@@ -1,0 +1,89 @@
+\documentclass[10pt, letterpaper]{article}
+
+\usepackage[top=0.4in, bottom=0.4in, left=0.55in, right=0.55in]{geometry}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{xcolor}
+\usepackage[normalem]{ulem}
+
+\definecolor{primary}{HTML}{1A3A5C}
+\definecolor{accent}{HTML}{2E86AB}
+
+\hypersetup{colorlinks=true, urlcolor=accent, linkcolor=accent}
+
+\newcommand{\linkedinlink}[2]{\href{#1}{\textcolor{accent}{\uline{#2}}}}
+
+\titleformat{\section}
+    {\normalsize\bfseries\color{primary}}
+    {}{0em}{\MakeUppercase}
+    [{\color{accent}\titlerule}]
+\titlespacing{\section}{0pt}{5pt}{3pt}
+
+\pagestyle{empty}
+\setlength{\parskip}{0pt}
+\setlength{\parindent}{0pt}
+\setlist[itemize]{leftmargin=1.5em, itemsep=0pt, parsep=0pt, topsep=1pt}
+
+\begin{document}
+
+%---------- HEADER ----------
+\begin{center}
+    {\LARGE\bfseries\color{primary} Jie Liu}\\[3pt]
+    \small
+    jieliu0100@gmail.com \textbar{}
+    669-328-9963 \textbar{}
+    \linkedinlink{https://www.linkedin.com/in/jieliu36/}{linkedin.com/in/jieliu36} \textbar{}
+    San Jose, CA
+\end{center}
+
+%---------- SUMMARY ----------
+\section{Summary}
+
+AI-native product manager with 4+ years owning end-to-end ML product roadmaps at JD.com, one of China's largest e-commerce platforms. Proven track record shipping NLP, recommendation, and generative AI features that drove \textbf{10\% GMV growth and 20\% profitability gains} across 10,000+ brands. Expert at AI product discovery, model evaluation design, and translating ML outputs into responsible, human-in-the-loop product experiences. Targeting AI PM roles at product-led technology companies.
+
+%---------- EDUCATION ----------
+\section{Education}
+
+\textbf{Northeastern University}, Silicon Valley Campus \hfill San Jose, CA\\
+Master of Science in Project Management \hfill 09/2025--Expected Dec 2026\\
+\textit{\small Coursework: Foundations of Project Management, Scope Management, Risk Management, Leadership in Analytics, AI Applications in Management}
+
+\smallskip
+
+\textbf{University of Dundee} \hfill Scotland, U.K.\\
+Master of Science in Management \& International Human Resource Management \hfill 09/2019--06/2020
+
+%---------- SKILLS ----------
+\section{Skills}
+
+\textbf{Product Management:} Product Roadmap, OKRs, PRD Development, Go-to-Market Strategy, Product Discovery, User Research, Customer Journey Mapping, Feature Prioritization, Backlog Management, Sprint Planning, Agile/Scrum, Waterfall, Change Management, RACI, Stakeholder Management\\
+\textbf{AI \& ML:} LLM Product Integration, Prompt Engineering, RAG, Vector Search, NLP, Recommendation Systems, Personalization Engines, Generative AI, Predictive Modeling, A/B Testing, AI Evaluation Frameworks, Responsible AI, Human-in-the-Loop Design, ML Pipeline Management\\
+\textbf{Tools:} Jira, Asana, Figma, SQL, Python, Tableau, Mixpanel, Google Analytics, Cursor, Adobe Creative Suite\\
+\textbf{Languages:} Mandarin (Native), English (Fluent)
+
+%---------- EXPERIENCE ----------
+\section{Experience}
+
+\textbf{Senior Product Manager}, \textit{JD.com Inc.\ (China's \#2 e-commerce platform, \$600B+ annual GMV)} \hfill Shanghai, China \textbar{} 11/2022--05/2025
+\begin{itemize}
+    \item Defined and owned a 12-month AI product roadmap across 3 product lines (semantic search with vector embeddings and BERT-based ranking, personalization engine, LLM-powered generative content with prompt engineering and hallucination guardrails); authored PRDs with OKRs, model evaluation criteria, and acceptance criteria aligned across engineering, data science, and business stakeholders.
+    \item Launched an AI-powered recommendation engine, designing a model evaluation framework with precision/recall benchmarks and A/B holdout groups to validate quality before rollout; drove a \textbf{10\% increase in total GMV} as measured by quarterly revenue targets.
+    \item Led product discovery sprints and customer journey mapping to define AI personalization and live-streaming automation features; implemented human-in-the-loop review workflows for AI-generated content decisions and tracked success against HEART framework metrics and north star KPIs.
+    \item Bridged data science, engineering, and business teams (10+ stakeholders) using RACI frameworks and sprint retrospectives to translate ML model outputs into user stories and go-to-market strategies, maintaining \textbf{100\% on-time delivery} across all major quarterly releases.
+    \item Monitored north star metrics via Mixpanel and SQL analytics pipelines, identifying funnel drop-offs and re-prioritizing backlog features to drive \textbf{15\%+ QoQ improvement} in new user acquisition and conversion rates.
+\end{itemize}
+
+\smallskip
+
+\textbf{Product Manager}, \textit{Chongbang Group (China's largest retail mall operator, 130+ shopping centers)} \hfill Shanghai, China \textbar{} 10/2020--10/2022
+\begin{itemize}
+    \item Designed go-to-market strategies and AI-searchable advertising campaigns for 10,000+ tenant brands, applying competitive analysis and customer persona development to boost marketplace visibility and drive a \textbf{35\% average increase in brand campaign reach} across global channels.
+    \item Built and deployed ML-based bid optimization and algorithmic budget allocation tools using gradient-boosted forecasting models, delivering \textbf{20\% profitability growth} for 1,000+ brands and a \textbf{90\% tenant renewal rate} as measured by annual contract retention.
+    \item Conducted voice-of-customer research across 50+ merchants and drove process improvement initiatives, synthesizing findings into prioritized roadmaps with risk registers that reduced average merchant onboarding time by \textbf{30\%} and eliminated top-3 recurring operational bottlenecks.
+    \item Achieved a \textbf{10\% profitability uplift} across the commercial ecosystem by deploying AI-assisted KPI dashboards with predictive churn modeling, enabling proactive interventions measured by merchant NPS and revenue retention.
+\end{itemize}
+
+\end{document}
