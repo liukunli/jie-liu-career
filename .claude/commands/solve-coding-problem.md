@@ -65,6 +65,21 @@ while (cur <= right) {
     else if (nums[cur] == 1) cur++;
     else                     swap(cur, right--);  ← don't increment cur here
 }
+// Prefix sum + HashMap (subarray sum = k)
+Map<Integer, Integer> prefixCount = new HashMap<>();
+prefixCount.put(0, 1);  ← empty prefix has sum 0
+int sum = 0;
+for (int num : nums) {
+    sum += num;
+    result += prefixCount.getOrDefault(sum - k, 0);  ← how many prefixes have sum-k
+    prefixCount.merge(sum, 1, Integer::sum);
+}
+// Kadane's (max subarray)
+int maxEndingHere = nums[0], maxSoFar = nums[0];
+for (int i = 1; i < n; i++) {
+    maxEndingHere = Math.max(nums[i], maxEndingHere + nums[i]);  ← extend or restart
+    maxSoFar = Math.max(maxSoFar, maxEndingHere);
+}
 ```
 
 ### Sliding Window
@@ -72,7 +87,7 @@ while (cur <= right) {
 Expand right, shrink left when invalid. Track state with map/counter. O(n).
 
 ```java
-// Variable-size
+// Variable-size (generic)
 int left = 0; Map<Character, Integer> window = new HashMap<>();
 for (int right = 0; right < s.length(); right++) {
     window.merge(s.charAt(right), 1, Integer::sum);      ← add to window
@@ -86,6 +101,22 @@ for (int i = 0; i < nums.length; i++) {
     if (i >= k) windowSum -= nums[i - k];
     if (i >= k - 1) result = Math.max(result, windowSum);
 }
+// Minimum window substring — need/formed counter pattern
+Map<Character, Integer> need = new HashMap<>(), have = new HashMap<>();
+for (char c : t.toCharArray()) need.merge(c, 1, Integer::sum);
+int formed = 0, required = need.size(), left = 0;
+for (int right = 0; right < s.length(); right++) {
+    char c = s.charAt(right); have.merge(c, 1, Integer::sum);
+    if (need.containsKey(c) && have.get(c).equals(need.get(c))) formed++;  ← char satisfied
+    while (formed == required) {  ← valid window: try to shrink
+        updateResult(left, right);
+        char rem = s.charAt(left++); have.merge(rem, -1, Integer::sum);
+        if (need.containsKey(rem) && have.get(rem) < need.get(rem)) formed--;
+    }
+}
+// int[128] for ASCII chars (faster than HashMap)
+int[] freq = new int[128];
+for (char c : s.toCharArray()) freq[c]++;
 ```
 
 ### Binary Search
@@ -127,12 +158,25 @@ return dummy.next;
 DFS (pre/in/post) or BFS (level). Pass state down; return results up.
 
 ```java
-// Recursive DFS
+// Recursive DFS — return value floats results up
 int dfs(TreeNode root) {
     if (root == null) return 0;          ← base case
     int left = dfs(root.left);
     int right = dfs(root.right);
     return Math.max(left, right) + 1;   ← combine at node
+}
+// Global result pattern (when node can't just return the answer)
+int[] ans = new int[]{Integer.MIN_VALUE};
+void dfs(TreeNode root) {
+    if (root == null) return;
+    int left = dfs2(root.left), right = dfs2(root.right);
+    ans[0] = Math.max(ans[0], left + right + root.val);  ← update global at each node
+}
+// BST: pass min/max bounds down to validate
+boolean validate(TreeNode node, long min, long max) {
+    if (node == null) return true;
+    if (node.val <= min || node.val >= max) return false;  ← violates BST property
+    return validate(node.left, min, node.val) && validate(node.right, node.val, max);
 }
 // Iterative inorder (left-root-right)
 Deque<TreeNode> stack = new ArrayDeque<>(); TreeNode current = root;
@@ -166,13 +210,24 @@ for (int coin : coins) for (int i = coin; i <= amount; i++) dp[i] += dp[i-coin];
 // 2D DP (LCS / edit distance)
 if (s1.charAt(i-1) == s2.charAt(j-1)) dp[i][j] = dp[i-1][j-1] + 1;  ← match
 else dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
-// Memoization
-Map<String, Integer> memo = new HashMap<>();
-int solve(int i, int j) {
-    String key = i + "," + j;
-    if (memo.containsKey(key)) return memo.get(key);
-    int result = ...; memo.put(key, result); return result;
+// Interval DP (burst balloons, palindrome partition)
+for (int len = 2; len <= n; len++) {        ← iterate by subproblem length
+    for (int i = 0; i + len <= n; i++) {
+        int j = i + len - 1;
+        for (int k = i; k < j; k++)         ← try all split points
+            dp[i][j] = Math.max(dp[i][j], dp[i][k] + dp[k+1][j] + cost(i,k,j));
+    }
 }
+// Memoization with int[][] (faster than Map<String>)
+int[][] memo = new int[m][n];
+for (int[] row : memo) Arrays.fill(row, -1);  ← -1 = unvisited
+int solve(int i, int j) {
+    if (memo[i][j] != -1) return memo[i][j];
+    return memo[i][j] = compute(i, j);         ← store and return
+}
+// MOD for counting problems
+private static final int MOD = 1_000_000_007;
+dp[i] = (dp[i-1] + dp[i-2]) % MOD;  ← apply mod after each addition
 ```
 
 ### Backtracking
@@ -191,6 +246,13 @@ void backtrack(int[] nums, int start) {
     }
 }
 // Permutations: boolean[] used; skip if used[i] or (i>0 && nums[i]==nums[i-1] && !used[i-1])
+// Grid backtracking — mark cell in-place, then restore
+void dfs(char[][] board, int r, int c) {
+    if (outOfBounds || board[r][c] != target) return;
+    char saved = board[r][c]; board[r][c] = '#';  ← mark visited in-place
+    dfs(board, r+1, c); dfs(board, r-1, c); dfs(board, r, c+1); dfs(board, r, c-1);
+    board[r][c] = saved;  ← restore (backtrack)
+}
 ```
 
 ### Stack & Queue
@@ -253,7 +315,36 @@ while (!queue.isEmpty()) {
     }
     steps++;
 }
-// Topological sort (Kahn's): int[] indegree; seed queue with 0-indegree nodes; reduce on pop
+// Grid BFS/DFS — 4-direction traversal
+int[][] dirs = {{0,1},{0,-1},{1,0},{-1,0}};
+for (int[] d : dirs) {
+    int nr = r + d[0], nc = c + d[1];
+    if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited[nr][nc]) { /* visit */ }
+}
+// Dijkstra — weighted shortest path
+int[] dist = new int[n]; Arrays.fill(dist, Integer.MAX_VALUE); dist[src] = 0;
+PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[0] - b[0]);
+pq.offer(new int[]{0, src});
+while (!pq.isEmpty()) {
+    int[] curr = pq.poll(); int d = curr[0], u = curr[1];
+    if (d > dist[u]) continue;  ← stale entry, skip
+    for (int[] edge : graph.get(u)) {
+        if (dist[u] + edge[1] < dist[edge[0]]) {
+            dist[edge[0]] = dist[u] + edge[1]; pq.offer(new int[]{dist[edge[0]], edge[0]});
+        }
+    }
+}
+// Topological sort DFS — 3-color cycle detection
+int[] state = new int[n];  // 0=unvisited 1=visiting 2=done
+boolean dfs(int u) {
+    state[u] = 1;
+    for (int v : graph.get(u)) {
+        if (state[v] == 1) return false;  ← back edge = cycle
+        if (state[v] == 0 && !dfs(v)) return false;
+    }
+    state[u] = 2; order.addFirst(u); return true;  ← post-order = topo order
+}
+// Kahn's topo sort (BFS): int[] indegree; seed queue with 0-indegree nodes; reduce on pop
 // Union Find
 int[] parent = new int[n]; for (int i=0;i<n;i++) parent[i]=i;
 int find(int x) { return parent[x]==x ? x : (parent[x]=find(parent[x])); }  ← path compression
@@ -385,6 +476,12 @@ GCD/LCM, modular arithmetic, sieve, fast power. Use long to avoid overflow.
 ```java
 int gcd(int a, int b) { return b == 0 ? a : gcd(b, a % b); }
 int lcm(int a, int b) { return a / gcd(a, b) * b; }  ← divide first to avoid overflow
+// MOD for count/combination problems (appears in ~30% of medium/hard)
+static final int MOD = 1_000_000_007;
+result = (result + value) % MOD;          ← apply after addition
+result = result * value % MOD;            ← apply after multiplication
+// NEVER: (a + b) % MOD where a,b can be up to MOD-1 — use long to avoid int overflow
+long result = ((long) a * b) % MOD;      ← cast to long before multiply
 // Fast power mod
 long powMod(long base, long exp, long mod) {
     long result = 1; base %= mod;
