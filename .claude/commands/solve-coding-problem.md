@@ -80,6 +80,60 @@ for (int i = 1; i < n; i++) {
     maxEndingHere = Math.max(nums[i], maxEndingHere + nums[i]);  ← extend or restart
     maxSoFar = Math.max(maxSoFar, maxEndingHere);
 }
+// ── Sorting Algorithms ──────────────────────────────────────────────
+// Merge Sort — O(n log n) time, O(n) space, stable
+void mergeSort(int[] nums, int lo, int hi) {
+    if (lo >= hi) return;
+    int mid = lo + (hi - lo) / 2;
+    mergeSort(nums, lo, mid);
+    mergeSort(nums, mid + 1, hi);
+    merge(nums, lo, mid, hi);
+}
+void merge(int[] nums, int lo, int mid, int hi) {
+    int[] tmp = Arrays.copyOfRange(nums, lo, hi + 1);
+    int i = lo, j = mid + 1, k = lo;
+    while (i <= mid && j <= hi)
+        nums[k++] = tmp[i-lo] <= tmp[j-lo] ? tmp[i++-lo] : tmp[j++-lo];
+    while (i <= mid) nums[k++] = tmp[i++-lo];  ← copy remaining left half
+}
+// Quick Sort — O(n log n) avg, O(log n) space, NOT stable
+void quickSort(int[] nums, int lo, int hi) {
+    if (lo >= hi) return;
+    int p = partition(nums, lo, hi);
+    quickSort(nums, lo, p - 1);
+    quickSort(nums, p + 1, hi);
+}
+int partition(int[] nums, int lo, int hi) {
+    int pivot = nums[hi], i = lo - 1;
+    for (int j = lo; j < hi; j++)
+        if (nums[j] <= pivot) swap(nums, ++i, j);
+    swap(nums, ++i, hi);  ← place pivot at final position
+    return i;
+}
+// Quick Select — O(n) avg for k-th smallest (k is 0-indexed)
+int quickSelect(int[] nums, int lo, int hi, int k) {
+    int p = partition(nums, lo, hi);
+    if (p == k) return nums[p];
+    return p < k ? quickSelect(nums, p + 1, hi, k)
+                 : quickSelect(nums, lo, p - 1, k);  ← recurse only one side
+}
+// Counting Sort — O(n + k) for integers in known range [min, max]
+int[] countingSort(int[] nums, int min, int max) {
+    int[] count = new int[max - min + 1];
+    for (int n : nums) count[n - min]++;
+    int k = 0;
+    for (int v = min; v <= max; v++)
+        while (count[v - min]-- > 0) nums[k++] = v;  ← rebuild from counts
+    return nums;
+}
+// Bucket Sort — O(n) avg for uniformly distributed values
+void bucketSort(float[] arr, int n) {
+    List<Float>[] buckets = new ArrayList[n];
+    for (int i = 0; i < n; i++) buckets[i] = new ArrayList<>();
+    for (float f : arr) buckets[(int)(n * f)].add(f);  ← map to bucket
+    int k = 0;
+    for (List<Float> b : buckets) { Collections.sort(b); for (float f : b) arr[k++] = f; }
+}
 ```
 
 ### Sliding Window
