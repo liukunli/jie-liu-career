@@ -6,32 +6,66 @@ Four data structures — each with a canonical template and representative probl
 
 ## Quick Reference Table
 
-| # | Name | Structure | Pattern | Pop/poll condition | Return |
-|---|---|---|---|---|---|
-| 20 | Valid Parentheses | Stack | Bracket matching | pop on close bracket | boolean |
-| 155 | Min Stack | Stack + aux stack | Mirror min alongside values | always pop both | int (min) |
-| 394 | Decode String | Two stacks | Push on `[`, expand on `]` | pop on `]` | String |
-| 739 | Daily Temperatures | Mono dec stack | Next greater temp | current > top | int[] |
-| 496 | Next Greater Element I | Mono dec stack + Map | NGE across two arrays | current > top | int[] |
-| 84 | Largest Rectangle | Mono inc stack | Next smaller bar → compute width | current < top | int (area) |
-| 42 | Trapping Rain Water | Mono inc stack | Valley between bars | current > top | int (water) |
-| 239 | Sliding Window Max | Mono dec deque | Window max at front | pollLast when current ≥ back | int[] |
-| 1046 | Last Stone Weight | Max-heap | Greedily smash top 2 | always poll 2 | int |
-| 347 | Top K Frequent | Min-heap size k | Evict smallest when size > k | size > k → poll | int[] |
-| 295 | Find Median | Max-heap + Min-heap | Lower/upper halves | rebalance after each add | double |
-| 502 | IPO | Sort + Max-heap | Unlock by capital, pick max profit | w >= required capital | int |
-| 767 | Reorganize String | Max-heap | Interleave two most frequent chars | always poll 2 | String |
-| 85 | Maximal Rectangle | Largest rectangle containing only 1s in binary matrix | For each row build histogram heights → apply #84 largestRectangleArea | **Row-by-row histogram**: reduce 2D problem to repeated #84 | O(m·n) | O(n) |
-| 224 | Basic Calculator | Evaluate expression with +, -, ( ) | Stack saves (result, sign) before each `(`; restore after `)` | **Sign + parentheses stack**: push (result,sign) on `(`, pop and combine on `)` | O(n) | O(n) |
-| 227 | Basic Calculator II | Evaluate expression with +, -, *, / (no parentheses) | Scan tokens; push negative/positive for +/-; multiply/divide top of stack for */÷ | **Operator-before-operand**: apply *, / immediately; defer +, - via signed push | O(n) | O(n) |
-| 373 | Find K Pairs with Smallest Sums | Find k pairs (u,v) with smallest u+v, u from nums1, v from nums2 | Min-heap seeded with (nums1[i], nums2[0]) for all i; expand j on pop | **Expand j**: each heap entry tracks (i, j); pop → push (i, j+1) | O(k log k) | O(k) |
-| 378 | Kth Smallest Element in Sorted Matrix | kth smallest in n×n matrix where rows and cols are sorted | Binary search on value range [min,max]; count elements ≤ mid from bottom-left | **Binary search on value**: count(mid) ≥ k → search lower; else search higher | O(n log(max-min)) | O(1) |
-| 503 | Next Greater Element II | Next greater element in circular array | Monotone decreasing stack; iterate array twice (i % n) | **Circular**: loop 2n, use i % n; only push indices in first pass (i < n) | O(n) | O(n) |
-| 621 | Task Scheduler | Minimum intervals to finish tasks with cooldown n | Count frequencies; answer = max((maxFreq-1)*(n+1)+maxCount, tasks.length) | **Greedy formula**: no simulation needed, direct calculation | O(k) k=tasks.length | O(1) |
-| 358 | Rearrange String k Distance Apart | Rearrange so same chars are ≥k apart | Max-heap by frequency + cooldown queue of size k | **Cooldown queue**: hold used char until k slots pass, then re-add to heap | O(n log k) | O(k) |
-| 480 | Sliding Window Median | Median of each window of size k | Two heaps (maxHeap lower, minHeap upper) + lazy deletion via HashMap | **Lazy deletion**: defer removing out-of-window elements; rebalance by counts | O(n log k) | O(k) |
-| 692 | Top K Frequent Words | k most frequent words, lexicographic on ties | Min-heap of size k ordered by (freq asc, word desc) | **Custom tie-break**: same freq → larger word first so it's evicted | O(n log k) | O(n) |
-| 772 | Basic Calculator III | Evaluate expression with +,-,*,/ and parentheses | Recursive/stack: handle parentheses recursively, apply *,/ immediately | **Full calculator**: combine #224 parentheses + #227 operator precedence | O(n) | O(n) |
+| # | Name | Description | Intuition | Variation |
+|---|---|---|---|---|
+| 20 | Valid Parentheses | Given a string of brackets `()[]{}`, return true if all brackets are properly closed and ordered. | the most recent unmatched open bracket is the only one a closing bracket can legally match — that is exactly LIFO. | Standard |
+| 155 | Min Stack | Design a stack that supports push, pop, top, and `getMin()` in O(1). |  | Standard |
+| 394 | Decode String | Decode a string like `"3[a2[bc]]"` → `"abcbcabcbc"`. |  | Standard |
+| 739 | Daily Temperatures | For each day, how many days until a warmer temperature? Return 0 if none. | a colder day just waits on the stack until the first warmer day arrives and resolves it. | Standard |
+| 496 | Next Greater Element I | For each element in `nums1` (a subset of `nums2`), find the first greater element to its right in `nums2`. Return -1 if none. |  | Standard |
+| 84 | Largest Rectangle in Histogram | Find the largest rectangle that can be formed within the histogram bars. | a bar can only stretch sideways until it hits a shorter bar; the stack remembers each bar's left limit so the right limit (current shorter bar) closes the rectangle. | Standard |
+| 42 | Trapping Rain Water | How much water can be trapped between the bars after rain? | water sits in a dip between a left wall and a right wall, and its depth is set by whichever wall is shorter. | Standard |
+| 239 | Sliding Window Maximum | Return the maximum in each sliding window of size k. | any element smaller than a newer element can never be the window max again, so discard it; the front always holds the current best. | Standard |
+| 1046 | Last Stone Weight | Smash the two heaviest stones repeatedly. Return the last remaining weight (or 0). |  | Standard |
+| 347 | Top K Frequent Elements | Return the k most frequent elements. |  | Standard |
+| 295 | Find Median from Data Stream | Add integers to a stream and find the median at any time in O(log n) add and O(1) find. | keep the smaller half and larger half balanced; the median always lives right at the boundary, on the tops of the two heaps. | Standard |
+| 502 | IPO | Before each project you must have enough capital. Start with capital `w`. Pick at most `k` projects to maximize final capital. |  | Standard |
+| 767 | Reorganize String | Rearrange characters so no two adjacent characters are the same. Return `""` if impossible. |  | Standard |
+| 503 | Next Greater Element II | Given a circular integer array, return the next greater number for every element. The next greater number of an element is the first greater number found by traversing the array circularly. |  | Monotone decreasing stack. Iterate through the array TWICE (indices 0 to 2n-1, using `i % n`). Only push index `i` onto the stack during the first pass (`i < n`) to avoid duplicates. |
+| 85 | Maximal Rectangle | Given a binary matrix filled with 0s and 1s, find the largest rectangle containing only 1s and return its area. |  | For each row, compute cumulative histogram heights (1s stack vertically). Then apply the Largest Rectangle in Histogram algorithm (#84) on each row's histogram. |
+| 224 | Basic Calculator | Evaluate a string expression containing `+`, `-`, `(`, `)`, digits, and spaces. |  | When encountering `(`, push current (result, sign) onto stack and reset. When encountering `)`, combine current result with the saved result and sign from the stack. |
+| 227 | Basic Calculator II | Evaluate a string expression with `+`, `-`, `*`, `/` and integers (no parentheses). |  | Process operator BEFORE the current number. Push positive/negative numbers for `+`/`-`. For `*`/`/`, immediately multiply/divide the top of the stack. Sum the stack at the end. |
+| 378 | Kth Smallest Element in a Sorted Matrix | Given an n×n matrix where each row and column is sorted in ascending order, return the kth smallest element. |  | Binary search on the VALUE range [matrix[0][0], matrix[n-1][n-1]]. For a given `mid`, count elements ≤ mid by scanning from the bottom-left corner: if `matrix[row][col] <= mid`, all `row+1` elements in this column (0..row) are ≤ mid. |
+| 373 | Find K Pairs with Smallest Sums | Given two sorted arrays `nums1` and `nums2`, return the `k` pairs `(u, v)` (one from each) with the smallest sums. |  | Seed min-heap with `(nums1[i], nums2[0])` for i = 0..min(k, n1.length)-1. On each pop, if `j+1 < nums2.length`, push `(nums1[i], nums2[j+1])`. This expands row-by-row in the implicit pair matrix. |
+| 621 | Task Scheduler | Given a list of tasks (characters) and a cooldown `n`, return the minimum number of intervals to finish all tasks. Between two same tasks there must be at least `n` intervals. |  | Greedy formula. Find the most frequent task (maxFreq). It creates `maxFreq - 1` "frames" of `n + 1` slots, plus `maxCount` (count of tasks with maxFreq) slots. The answer is `max(tasks.length, (maxFreq - 1) * (n + 1) + maxCount)`. |
+| 358 | Rearrange String k Distance Apart | Rearrange a string so that the same characters are at least `k` distance apart. Return "" if impossible. |  | greedy with a max-heap by frequency plus a cooldown queue of size k that holds recently used characters until they're eligible again. |
+| 480 | Sliding Window Median | Return the median of every window of size k as it slides across the array. |  | two heaps (maxHeap = lower half, minHeap = upper half) with lazy deletion — defer removing elements that left the window, tracking balance with counts. |
+| 692 | Top K Frequent Words | Return the k most frequent words. Sort by frequency descending; ties broken by lexicographic order. |  | min-heap of size k ordered so the "smallest" (lowest freq, or same freq with lexicographically larger word) sits on top for eviction. |
+| 772 | Basic Calculator III | Evaluate an arithmetic expression with `+`, `-`, `*`, `/`, and parentheses. |  | combines #224 (parentheses via recursion) and #227 (operator precedence: apply `*`/`/` immediately, defer `+`/`-`). |
+| 32 | Longest Valid Parentheses | Find the length of the longest valid (well-formed) parentheses substring. | push indices onto a stack; the bottom of the stack is always the index just before the current valid run, so the gap to it gives the run length. | Standard |
+| 71 | Simplify Path | Simplify an absolute Unix file path (handle `.`, `..`, multiple slashes). | split on `/` and treat directories as a stack — `..` pops the last directory, `.` and empty tokens are ignored. | Standard |
+| 150 | Evaluate Reverse Polish Notation | Evaluate a Reverse Polish Notation expression with `+`, `-`, `*`, `/`. | push operands; on an operator pop the two most recent operands, apply, and push the result back — exactly LIFO. | Standard |
+| 215 | Kth Largest Element in an Array | Find the kth largest element in an unsorted array (not necessarily distinct). | a min-heap of size k keeps the k largest seen so far; its top is the kth largest. | Standard |
+| 218 | The Skyline Problem | Given building rectangles, return the skyline as a list of key points. | sweep left to right over building edges; a max-heap of active heights tracks the tallest standing building, and a key point is emitted whenever that maximum changes. | Standard |
+| 225 | Implement Stack using Queues | Implement a LIFO stack using only queue operations. | after each push, rotate the queue so the newest element sits at the front — then `poll`/`peek` behave like stack `pop`/`top`. | Standard |
+| 232 | Implement Queue using Stacks | Implement a queue using two stacks. | one stack receives pushes, the other serves pops; moving elements over reverses their order, restoring FIFO. Amortized O(1) per element. | two stacks emulate FIFO |
+| 316 | Remove Duplicate Letters | Remove duplicate letters so each appears once, result is lexicographically smallest. | monotone increasing stack of letters — pop a larger letter when a smaller one arrives, but only if the popped letter appears again later (so we can re-add it). | Standard |
+| 402 | Remove K Digits | Remove k digits from a number string to get the smallest possible number. | monotone increasing stack of digits — whenever a smaller digit arrives, pop larger preceding digits (each pop is one removal) so high places hold the smallest digits. | Standard |
+| 456 | 132 Pattern | Check if a 1-3-2 pattern exists in an integer array. |  | scan right to left with a monotone decreasing stack; pop to track the largest value that is still smaller than some element to its right (the "2"). If a later element is below that "2", a 132 pattern exists. |
+| 506 | Relative Ranks | Assign ranks ("Gold Medal", "Silver Medal", "Bronze Medal", then 4, 5, ...) to athletes by score. | a max-heap of (score, index) pops athletes in descending score order, so each pop assigns the next rank back to its original position. | Standard |
+| 636 | Exclusive Time of Functions | Given a log of function start/end times, compute exclusive time per function. | a call stack mirrors execution; when a new call starts, the currently running function pauses (accumulate its slice), and when a call ends, the resumed parent restarts its clock. | Standard |
+| 678 | Valid Parenthesis String | Check if a string with `(`, `)`, `*` (wildcard) can be a valid parenthesis string. |  | track a range `[low, high]` of possible open-paren counts; `*` widens the range (could be `(`, `)`, or empty). Valid iff the range can return to 0 and never goes negative. |
+| 703 | Kth Largest Element in a Stream | Design a class to find the kth largest element in a stream. | a min-heap capped at size k always holds the k largest seen; its top is the running kth largest. | Standard |
+| 716 | Max Stack | Design a stack with push, pop, top, getMax, and popMax operations. |  | mirror an auxiliary `maxStack` (like #155). `popMax` pops down to the max into a temp buffer, removes it, then pushes the buffer back — re-establishing both stacks. |
+| 735 | Asteroid Collision | Simulate asteroids moving in a row: right-moving collide with left-moving. | a stack holds surviving asteroids; a left-moving asteroid only collides with a right-moving one on top, resolving collisions repeatedly until it survives, explodes, or the stack clears. | Standard |
+| 759 | Employee Free Time | Find the free time intervals common to all employees given their schedules. | flatten all intervals, sort by start, then sweep tracking the furthest end seen so far; any gap between that end and the next start is common free time. | Standard |
+| 844 | Backspace String Compare | Check if two strings are equal after processing `#` as backspace. | build each string with a stack where `#` pops the last character, then compare the resulting stacks. | Standard |
+| 856 | Score of Parentheses | Calculate the score of a valid parentheses string (empty=0, AB=A+B, (A)=2A or 1 if empty). |  | stack holds the accumulated score at each depth; push 0 on `(`, and on `)` collapse the inner score (`max(2*inner, 1)`) into the parent frame. |
+| 862 | Shortest Subarray with Sum at Least K | Find the length of the shortest subarray with sum at least k (k can be negative). |  | monotone increasing deque over prefix sums — pop from the front when a window qualifies, and from the back when a newer prefix is smaller (dominating older larger ones). |
+| 907 | Sum of Subarray Minimums | Find the sum of subarray minimums for all subarrays. |  | monotone increasing stack — for each element as the minimum, count subarrays via distance to the previous strictly-smaller and next smaller-or-equal element, then weight by the value. |
+| 921 | Minimum Add to Make Parentheses Valid | Find the minimum additions to make a parentheses string valid. | track open parentheses as a counter (stack of size); each unmatched `)` needs an added `(`, and leftover `(` each need a `)`. | Standard |
+| 946 | Validate Stack Sequences | Check if a sequence can be produced by a series of push-pop operations on a stack. | simulate — push each value, then greedily pop whenever the stack top matches the next expected popped value. If everything pops, the sequence is valid. | Standard |
+| 973 | K Closest Points to Origin | Find the k points closest to the origin. | a max-heap of size k keyed on squared distance keeps the k closest seen; evict the farthest whenever the heap overflows. | Standard |
+| 1086 | High Five | For each student, compute the average of their top five scores. | keep a min-heap of size 5 per student so only their five highest scores remain, then average those. | Standard |
+| 1190 | Reverse Substrings Between Each Pair of Parentheses | Reverse the substrings between each pair of parentheses (innermost first). |  | stack of builders — push current builder on `(`; on `)` reverse the inner builder and append it to the parent frame. |
+| 1209 | Remove All Adjacent Duplicates in String II | Remove all adjacent duplicates of length k in a string repeatedly. |  | stack of (char, count) pairs — increment the top's count on a repeat, and pop the frame once its count reaches k. |
+| 1249 | Minimum Remove to Make Valid Parentheses | Remove the minimum number of parentheses to make the string valid. |  | stack stores indices of unmatched `(`; a `)` with no match is marked for removal, and any `(` left on the stack at the end is also removed. |
+| 1337 | The K Weakest Rows in a Matrix | Find the k weakest rows in a matrix (fewest soldiers, ties broken by row index). |  | max-heap of size k keyed on (soldier count, row index) so the strongest qualifying row sits on top for eviction; the remaining k are the weakest. |
+| 1541 | Minimum Insertions to Balance a Parentheses String | Find the minimum insertions to make a string balanced (every `(` needs two `)`). |  | counter-style stack tracking open `(`; each `(` demands two `)`. Handle `)` carefully since they come in pairs, inserting a `)` when only one is available. |
+| 1614 | Maximum Nesting Depth of the Parentheses | Find the maximum nesting depth of parentheses in a string. | the stack depth equals the current nesting level; track a running counter for `(`/`)` and record its peak. | Standard |
+| 1792 | Maximum Average Pass Ratio | Maximize the average pass ratio by adding extra students optimally. |  | max-heap keyed on the marginal gain from adding one student to a class; greedily assign each extra student where it helps most, then push the updated gain back. |
+| 1944 | Number of Visible People in a Queue | Count the number of people each person can see in a queue (taller blocks view). |  | monotone decreasing stack scanned right to left; pop shorter people (each is visible) until a taller one blocks the view — that taller person is visible too. |
+| 1985 | Find the Kth Largest Integer in the Array | Find the kth largest integer in an array of number strings. |  | min-heap of size k comparing the numeric strings by length first, then lexicographically (so big-integer values compare correctly without overflow). |
 
 ---
 
@@ -924,3 +958,1050 @@ class Solution {
 }
 ```
 **Time** O(n) | **Space** O(n)
+
+---
+
+# Additional Reference Problems
+
+## #32 Longest Valid Parentheses
+
+**Description:** Find the length of the longest valid (well-formed) parentheses substring.
+
+**Intuition:** push indices onto a stack; the bottom of the stack is always the index just before the current valid run, so the gap to it gives the run length.
+
+```java
+class Solution {
+    public int longestValidParentheses(String s) {
+        Deque<Integer> stack = new ArrayDeque<>();
+        stack.push(-1);                              // sentinel: index before current valid run
+        int result = 0;
+        for (int i = 0; i < s.length(); i++) {
+            if (s.charAt(i) == '(') {
+                stack.push(i);
+            } else {
+                stack.pop();                         // match this ')' with the top '('
+                if (stack.isEmpty()) {
+                    stack.push(i);                   // no match: this ')' becomes new base
+                } else {
+                    result = Math.max(result, i - stack.peek());
+                }
+            }
+        }
+        return result;
+    }
+}
+```
+**Time** O(n) | **Space** O(n)
+
+---
+
+## #71 Simplify Path
+
+**Description:** Simplify an absolute Unix file path (handle `.`, `..`, multiple slashes).
+
+**Intuition:** split on `/` and treat directories as a stack — `..` pops the last directory, `.` and empty tokens are ignored.
+
+```java
+class Solution {
+    public String simplifyPath(String path) {
+        Deque<String> stack = new ArrayDeque<>();
+        for (String part : path.split("/")) {
+            if (part.isEmpty() || part.equals(".")) {
+                continue;
+            } else if (part.equals("..")) {
+                if (!stack.isEmpty()) stack.pop();   // go up one directory
+            } else {
+                stack.push(part);
+            }
+        }
+        StringBuilder builder = new StringBuilder();
+        // stack top is the deepest dir; iterate from bottom to build path in order
+        Iterator<String> it = stack.descendingIterator();
+        while (it.hasNext()) {
+            builder.append('/').append(it.next());
+        }
+        return builder.length() == 0 ? "/" : builder.toString();
+    }
+}
+```
+**Time** O(n) | **Space** O(n)
+
+---
+
+## #150 Evaluate Reverse Polish Notation
+
+**Description:** Evaluate a Reverse Polish Notation expression with `+`, `-`, `*`, `/`.
+
+**Intuition:** push operands; on an operator pop the two most recent operands, apply, and push the result back — exactly LIFO.
+
+```java
+class Solution {
+    public int evalRPN(String[] tokens) {
+        Deque<Integer> stack = new ArrayDeque<>();
+        for (String token : tokens) {
+            if (token.equals("+") || token.equals("-") || token.equals("*") || token.equals("/")) {
+                int b = stack.pop();
+                int a = stack.pop();                 // order matters for - and /
+                if (token.equals("+")) {
+                    stack.push(a + b);
+                } else if (token.equals("-")) {
+                    stack.push(a - b);
+                } else if (token.equals("*")) {
+                    stack.push(a * b);
+                } else {
+                    stack.push(a / b);
+                }
+            } else {
+                stack.push(Integer.parseInt(token));
+            }
+        }
+        return stack.pop();
+    }
+}
+```
+**Time** O(n) | **Space** O(n)
+
+---
+
+## #215 Kth Largest Element in an Array
+
+**Description:** Find the kth largest element in an unsorted array (not necessarily distinct).
+
+**Intuition:** a min-heap of size k keeps the k largest seen so far; its top is the kth largest.
+
+```java
+class Solution {
+    public int findKthLargest(int[] nums, int k) {
+        PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+        for (int num : nums) {
+            minHeap.offer(num);
+            if (minHeap.size() > k) minHeap.poll();  // evict smallest, keep k largest
+        }
+        return minHeap.peek();
+    }
+}
+```
+**Time** O(n log k) | **Space** O(k)
+
+---
+
+## #218 The Skyline Problem
+
+**Description:** Given building rectangles, return the skyline as a list of key points.
+
+**Intuition:** sweep left to right over building edges; a max-heap of active heights tracks the tallest standing building, and a key point is emitted whenever that maximum changes.
+
+```java
+class Solution {
+    public List<List<Integer>> getSkyline(int[][] buildings) {
+        List<int[]> events = new ArrayList<>();
+        for (int[] b : buildings) {
+            events.add(new int[]{b[0], -b[2]});      // start: negative height
+            events.add(new int[]{b[1], b[2]});       // end:   positive height
+        }
+        // sort by x; at same x, starts before ends, taller start first, shorter end first
+        events.sort((a, b) -> a[0] != b[0] ? a[0] - b[0] : a[1] - b[1]);
+        List<List<Integer>> result = new ArrayList<>();
+        PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder());
+        maxHeap.offer(0);                            // ground level
+        int prevMax = 0;
+        for (int[] e : events) {
+            if (e[1] < 0) {
+                maxHeap.offer(-e[1]);                // building starts
+            } else {
+                maxHeap.remove(e[1]);                // building ends
+            }
+            int currentMax = maxHeap.peek();
+            if (currentMax != prevMax) {
+                result.add(Arrays.asList(e[0], currentMax));
+                prevMax = currentMax;
+            }
+        }
+        return result;
+    }
+}
+```
+**Time** O(n^2) (heap remove) | **Space** O(n)
+
+---
+
+## #225 Implement Stack using Queues
+
+**Description:** Implement a LIFO stack using only queue operations.
+
+**Intuition:** after each push, rotate the queue so the newest element sits at the front — then `poll`/`peek` behave like stack `pop`/`top`.
+
+```java
+class MyStack {
+    Queue<Integer> queue = new ArrayDeque<>();
+
+    public void push(int x) {
+        queue.offer(x);
+        for (int i = 1; i < queue.size(); i++) {     // rotate so x moves to front
+            queue.offer(queue.poll());
+        }
+    }
+    public int pop()     { return queue.poll(); }
+    public int top()     { return queue.peek(); }
+    public boolean empty() { return queue.isEmpty(); }
+}
+```
+**Time** O(n) push, O(1) others | **Space** O(n)
+
+---
+
+## #232 Implement Queue using Stacks
+
+**Description:** Implement a queue using two stacks.
+
+**Intuition:** one stack receives pushes, the other serves pops; moving elements over reverses their order, restoring FIFO. Amortized O(1) per element.
+
+```java
+class MyQueue {
+    Deque<Integer> inStack  = new ArrayDeque<>();    // ← VARIATION: two stacks emulate FIFO
+    Deque<Integer> outStack = new ArrayDeque<>();
+
+    public void push(int x) { inStack.push(x); }
+    public int pop() {
+        peek();                                      // ensure outStack is primed
+        return outStack.pop();
+    }
+    public int peek() {
+        if (outStack.isEmpty()) {
+            while (!inStack.isEmpty()) outStack.push(inStack.pop());  // reverse order
+        }
+        return outStack.peek();
+    }
+    public boolean empty() { return inStack.isEmpty() && outStack.isEmpty(); }
+}
+```
+**Time** O(1) amortized | **Space** O(n)
+
+---
+
+## #316 Remove Duplicate Letters
+
+**Description:** Remove duplicate letters so each appears once, result is lexicographically smallest.
+
+**Intuition:** monotone increasing stack of letters — pop a larger letter when a smaller one arrives, but only if the popped letter appears again later (so we can re-add it).
+
+```java
+class Solution {
+    public String removeDuplicateLetters(String s) {
+        int[] lastIndex = new int[26];
+        for (int i = 0; i < s.length(); i++) lastIndex[s.charAt(i) - 'a'] = i;
+        boolean[] inStack = new boolean[26];
+        Deque<Character> stack = new ArrayDeque<>();
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (inStack[c - 'a']) continue;          // keep only one of each letter
+            while (!stack.isEmpty() && stack.peek() > c && lastIndex[stack.peek() - 'a'] > i) {
+                inStack[stack.pop() - 'a'] = false;  // pop bigger letter that recurs later
+            }
+            stack.push(c);
+            inStack[c - 'a'] = true;
+        }
+        StringBuilder builder = new StringBuilder();
+        Iterator<Character> it = stack.descendingIterator();
+        while (it.hasNext()) builder.append(it.next());
+        return builder.toString();
+    }
+}
+```
+**Time** O(n) | **Space** O(1) (26 letters)
+
+---
+
+## #402 Remove K Digits
+
+**Description:** Remove k digits from a number string to get the smallest possible number.
+
+**Intuition:** monotone increasing stack of digits — whenever a smaller digit arrives, pop larger preceding digits (each pop is one removal) so high places hold the smallest digits.
+
+```java
+class Solution {
+    public String removeKdigits(String num, int k) {
+        Deque<Character> stack = new ArrayDeque<>();
+        for (char c : num.toCharArray()) {
+            while (k > 0 && !stack.isEmpty() && stack.peek() > c) {
+                stack.pop();                         // remove larger leading digit
+                k--;
+            }
+            stack.push(c);
+        }
+        while (k > 0) {                              // still need removals: drop from top
+            stack.pop();
+            k--;
+        }
+        StringBuilder builder = new StringBuilder();
+        Iterator<Character> it = stack.descendingIterator();
+        while (it.hasNext()) builder.append(it.next());
+        while (builder.length() > 1 && builder.charAt(0) == '0') builder.deleteCharAt(0);
+        return builder.length() == 0 ? "0" : builder.toString();
+    }
+}
+```
+**Time** O(n) | **Space** O(n)
+
+---
+
+## #456 132 Pattern
+
+**Description:** Check if a 1-3-2 pattern exists in an integer array.
+
+**Variation:** scan right to left with a monotone decreasing stack; pop to track the largest value that is still smaller than some element to its right (the "2"). If a later element is below that "2", a 132 pattern exists.
+
+```java
+class Solution {
+    public boolean find132pattern(int[] nums) {
+        Deque<Integer> stack = new ArrayDeque<>();   // candidates for the "3"
+        int two = Integer.MIN_VALUE;                 // ← VARIATION: best valid "2" so far
+        for (int i = nums.length - 1; i >= 0; i--) {
+            if (nums[i] < two) return true;          // nums[i] is the "1" < "2" < "3"
+            while (!stack.isEmpty() && stack.peek() < nums[i]) {
+                two = stack.pop();                   // popped value becomes the "2"
+            }
+            stack.push(nums[i]);
+        }
+        return false;
+    }
+}
+```
+**Time** O(n) | **Space** O(n)
+
+---
+
+## #506 Relative Ranks
+
+**Description:** Assign ranks ("Gold Medal", "Silver Medal", "Bronze Medal", then 4, 5, ...) to athletes by score.
+
+**Intuition:** a max-heap of (score, index) pops athletes in descending score order, so each pop assigns the next rank back to its original position.
+
+```java
+class Solution {
+    public String[] findRelativeRanks(int[] score) {
+        int n = score.length;
+        PriorityQueue<int[]> maxHeap = new PriorityQueue<>((a, b) -> b[0] - a[0]);
+        for (int i = 0; i < n; i++) maxHeap.offer(new int[]{score[i], i});
+        String[] result = new String[n];
+        int rank = 1;
+        while (!maxHeap.isEmpty()) {
+            int idx = maxHeap.poll()[1];             // highest remaining score
+            if (rank == 1) {
+                result[idx] = "Gold Medal";
+            } else if (rank == 2) {
+                result[idx] = "Silver Medal";
+            } else if (rank == 3) {
+                result[idx] = "Bronze Medal";
+            } else {
+                result[idx] = String.valueOf(rank);
+            }
+            rank++;
+        }
+        return result;
+    }
+}
+```
+**Time** O(n log n) | **Space** O(n)
+
+---
+
+## #636 Exclusive Time of Functions
+
+**Description:** Given a log of function start/end times, compute exclusive time per function.
+
+**Intuition:** a call stack mirrors execution; when a new call starts, the currently running function pauses (accumulate its slice), and when a call ends, the resumed parent restarts its clock.
+
+```java
+class Solution {
+    public int[] exclusiveTime(int n, List<String> logs) {
+        int[] result = new int[n];
+        Deque<Integer> stack = new ArrayDeque<>();   // function ids currently running
+        int prevTime = 0;
+        for (String log : logs) {
+            String[] parts = log.split(":");
+            int id = Integer.parseInt(parts[0]);
+            int time = Integer.parseInt(parts[2]);
+            if (parts[1].equals("start")) {
+                if (!stack.isEmpty()) result[stack.peek()] += time - prevTime;  // pause caller
+                stack.push(id);
+                prevTime = time;
+            } else {
+                result[stack.pop()] += time - prevTime + 1;  // inclusive end timestamp
+                prevTime = time + 1;
+            }
+        }
+        return result;
+    }
+}
+```
+**Time** O(L) (L = number of logs) | **Space** O(n)
+
+---
+
+## #678 Valid Parenthesis String
+
+**Description:** Check if a string with `(`, `)`, `*` (wildcard) can be a valid parenthesis string.
+
+**Variation:** track a range `[low, high]` of possible open-paren counts; `*` widens the range (could be `(`, `)`, or empty). Valid iff the range can return to 0 and never goes negative.
+
+```java
+class Solution {
+    public boolean checkValidString(String s) {
+        int low = 0, high = 0;                       // ← VARIATION: range of open '(' counts
+        for (char c : s.toCharArray()) {
+            if (c == '(') {
+                low++; high++;
+            } else if (c == ')') {
+                low--; high--;
+            } else {                                 // '*': treat as ')' for low, '(' for high
+                low--; high++;
+            }
+            if (high < 0) return false;              // too many ')' even with all '*' as '('
+            if (low < 0) low = 0;                    // never let open count drop below 0
+        }
+        return low == 0;
+    }
+}
+```
+**Time** O(n) | **Space** O(1)
+
+---
+
+## #703 Kth Largest Element in a Stream
+
+**Description:** Design a class to find the kth largest element in a stream.
+
+**Intuition:** a min-heap capped at size k always holds the k largest seen; its top is the running kth largest.
+
+```java
+class KthLargest {
+    private PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+    private int k;
+
+    public KthLargest(int k, int[] nums) {
+        this.k = k;
+        for (int num : nums) add(num);
+    }
+    public int add(int val) {
+        minHeap.offer(val);
+        if (minHeap.size() > k) minHeap.poll();      // keep only k largest
+        return minHeap.peek();
+    }
+}
+```
+**Time** O(log k) per add | **Space** O(k)
+
+---
+
+## #716 Max Stack
+
+**Description:** Design a stack with push, pop, top, getMax, and popMax operations.
+
+**Variation:** mirror an auxiliary `maxStack` (like #155). `popMax` pops down to the max into a temp buffer, removes it, then pushes the buffer back — re-establishing both stacks.
+
+```java
+class MaxStack {
+    Deque<Integer> stack    = new ArrayDeque<>();
+    Deque<Integer> maxStack = new ArrayDeque<>();    // ← VARIATION: running max alongside
+
+    public void push(int x) {
+        stack.push(x);
+        maxStack.push(maxStack.isEmpty() ? x : Math.max(maxStack.peek(), x));
+    }
+    public int pop()  { maxStack.pop(); return stack.pop(); }
+    public int top()  { return stack.peek(); }
+    public int peekMax() { return maxStack.peek(); }
+    public int popMax() {
+        int max = maxStack.peek();
+        Deque<Integer> buffer = new ArrayDeque<>();
+        while (top() != max) buffer.push(pop());     // ← VARIATION: unload above the max
+        pop();                                       // remove the max itself
+        while (!buffer.isEmpty()) push(buffer.pop()); // reload, rebuilding maxStack
+        return max;
+    }
+}
+```
+**Time** O(n) popMax, O(1) others | **Space** O(n)
+
+---
+
+## #735 Asteroid Collision
+
+**Description:** Simulate asteroids moving in a row: right-moving collide with left-moving.
+
+**Intuition:** a stack holds surviving asteroids; a left-moving asteroid only collides with a right-moving one on top, resolving collisions repeatedly until it survives, explodes, or the stack clears.
+
+```java
+class Solution {
+    public int[] asteroidCollision(int[] asteroids) {
+        Deque<Integer> stack = new ArrayDeque<>();
+        for (int a : asteroids) {
+            boolean alive = true;
+            while (alive && a < 0 && !stack.isEmpty() && stack.peek() > 0) {
+                if (stack.peek() < -a) {
+                    stack.pop();                     // top explodes, incoming continues
+                } else if (stack.peek() == -a) {
+                    stack.pop();                     // both explode
+                    alive = false;
+                } else {
+                    alive = false;                   // incoming explodes
+                }
+            }
+            if (alive) stack.push(a);
+        }
+        int[] result = new int[stack.size()];
+        for (int i = result.length - 1; i >= 0; i--) result[i] = stack.pop();
+        return result;
+    }
+}
+```
+**Time** O(n) | **Space** O(n)
+
+---
+
+## #759 Employee Free Time
+
+**Description:** Find the free time intervals common to all employees given their schedules.
+
+**Intuition:** flatten all intervals, sort by start, then sweep tracking the furthest end seen so far; any gap between that end and the next start is common free time.
+
+```java
+/*
+// Definition for an Interval.
+class Interval {
+    public int start;
+    public int end;
+    public Interval() {}
+    public Interval(int _start, int _end) { start = _start; end = _end; }
+};
+*/
+class Solution {
+    public List<Interval> employeeFreeTime(List<List<Interval>> schedule) {
+        List<Interval> all = new ArrayList<>();
+        for (List<Interval> emp : schedule) all.addAll(emp);
+        all.sort((a, b) -> a.start - b.start);
+        List<Interval> result = new ArrayList<>();
+        int prevEnd = all.get(0).end;
+        for (Interval interval : all) {
+            if (interval.start > prevEnd) {
+                result.add(new Interval(prevEnd, interval.start));  // gap = free time
+            }
+            prevEnd = Math.max(prevEnd, interval.end);
+        }
+        return result;
+    }
+}
+```
+**Time** O(n log n) | **Space** O(n)
+
+---
+
+## #844 Backspace String Compare
+
+**Description:** Check if two strings are equal after processing `#` as backspace.
+
+**Intuition:** build each string with a stack where `#` pops the last character, then compare the resulting stacks.
+
+```java
+class Solution {
+    public boolean backspaceCompare(String s, String t) {
+        return build(s).equals(build(t));
+    }
+    private String build(String s) {
+        Deque<Character> stack = new ArrayDeque<>();
+        for (char c : s.toCharArray()) {
+            if (c == '#') {
+                if (!stack.isEmpty()) stack.pop();   // backspace removes last char
+            } else {
+                stack.push(c);
+            }
+        }
+        StringBuilder builder = new StringBuilder();
+        while (!stack.isEmpty()) builder.append(stack.pop());
+        return builder.toString();
+    }
+}
+```
+**Time** O(n) | **Space** O(n)
+
+---
+
+## #856 Score of Parentheses
+
+**Description:** Calculate the score of a valid parentheses string (empty=0, AB=A+B, (A)=2A or 1 if empty).
+
+**Variation:** stack holds the accumulated score at each depth; push 0 on `(`, and on `)` collapse the inner score (`max(2*inner, 1)`) into the parent frame.
+
+```java
+class Solution {
+    public int scoreOfParentheses(String s) {
+        Deque<Integer> stack = new ArrayDeque<>();
+        stack.push(0);                               // ← VARIATION: score of current frame
+        for (char c : s.toCharArray()) {
+            if (c == '(') {
+                stack.push(0);                       // new inner frame
+            } else {
+                int inner = stack.pop();
+                int add = inner == 0 ? 1 : 2 * inner;  // "()"=1, "(A)"=2A
+                stack.push(stack.pop() + add);       // fold into parent
+            }
+        }
+        return stack.pop();
+    }
+}
+```
+**Time** O(n) | **Space** O(n)
+
+---
+
+## #862 Shortest Subarray with Sum at Least K
+
+**Description:** Find the length of the shortest subarray with sum at least k (k can be negative).
+
+**Variation:** monotone increasing deque over prefix sums — pop from the front when a window qualifies, and from the back when a newer prefix is smaller (dominating older larger ones).
+
+```java
+class Solution {
+    public int shortestSubarray(int[] nums, int k) {
+        int n = nums.length;
+        long[] prefix = new long[n + 1];
+        for (int i = 0; i < n; i++) prefix[i + 1] = prefix[i] + nums[i];
+        Deque<Integer> queue = new ArrayDeque<>();   // indices, prefix increasing front→back
+        int result = n + 1;
+        for (int i = 0; i <= n; i++) {
+            while (!queue.isEmpty() && prefix[i] - prefix[queue.peekFirst()] >= k) {
+                result = Math.min(result, i - queue.pollFirst());  // ← VARIATION: window qualifies
+            }
+            while (!queue.isEmpty() && prefix[queue.peekLast()] >= prefix[i]) {
+                queue.pollLast();                    // ← VARIATION: drop dominated prefixes
+            }
+            queue.offerLast(i);
+        }
+        return result <= n ? result : -1;
+    }
+}
+```
+**Time** O(n) | **Space** O(n)
+
+---
+
+## #907 Sum of Subarray Minimums
+
+**Description:** Find the sum of subarray minimums for all subarrays.
+
+**Variation:** monotone increasing stack — for each element as the minimum, count subarrays via distance to the previous strictly-smaller and next smaller-or-equal element, then weight by the value.
+
+```java
+class Solution {
+    public int sumSubarrayMins(int[] arr) {
+        int n = arr.length;
+        long MOD = 1_000_000_007L;
+        Deque<Integer> stack = new ArrayDeque<>();   // indices, values increasing bottom→top
+        long sum = 0;
+        for (int i = 0; i <= n; i++) {
+            int current = i == n ? Integer.MIN_VALUE : arr[i];  // sentinel flushes stack
+            while (!stack.isEmpty() && arr[stack.peek()] > current) {
+                int mid = stack.pop();               // arr[mid] is the subarray minimum
+                int left = stack.isEmpty() ? -1 : stack.peek();
+                long count = (long)(mid - left) * (i - mid);  // ← VARIATION: subarrays where mid is min
+                sum = (sum + count * arr[mid]) % MOD;
+            }
+            stack.push(i);
+        }
+        return (int) sum;
+    }
+}
+```
+**Time** O(n) | **Space** O(n)
+
+---
+
+## #921 Minimum Add to Make Parentheses Valid
+
+**Description:** Find the minimum additions to make a parentheses string valid.
+
+**Intuition:** track open parentheses as a counter (stack of size); each unmatched `)` needs an added `(`, and leftover `(` each need a `)`.
+
+```java
+class Solution {
+    public int minAddToMakeValid(String s) {
+        int open = 0;                                // unmatched '(' (stack height)
+        int additions = 0;
+        for (char c : s.toCharArray()) {
+            if (c == '(') {
+                open++;
+            } else {
+                if (open > 0) {
+                    open--;                          // match an existing '('
+                } else {
+                    additions++;                     // need to add a '(' for this ')'
+                }
+            }
+        }
+        return additions + open;                     // remaining '(' each need a ')'
+    }
+}
+```
+**Time** O(n) | **Space** O(1)
+
+---
+
+## #946 Validate Stack Sequences
+
+**Description:** Check if a sequence can be produced by a series of push-pop operations on a stack.
+
+**Intuition:** simulate — push each value, then greedily pop whenever the stack top matches the next expected popped value. If everything pops, the sequence is valid.
+
+```java
+class Solution {
+    public boolean validateStackSequences(int[] pushed, int[] popped) {
+        Deque<Integer> stack = new ArrayDeque<>();
+        int j = 0;                                   // index into popped
+        for (int value : pushed) {
+            stack.push(value);
+            while (!stack.isEmpty() && stack.peek() == popped[j]) {
+                stack.pop();                         // pop as long as top matches
+                j++;
+            }
+        }
+        return stack.isEmpty();
+    }
+}
+```
+**Time** O(n) | **Space** O(n)
+
+---
+
+## #973 K Closest Points to Origin
+
+**Description:** Find the k points closest to the origin.
+
+**Intuition:** a max-heap of size k keyed on squared distance keeps the k closest seen; evict the farthest whenever the heap overflows.
+
+```java
+class Solution {
+    public int[][] kClosest(int[][] points, int k) {
+        PriorityQueue<int[]> maxHeap = new PriorityQueue<>(
+            (a, b) -> (b[0] * b[0] + b[1] * b[1]) - (a[0] * a[0] + a[1] * a[1]));
+        for (int[] point : points) {
+            maxHeap.offer(point);
+            if (maxHeap.size() > k) maxHeap.poll();  // evict farthest, keep k closest
+        }
+        int[][] result = new int[k][2];
+        for (int i = 0; i < k; i++) result[i] = maxHeap.poll();
+        return result;
+    }
+}
+```
+**Time** O(n log k) | **Space** O(k)
+
+---
+
+## #1086 High Five
+
+**Description:** For each student, compute the average of their top five scores.
+
+**Intuition:** keep a min-heap of size 5 per student so only their five highest scores remain, then average those.
+
+```java
+class Solution {
+    public int[][] highFive(int[][] items) {
+        Map<Integer, PriorityQueue<Integer>> map = new TreeMap<>();  // sorted by student id
+        for (int[] item : items) {
+            int id = item[0], score = item[1];
+            PriorityQueue<Integer> minHeap = map.computeIfAbsent(id, key -> new PriorityQueue<>());
+            minHeap.offer(score);
+            if (minHeap.size() > 5) minHeap.poll();  // keep top 5 scores
+        }
+        int[][] result = new int[map.size()][2];
+        int i = 0;
+        for (Map.Entry<Integer, PriorityQueue<Integer>> e : map.entrySet()) {
+            int sum = 0;
+            for (int score : e.getValue()) sum += score;
+            result[i][0] = e.getKey();
+            result[i][1] = sum / 5;
+            i++;
+        }
+        return result;
+    }
+}
+```
+**Time** O(n log 5) | **Space** O(n)
+
+---
+
+## #1190 Reverse Substrings Between Each Pair of Parentheses
+
+**Description:** Reverse the substrings between each pair of parentheses (innermost first).
+
+**Variation:** stack of builders — push current builder on `(`; on `)` reverse the inner builder and append it to the parent frame.
+
+```java
+class Solution {
+    public String reverseParentheses(String s) {
+        Deque<StringBuilder> stack = new ArrayDeque<>();  // ← VARIATION: builder per frame
+        StringBuilder current = new StringBuilder();
+        for (char c : s.toCharArray()) {
+            if (c == '(') {
+                stack.push(current);                 // save parent frame
+                current = new StringBuilder();
+            } else if (c == ')') {
+                current.reverse();                   // ← VARIATION: reverse inner substring
+                stack.peek().append(current);
+                current = stack.pop();
+            } else {
+                current.append(c);
+            }
+        }
+        return current.toString();
+    }
+}
+```
+**Time** O(n^2) | **Space** O(n)
+
+---
+
+## #1209 Remove All Adjacent Duplicates in String II
+
+**Description:** Remove all adjacent duplicates of length k in a string repeatedly.
+
+**Variation:** stack of (char, count) pairs — increment the top's count on a repeat, and pop the frame once its count reaches k.
+
+```java
+class Solution {
+    public String removeDuplicates(String s, int k) {
+        Deque<int[]> stack = new ArrayDeque<>();     // ← VARIATION: [charCode, runLength]
+        for (char c : s.toCharArray()) {
+            if (!stack.isEmpty() && stack.peek()[0] == c) {
+                stack.peek()[1]++;
+                if (stack.peek()[1] == k) stack.pop();  // full group of k: remove
+            } else {
+                stack.push(new int[]{c, 1});
+            }
+        }
+        StringBuilder builder = new StringBuilder();
+        Iterator<int[]> it = stack.descendingIterator();
+        while (it.hasNext()) {
+            int[] frame = it.next();
+            for (int i = 0; i < frame[1]; i++) builder.append((char) frame[0]);
+        }
+        return builder.toString();
+    }
+}
+```
+**Time** O(n) | **Space** O(n)
+
+---
+
+## #1249 Minimum Remove to Make Valid Parentheses
+
+**Description:** Remove the minimum number of parentheses to make the string valid.
+
+**Variation:** stack stores indices of unmatched `(`; a `)` with no match is marked for removal, and any `(` left on the stack at the end is also removed.
+
+```java
+class Solution {
+    public String minRemoveToMakeValid(String s) {
+        char[] chars = s.toCharArray();
+        Deque<Integer> stack = new ArrayDeque<>();   // ← VARIATION: indices of unmatched '('
+        for (int i = 0; i < chars.length; i++) {
+            if (chars[i] == '(') {
+                stack.push(i);
+            } else if (chars[i] == ')') {
+                if (stack.isEmpty()) {
+                    chars[i] = '*';                  // unmatched ')': mark for removal
+                } else {
+                    stack.pop();
+                }
+            }
+        }
+        while (!stack.isEmpty()) chars[stack.pop()] = '*';  // unmatched '('
+        StringBuilder builder = new StringBuilder();
+        for (char c : chars) {
+            if (c != '*') builder.append(c);
+        }
+        return builder.toString();
+    }
+}
+```
+**Time** O(n) | **Space** O(n)
+
+---
+
+## #1337 The K Weakest Rows in a Matrix
+
+**Description:** Find the k weakest rows in a matrix (fewest soldiers, ties broken by row index).
+
+**Variation:** max-heap of size k keyed on (soldier count, row index) so the strongest qualifying row sits on top for eviction; the remaining k are the weakest.
+
+```java
+class Solution {
+    public int[] kWeakestRows(int[][] mat, int k) {
+        // max-heap: strongest row (more soldiers, or larger index on tie) on top
+        PriorityQueue<int[]> maxHeap = new PriorityQueue<>(
+            (a, b) -> a[0] != b[0] ? b[0] - a[0] : b[1] - a[1]);
+        for (int i = 0; i < mat.length; i++) {
+            int soldiers = 0;
+            for (int v : mat[i]) soldiers += v;
+            maxHeap.offer(new int[]{soldiers, i});   // ← VARIATION: (count, index)
+            if (maxHeap.size() > k) maxHeap.poll();  // evict strongest
+        }
+        int[] result = new int[k];
+        for (int i = k - 1; i >= 0; i--) result[i] = maxHeap.poll()[1];
+        return result;
+    }
+}
+```
+**Time** O(m·n + m log k) | **Space** O(k)
+
+---
+
+## #1541 Minimum Insertions to Balance a Parentheses String
+
+**Description:** Find the minimum insertions to make a string balanced (every `(` needs two `)`).
+
+**Variation:** counter-style stack tracking open `(`; each `(` demands two `)`. Handle `)` carefully since they come in pairs, inserting a `)` when only one is available.
+
+```java
+class Solution {
+    public int minInsertions(String s) {
+        int open = 0;                                // unmatched '(' needing ')) '
+        int insertions = 0;
+        int i = 0;
+        while (i < s.length()) {
+            if (s.charAt(i) == '(') {
+                open++;
+                i++;
+            } else {                                 // ')': need two in a row
+                if (i + 1 < s.length() && s.charAt(i + 1) == ')') {
+                    i += 2;
+                } else {
+                    insertions++;                    // ← VARIATION: insert missing ')'
+                    i++;
+                }
+                if (open > 0) {
+                    open--;
+                } else {
+                    insertions++;                    // ← VARIATION: insert missing '('
+                }
+            }
+        }
+        return insertions + open * 2;                // each leftover '(' needs '))'
+    }
+}
+```
+**Time** O(n) | **Space** O(1)
+
+---
+
+## #1614 Maximum Nesting Depth of the Parentheses
+
+**Description:** Find the maximum nesting depth of parentheses in a string.
+
+**Intuition:** the stack depth equals the current nesting level; track a running counter for `(`/`)` and record its peak.
+
+```java
+class Solution {
+    public int maxDepth(String s) {
+        int depth = 0;                               // current stack height
+        int result = 0;
+        for (char c : s.toCharArray()) {
+            if (c == '(') {
+                depth++;
+                result = Math.max(result, depth);
+            } else if (c == ')') {
+                depth--;
+            }
+        }
+        return result;
+    }
+}
+```
+**Time** O(n) | **Space** O(1)
+
+---
+
+## #1792 Maximum Average Pass Ratio
+
+**Description:** Maximize the average pass ratio by adding extra students optimally.
+
+**Variation:** max-heap keyed on the marginal gain from adding one student to a class; greedily assign each extra student where it helps most, then push the updated gain back.
+
+```java
+class Solution {
+    public double maxAverageRatio(int[][] classes, int extraStudents) {
+        // max-heap by gain from adding one passing student
+        PriorityQueue<double[]> maxHeap = new PriorityQueue<>(
+            (a, b) -> Double.compare(b[2], a[2]));   // ← VARIATION: order by marginal gain
+        for (int[] c : classes) {
+            double pass = c[0], total = c[1];
+            maxHeap.offer(new double[]{pass, total, gain(pass, total)});
+        }
+        while (extraStudents-- > 0) {
+            double[] top = maxHeap.poll();
+            double pass = top[0] + 1, total = top[1] + 1;  // add one passing student
+            maxHeap.offer(new double[]{pass, total, gain(pass, total)});
+        }
+        double sum = 0;
+        for (double[] c : maxHeap) sum += c[0] / c[1];
+        return sum / classes.length;
+    }
+    private double gain(double pass, double total) {
+        return (pass + 1) / (total + 1) - pass / total;
+    }
+}
+```
+**Time** O((n + extra) log n) | **Space** O(n)
+
+---
+
+## #1944 Number of Visible People in a Queue
+
+**Description:** Count the number of people each person can see in a queue (taller blocks view).
+
+**Variation:** monotone decreasing stack scanned right to left; pop shorter people (each is visible) until a taller one blocks the view — that taller person is visible too.
+
+```java
+class Solution {
+    public int[] canSeePersonsCount(int[] heights) {
+        int n = heights.length;
+        int[] result = new int[n];
+        Deque<Integer> stack = new ArrayDeque<>();   // heights, decreasing bottom→top
+        for (int i = n - 1; i >= 0; i--) {
+            while (!stack.isEmpty() && stack.peek() < heights[i]) {
+                stack.pop();                         // ← VARIATION: shorter person is visible
+                result[i]++;
+            }
+            if (!stack.isEmpty()) result[i]++;       // the taller blocker is also visible
+            stack.push(heights[i]);
+        }
+        return result;
+    }
+}
+```
+**Time** O(n) | **Space** O(n)
+
+---
+
+## #1985 Find the Kth Largest Integer in the Array
+
+**Description:** Find the kth largest integer in an array of number strings.
+
+**Variation:** min-heap of size k comparing the numeric strings by length first, then lexicographically (so big-integer values compare correctly without overflow).
+
+```java
+class Solution {
+    public String kthLargestNumber(String[] nums, int k) {
+        // ← VARIATION: compare by length then lexicographically (numeric order for big ints)
+        PriorityQueue<String> minHeap = new PriorityQueue<>(
+            (a, b) -> a.length() != b.length() ? a.length() - b.length() : a.compareTo(b));
+        for (String num : nums) {
+            minHeap.offer(num);
+            if (minHeap.size() > k) minHeap.poll();  // keep k largest
+        }
+        return minHeap.peek();
+    }
+}
+```
+**Time** O(n log k) | **Space** O(k)

@@ -4,21 +4,25 @@
 
 ## Quick Reference Table
 
-| # | Name | Description | Algorithm | Variation from Template | Time | Space |
-|---|---|---|---|---|---|---|
-| 136 | Single Number | One element appears once; rest appear twice | XOR all — pairs cancel | **Standard** | O(n) | O(1) |
-| 137 | Single Number II | One element appears once; rest appear three times | XOR state machine with `ones`, `twos` | **mod 3**: two-state machine instead of simple XOR | O(n) | O(1) |
-| 260 | Single Number III | Two unique elements; rest appear twice | XOR → split by lowest-diff bit | **Split**: use `xor & (-xor)` to separate into two groups | O(n) | O(1) |
-| 191 | Number of 1 Bits | Count set bits in n | Brian Kernighan: `n &= (n-1)` loop | **Standard bit clear** | O(k) k=set bits | O(1) |
-| 338 | Counting Bits | Return number of 1 bits for every i in 0..n | DP: `dp[i] = dp[i >> 1] + (i & 1)` | **DP relation**: right-shift halves the number | O(n) | O(n) |
-| 268 | Missing Number | Missing number in [0, n] | XOR indices with values | **Index XOR**: XOR i with nums[i] instead of just nums | O(n) | O(1) |
-| 190 | Reverse Bits | Reverse all 32 bits of an integer | Shift-and-OR loop 32 times | **Fixed 32 iterations** instead of until zero | O(32) | O(1) |
-| 201 | Bitwise AND of Numbers Range | AND of all numbers in [left, right] | Right-shift both until equal; shift back | **Common prefix**: find shared high bits | O(log n) | O(1) |
-| 371 | Sum of Two Integers | Add without `+` or `-` | XOR = sum without carry; AND << 1 = carry | **Carry loop**: separate sum and carry bits | O(32) | O(1) |
-| 318 | Max Product of Word Lengths | Max product of word lengths with no shared letters | Precompute 26-bit mask per word; check `mask[i] & mask[j] == 0` | **Bitmask as set**: 26 bits represent letter presence | O(n²) | O(n) |
-| 231 | Power of Two | Check if n is a power of two | n > 0 && (n & (n-1)) == 0 | **Single bit check**: power of 2 has exactly one set bit | O(1) | O(1) |
-| 287 | Find the Duplicate Number | Find duplicate in nums[1..n] with n+1 elements; no extra space | Floyd's cycle detection: treat array as linked list, nums[i] → next node | **Floyd's cycle**: not XOR; use slow/fast pointer cycle detection | O(n) | O(1) |
-| 342 | Power of Four | Check if n is a power of four | Power of 2 AND the single set bit is at an even position (0,2,4,...) | **Even bit position**: check (n & 0xAAAAAAAA) == 0 after power-of-2 check | O(1) | O(1) |
+| # | Name | Description | Intuition | Variation |
+|---|---|---|---|---|
+| 136 | Single Number | Array where every element appears twice except one. Find it. | XOR is its own inverse, so every duplicated pair cancels to 0 and only the lone element is left standing. | Standard |
+| 268 | Missing Number | Array of n distinct numbers from [0, n] with one missing. Find it. | XOR-ing every index against every value pairs each present number with its index — the missing number's index has no partner to cancel. | XOR each index `i` with `nums[i]`. Indices 0..n XOR'd with the n elements — the missing index has no pair. |
+| 137 | Single Number II | Every element appears three times except one. Find it. | XOR cancels pairs (mod 2); here we need a counter mod 3, so two state bits (`ones`, `twos`) cycle each bit through 1→2→0 and the survivor sits in `ones`. | Two-state XOR machine. `ones` tracks bits seen 1 mod 3 times, `twos` tracks bits seen 2 mod 3 times. When a bit reaches 3, it clears from both. |
+| 260 | Single Number III | Two elements appear exactly once; all others appear twice. Find both. | XOR of all leaves `a ^ b`; any set bit in it is a bit where a and b differ, so it splits the array into two groups each holding one unique. | XOR all → get `a ^ b`. Use lowest set bit of `a ^ b` to partition nums into two groups (one containing `a`, one containing `b`). XOR each group independently. |
+| 191 | Number of 1 Bits | Return the number of set bits in an unsigned integer. | Each `n & (n-1)` erases exactly one set bit, so the loop runs once per set bit — no need to scan all 32 positions. | Standard |
+| 338 | Counting Bits | Return an array `result` where `result[i]` = number of 1 bits in `i`, for i in [0, n]. | `i` has the same set bits as `i >> 1` plus possibly its own last bit, so reuse the already-computed smaller answer instead of recounting. | DP relation — `i >> 1` is `i` with last bit removed (already computed), plus the last bit `i & 1`. |
+| 190 | Reverse Bits | Reverse the 32 bits of an unsigned integer. | Peel the lowest bit off `n` and stack it onto `result` from the bottom — after 32 shifts the bit order is fully mirrored. | Fixed 32 iterations — each time take the LSB of `n`, append it to `result`, then shift both. |
+| 201 | Bitwise AND of Numbers Range | Return the AND of all numbers in `[left, right]`. | AND only keeps bits that are 1 in every number; the low bits flip somewhere in the range, so only the common high-bit prefix of `left` and `right` survives. | right-shift both until equal to find shared prefix; shift back. |
+| 371 | Sum of Two Integers | Return `a + b` without using `+` or `-`. | Addition splits into a carry-free sum (XOR) and the carries (AND shifted left); feed the carry back until nothing carries over. | XOR computes bit sum without carry; AND shifted left computes carry. Repeat until no carry. |
+| 318 | Maximum Product of Word Lengths | Given a list of words, find the maximum product `len(a) * len(b)` where `a` and `b` share no common letters. | Compress each word's letter set into a 26-bit integer so "share a letter?" becomes a single AND, replacing slow character-by-character comparison. | encode each word as a 26-bit integer where bit `i` = 1 if letter `'a' + i` appears. Two words share a letter iff their bitmasks have any common bit (`mask[i] & mask[j] != 0`). |
+| 231 | Power of Two | Given an integer `n`, return true if it is a power of two. | A power of two is a single 1 bit, and `n & (n-1)` clears that one bit to 0 — anything else leaves bits behind. | single-bit property of powers of 2 |
+| 342 | Power of Four | Given an integer `n`, return true if it is a power of four. | Powers of four are powers of two (one set bit) whose bit sits at an even position; masking against the odd-position mask `0xAAAAAAAA` must give 0. | Power of four must be power of two (one set bit) AND that bit must be at an even bit position (0, 2, 4, 6, ...). Mask `0xAAAAAAAA` has bits set at ALL odd positions; if `n & 0xAAAAAAAA == 0`, the set bit is at an even position. |
+| 287 | Find the Duplicate Number | Given an array of `n+1` integers where each is in `[1, n]`, find the duplicate. No extra space, no modifying the array. | Following `i → nums[i]` turns the array into a linked list; a duplicate value means two indices point to the same node, forming a cycle whose entry is the duplicate. | Floyd's Cycle Detection. Treat the array as a linked list where `nums[i]` is the next node. Since there's a duplicate, two indices point to the same value → creates a cycle. Find cycle entry = duplicate. |
+| 405 | Convert a Number to Hexadecimal | Given an integer `num`, return its hexadecimal representation as a lowercase string. For negative numbers use two's complement. | Hex is base 16, so each group of 4 bits maps to one hex digit; mask the lowest 4 bits with `num & 15` and shift right 4 at a time, using an unsigned shift so the two's-complement sign bit fills with zeros. | Standard |
+| 461 | Hamming Distance | Given two integers `x` and `y`, return the Hamming distance — the number of bit positions where they differ. | XOR sets exactly the bits where `x` and `y` differ, so the answer is just the number of set bits in `x ^ y`. | Standard |
+| 476 | Number Complement | Given a positive integer `num`, return its complement: flip every bit up to and including the most significant set bit. | Build a mask of all 1s spanning the bit width of `num` (from the MSB down to bit 0), then XOR — flipping exactly the meaningful bits while leaving the leading zeros untouched. | Standard |
+| 957 | Prison Cells After N Days | 8 prison cells (`cells[i]` is 0 or 1) update each day: a cell becomes 1 if both neighbors are equal, else 0. The two end cells always become 0 (they lack two neighbors). Return the state after `n` days. | With only 8 cells the state space is finite, so the configuration must cycle; detect the cycle length and reduce `n` modulo it to avoid simulating huge day counts. | Standard |
 
 ---
 
@@ -454,3 +458,140 @@ class Solution {
 }
 ```
 **Time** O(n) | **Space** O(1)
+
+---
+
+# Additional Reference Problems
+
+## #405 Convert a Number to Hexadecimal
+
+**Description:** Given an integer `num`, return its hexadecimal representation as a lowercase string. For negative numbers use two's complement.
+
+**Intuition:** Hex is base 16, so each group of 4 bits maps to one hex digit; mask the lowest 4 bits with `num & 15` and shift right 4 at a time, using an unsigned shift so the two's-complement sign bit fills with zeros.
+
+**Algorithm:** Repeatedly take `num & 0xF` to read the lowest nibble, map it to a hex char, then unsigned-right-shift `num >>> 4`. Stop when `num` becomes 0.
+
+```java
+class Solution {
+    public String toHex(int num) {
+        if (num == 0) {
+            return "0";
+        }
+        char[] digits = "0123456789abcdef".toCharArray();
+        StringBuilder builder = new StringBuilder();
+        while (num != 0) {
+            int nibble = num & 15;              // ← lowest 4 bits = one hex digit
+            builder.append(digits[nibble]);
+            num >>>= 4;                          // unsigned shift handles negatives (two's complement)
+        }
+        return builder.reverse().toString();
+    }
+}
+```
+**Time** O(8) = O(1) | **Space** O(1)
+
+---
+
+## #461 Hamming Distance
+
+**Description:** Given two integers `x` and `y`, return the Hamming distance — the number of bit positions where they differ.
+
+**Intuition:** XOR sets exactly the bits where `x` and `y` differ, so the answer is just the number of set bits in `x ^ y`.
+
+**Algorithm:** Compute `x ^ y`, then count its set bits with Brian Kernighan (`n & (n-1)` clears the lowest set bit each iteration).
+
+```java
+class Solution {
+    public int hammingDistance(int x, int y) {
+        int n = x ^ y;                          // differing bits become 1
+        int count = 0;
+        while (n != 0) {
+            count++;
+            n &= (n - 1);                        // ← clears lowest set bit each iteration
+        }
+        return count;
+    }
+}
+```
+**Time** O(k) k = differing bits | **Space** O(1)
+
+---
+
+## #476 Number Complement
+
+**Description:** Given a positive integer `num`, return its complement: flip every bit up to and including the most significant set bit.
+
+**Intuition:** Build a mask of all 1s spanning the bit width of `num` (from the MSB down to bit 0), then XOR — flipping exactly the meaningful bits while leaving the leading zeros untouched.
+
+**Algorithm:** Grow a mask `1 << i` until it covers all bits of `num` (`mask < num`), forming `(1 << bitLength) - 1`; XOR `num` with that mask to flip only the relevant bits.
+
+```java
+class Solution {
+    public int findComplement(int num) {
+        int mask = 0;
+        int i = 0;
+        while ((1 << i) <= num) {                // ← extend mask to num's bit width
+            mask |= (1 << i);                    // set bit i in the all-ones mask
+            i++;
+        }
+        return num ^ mask;                       // XOR flips every bit within the mask
+    }
+}
+```
+**Time** O(log num) | **Space** O(1)
+
+---
+
+## #957 Prison Cells After N Days
+
+**Description:** 8 prison cells (`cells[i]` is 0 or 1) update each day: a cell becomes 1 if both neighbors are equal, else 0. The two end cells always become 0 (they lack two neighbors). Return the state after `n` days.
+
+**Intuition:** With only 8 cells the state space is finite, so the configuration must cycle; detect the cycle length and reduce `n` modulo it to avoid simulating huge day counts.
+
+**Algorithm:** Encode the 8 cells as an 8-bit integer. Simulate one day with bit operations (a cell is 1 iff its neighbors match, i.e. their XOR is 0), recording seen states in a map. On the first repeat, reduce remaining days modulo the cycle length, then finish the leftover days.
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+
+class Solution {
+    public int[] prisonAfterNDays(int[] cells, int n) {
+        int state = 0;
+        for (int i = 0; i < 8; i++) {
+            if (cells[i] == 1) {
+                state |= (1 << i);               // pack cells into an 8-bit integer
+            }
+        }
+        Map<Integer, Integer> seen = new HashMap<>();
+        while (n > 0) {
+            if (seen.containsKey(state)) {
+                n %= seen.get(state) - n;        // ← cycle found: skip whole cycles
+            } else {
+                seen.put(state, n);
+            }
+            if (n > 0) {
+                state = nextDay(state);
+                n--;
+            }
+        }
+        int[] result = new int[8];
+        for (int i = 0; i < 8; i++) {
+            result[i] = (state >> i) & 1;        // unpack bits back into cells
+        }
+        return result;
+    }
+
+    private int nextDay(int state) {
+        int next = 0;
+        for (int i = 1; i < 7; i++) {            // end cells (0 and 7) always become 0
+            int left = (state >> (i - 1)) & 1;
+            int right = (state >> (i + 1)) & 1;
+            if ((left ^ right) == 0) {           // neighbors equal → cell becomes 1
+                next |= (1 << i);
+            }
+        }
+        return next;
+    }
+}
+```
+**Time** O(min(n, cycle) · 8) | **Space** O(states)

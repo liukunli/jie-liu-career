@@ -18,33 +18,65 @@ Prim's MST        O(E log V)          PQ of candidate edges
 
 ## Quick Reference Table
 
-| # | Name | Algorithm | Graph type | Key structure | Return | Time | Space |
-|---|---|---|---|---|---|---|---|
-| 994 | Rotting Oranges | Multi-source BFS | Grid | `Queue<int[]>` | `int` (minutes) | O(V+E) | O(V) |
-| 542 | 01 Matrix | Multi-source BFS | Grid | `Queue<int[]>` + `dist[][]` | `int[][]` | O(V+E) | O(V) |
-| 127 | Word Ladder | BFS on state | Implicit | `Queue<String>` + `Set` | `int` (steps) | O(N·L·26) | O(N·L) |
-| 130 | Surrounded Regions | BFS flood fill | Grid | `Queue<int[]>` | void | O(V+E) | O(V) |
-| 417 | Pacific Atlantic | Multi-source BFS ×2 | Grid | `Queue<int[]>` ×2 | `List<List<int>>` | O(V+E) | O(V) |
-| 207 | Course Schedule | Topo sort (Kahn's) | Directed | `int[] inDegree` | `boolean` | O(V+E) | O(V+E) |
-| 210 | Course Schedule II | Topo sort (Kahn's) | Directed | `int[] inDegree` | `int[]` | O(V+E) | O(V+E) |
-| 310 | Minimum Height Trees | Topo sort (leaf trim) | Undirected | `Set<Integer>[]` | `List<Integer>` | O(V+E) | O(V+E) |
-| 547 | Number of Provinces | Union Find | Undirected | `int[] parent` | `int` | O(n²·α(n)) | O(n) |
-| 684 | Redundant Connection | Union Find | Undirected | `int[] parent` | `int[]` | O(n·α(n)) | O(n) |
-| 1319 | Connect Network | Union Find | Undirected | `int[] parent` | `int` | O(E·α(n)) | O(n) |
-| 743 | Network Delay Time | Dijkstra | Directed weighted | `PriorityQueue<int[]>` | `int` | O((V+E)logV) | O(V+E) |
-| 787 | Cheapest Flights K Stops | Bellman-Ford (k rounds) | Directed weighted | `int[] dist` per round | `int` | O(k·E) | O(V) |
-| 1514 | Max Probability Path | Dijkstra (maximize) | Undirected weighted | `PriorityQueue` max-heap | `double` | O((V+E)logV) | O(V+E) |
-| 785 | Is Graph Bipartite? | BFS 2-coloring | Undirected | `int[] color` | `boolean` | O(V+E) | O(V) |
-| 1584 | Min Cost Connect Points | Prim's MST | Complete graph | `PriorityQueue<int[]>` | `int` | O(n²logn) | O(n²) |
-| 261 | Graph Valid Tree | Check if n nodes and edges form a valid tree | Union Find: valid tree has exactly n-1 edges AND no cycles | **Tree check**: edges.length == n-1 is necessary; UF detects cycles | `boolean` | O(n·α(n)) | O(n) |
-| 269 | Alien Dictionary | Determine character order from sorted alien words | Build directed graph from adjacent word pairs; topological sort | **Topo sort on char graph**: compare adjacent words letter-by-letter to extract ordering edges | `String` | O(C) C=total chars | O(1) |
-| 286 | Walls and Gates | Fill each empty room with distance to nearest gate | Multi-source BFS from all gates simultaneously | **Multi-source BFS**: seed queue with ALL gates at distance 0 | void | O(m·n) | O(m·n) |
-| 323 | Number of Connected Components | Count connected components in undirected graph | Union Find: union all edges; count distinct roots | **Standard UF component count**: start with n, decrement per successful union | `int` | O(n·α(n)) | O(n) |
-| 721 | Accounts Merge | Merge accounts sharing any common email | Union Find on emails; group by root | **Union Find on strings**: map each email to an id, union emails within an account | `List<List<String>>` | O(n·α) | O(n) |
-| 827 | Making A Large Island | Flip one 0 to 1 to maximize island size | Label islands with id+size map; for each 0 sum unique neighbor island sizes +1 | **Two-pass labeling**: first DFS-color islands, then test each 0 | `int` | O(m·n) | O(m·n) |
-| 909 | Snakes and Ladders | Min moves to reach last square (board with snakes/ladders) | BFS on flattened board; convert square number to (row,col) via boustrophedon | **BFS on board cells**: number→coordinate conversion for zigzag rows | `int` | O(n²) | O(n²) |
-| 1091 | Shortest Path in Binary Matrix | Shortest 8-directional path top-left to bottom-right through 0s | BFS with 8 directions | **8-directional BFS**: include diagonals in dr/dc | `int` | O(m·n) | O(m·n) |
-| 1631 | Path With Minimum Effort | Min effort path from top-left to bottom-right; effort = max abs difference along path | Dijkstra with effort[r][c] = min-so-far max diff; PQ sorted by effort | **Modified Dijkstra**: dist = max(currEffort, edgeCost) instead of sum | `int` | O(m·n·log(m·n)) | O(m·n) |
+| # | Name | Description | Intuition | Variation |
+|---|---|---|---|---|
+| 994 | Rotting Oranges | Grid of `0` (empty), `1` (fresh), `2` (rotten). Each minute rotten oranges infect adjacent fresh ones. Return minutes until no fresh remain, or -1. |  | Standard |
+| 542 | 01 Matrix | For each cell, return the distance to the nearest `0`. |  | Standard |
+| 127 | Word Ladder | Minimum number of transformations from `beginWord` to `endWord`, changing one letter at a time. Each intermediate word must be in `wordList`. |  | Standard |
+| 130 | Surrounded Regions | Flip all `'O'` regions not connected to the border to `'X'`. |  | Standard |
+| 417 | Pacific Atlantic Water Flow | Return all cells from which water can flow to both the Pacific (top/left border) and Atlantic (bottom/right border). |  | Standard |
+| 207 | Course Schedule | Can you finish all courses given prerequisites? Detect if there is a directed cycle. |  | Standard |
+| 210 | Course Schedule II | Return a valid order to take all courses. Return `[]` if impossible. |  | Standard |
+| 310 | Minimum Height Trees | Find all roots that minimize tree height. At most 2 answers — they are the center node(s) of the longest path. | the best root sits at the center of the longest path; peeling leaves layer by layer converges there. | Standard |
+| 547 | Number of Provinces | Count the number of connected components (provinces) in an undirected graph given as an adjacency matrix. | start with `n` separate sets; every successful merge drops the count by one. | Standard |
+| 684 | Redundant Connection | Find the edge that creates a cycle in an undirected graph that would otherwise be a tree. | if both endpoints are already in the same set, this edge closes a cycle — it's the redundant one. | Standard |
+| 1319 | Number of Operations to Make Network Connected | Minimum cable moves to connect all `n` computers. Return -1 if impossible. | each redundant cable can be moved to bridge one gap, so `components - 1` moves suffice if you have enough spare cables. | Standard |
+| 743 | Network Delay Time | Time for a signal from `k` to reach all `n` nodes. Return -1 if unreachable. | every node is reached by its shortest delay; the network is "done" when the slowest of those arrives. | Standard |
+| 787 | Cheapest Flights Within K Stops | Cheapest price from `src` to `dst` using at most `k` stops (k+1 edges). | each round lets paths grow by one more edge, so `k+1` rounds caps the path at `k` stops. | Standard |
+| 1514 | Path with Maximum Probability | Find the path from `start` to `end` with maximum success probability (product of edge probabilities). | probabilities in [0,1] only shrink when multiplied, so the "closest" (highest-probability) node settles first — Dijkstra still applies. | Standard |
+| 785 | Is Graph Bipartite? | Can graph nodes be split into two groups where every edge connects nodes in different groups? | paint each neighbor the opposite color; a clash means an odd-length cycle, which can't be 2-colored. | Standard |
+| 1584 | Min Cost to Connect All Points | Connect all points (on a 2D plane) with minimum total Manhattan distance. Return that total cost. | grow one tree, always swallowing the cheapest edge that reaches a node not yet in it. | Standard |
+| 1631 | Path With Minimum Effort | Find a path from top-left `[0,0]` to bottom-right `[m-1,n-1]` that minimizes the maximum absolute difference between adjacent cells. |  | Modified Dijkstra. Instead of summing edge weights, the "cost" of a path is the maximum edge cost. Priority queue ordered by effort; `effort[r][c]` = minimum over all paths of their max-abs-diff. |
+| 269 | Alien Dictionary | Given a sorted list of alien words, determine the order of characters in the alien alphabet. Return the order as a string, or empty string if invalid. |  | Build a directed graph of character ordering. Compare each adjacent pair of words to find the first differing character → that gives an edge. Then topological sort. Return empty if there's a cycle or if shorter word is a prefix of longer word in wrong order. |
+| 261 | Graph Valid Tree | Given `n` nodes labeled 0..n-1 and a list of undirected edges, determine if they form a valid tree (connected, no cycles). |  | A valid tree has exactly `n-1` edges. Use Union Find to detect cycles. If any edge connects two nodes already in the same component → cycle → not a tree. |
+| 323 | Number of Connected Components in an Undirected Graph | Given `n` nodes and a list of undirected edges, return the number of connected components. |  | decrement on merge |
+| 286 | Walls and Gates | Each cell is a gate (0), wall (-1), or empty (INF = 2147483647). Fill each empty room with distance to its nearest gate. |  | multi-source BFS — seed the queue with every gate at distance 0, then expand outward simultaneously. |
+| 721 | Accounts Merge | Each account has a name and a list of emails. Merge accounts that share any email. Return merged accounts with emails sorted. |  | Union Find over emails. Assign each unique email an integer id, union all emails within the same account, then group emails by their root. |
+| 827 | Making A Large Island | In a binary grid you may change at most one 0 to 1. Return the size of the largest island possible. |  | two passes. First DFS-color each island with a unique id (starting at 2) and record its size. Then for every 0, sum the sizes of distinct neighboring islands + 1. |
+| 909 | Snakes and Ladders | On an n×n board numbered in boustrophedon (zigzag) order, find the minimum dice moves (1-6) from square 1 to square n². Ladders/snakes teleport you. |  | BFS over square numbers. Convert a square number to (row, col) accounting for the zigzag layout. |
+| 1091 | Shortest Path in Binary Matrix | In an n×n binary grid, find the length of the shortest clear path (cells of 0) from top-left to bottom-right, moving in 8 directions. |  | standard BFS but with 8-directional movement (includes diagonals). |
+| 126 | Word Ladder II | Find all shortest transformation sequences from `beginWord` to `endWord`, changing one letter at a time, each intermediate word in `wordList`. | BFS level-by-level builds a parent (predecessor) map of which words lead to which; once `endWord` is reached, DFS backtracks through parents to reconstruct every shortest path. | Standard |
+| 133 | Clone Graph | Deep-copy an undirected graph where each node has a value and a list of neighbors. | Use a map from original node to its clone to avoid re-cloning and to wire neighbors correctly; BFS the graph, creating clones on first sight. | Standard |
+| 277 | Find the Celebrity | Among `n` people, find the celebrity: known by everyone, knows nobody. `knows(a, b)` is the API. | A single linear scan narrows to one candidate (if `candidate` knows `i`, the candidate can't be the celebrity, so `i` becomes the new candidate); a second pass verifies. | Standard |
+| 296 | Best Meeting Point | Given a grid where `1` marks a home, find the minimum total Manhattan distance to a single meeting point. | Manhattan distance separates into independent x and y components; the optimal coordinate on each axis is the median of the occupied coordinates. | Standard |
+| 305 | Number of Islands II | Land cells are added one at a time to a water grid; after each addition return the current number of islands. |  | Online Union-Find — when a cell becomes land, union it with any already-land 4-neighbors; track component count. |
+| 317 | Shortest Distance from All Buildings | Find the empty land cell `0` minimizing total walking distance to every building `1` (`2` = obstacle). | BFS from each building, accumulating distances into every reachable empty cell and counting how many buildings reach it; the answer is the minimum total among cells reachable by all buildings. | Standard |
+| 399 | Evaluate Division | Given equations `a/b = value`, answer queries `c/d`. Return -1.0 if undeterminable. | Treat variables as nodes and ratios as weighted directed edges; the answer to a query is the product of edge weights along any path from numerator to denominator. | Standard |
+| 407 | Trapping Rain Water II | Given a 2D height map, compute how much water it can trap after raining. |  | Dijkstra-style BFS from the border inward using a min-heap of boundary heights; water level at a cell is the highest of the minimum boundary it must pass — pop the lowest wall first. |
+| 463 | Island Perimeter | Given a grid with exactly one island, return its perimeter. | Each land cell contributes 4 sides, minus 2 for every shared edge with an adjacent land cell (counted once per pair). | Standard |
+| 529 | Minesweeper | Reveal a cell on a Minesweeper board. `'M'` mine, `'E'` unrevealed empty, `'B'` revealed blank, digit = adjacent mine count. |  | BFS/DFS flood fill with 8 directions; if the clicked cell is a mine, mark `'X'`; otherwise count adjacent mines, and only recurse when count is 0. |
+| 694 | Number of Distinct Islands | Count islands that are distinct by shape (translations are the same, rotations are not). |  | DFS recording the path signature (the direction taken at each step plus a backtrack marker); two islands with identical signatures have the same shape. |
+| 733 | Flood Fill | Starting at `(sr, sc)`, change all connected same-color pixels to `color`. |  | Standard |
+| 752 | Open the Lock | A 4-wheel lock starts at `"0000"`; each move turns one wheel ±1. Find minimum moves to reach `target`, avoiding `deadends`. |  | BFS over the 4-digit state space; each state has 8 neighbors (each wheel up or down). Treat deadends as visited. |
+| 778 | Swim in Rising Water | At time `t` you can stand on any cell with elevation ≤ `t`. Find the least time to swim from `(0,0)` to `(n-1,n-1)`. |  | Modified Dijkstra — minimize the maximum elevation along the path (not the sum). Min-heap ordered by current max elevation. |
+| 797 | All Paths From Source to Target | In a DAG given as adjacency list `graph`, return all paths from node `0` to node `n-1`. | Since it is a DAG with no cycles, plain DFS backtracking enumerates every path; no visited set is needed. | Standard |
+| 802 | Find Eventual Safe States | A node is safe if every path from it eventually reaches a terminal node (no outgoing edges). Return all safe nodes sorted. |  | Topological sort on the reversed graph (Kahn's) — start from terminal nodes (out-degree 0); a node becomes safe once all its outgoing edges lead to safe nodes. |
+| 815 | Bus Routes | `routes[i]` is the stops served by bus `i`. Find the minimum number of buses to travel from `source` to `target`. |  | BFS where the "nodes" are buses (routes); build stop→routes index, then BFS route-to-route through shared stops, counting buses taken. |
+| 847 | Shortest Path Visiting All Nodes | Find the length of the shortest path in an undirected graph that visits every node (may revisit nodes/edges). |  | BFS over states `(node, visitedMask)` where `mask` is a bitmask of visited nodes; the goal is any state with all bits set. Start BFS from every node simultaneously. |
+| 851 | Loud and Rich | `richer[i] = [a, b]` means `a` is richer than `b`; `quiet[i]` is the quietness of person `i`. For each person find the quietest person among everyone at least as rich (themselves included). |  | Topological sort (Kahn's) on the richer→poorer graph; propagate the quietest-known answer from richer people down to poorer ones in topo order. |
+| 886 | Possible Bipartition | Given `dislikes` pairs, split `n` people into two groups so disliking people are never in the same group. |  | Standard |
+| 913 | Cat and Mouse | A mouse (start node 1) and cat (start node 2) move on a graph; mouse wins by reaching node 0, cat wins by catching the mouse, else draw. Return 0/1/2 with optimal play. |  | Game-theory BFS over states `(mouse, cat, turn)`; start from known terminal states and propagate results backward (retrograde analysis) by counting undecided moves. |
+| 934 | Shortest Bridge | A grid has exactly two islands of `1`s. Find the minimum number of `0`s to flip to connect them. |  | DFS to mark the first island (seeding a BFS queue with its cells), then multi-source BFS expanding outward until reaching the second island; BFS levels = bridge length. |
+| 1034 | Coloring A Border | Color the border cells of the connected component containing `(row, col)` with `color`. A border cell touches the grid edge or a cell of a different original color. |  | BFS over same-color connected cells; mark a cell as a border when it has fewer than 4 same-component neighbors, recolor borders after traversal. |
+| 1102 | Path With Maximum Minimum Value | Find a path from top-left to bottom-right maximizing the minimum cell value along the path (4-directional). |  | Modified Dijkstra with a max-heap — the path "score" is the minimum cell value seen; greedily expand the highest-scoring frontier first. |
+| 1136 | Parallel Courses | Courses 1..n with prerequisite `relations`; in each semester take all courses whose prerequisites are done. Return minimum semesters, or -1 if impossible. |  | Topological sort (Kahn's) processed level-by-level — each BFS level is one semester; if not all courses are processed, a cycle exists. |
+| 1162 | As Far from Land as Possible | In a grid of `0` (water) and `1` (land), find the water cell whose distance to the nearest land is maximized; return that distance, or -1. |  | Multi-source BFS seeded with all land cells; the last BFS level expanded gives the maximum distance. |
+| 1197 | Minimum Knight Moves | On an infinite chessboard, find the minimum knight moves from `(0,0)` to `(x, y)`. |  | BFS over knight moves (8 jump offsets); exploit symmetry by working in the first quadrant to bound the visited set. |
+| 1202 | Smallest String With Swaps | Given index `pairs` that may be swapped any number of times, return the lexicographically smallest string achievable. |  | Union-Find groups swappable indices into connected components; within each component, sort the characters and place them back in ascending index order. |
+| 1245 | Tree Diameter | Given the edges of an undirected tree, return its diameter (the number of edges on the longest path between any two nodes). |  | Two BFS passes — BFS from any node finds the farthest node `u`; a second BFS from `u` gives the diameter as the maximum distance. |
+| 1293 | Shortest Path in a Grid with Obstacles Elimination | Find the shortest path from `(0,0)` to `(m-1,n-1)` in a grid where you may eliminate at most `k` obstacles (`1`s). |  | BFS over states `(row, col, remainingK)`; the visited set tracks the best remaining eliminations per cell so a cell can be revisited with more budget. |
+| 1559 | Detect Cycles in 2D Grid | Return true if the grid contains a cycle of length ≥ 4 made of the same character. |  | Union-Find over grid cells — for each cell union it with its up and left same-character neighbors; if a union finds them already connected, a cycle exists. |
+| 1743 | Restore the Array From Adjacent Pairs | Given all adjacent pairs of an array (in any order), reconstruct the original array. |  | Build an adjacency graph; the two endpoints have a single neighbor. Start from an endpoint and walk the path, avoiding the previous node. |
 
 ---
 
@@ -1236,3 +1268,1335 @@ class Solution {
 }
 ```
 **Time** O(m·n) | **Space** O(m·n)
+
+---
+
+# Additional Reference Problems
+
+## #126 Word Ladder II
+
+**Description:** Find all shortest transformation sequences from `beginWord` to `endWord`, changing one letter at a time, each intermediate word in `wordList`.  
+**Intuition:** BFS level-by-level builds a parent (predecessor) map of which words lead to which; once `endWord` is reached, DFS backtracks through parents to reconstruct every shortest path.  
+**Algorithm:** BFS recording all predecessors per word; stop expanding once `endWord` found at a level; then DFS from `endWord` back to `beginWord`.
+
+```java
+class Solution {
+    public List<List<String>> findLadders(String beginWord, String endWord, List<String> wordList) {
+        List<List<String>> result = new ArrayList<>();
+        Set<String> wordSet = new HashSet<>(wordList);
+        if (!wordSet.contains(endWord)) return result;
+        Map<String, List<String>> parents = new HashMap<>();
+        Set<String> level = new HashSet<>();
+        level.add(beginWord);
+        boolean found = false;
+        while (!level.isEmpty() && !found) {
+            Set<String> next = new HashSet<>();
+            wordSet.removeAll(level);
+            for (String word : level) {
+                char[] chars = word.toCharArray();
+                for (int j = 0; j < chars.length; j++) {
+                    char original = chars[j];
+                    for (char c = 'a'; c <= 'z'; c++) {
+                        chars[j] = c;
+                        String candidate = new String(chars);
+                        if (wordSet.contains(candidate)) {
+                            if (candidate.equals(endWord)) found = true;
+                            next.add(candidate);
+                            parents.computeIfAbsent(candidate, x -> new ArrayList<>()).add(word);
+                        }
+                    }
+                    chars[j] = original;
+                }
+            }
+            level = next;
+        }
+        if (found) {
+            LinkedList<String> path = new LinkedList<>();
+            path.add(endWord);
+            backtrack(endWord, beginWord, parents, path, result);
+        }
+        return result;
+    }
+    private void backtrack(String word, String beginWord, Map<String, List<String>> parents,
+                           LinkedList<String> path, List<List<String>> result) {
+        if (word.equals(beginWord)) {
+            result.add(new ArrayList<>(path));
+            return;
+        }
+        if (!parents.containsKey(word)) return;
+        for (String parent : parents.get(word)) {
+            path.addFirst(parent);
+            backtrack(parent, beginWord, parents, path, result);
+            path.removeFirst();
+        }
+    }
+}
+```
+**Time** O(N·L·26) BFS + paths | **Space** O(N·L)
+
+---
+
+## #133 Clone Graph
+
+**Description:** Deep-copy an undirected graph where each node has a value and a list of neighbors.  
+**Intuition:** Use a map from original node to its clone to avoid re-cloning and to wire neighbors correctly; BFS the graph, creating clones on first sight.  
+**Algorithm:** BFS with a `Map<Node, Node>` of original→clone; for each node, attach cloned neighbors.
+
+```java
+/*
+// Definition for a Node.
+class Node {
+    public int val;
+    public List<Node> neighbors;
+    public Node() { val = 0; neighbors = new ArrayList<Node>(); }
+    public Node(int _val) { val = _val; neighbors = new ArrayList<Node>(); }
+    public Node(int _val, ArrayList<Node> _neighbors) { val = _val; neighbors = _neighbors; }
+}
+*/
+class Solution {
+    public Node cloneGraph(Node node) {
+        if (node == null) return null;
+        Map<Node, Node> clones = new HashMap<>();
+        Queue<Node> queue = new ArrayDeque<>();
+        queue.offer(node);
+        clones.put(node, new Node(node.val));
+        while (!queue.isEmpty()) {
+            Node current = queue.poll();
+            for (Node neighbor : current.neighbors) {
+                if (!clones.containsKey(neighbor)) {
+                    clones.put(neighbor, new Node(neighbor.val));
+                    queue.offer(neighbor);
+                }
+                clones.get(current).neighbors.add(clones.get(neighbor));
+            }
+        }
+        return clones.get(node);
+    }
+}
+```
+**Time** O(V+E) | **Space** O(V)
+
+---
+
+## #277 Find the Celebrity
+
+**Description:** Among `n` people, find the celebrity: known by everyone, knows nobody. `knows(a, b)` is the API.  
+**Intuition:** A single linear scan narrows to one candidate (if `candidate` knows `i`, the candidate can't be the celebrity, so `i` becomes the new candidate); a second pass verifies.  
+**Algorithm:** Two passes — find candidate, then validate both directions.
+
+```java
+/* The knows API is defined in the parent class Relation.
+      boolean knows(int a, int b); */
+public class Solution extends Relation {
+    public int findCelebrity(int n) {
+        int candidate = 0;
+        for (int i = 1; i < n; i++) {
+            if (knows(candidate, i)) {
+                candidate = i;
+            }
+        }
+        for (int i = 0; i < n; i++) {
+            if (i == candidate) continue;
+            if (knows(candidate, i) || !knows(i, candidate)) return -1;
+        }
+        return candidate;
+    }
+}
+```
+**Time** O(n) | **Space** O(1)
+
+---
+
+## #296 Best Meeting Point
+
+**Description:** Given a grid where `1` marks a home, find the minimum total Manhattan distance to a single meeting point.  
+**Intuition:** Manhattan distance separates into independent x and y components; the optimal coordinate on each axis is the median of the occupied coordinates.  
+**Algorithm:** Collect row and column indices (rows in sorted order, columns sorted), take the median on each axis, sum absolute distances.
+
+```java
+class Solution {
+    public int minTotalDistance(int[][] grid) {
+        int rows = grid.length, cols = grid[0].length;
+        List<Integer> rowList = new ArrayList<>();
+        List<Integer> colList = new ArrayList<>();
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (grid[i][j] == 1) {
+                    rowList.add(i);
+                    colList.add(j);
+                }
+            }
+        }
+        Collections.sort(colList);
+        int total = 0;
+        int medianRow = rowList.get(rowList.size() / 2);
+        int medianCol = colList.get(colList.size() / 2);
+        for (int r : rowList) {
+            total += Math.abs(r - medianRow);
+        }
+        for (int c : colList) {
+            total += Math.abs(c - medianCol);
+        }
+        return total;
+    }
+}
+```
+**Time** O(m·n) | **Space** O(m·n)
+
+---
+
+## #305 Number of Islands II
+
+**Description:** Land cells are added one at a time to a water grid; after each addition return the current number of islands.  
+**Variation:** Online Union-Find — when a cell becomes land, union it with any already-land 4-neighbors; track component count.
+
+```java
+class Solution {
+    int[] parent, rank;
+    public List<Integer> numIslands2(int m, int n, int[][] positions) {
+        parent = new int[m * n];
+        rank = new int[m * n];
+        Arrays.fill(parent, -1);                              // ← VARIATION: -1 marks water (not yet land)
+        int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
+        List<Integer> result = new ArrayList<>();
+        int count = 0;
+        for (int[] p : positions) {
+            int i = p[0], j = p[1], id = i * n + j;
+            if (parent[id] != -1) {                           // already land
+                result.add(count);
+                continue;
+            }
+            parent[id] = id;
+            count++;
+            for (int dir = 0; dir < 4; dir++) {
+                int ni = i + dr[dir], nj = j + dc[dir];
+                if (ni < 0 || ni >= m || nj < 0 || nj >= n) continue;
+                int nid = ni * n + nj;
+                if (parent[nid] != -1 && union(id, nid)) count--;
+            }
+            result.add(count);
+        }
+        return result;
+    }
+    int find(int x) { return parent[x] == x ? x : (parent[x] = find(parent[x])); }
+    boolean union(int x, int y) {
+        int px = find(x), py = find(y);
+        if (px == py) return false;
+        if (rank[px] < rank[py]) { int t = px; px = py; py = t; }
+        parent[py] = px;
+        if (rank[px] == rank[py]) rank[px]++;
+        return true;
+    }
+}
+```
+**Time** O(k·α(m·n)) | **Space** O(m·n)
+
+---
+
+## #317 Shortest Distance from All Buildings
+
+**Description:** Find the empty land cell `0` minimizing total walking distance to every building `1` (`2` = obstacle).  
+**Intuition:** BFS from each building, accumulating distances into every reachable empty cell and counting how many buildings reach it; the answer is the minimum total among cells reachable by all buildings.  
+**Algorithm:** Multi-pass BFS — one BFS per building; track `total[][]` distance sum and `reach[][]` count.
+
+```java
+class Solution {
+    public int shortestDistance(int[][] grid) {
+        int rows = grid.length, cols = grid[0].length;
+        int[][] total = new int[rows][cols];
+        int[][] reach = new int[rows][cols];
+        int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
+        int buildings = 0;
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (grid[i][j] != 1) continue;
+                buildings++;
+                Queue<int[]> queue = new ArrayDeque<>();
+                queue.offer(new int[]{i, j});
+                boolean[][] visited = new boolean[rows][cols];
+                visited[i][j] = true;
+                int dist = 0;
+                while (!queue.isEmpty()) {
+                    int size = queue.size();
+                    dist++;
+                    for (int s = 0; s < size; s++) {
+                        int[] current = queue.poll();
+                        for (int dir = 0; dir < 4; dir++) {
+                            int ni = current[0] + dr[dir], nj = current[1] + dc[dir];
+                            if (ni < 0 || ni >= rows || nj < 0 || nj >= cols) continue;
+                            if (visited[ni][nj] || grid[ni][nj] != 0) continue;
+                            visited[ni][nj] = true;
+                            total[ni][nj] += dist;
+                            reach[ni][nj]++;
+                            queue.offer(new int[]{ni, nj});
+                        }
+                    }
+                }
+            }
+        }
+        int result = Integer.MAX_VALUE;
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (grid[i][j] == 0 && reach[i][j] == buildings) {
+                    result = Math.min(result, total[i][j]);
+                }
+            }
+        }
+        return result == Integer.MAX_VALUE ? -1 : result;
+    }
+}
+```
+**Time** O(B·m·n) where B = buildings | **Space** O(m·n)
+
+---
+
+## #399 Evaluate Division
+
+**Description:** Given equations `a/b = value`, answer queries `c/d`. Return -1.0 if undeterminable.  
+**Intuition:** Treat variables as nodes and ratios as weighted directed edges; the answer to a query is the product of edge weights along any path from numerator to denominator.  
+**Algorithm:** Build weighted graph, then DFS each query multiplying weights along the path.
+
+```java
+class Solution {
+    public double[] calcEquation(List<List<String>> equations, double[] values, List<List<String>> queries) {
+        Map<String, Map<String, Double>> graph = new HashMap<>();
+        for (int i = 0; i < equations.size(); i++) {
+            String a = equations.get(i).get(0), b = equations.get(i).get(1);
+            graph.computeIfAbsent(a, x -> new HashMap<>()).put(b, values[i]);
+            graph.computeIfAbsent(b, x -> new HashMap<>()).put(a, 1.0 / values[i]);
+        }
+        double[] result = new double[queries.size()];
+        for (int i = 0; i < queries.size(); i++) {
+            String src = queries.get(i).get(0), dst = queries.get(i).get(1);
+            if (!graph.containsKey(src) || !graph.containsKey(dst)) {
+                result[i] = -1.0;
+            } else {
+                result[i] = dfs(graph, src, dst, 1.0, new HashSet<>());
+            }
+        }
+        return result;
+    }
+    private double dfs(Map<String, Map<String, Double>> graph, String node, String target,
+                       double product, Set<String> visited) {
+        if (node.equals(target)) return product;
+        visited.add(node);
+        for (Map.Entry<String, Double> nb : graph.get(node).entrySet()) {
+            if (visited.contains(nb.getKey())) continue;
+            double sub = dfs(graph, nb.getKey(), target, product * nb.getValue(), visited);
+            if (sub != -1.0) return sub;
+        }
+        return -1.0;
+    }
+}
+```
+**Time** O(Q·(V+E)) | **Space** O(V+E)
+
+---
+
+## #407 Trapping Rain Water II
+
+**Description:** Given a 2D height map, compute how much water it can trap after raining.  
+**Variation:** Dijkstra-style BFS from the border inward using a min-heap of boundary heights; water level at a cell is the highest of the minimum boundary it must pass — pop the lowest wall first.
+
+```java
+class Solution {
+    public int trapRainWater(int[][] heightMap) {
+        int rows = heightMap.length, cols = heightMap[0].length;
+        if (rows < 3 || cols < 3) return 0;
+        boolean[][] visited = new boolean[rows][cols];
+        PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[2] - b[2]); // ← VARIATION: heap on cell height
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (i == 0 || i == rows - 1 || j == 0 || j == cols - 1) {
+                    pq.offer(new int[]{i, j, heightMap[i][j]});
+                    visited[i][j] = true;
+                }
+            }
+        }
+        int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
+        int water = 0;
+        while (!pq.isEmpty()) {
+            int[] current = pq.poll();
+            int level = current[2];
+            for (int dir = 0; dir < 4; dir++) {
+                int ni = current[0] + dr[dir], nj = current[1] + dc[dir];
+                if (ni < 0 || ni >= rows || nj < 0 || nj >= cols || visited[ni][nj]) continue;
+                visited[ni][nj] = true;
+                if (heightMap[ni][nj] < level) water += level - heightMap[ni][nj];
+                pq.offer(new int[]{ni, nj, Math.max(level, heightMap[ni][nj])});
+            }
+        }
+        return water;
+    }
+}
+```
+**Time** O(m·n·log(m·n)) | **Space** O(m·n)
+
+---
+
+## #463 Island Perimeter
+
+**Description:** Given a grid with exactly one island, return its perimeter.  
+**Intuition:** Each land cell contributes 4 sides, minus 2 for every shared edge with an adjacent land cell (counted once per pair).  
+**Algorithm:** Count land cells ×4, subtract 2 for each adjacent land pair.
+
+```java
+class Solution {
+    public int islandPerimeter(int[][] grid) {
+        int rows = grid.length, cols = grid[0].length;
+        int perimeter = 0;
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (grid[i][j] == 1) {
+                    perimeter += 4;
+                    if (i > 0 && grid[i-1][j] == 1) perimeter -= 2;
+                    if (j > 0 && grid[i][j-1] == 1) perimeter -= 2;
+                }
+            }
+        }
+        return perimeter;
+    }
+}
+```
+**Time** O(m·n) | **Space** O(1)
+
+---
+
+## #529 Minesweeper
+
+**Description:** Reveal a cell on a Minesweeper board. `'M'` mine, `'E'` unrevealed empty, `'B'` revealed blank, digit = adjacent mine count.  
+**Variation:** BFS/DFS flood fill with 8 directions; if the clicked cell is a mine, mark `'X'`; otherwise count adjacent mines, and only recurse when count is 0.
+
+```java
+class Solution {
+    public char[][] updateBoard(char[][] board, int[] click) {
+        int rows = board.length, cols = board[0].length;
+        int cr = click[0], cc = click[1];
+        if (board[cr][cc] == 'M') {
+            board[cr][cc] = 'X';
+            return board;
+        }
+        int[] dr = {1,-1,0,0,1,1,-1,-1}, dc = {0,0,1,-1,1,-1,1,-1}; // ← VARIATION: 8 directions
+        Queue<int[]> queue = new ArrayDeque<>();
+        queue.offer(new int[]{cr, cc});
+        boolean[][] visited = new boolean[rows][cols];
+        visited[cr][cc] = true;
+        while (!queue.isEmpty()) {
+            int[] current = queue.poll();
+            int r = current[0], c = current[1];
+            int mines = 0;
+            for (int dir = 0; dir < 8; dir++) {
+                int nr = r + dr[dir], nc = c + dc[dir];
+                if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && board[nr][nc] == 'M') mines++;
+            }
+            if (mines > 0) {
+                board[r][c] = (char) ('0' + mines);
+            } else {
+                board[r][c] = 'B';
+                for (int dir = 0; dir < 8; dir++) {
+                    int nr = r + dr[dir], nc = c + dc[dir];
+                    if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
+                    if (!visited[nr][nc] && board[nr][nc] == 'E') {
+                        visited[nr][nc] = true;
+                        queue.offer(new int[]{nr, nc});
+                    }
+                }
+            }
+        }
+        return board;
+    }
+}
+```
+**Time** O(m·n) | **Space** O(m·n)
+
+---
+
+## #694 Number of Distinct Islands
+
+**Description:** Count islands that are distinct by shape (translations are the same, rotations are not).  
+**Variation:** DFS recording the path signature (the direction taken at each step plus a backtrack marker); two islands with identical signatures have the same shape.
+
+```java
+class Solution {
+    public int numDistinctIslands(int[][] grid) {
+        int rows = grid.length, cols = grid[0].length;
+        Set<String> shapes = new HashSet<>();
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (grid[i][j] == 1) {
+                    StringBuilder builder = new StringBuilder();
+                    dfs(grid, i, j, 'o', builder);              // ← VARIATION: record traversal path
+                    shapes.add(builder.toString());
+                }
+            }
+        }
+        return shapes.size();
+    }
+    private void dfs(int[][] grid, int i, int j, char dir, StringBuilder builder) {
+        if (i < 0 || i >= grid.length || j < 0 || j >= grid[0].length || grid[i][j] != 1) return;
+        grid[i][j] = 0;
+        builder.append(dir);
+        dfs(grid, i + 1, j, 'd', builder);
+        dfs(grid, i - 1, j, 'u', builder);
+        dfs(grid, i, j + 1, 'r', builder);
+        dfs(grid, i, j - 1, 'l', builder);
+        builder.append('b');                                    // ← VARIATION: backtrack marker disambiguates shapes
+    }
+}
+```
+**Time** O(m·n) | **Space** O(m·n)
+
+---
+
+## #733 Flood Fill
+
+**Description:** Starting at `(sr, sc)`, change all connected same-color pixels to `color`.  
+**Algorithm:** BFS/DFS flood fill from the start cell over 4 directions; guard against re-filling when the new color equals the original.
+
+```java
+class Solution {
+    public int[][] floodFill(int[][] image, int sr, int sc, int color) {
+        int original = image[sr][sc];
+        if (original == color) return image;
+        int rows = image.length, cols = image[0].length;
+        int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
+        Queue<int[]> queue = new ArrayDeque<>();
+        queue.offer(new int[]{sr, sc});
+        image[sr][sc] = color;
+        while (!queue.isEmpty()) {
+            int[] current = queue.poll();
+            for (int dir = 0; dir < 4; dir++) {
+                int ni = current[0] + dr[dir], nj = current[1] + dc[dir];
+                if (ni < 0 || ni >= rows || nj < 0 || nj >= cols) continue;
+                if (image[ni][nj] == original) {
+                    image[ni][nj] = color;
+                    queue.offer(new int[]{ni, nj});
+                }
+            }
+        }
+        return image;
+    }
+}
+```
+**Time** O(m·n) | **Space** O(m·n)
+
+---
+
+## #752 Open the Lock
+
+**Description:** A 4-wheel lock starts at `"0000"`; each move turns one wheel ±1. Find minimum moves to reach `target`, avoiding `deadends`.  
+**Variation:** BFS over the 4-digit state space; each state has 8 neighbors (each wheel up or down). Treat deadends as visited.
+
+```java
+class Solution {
+    public int openLock(String[] deadends, String target) {
+        Set<String> dead = new HashSet<>(Arrays.asList(deadends));
+        if (dead.contains("0000")) return -1;
+        if (target.equals("0000")) return 0;
+        Set<String> visited = new HashSet<>();
+        visited.add("0000");
+        Queue<String> queue = new ArrayDeque<>();
+        queue.offer("0000");
+        int turns = 0;
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            turns++;
+            for (int s = 0; s < size; s++) {
+                String current = queue.poll();
+                for (int j = 0; j < 4; j++) {                  // ← VARIATION: each wheel ±1 = 8 neighbors
+                    char c = current.charAt(j);
+                    for (int delta = -1; delta <= 1; delta += 2) {
+                        char nc = (char) ('0' + (c - '0' + delta + 10) % 10);
+                        String next = current.substring(0, j) + nc + current.substring(j + 1);
+                        if (next.equals(target)) return turns;
+                        if (!dead.contains(next) && visited.add(next)) queue.offer(next);
+                    }
+                }
+            }
+        }
+        return -1;
+    }
+}
+```
+**Time** O(10^4 · 8) | **Space** O(10^4)
+
+---
+
+## #778 Swim in Rising Water
+
+**Description:** At time `t` you can stand on any cell with elevation ≤ `t`. Find the least time to swim from `(0,0)` to `(n-1,n-1)`.  
+**Variation:** Modified Dijkstra — minimize the maximum elevation along the path (not the sum). Min-heap ordered by current max elevation.
+
+```java
+class Solution {
+    public int swimInWater(int[][] grid) {
+        int n = grid.length;
+        boolean[][] visited = new boolean[n][n];
+        PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[0] - b[0]); // [maxElev, r, c]
+        pq.offer(new int[]{grid[0][0], 0, 0});
+        visited[0][0] = true;
+        int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
+        while (!pq.isEmpty()) {
+            int[] current = pq.poll();
+            int time = current[0], r = current[1], c = current[2];
+            if (r == n - 1 && c == n - 1) return time;
+            for (int dir = 0; dir < 4; dir++) {
+                int nr = r + dr[dir], nc = c + dc[dir];
+                if (nr < 0 || nr >= n || nc < 0 || nc >= n || visited[nr][nc]) continue;
+                visited[nr][nc] = true;
+                pq.offer(new int[]{Math.max(time, grid[nr][nc]), nr, nc}); // ← VARIATION: max not sum
+            }
+        }
+        return -1;
+    }
+}
+```
+**Time** O(n²·log(n)) | **Space** O(n²)
+
+---
+
+## #797 All Paths From Source to Target
+
+**Description:** In a DAG given as adjacency list `graph`, return all paths from node `0` to node `n-1`.  
+**Intuition:** Since it is a DAG with no cycles, plain DFS backtracking enumerates every path; no visited set is needed.  
+**Algorithm:** DFS from `0`, appending nodes to a path, recording the path when reaching `n-1`.
+
+```java
+class Solution {
+    public List<List<Integer>> allPathsSourceTarget(int[][] graph) {
+        List<List<Integer>> result = new ArrayList<>();
+        List<Integer> path = new ArrayList<>();
+        path.add(0);
+        dfs(graph, 0, path, result);
+        return result;
+    }
+    private void dfs(int[][] graph, int node, List<Integer> path, List<List<Integer>> result) {
+        if (node == graph.length - 1) {
+            result.add(new ArrayList<>(path));
+            return;
+        }
+        for (int neighbor : graph[node]) {
+            path.add(neighbor);
+            dfs(graph, neighbor, path, result);
+            path.remove(path.size() - 1);
+        }
+    }
+}
+```
+**Time** O(2^V · V) | **Space** O(V)
+
+---
+
+## #802 Find Eventual Safe States
+
+**Description:** A node is safe if every path from it eventually reaches a terminal node (no outgoing edges). Return all safe nodes sorted.  
+**Variation:** Topological sort on the reversed graph (Kahn's) — start from terminal nodes (out-degree 0); a node becomes safe once all its outgoing edges lead to safe nodes.
+
+```java
+class Solution {
+    public List<Integer> eventualSafeNodes(int[][] graph) {
+        int n = graph.length;
+        List<List<Integer>> reverse = new ArrayList<>();
+        for (int i = 0; i < n; i++) reverse.add(new ArrayList<>());
+        int[] outDegree = new int[n];                           // ← VARIATION: track outgoing count
+        for (int i = 0; i < n; i++) {
+            outDegree[i] = graph[i].length;
+            for (int neighbor : graph[i]) reverse.get(neighbor).add(i);
+        }
+        Queue<Integer> queue = new ArrayDeque<>();
+        for (int i = 0; i < n; i++) if (outDegree[i] == 0) queue.offer(i);
+        boolean[] safe = new boolean[n];
+        while (!queue.isEmpty()) {
+            int node = queue.poll();
+            safe[node] = true;
+            for (int prev : reverse.get(node)) {
+                if (--outDegree[prev] == 0) queue.offer(prev);
+            }
+        }
+        List<Integer> result = new ArrayList<>();
+        for (int i = 0; i < n; i++) if (safe[i]) result.add(i);
+        return result;
+    }
+}
+```
+**Time** O(V+E) | **Space** O(V+E)
+
+---
+
+## #815 Bus Routes
+
+**Description:** `routes[i]` is the stops served by bus `i`. Find the minimum number of buses to travel from `source` to `target`.  
+**Variation:** BFS where the "nodes" are buses (routes); build stop→routes index, then BFS route-to-route through shared stops, counting buses taken.
+
+```java
+class Solution {
+    public int numBusesToDestination(int[][] routes, int source, int target) {
+        if (source == target) return 0;
+        Map<Integer, List<Integer>> stopToRoutes = new HashMap<>();
+        for (int i = 0; i < routes.length; i++) {
+            for (int stop : routes[i]) {
+                stopToRoutes.computeIfAbsent(stop, x -> new ArrayList<>()).add(i);
+            }
+        }
+        Queue<Integer> queue = new ArrayDeque<>();              // ← VARIATION: queue holds stops
+        Set<Integer> visitedStops = new HashSet<>();
+        boolean[] visitedRoutes = new boolean[routes.length];
+        queue.offer(source);
+        visitedStops.add(source);
+        int buses = 0;
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            buses++;
+            for (int s = 0; s < size; s++) {
+                int stop = queue.poll();
+                for (int route : stopToRoutes.getOrDefault(stop, Collections.emptyList())) {
+                    if (visitedRoutes[route]) continue;
+                    visitedRoutes[route] = true;
+                    for (int nextStop : routes[route]) {
+                        if (nextStop == target) return buses;
+                        if (visitedStops.add(nextStop)) queue.offer(nextStop);
+                    }
+                }
+            }
+        }
+        return -1;
+    }
+}
+```
+**Time** O(sum of route lengths) | **Space** O(sum of route lengths)
+
+---
+
+## #847 Shortest Path Visiting All Nodes
+
+**Description:** Find the length of the shortest path in an undirected graph that visits every node (may revisit nodes/edges).  
+**Variation:** BFS over states `(node, visitedMask)` where `mask` is a bitmask of visited nodes; the goal is any state with all bits set. Start BFS from every node simultaneously.
+
+```java
+class Solution {
+    public int shortestPathLength(int[][] graph) {
+        int n = graph.length;
+        int allVisited = (1 << n) - 1;
+        Queue<int[]> queue = new ArrayDeque<>();               // [node, mask]
+        boolean[][] visited = new boolean[n][1 << n];
+        for (int i = 0; i < n; i++) {                          // ← VARIATION: seed all nodes
+            queue.offer(new int[]{i, 1 << i});
+            visited[i][1 << i] = true;
+        }
+        int steps = 0;
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            for (int s = 0; s < size; s++) {
+                int[] current = queue.poll();
+                int node = current[0], mask = current[1];
+                if (mask == allVisited) return steps;
+                for (int neighbor : graph[node]) {
+                    int nextMask = mask | (1 << neighbor);
+                    if (!visited[neighbor][nextMask]) {
+                        visited[neighbor][nextMask] = true;
+                        queue.offer(new int[]{neighbor, nextMask});
+                    }
+                }
+            }
+            steps++;
+        }
+        return 0;
+    }
+}
+```
+**Time** O(2^n · n²) | **Space** O(2^n · n)
+
+---
+
+## #851 Loud and Rich
+
+**Description:** `richer[i] = [a, b]` means `a` is richer than `b`; `quiet[i]` is the quietness of person `i`. For each person find the quietest person among everyone at least as rich (themselves included).  
+**Variation:** Topological sort (Kahn's) on the richer→poorer graph; propagate the quietest-known answer from richer people down to poorer ones in topo order.
+
+```java
+class Solution {
+    public int[] loudAndRich(int[][] richer, int[] quiet) {
+        int n = quiet.length;
+        List<List<Integer>> graph = new ArrayList<>();
+        for (int i = 0; i < n; i++) graph.add(new ArrayList<>());
+        int[] inDegree = new int[n];
+        for (int[] r : richer) {
+            graph.get(r[0]).add(r[1]);                          // richer → poorer
+            inDegree[r[1]]++;
+        }
+        int[] result = new int[n];
+        for (int i = 0; i < n; i++) result[i] = i;
+        Queue<Integer> queue = new ArrayDeque<>();
+        for (int i = 0; i < n; i++) if (inDegree[i] == 0) queue.offer(i);
+        while (!queue.isEmpty()) {
+            int node = queue.poll();
+            for (int neighbor : graph.get(node)) {
+                if (quiet[result[node]] < quiet[result[neighbor]]) {
+                    result[neighbor] = result[node];            // ← VARIATION: propagate quietest down
+                }
+                if (--inDegree[neighbor] == 0) queue.offer(neighbor);
+            }
+        }
+        return result;
+    }
+}
+```
+**Time** O(V+E) | **Space** O(V+E)
+
+---
+
+## #886 Possible Bipartition
+
+**Description:** Given `dislikes` pairs, split `n` people into two groups so disliking people are never in the same group.  
+**Algorithm:** Bipartite 2-coloring via BFS over the dislike graph; a same-color conflict means impossible.
+
+```java
+class Solution {
+    public boolean possibleBipartition(int n, int[][] dislikes) {
+        List<List<Integer>> graph = new ArrayList<>();
+        for (int i = 0; i <= n; i++) graph.add(new ArrayList<>());
+        for (int[] d : dislikes) {
+            graph.get(d[0]).add(d[1]);
+            graph.get(d[1]).add(d[0]);
+        }
+        int[] color = new int[n + 1];
+        Arrays.fill(color, -1);
+        Queue<Integer> queue = new ArrayDeque<>();
+        for (int start = 1; start <= n; start++) {
+            if (color[start] != -1) continue;
+            color[start] = 0;
+            queue.offer(start);
+            while (!queue.isEmpty()) {
+                int node = queue.poll();
+                for (int neighbor : graph.get(node)) {
+                    if (color[neighbor] == -1) {
+                        color[neighbor] = 1 - color[node];
+                        queue.offer(neighbor);
+                    } else if (color[neighbor] == color[node]) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+}
+```
+**Time** O(V+E) | **Space** O(V+E)
+
+---
+
+## #913 Cat and Mouse
+
+**Description:** A mouse (start node 1) and cat (start node 2) move on a graph; mouse wins by reaching node 0, cat wins by catching the mouse, else draw. Return 0/1/2 with optimal play.  
+**Variation:** Game-theory BFS over states `(mouse, cat, turn)`; start from known terminal states and propagate results backward (retrograde analysis) by counting undecided moves.
+
+```java
+class Solution {
+    public int catMouseGame(int[][] graph) {
+        int n = graph.length;
+        final int DRAW = 0, MOUSE = 1, CAT = 2;
+        int[][][] result = new int[n][n][2];                   // [mouse][cat][turn] : 0=mouse turn,1=cat turn
+        int[][][] degree = new int[n][n][2];
+        Queue<int[]> queue = new ArrayDeque<>();
+        for (int m = 0; m < n; m++) {
+            for (int c = 0; c < n; c++) {
+                degree[m][c][0] = graph[m].length;
+                degree[m][c][1] = graph[c].length;
+                for (int x : graph[c]) {
+                    if (x == 0) { degree[m][c][1]--; break; }   // cat cannot move into hole 0
+                }
+            }
+        }
+        for (int c = 0; c < n; c++) {
+            for (int t = 0; t < 2; t++) {
+                result[0][c][t] = MOUSE;                        // mouse at hole → mouse wins
+                queue.offer(new int[]{0, c, t, MOUSE});
+                if (c > 0) {
+                    result[c][c][t] = CAT;                      // cat catches mouse
+                    queue.offer(new int[]{c, c, t, CAT});
+                }
+            }
+        }
+        while (!queue.isEmpty()) {
+            int[] state = queue.poll();
+            int mouse = state[0], cat = state[1], turn = state[2], winner = state[3];
+            for (int[] prev : parents(graph, mouse, cat, turn)) {
+                int pm = prev[0], pc = prev[1], pt = prev[2];
+                if (result[pm][pc][pt] != DRAW) continue;
+                if ((pt == 0 && winner == MOUSE) || (pt == 1 && winner == CAT)) {
+                    result[pm][pc][pt] = winner;                // mover can force its own win
+                    queue.offer(new int[]{pm, pc, pt, winner});
+                } else if (--degree[pm][pc][pt] == 0) {         // ← VARIATION: all moves lead to opponent win
+                    result[pm][pc][pt] = winner;
+                    queue.offer(new int[]{pm, pc, pt, winner});
+                }
+            }
+        }
+        return result[1][2][0];
+    }
+    private List<int[]> parents(int[][] graph, int mouse, int cat, int turn) {
+        List<int[]> result = new ArrayList<>();
+        if (turn == 0) {                                        // previous move was the cat's (turn 1)
+            for (int pc : graph[cat]) {
+                if (pc != 0) result.add(new int[]{mouse, pc, 1});
+            }
+        } else {                                                // previous move was the mouse's (turn 0)
+            for (int pm : graph[mouse]) {
+                result.add(new int[]{pm, cat, 0});
+            }
+        }
+        return result;
+    }
+}
+```
+**Time** O(V³) | **Space** O(V²)
+
+---
+
+## #934 Shortest Bridge
+
+**Description:** A grid has exactly two islands of `1`s. Find the minimum number of `0`s to flip to connect them.  
+**Variation:** DFS to mark the first island (seeding a BFS queue with its cells), then multi-source BFS expanding outward until reaching the second island; BFS levels = bridge length.
+
+```java
+class Solution {
+    public int shortestBridge(int[][] grid) {
+        int n = grid.length;
+        int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
+        Queue<int[]> queue = new ArrayDeque<>();
+        boolean found = false;
+        for (int i = 0; i < n && !found; i++) {
+            for (int j = 0; j < n && !found; j++) {
+                if (grid[i][j] == 1) {
+                    dfs(grid, i, j, queue);                     // ← VARIATION: mark first island, seed queue
+                    found = true;
+                }
+            }
+        }
+        int steps = 0;
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            for (int s = 0; s < size; s++) {
+                int[] current = queue.poll();
+                for (int dir = 0; dir < 4; dir++) {
+                    int ni = current[0] + dr[dir], nj = current[1] + dc[dir];
+                    if (ni < 0 || ni >= n || nj < 0 || nj >= n) continue;
+                    if (grid[ni][nj] == 1) return steps;
+                    if (grid[ni][nj] == 0) {
+                        grid[ni][nj] = 2;
+                        queue.offer(new int[]{ni, nj});
+                    }
+                }
+            }
+            steps++;
+        }
+        return -1;
+    }
+    private void dfs(int[][] grid, int i, int j, Queue<int[]> queue) {
+        int n = grid.length;
+        if (i < 0 || i >= n || j < 0 || j >= n || grid[i][j] != 1) return;
+        grid[i][j] = 2;
+        queue.offer(new int[]{i, j});
+        int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
+        for (int dir = 0; dir < 4; dir++) dfs(grid, i + dr[dir], j + dc[dir], queue);
+    }
+}
+```
+**Time** O(n²) | **Space** O(n²)
+
+---
+
+## #1034 Coloring A Border
+
+**Description:** Color the border cells of the connected component containing `(row, col)` with `color`. A border cell touches the grid edge or a cell of a different original color.  
+**Variation:** BFS over same-color connected cells; mark a cell as a border when it has fewer than 4 same-component neighbors, recolor borders after traversal.
+
+```java
+class Solution {
+    public int[][] colorBorder(int[][] grid, int row, int col, int color) {
+        int rows = grid.length, cols = grid[0].length;
+        int original = grid[row][col];
+        boolean[][] visited = new boolean[rows][cols];
+        List<int[]> borders = new ArrayList<>();
+        int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
+        Queue<int[]> queue = new ArrayDeque<>();
+        queue.offer(new int[]{row, col});
+        visited[row][col] = true;
+        while (!queue.isEmpty()) {
+            int[] current = queue.poll();
+            int r = current[0], c = current[1];
+            int sameNeighbors = 0;
+            for (int dir = 0; dir < 4; dir++) {
+                int nr = r + dr[dir], nc = c + dc[dir];
+                if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
+                if (grid[nr][nc] == original) sameNeighbors++;
+                if (grid[nr][nc] == original && !visited[nr][nc]) {
+                    visited[nr][nc] = true;
+                    queue.offer(new int[]{nr, nc});
+                }
+            }
+            if (sameNeighbors < 4) borders.add(new int[]{r, c}); // ← VARIATION: fewer than 4 component neighbors
+        }
+        for (int[] b : borders) grid[b[0]][b[1]] = color;
+        return grid;
+    }
+}
+```
+**Time** O(m·n) | **Space** O(m·n)
+
+---
+
+## #1102 Path With Maximum Minimum Value
+
+**Description:** Find a path from top-left to bottom-right maximizing the minimum cell value along the path (4-directional).  
+**Variation:** Modified Dijkstra with a max-heap — the path "score" is the minimum cell value seen; greedily expand the highest-scoring frontier first.
+
+```java
+class Solution {
+    public int maximumMinimumPath(int[][] grid) {
+        int rows = grid.length, cols = grid[0].length;
+        boolean[][] visited = new boolean[rows][cols];
+        PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> b[0] - a[0]); // ← VARIATION: max-heap on min-so-far
+        pq.offer(new int[]{grid[0][0], 0, 0});
+        visited[0][0] = true;
+        int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
+        while (!pq.isEmpty()) {
+            int[] current = pq.poll();
+            int score = current[0], r = current[1], c = current[2];
+            if (r == rows - 1 && c == cols - 1) return score;
+            for (int dir = 0; dir < 4; dir++) {
+                int nr = r + dr[dir], nc = c + dc[dir];
+                if (nr < 0 || nr >= rows || nc < 0 || nc >= cols || visited[nr][nc]) continue;
+                visited[nr][nc] = true;
+                pq.offer(new int[]{Math.min(score, grid[nr][nc]), nr, nc}); // ← VARIATION: min not sum
+            }
+        }
+        return -1;
+    }
+}
+```
+**Time** O(m·n·log(m·n)) | **Space** O(m·n)
+
+---
+
+## #1136 Parallel Courses
+
+**Description:** Courses 1..n with prerequisite `relations`; in each semester take all courses whose prerequisites are done. Return minimum semesters, or -1 if impossible.  
+**Variation:** Topological sort (Kahn's) processed level-by-level — each BFS level is one semester; if not all courses are processed, a cycle exists.
+
+```java
+class Solution {
+    public int minimumSemesters(int n, int[][] relations) {
+        List<List<Integer>> graph = new ArrayList<>();
+        for (int i = 0; i <= n; i++) graph.add(new ArrayList<>());
+        int[] inDegree = new int[n + 1];
+        for (int[] r : relations) {
+            graph.get(r[0]).add(r[1]);
+            inDegree[r[1]]++;
+        }
+        Queue<Integer> queue = new ArrayDeque<>();
+        for (int i = 1; i <= n; i++) if (inDegree[i] == 0) queue.offer(i);
+        int semesters = 0, studied = 0;
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            semesters++;                                        // ← VARIATION: each level = one semester
+            for (int s = 0; s < size; s++) {
+                int node = queue.poll();
+                studied++;
+                for (int neighbor : graph.get(node)) {
+                    if (--inDegree[neighbor] == 0) queue.offer(neighbor);
+                }
+            }
+        }
+        return studied == n ? semesters : -1;
+    }
+}
+```
+**Time** O(V+E) | **Space** O(V+E)
+
+---
+
+## #1162 As Far from Land as Possible
+
+**Description:** In a grid of `0` (water) and `1` (land), find the water cell whose distance to the nearest land is maximized; return that distance, or -1.  
+**Variation:** Multi-source BFS seeded with all land cells; the last BFS level expanded gives the maximum distance.
+
+```java
+class Solution {
+    public int maxDistance(int[][] grid) {
+        int n = grid.length;
+        Queue<int[]> queue = new ArrayDeque<>();
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (grid[i][j] == 1) queue.offer(new int[]{i, j}); // ← VARIATION: seed ALL land cells
+            }
+        }
+        if (queue.isEmpty() || queue.size() == n * n) return -1;
+        int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
+        int distance = -1;
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            distance++;
+            for (int s = 0; s < size; s++) {
+                int[] current = queue.poll();
+                for (int dir = 0; dir < 4; dir++) {
+                    int ni = current[0] + dr[dir], nj = current[1] + dc[dir];
+                    if (ni < 0 || ni >= n || nj < 0 || nj >= n || grid[ni][nj] != 0) continue;
+                    grid[ni][nj] = 1;
+                    queue.offer(new int[]{ni, nj});
+                }
+            }
+        }
+        return distance;
+    }
+}
+```
+**Time** O(n²) | **Space** O(n²)
+
+---
+
+## #1197 Minimum Knight Moves
+
+**Description:** On an infinite chessboard, find the minimum knight moves from `(0,0)` to `(x, y)`.  
+**Variation:** BFS over knight moves (8 jump offsets); exploit symmetry by working in the first quadrant to bound the visited set.
+
+```java
+class Solution {
+    public int minKnightMoves(int x, int y) {
+        x = Math.abs(x);
+        y = Math.abs(y);                                        // ← VARIATION: symmetry to first quadrant
+        int[] dr = {1,1,-1,-1,2,2,-2,-2}, dc = {2,-2,2,-2,1,-1,1,-1}; // knight offsets
+        Queue<int[]> queue = new ArrayDeque<>();
+        queue.offer(new int[]{0, 0});
+        Set<String> visited = new HashSet<>();
+        visited.add("0,0");
+        int moves = 0;
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            for (int s = 0; s < size; s++) {
+                int[] current = queue.poll();
+                if (current[0] == x && current[1] == y) return moves;
+                for (int dir = 0; dir < 8; dir++) {
+                    int ni = current[0] + dr[dir], nj = current[1] + dc[dir];
+                    if (ni < -2 || nj < -2) continue;           // stay near first quadrant
+                    String key = ni + "," + nj;
+                    if (visited.add(key)) queue.offer(new int[]{ni, nj});
+                }
+            }
+            moves++;
+        }
+        return -1;
+    }
+}
+```
+**Time** O(max(x,y)²) | **Space** O(max(x,y)²)
+
+---
+
+## #1202 Smallest String With Swaps
+
+**Description:** Given index `pairs` that may be swapped any number of times, return the lexicographically smallest string achievable.  
+**Variation:** Union-Find groups swappable indices into connected components; within each component, sort the characters and place them back in ascending index order.
+
+```java
+class Solution {
+    int[] parent, rank;
+    public String smallestStringWithSwaps(String s, List<List<Integer>> pairs) {
+        int n = s.length();
+        parent = new int[n];
+        rank = new int[n];
+        for (int i = 0; i < n; i++) parent[i] = i;
+        for (List<Integer> p : pairs) union(p.get(0), p.get(1)); // ← VARIATION: union swappable indices
+        Map<Integer, List<Integer>> groups = new HashMap<>();
+        for (int i = 0; i < n; i++) {
+            groups.computeIfAbsent(find(i), x -> new ArrayList<>()).add(i);
+        }
+        char[] result = s.toCharArray();
+        for (List<Integer> indices : groups.values()) {
+            List<Character> chars = new ArrayList<>();
+            for (int i : indices) chars.add(s.charAt(i));
+            Collections.sort(chars);
+            for (int k = 0; k < indices.size(); k++) result[indices.get(k)] = chars.get(k);
+        }
+        return new String(result);
+    }
+    int find(int x) { return parent[x] == x ? x : (parent[x] = find(parent[x])); }
+    boolean union(int x, int y) {
+        int px = find(x), py = find(y);
+        if (px == py) return false;
+        if (rank[px] < rank[py]) { int t = px; px = py; py = t; }
+        parent[py] = px;
+        if (rank[px] == rank[py]) rank[px]++;
+        return true;
+    }
+}
+```
+**Time** O(n·log(n) + E·α(n)) | **Space** O(n)
+
+---
+
+## #1245 Tree Diameter
+
+**Description:** Given the edges of an undirected tree, return its diameter (the number of edges on the longest path between any two nodes).  
+**Variation:** Two BFS passes — BFS from any node finds the farthest node `u`; a second BFS from `u` gives the diameter as the maximum distance.
+
+```java
+class Solution {
+    public int treeDiameter(int[][] edges) {
+        int n = edges.length + 1;
+        List<List<Integer>> graph = new ArrayList<>();
+        for (int i = 0; i < n; i++) graph.add(new ArrayList<>());
+        for (int[] e : edges) {
+            graph.get(e[0]).add(e[1]);
+            graph.get(e[1]).add(e[0]);
+        }
+        int[] first = bfs(graph, 0, n);                         // ← VARIATION: farthest node from arbitrary start
+        int[] second = bfs(graph, first[0], n);                 // diameter from that farthest node
+        return second[1];
+    }
+    private int[] bfs(List<List<Integer>> graph, int start, int n) {
+        boolean[] visited = new boolean[n];
+        Queue<Integer> queue = new ArrayDeque<>();
+        queue.offer(start);
+        visited[start] = true;
+        int farthest = start, distance = -1;
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            distance++;
+            for (int s = 0; s < size; s++) {
+                int node = queue.poll();
+                farthest = node;
+                for (int neighbor : graph.get(node)) {
+                    if (!visited[neighbor]) {
+                        visited[neighbor] = true;
+                        queue.offer(neighbor);
+                    }
+                }
+            }
+        }
+        return new int[]{farthest, distance};
+    }
+}
+```
+**Time** O(V+E) | **Space** O(V+E)
+
+---
+
+## #1293 Shortest Path in a Grid with Obstacles Elimination
+
+**Description:** Find the shortest path from `(0,0)` to `(m-1,n-1)` in a grid where you may eliminate at most `k` obstacles (`1`s).  
+**Variation:** BFS over states `(row, col, remainingK)`; the visited set tracks the best remaining eliminations per cell so a cell can be revisited with more budget.
+
+```java
+class Solution {
+    public int shortestPath(int[][] grid, int k) {
+        int rows = grid.length, cols = grid[0].length;
+        if (k >= rows + cols - 2) return rows + cols - 2;       // enough to go straight
+        int[][] bestK = new int[rows][cols];
+        for (int[] row : bestK) Arrays.fill(row, -1);
+        int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
+        Queue<int[]> queue = new ArrayDeque<>();                // [r, c, remainingK]
+        queue.offer(new int[]{0, 0, k});
+        bestK[0][0] = k;
+        int steps = 0;
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            for (int s = 0; s < size; s++) {
+                int[] current = queue.poll();
+                int r = current[0], c = current[1], rem = current[2];
+                if (r == rows - 1 && c == cols - 1) return steps;
+                for (int dir = 0; dir < 4; dir++) {
+                    int nr = r + dr[dir], nc = c + dc[dir];
+                    if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
+                    int nextRem = rem - grid[nr][nc];
+                    if (nextRem > bestK[nr][nc]) {              // ← VARIATION: revisit if more budget remains
+                        bestK[nr][nc] = nextRem;
+                        queue.offer(new int[]{nr, nc, nextRem});
+                    }
+                }
+            }
+            steps++;
+        }
+        return -1;
+    }
+}
+```
+**Time** O(m·n·k) | **Space** O(m·n)
+
+---
+
+## #1559 Detect Cycles in 2D Grid
+
+**Description:** Return true if the grid contains a cycle of length ≥ 4 made of the same character.  
+**Variation:** Union-Find over grid cells — for each cell union it with its up and left same-character neighbors; if a union finds them already connected, a cycle exists.
+
+```java
+class Solution {
+    int[] parent, rank;
+    public boolean containsCycle(char[][] grid) {
+        int rows = grid.length, cols = grid[0].length;
+        parent = new int[rows * cols];
+        rank = new int[rows * cols];
+        for (int i = 0; i < rows * cols; i++) parent[i] = i;
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                int id = i * cols + j;
+                if (i > 0 && grid[i-1][j] == grid[i][j]) {
+                    if (!union(id, (i-1) * cols + j)) return true; // ← VARIATION: already connected → cycle
+                }
+                if (j > 0 && grid[i][j-1] == grid[i][j]) {
+                    if (!union(id, i * cols + (j-1))) return true;
+                }
+            }
+        }
+        return false;
+    }
+    int find(int x) { return parent[x] == x ? x : (parent[x] = find(parent[x])); }
+    boolean union(int x, int y) {
+        int px = find(x), py = find(y);
+        if (px == py) return false;
+        if (rank[px] < rank[py]) { int t = px; px = py; py = t; }
+        parent[py] = px;
+        if (rank[px] == rank[py]) rank[px]++;
+        return true;
+    }
+}
+```
+**Time** O(m·n·α(m·n)) | **Space** O(m·n)
+
+---
+
+## #1743 Restore the Array From Adjacent Pairs
+
+**Description:** Given all adjacent pairs of an array (in any order), reconstruct the original array.  
+**Variation:** Build an adjacency graph; the two endpoints have a single neighbor. Start from an endpoint and walk the path, avoiding the previous node.
+
+```java
+class Solution {
+    public int[] restoreArray(int[][] adjacentPairs) {
+        Map<Integer, List<Integer>> graph = new HashMap<>();
+        for (int[] pair : adjacentPairs) {
+            graph.computeIfAbsent(pair[0], x -> new ArrayList<>()).add(pair[1]);
+            graph.computeIfAbsent(pair[1], x -> new ArrayList<>()).add(pair[0]);
+        }
+        int n = adjacentPairs.length + 1;
+        int[] result = new int[n];
+        int start = 0;
+        for (Map.Entry<Integer, List<Integer>> entry : graph.entrySet()) {
+            if (entry.getValue().size() == 1) {                 // ← VARIATION: endpoint has one neighbor
+                start = entry.getKey();
+                break;
+            }
+        }
+        result[0] = start;
+        result[1] = graph.get(start).get(0);
+        for (int i = 2; i < n; i++) {
+            List<Integer> neighbors = graph.get(result[i-1]);
+            result[i] = neighbors.get(0) == result[i-2] ? neighbors.get(1) : neighbors.get(0);
+        }
+        return result;
+    }
+}
+```
+**Time** O(n) | **Space** O(n)

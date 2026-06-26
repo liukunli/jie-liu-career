@@ -67,21 +67,21 @@ and i == size-1 / i == 0 checks become meaningless.
 
 ## Quick Reference Table
 
-| # | Name | Description | Level var | Key action per level | Return |
-|---|---|---|---|---|---|
-| 102 | Level Order | All nodes level by level | No | collect all `node.val` | `List<List<Integer>>` |
-| 107 | Level Order II | Same but bottom-up | No | `result.addFirst(level)` | `List<List<Integer>>` |
-| 103 | Zigzag Level Order | Alternate direction each level | `leftToRight` flag | addLast / addFirst | `List<List<Integer>>` |
-| 637 | Average of Levels | Mean value at each level | No | `sum / size` | `List<Double>` |
-| 515 | Largest Value Per Row | Max value at each level | No | `Math.max` over level | `List<Integer>` |
-| 1161 | Maximum Level Sum | Level number with greatest sum | `level` counter | compare `sum > maxSum` | `int` (level #) |
-| 199 | Right Side View | Rightmost node at each level | No | record when `i == size-1` | `List<Integer>` |
-| 513 | Bottom Left Value | First node at the last level | No | record when `i == 0` | `int` |
-| 111 | Minimum Depth | Depth of the first leaf reached | `depth` counter | return when leaf found | `int` |
-| 116 | Next Right Pointers I | Connect nodes at same level (perfect tree) | No | `previous.next = node` | `Node` |
-| 117 | Next Right Pointers II | Connect nodes at same level (any tree) | No | `previous.next = node` | `Node` |
-| 662 | Maximum Width of Binary Tree | Max width of any level (between leftmost and rightmost non-null nodes, counting nulls) | BFS with position index per node; width = lastPos - firstPos + 1 per level | **Position indexing**: assign position 2*pos (left) and 2*pos+1 (right); normalize to avoid overflow | O(n) | O(n) |
-| 993 | Cousins in Binary Tree | Same depth, different parents? | No | track parent of x and y | `boolean` |
+| # | Name | Description | Intuition | Variation |
+|---|---|---|---|---|
+| 102 | Binary Tree Level Order Traversal | Return all node values level by level, left to right. |  | Standard |
+| 107 | Binary Tree Level Order Traversal II | Same as #102 but return levels from bottom to top. |  | Standard |
+| 103 | Binary Tree Zigzag Level Order Traversal | Level 1 left-to-right, level 2 right-to-left, alternating. |  | Standard |
+| 637 | Average of Levels in Binary Tree | Return the average value of nodes at each level. |  | Standard |
+| 199 | Binary Tree Right Side View | Return the value of the rightmost node at each level. |  | Standard |
+| 513 | Find Bottom Left Tree Value | Return the leftmost value in the last level (deepest row). |  | Standard |
+| 515 | Find Largest Value in Each Tree Row | Return the maximum value found at each level. |  | Standard |
+| 1161 | Maximum Level Sum of a Binary Tree | Return the smallest level number (1-indexed) whose node sum is maximum. |  | Standard |
+| 111 | Minimum Depth of Binary Tree | Minimum number of nodes from root to the nearest leaf. | BFS reaches nodes in depth order, so the first leaf it dequeues is necessarily the shallowest. | Standard |
+| 116 | Populating Next Right Pointers in Each Node | Connect each node's `next` to the node immediately to its right at the same level. Tree is a perfect binary tree. | BFS already visits a level left to right, so just chain each node to the one polled before it. | Standard |
+| 117 | Populating Next Right Pointers in Each Node II | Same as #116 but the tree can be any binary tree (not necessarily perfect). |  | Standard |
+| 993 | Cousins in Binary Tree | Two nodes `x` and `y` are cousins if they are at the same depth but have different parents. Return true if `x` and `y` are cousins. | cousins must surface in the *same* BFS level; if only one shows up per level, their depths differ. | Standard |
+| 662 | Maximum Width of Binary Tree | Return the maximum width of any level of a binary tree. Width is defined as the length between the leftmost and rightmost non-null nodes, including all the null nodes in between. |  | BFS with position tracking. Assign each node a position: root=1, left child of node at pos `p` gets `2*p`, right child gets `2*p+1`. Width of level = `lastPos - firstPos + 1`. Normalize by subtracting `firstPos` of each level to prevent overflow. |
 
 ---
 

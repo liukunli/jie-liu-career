@@ -60,7 +60,7 @@ if (condition) {
 | Linked list | `sentinel`, `previous`, `current` |
 | Queue | `Queue<Integer> queue = new ArrayDeque<>();` |
 | BFS over tree | `Queue<TreeNode> queue = new ArrayDeque<>();` |
-| Grid directions | `int[][] dirs = {{-1,0},{1,0},{0,-1},{0,1}};` (UP, DOWN, LEFT, RIGHT) |
+| Grid directions | `int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};` (DOWN, UP, RIGHT, LEFT); iterate `for (int dir=0; dir<4; dir++)` using `i+dr[dir]`, `j+dc[dir]` |
 | Character frequency | `count[ch - 'a']++;` |
 | Digit frequency | `count[ch - '0']++;` |
 | Char to integer build | `num = num * 10 + (ch - '0');` |
@@ -94,7 +94,7 @@ Random rand                    = new Random();       // rand.nextInt(n) → 0..n
 int[]      arr  = new int[n];                        // defaults to 0
 boolean[]  seen = new boolean[n];                    // defaults to false
 int[][]    grid = new int[m][n];                     // 2D, all 0
-int[][]    dirs = {{-1,0},{1,0},{0,-1},{0,1}};       // UP, DOWN, LEFT, RIGHT
+int[]      dr   = {1,-1,0,0}, dc = {0,0,1,-1};  // DOWN,UP,RIGHT,LEFT; iterate for(dir=0..3) i+dr[dir],j+dc[dir]
 ```
 
 ### Map / Set / List operations
@@ -182,9 +182,9 @@ s.startsWith("ab");  s.endsWith("z");  s.contains("x"); // prefix / suffix / sub
 s.toLowerCase();  s.toUpperCase();                   // case-normalize (e.g. case-insensitive compare)
 s.trim();  s.replace('a', 'b');  s.repeat(n);        // strip ends / swap chars / repeat
 
-StringBuilder sb = new StringBuilder();
-sb.append(x);  sb.reverse();  sb.toString();
-sb.charAt(i);  sb.setCharAt(i, c);  sb.deleteCharAt(i);  sb.length();
+StringBuilder builder = new StringBuilder();
+builder.append(x);  builder.reverse();  builder.toString();
+builder.charAt(i);  builder.setCharAt(i, c);  builder.deleteCharAt(i);  builder.length();
 String.join(",", list);                              // list → "a,b,c"
 ```
 
@@ -258,7 +258,7 @@ if (entry[0] != dist[node]) continue; // Dijkstra: ignore outdated heap entries
 Deque<Integer> stack = new ArrayDeque<>();   // never use java.util.Stack
 
 // ── StringBuilder over String += in a loop ── O(n) vs O(n²)
-StringBuilder sb = new StringBuilder();      // append, then sb.toString() once
+StringBuilder builder = new StringBuilder();      // append, then builder.toString() once
 
 // ── EARLY EXIT / PRUNING ── return the moment the answer is decided
 if (found) return result;             // e.g. Trie shortest-root, backtracking bounds

@@ -53,21 +53,30 @@ for (int j = 0; j < n; j++) {
 
 ## Quick Reference Table
 
-| # | Name | Description | Problem phrase trigger | Type | State | Shrink / Record condition |
-|---|---|---|---|---|---|---|
-| 643 | Max Average Subarray I | Max average of subarray of size k | "subarray of size k" | Fixed | sum | shrink when `j-i+1 == k` |
-| 567 | Permutation in String | Does s2 contain any permutation of s1? | "substring of size len(s1)" / "permutation" | Fixed | freq + required count | shrink when `j-i+1 == len(s1)` |
-| 219 | Contains Duplicate II | Any duplicate indices ≤ k apart | "within k indices" | Fixed | HashSet | shrink when `j-i+1 > k` |
-| 239 | Sliding Window Maximum | Max element in every window of size k | "max of every window of size k" | Fixed | monotone deque | shrink when front out of `[i,j]` |
-| 1004 | Max Consecutive Ones III | Longest subarray with at most k zeros | "longest" + "at most k zeros" | Max | zero count | shrink while `zeros > k` |
-| 3 | Longest No-Repeat Substring | Longest substring without duplicates | "longest" + "no repeats" | Max | freq array | shrink while `freq[j] > 1` |
-| 424 | Longest Char Replacement | Longest with at most k replacements | "longest" + "at most k replacements" | Max | freq + maxFreq | shrink while `size - maxFreq > k` |
-| 209 | Min Size Subarray Sum | Shortest subarray with sum ≥ target | "shortest" + "sum >= target" | Min | sum | record + shrink while `sum >= target` |
-| 76 | Minimum Window Substring | Shortest substring containing all of t | "shortest substring containing" all of t | Min (freq) | freq + required count | record + shrink while `required == 0` |
-| 159 | Longest Substring with At Most 2 Distinct | Max length substring with ≤2 distinct chars | "longest" + "at most 2 distinct" | Max | freq map (size ≤ 2) | shrink while `freq.size() > 2` |
-| 340 | Longest Substring with At Most K Distinct | Max length substring with ≤k distinct chars | "longest" + "at most k distinct" | Max | freq map (size ≤ k) | shrink while `freq.size() > k` |
-| 438 | Find All Anagrams in a String | Find all start indices of p's anagrams in s | "all anagrams" / "all windows of size len(p)" | Fixed | freq compare `int[26]` | shrink when `j-i == len(p)` |
-| 1343 | Number of Subarrays of Size K and Avg ≥ Threshold | Count fixed-size windows with average ≥ threshold | "subarrays of size k" + "average >= threshold" | Fixed | sum (compare `sum >= k*threshold`) | slide when window size `== k` |
+| # | Name | Description | Intuition | Variation |
+|---|---|---|---|---|
+| 643 | Maximum Average Subarray I | Find the contiguous subarray of length k with the maximum average value. | Max average of fixed length = max sum; slide a width-k window and track the best running sum. | Standard |
+| 567 | Permutation in String | Return true if any permutation of s1 appears as a substring of s2. | A permutation is just a fixed-length window whose letter counts match s1, so slide and check the counts. | Standard |
+| 219 | Contains Duplicate II | Return true if any two equal values are at most k indices apart. | Keep only the last k values in a set; a failed insert means a duplicate within k indices. | Standard |
+| 239 | Sliding Window Maximum | Return the maximum of every contiguous subarray of size k. | A smaller value with a larger one still in the window can never be the max again, so discard it. | Standard |
+| 1004 | Max Consecutive Ones III | Flip at most k zeros. Return the length of the longest subarray of 1s. | "Flip at most k zeros" = longest window containing at most k zeros; grow, and shrink only when zeros exceed k. | Standard |
+| 3 | Longest Substring Without Repeating Characters | Find the length of the longest substring with all unique characters. | A repeat appears the moment you add it, so shrink from the left until that one character is unique again. | Standard |
+| 424 | Longest Repeating Character Replacement | Replace at most k characters. Find the longest substring with one repeated char. | A window is valid if the non-dominant chars (size − maxFreq) fit within k replacements; otherwise shrink. | Standard |
+| 209 | Minimum Size Subarray Sum | Find the minimum length subarray with sum ≥ target. | Once the window reaches target, every extra left-trim that stays ≥ target gives a shorter candidate. | Standard |
+| 76 | Minimum Window Substring | Find the shortest substring of s that contains all characters of t. | Expand until all of t is covered, then shrink as far as you can while still covering it to find the tightest window. | Standard |
+| 438 | Find All Anagrams in a String | Given strings `s` and `p`, return a list of all start indices of `p`'s anagrams in `s`. (An anagram uses same characters with same frequencies.) | An anagram is a fixed-length window whose letter counts equal p's, so slide width-`p.length()` and compare counts. | fixed window size |
+| 159 | Longest Substring with At Most 2 Distinct Characters | Return the length of the longest substring with at most 2 distinct characters. | Grow the window freely; whenever a third distinct character appears, drop from the left until only 2 remain. | shrink when >2 distinct |
+| 340 | Longest Substring with At Most K Distinct Characters | Return the length of the longest substring with at most `k` distinct characters. | Same as #159 but the distinct cap is `k`; shrink whenever the map holds more than k distinct characters. | Parameterized generalization of #159 — replace the hard-coded `2` with `k`. |
+| 1343 | Number of Sub-arrays of Size K and Average Greater than or Equal to Threshold | Return the number of contiguous subarrays of size `k` whose average is greater than or equal to `threshold`. | "Average ≥ threshold" over fixed width k is just "sum ≥ k·threshold"; slide a width-k window and count the hits. | fixed-size sliding window. To avoid floating-point division, compare `windowSum >= k * threshold`. |
+| 30 | Substring with Concatenation of All Words | Given `s` and an array `words` (all of equal length), return all start indices of substrings in `s` that are a concatenation of every word in `words` exactly once, in any order. | Every candidate substring has fixed length `words.length * wordLen`. Slide a word-aligned window: start at each offset `0..wordLen-1` and move in steps of `wordLen`, maintaining a frequency map of words seen. | word-aligned window, step = wordLen |
+| 187 | Repeated DNA Sequences | Return all 10-letter substrings that occur more than once in a DNA string `s` (characters `A`, `C`, `G`, `T`). | Fixed window of size 10; record each substring in a set and report it the first time a duplicate insert fails. | fixed window size 10 |
+| 395 | Longest Substring with At Least K Repeating Characters | Return the length of the longest substring of `s` such that every character in it appears at least `k` times. | "At least k" is not monotone for a single window, so fix the number of distinct characters allowed. For each target `unique` from 1 to 26, run a max-window that holds exactly `unique` distinct chars, and record when all of them meet the count `k`. | fix distinct count to restore monotonicity |
+| 487 | Max Consecutive Ones II | Given a binary array `nums`, return the maximum number of consecutive 1s if you may flip at most one 0. | Identical to #1004 with `k = 1`: longest window containing at most one zero. Grow, and shrink only when a second zero enters. | at most one zero (k = 1) |
+| 689 | Maximum Sum of 3 Non-Overlapping Subarrays | Find three non-overlapping subarrays of length `k` with maximum total sum and return their starting indices (lexicographically smallest on ties). | Precompute every window sum of size k, then for each middle window pick the best left window to its left and the best right window to its right. | middle window scan with k-gaps |
+| 713 | Subarray Product Less Than K | Return the number of contiguous subarrays whose product of all elements is strictly less than `k`. | Max-variable window: grow the window while the product stays below k; every valid window ending at `j` contributes `j - i + 1` new subarrays. | count subarrays ending at j |
+| 727 | Minimum Window Subsequence | Return the minimum-length substring (window) of `s1` such that `s2` is a subsequence of it. On ties, return the leftmost. | Walk forward matching `s2` as a subsequence; once fully matched at index `j`, walk backward to tighten the start, giving the smallest window ending at `j`. Restart the forward scan just past that start. | subsequence match, not contiguous |
+| 1044 | Longest Duplicate Substring | Return any longest substring that appears at least twice in `s` (overlaps allowed); return `""` if none. | Binary search the answer length: if a duplicate of length `L` exists, a duplicate of any shorter length also exists. Check each candidate length with a rolling hash over a fixed-size window. | binary search the window size |
+| 1838 | Frequency of the Most Frequent Element | Given `nums` and `k` operations (each increments one element by 1), return the maximum possible frequency of any single value. | Sort the array; the cheapest target to raise a window of elements to is its maximum (the rightmost in a sorted window). A window `[i, j]` is achievable if raising all elements to `nums[j]` costs at most `k`. | sort so the window max is the cheapest target |
 
 ---
 
@@ -506,3 +515,396 @@ class Solution {
 }
 ```
 **Time** O(n) | **Space** O(1)
+
+---
+
+# Additional Reference Problems
+
+### #30 Substring with Concatenation of All Words
+
+**Description:** Given `s` and an array `words` (all of equal length), return all start indices of substrings in `s` that are a concatenation of every word in `words` exactly once, in any order.
+
+**Intuition:** Every candidate substring has fixed length `words.length * wordLen`. Slide a word-aligned window: start at each offset `0..wordLen-1` and move in steps of `wordLen`, maintaining a frequency map of words seen.
+
+**Algorithm:** For each starting offset, run a sliding window over words. Track a `seen` map and a `count` of matched words; shrink from the left when a word over-fills or is unknown. Record when `count == words.length`.
+
+```java
+class Solution {
+    public List<Integer> findSubstring(String s, String[] words) {
+        List<Integer> result = new ArrayList<>();
+        int wordLen = words[0].length();
+        int total = words.length;
+        int windowLen = wordLen * total;
+        if (s.length() < windowLen) {
+            return result;
+        }
+        Map<String, Integer> need = new HashMap<>();
+        for (String w : words) {
+            need.merge(w, 1, Integer::sum);
+        }
+        for (int offset = 0; offset < wordLen; offset++) {   // ← VARIATION: word-aligned window, step = wordLen
+            int i = offset, count = 0;
+            Map<String, Integer> seen = new HashMap<>();
+            for (int j = offset; j + wordLen <= s.length(); j += wordLen) {
+                String word = s.substring(j, j + wordLen);   // add word at right
+                if (need.containsKey(word)) {
+                    seen.merge(word, 1, Integer::sum);
+                    count++;
+                    while (seen.get(word) > need.get(word)) {  // shrink: too many of this word
+                        String left = s.substring(i, i + wordLen);
+                        seen.merge(left, -1, Integer::sum);
+                        count--;
+                        i += wordLen;
+                    }
+                    if (count == total) {
+                        result.add(i);
+                    }
+                } else {                                      // unknown word: reset window past it
+                    seen.clear();
+                    count = 0;
+                    i = j + wordLen;
+                }
+            }
+        }
+        return result;
+    }
+}
+```
+**Time** O(n * wordLen) | **Space** O(words.length * wordLen)
+
+---
+
+### #187 Repeated DNA Sequences
+
+**Description:** Return all 10-letter substrings that occur more than once in a DNA string `s` (characters `A`, `C`, `G`, `T`).
+
+**Intuition:** Fixed window of size 10; record each substring in a set and report it the first time a duplicate insert fails.
+
+**Algorithm:** Fixed-size sliding window of length 10. Use a `seen` set to detect duplicates and a `result` set to avoid reporting the same sequence twice.
+
+```java
+class Solution {
+    public List<String> findRepeatedDnaSequences(String s) {
+        Set<String> seen = new HashSet<>();
+        Set<String> result = new HashSet<>();
+        int i = 0;
+        for (int j = 0; j < s.length(); j++) {
+            if (j - i + 1 == 10) {                       // ← VARIATION: fixed window size 10
+                String window = s.substring(i, j + 1);
+                if (!seen.add(window)) {
+                    result.add(window);
+                }
+                i++;
+            }
+        }
+        return new ArrayList<>(result);
+    }
+}
+```
+**Time** O(n) | **Space** O(n)
+
+---
+
+### #395 Longest Substring with At Least K Repeating Characters
+
+**Description:** Return the length of the longest substring of `s` such that every character in it appears at least `k` times.
+
+**Intuition:** "At least k" is not monotone for a single window, so fix the number of distinct characters allowed. For each target `unique` from 1 to 26, run a max-window that holds exactly `unique` distinct chars, and record when all of them meet the count `k`.
+
+**Algorithm:** Outer loop over `unique` (1..26). Inner sliding window tracks `count[ch-'a']`, the number of distinct chars, and how many of them reach `k`. Shrink while distinct exceeds `unique`. Record when distinct equals `unique` and all are at count k.
+
+```java
+class Solution {
+    public int longestSubstring(String s, int k) {
+        int result = 0;
+        for (int unique = 1; unique <= 26; unique++) {   // ← VARIATION: fix distinct count to restore monotonicity
+            int[] count = new int[26];
+            int i = 0, distinct = 0, atLeastK = 0;
+            for (int j = 0; j < s.length(); j++) {
+                if (count[s.charAt(j) - 'a'] == 0) {
+                    distinct++;
+                }
+                count[s.charAt(j) - 'a']++;
+                if (count[s.charAt(j) - 'a'] == k) {
+                    atLeastK++;
+                }
+                while (distinct > unique) {              // shrink to keep at most `unique` distinct
+                    if (count[s.charAt(i) - 'a'] == k) {
+                        atLeastK--;
+                    }
+                    count[s.charAt(i) - 'a']--;
+                    if (count[s.charAt(i) - 'a'] == 0) {
+                        distinct--;
+                    }
+                    i++;
+                }
+                if (distinct == unique && atLeastK == unique) {
+                    result = Math.max(result, j - i + 1);
+                }
+            }
+        }
+        return result;
+    }
+}
+```
+**Time** O(26 * n) | **Space** O(1)
+
+---
+
+### #487 Max Consecutive Ones II
+
+**Description:** Given a binary array `nums`, return the maximum number of consecutive 1s if you may flip at most one 0.
+
+**Intuition:** Identical to #1004 with `k = 1`: longest window containing at most one zero. Grow, and shrink only when a second zero enters.
+
+**Algorithm:** Max-variable sliding window. Track `zeros`; shrink from the left while `zeros > 1`.
+
+```java
+class Solution {
+    public int findMaxConsecutiveOnes(int[] nums) {
+        int i = 0, zeros = 0, result = 0;
+        for (int j = 0; j < nums.length; j++) {
+            if (nums[j] == 0) {
+                zeros++;
+            }
+            while (zeros > 1) {                          // ← VARIATION: at most one zero (k = 1)
+                if (nums[i] == 0) {
+                    zeros--;
+                }
+                i++;
+            }
+            result = Math.max(result, j - i + 1);
+        }
+        return result;
+    }
+}
+```
+**Time** O(n) | **Space** O(1)
+
+---
+
+### #689 Maximum Sum of 3 Non-Overlapping Subarrays
+
+**Description:** Find three non-overlapping subarrays of length `k` with maximum total sum and return their starting indices (lexicographically smallest on ties).
+
+**Intuition:** Precompute every window sum of size k, then for each middle window pick the best left window to its left and the best right window to its right.
+
+**Algorithm:** Fixed window sums into `windowSum`. Build `left[m]` = index of best window in `[0..m]` and `right[m]` = index of best window in `[m..end]`. Sweep the middle window and combine.
+
+```java
+class Solution {
+    public int[] maxSumOfThreeSubarrays(int[] nums, int k) {
+        int n = nums.length;
+        int numWindows = n - k + 1;
+        int[] windowSum = new int[numWindows];
+        int i = 0, sum = 0;
+        for (int j = 0; j < n; j++) {                    // fixed window sums of size k
+            sum += nums[j];
+            if (j - i + 1 == k) {
+                windowSum[i] = sum;
+                sum -= nums[i];
+                i++;
+            }
+        }
+        int[] left = new int[numWindows];
+        int best = 0;
+        for (int m = 0; m < numWindows; m++) {
+            if (windowSum[m] > windowSum[best]) {
+                best = m;
+            }
+            left[m] = best;
+        }
+        int[] right = new int[numWindows];
+        best = numWindows - 1;
+        for (int m = numWindows - 1; m >= 0; m--) {
+            if (windowSum[m] >= windowSum[best]) {       // >= keeps smallest index on ties
+                best = m;
+            }
+            right[m] = best;
+        }
+        int[] result = new int[]{-1, -1, -1};
+        int maxTotal = -1;
+        for (int mid = k; mid + k <= numWindows - 1; mid++) {   // ← VARIATION: middle window scan with k-gaps
+            int l = left[mid - k];
+            int r = right[mid + k];
+            int totalSum = windowSum[l] + windowSum[mid] + windowSum[r];
+            if (totalSum > maxTotal) {
+                maxTotal = totalSum;
+                result = new int[]{l, mid, r};
+            }
+        }
+        return result;
+    }
+}
+```
+**Time** O(n) | **Space** O(n)
+
+---
+
+### #713 Subarray Product Less Than K
+
+**Description:** Return the number of contiguous subarrays whose product of all elements is strictly less than `k`.
+
+**Intuition:** Max-variable window: grow the window while the product stays below k; every valid window ending at `j` contributes `j - i + 1` new subarrays.
+
+**Algorithm:** Maintain a running product. Shrink from the left while `product >= k`. Add `j - i + 1` to the count at each step.
+
+```java
+class Solution {
+    public int numSubarrayProductLessThanK(int[] nums, int k) {
+        if (k <= 1) {
+            return 0;
+        }
+        int i = 0, product = 1, result = 0;
+        for (int j = 0; j < nums.length; j++) {
+            product *= nums[j];
+            while (product >= k) {                       // shrink while window invalid
+                product /= nums[i];
+                i++;
+            }
+            result += j - i + 1;                         // ← VARIATION: count subarrays ending at j
+        }
+        return result;
+    }
+}
+```
+**Time** O(n) | **Space** O(1)
+
+---
+
+### #727 Minimum Window Subsequence
+
+**Description:** Return the minimum-length substring (window) of `s1` such that `s2` is a subsequence of it. On ties, return the leftmost.
+
+**Intuition:** Walk forward matching `s2` as a subsequence; once fully matched at index `j`, walk backward to tighten the start, giving the smallest window ending at `j`. Restart the forward scan just past that start.
+
+**Algorithm:** Two-pointer subsequence match. Forward pass advances `k` over `s2`; when `k` reaches the end, scan back to find the matching start, record the window, then resume scanning after the start position.
+
+```java
+class Solution {
+    public String minWindow(String s1, String s2) {
+        int n = s1.length(), m = s2.length();
+        int start = -1, minLen = Integer.MAX_VALUE;
+        int k = 0;                                       // pointer into s2
+        for (int j = 0; j < n; j++) {
+            if (s1.charAt(j) == s2.charAt(k)) {          // ← VARIATION: subsequence match, not contiguous
+                k++;
+                if (k == m) {                            // matched all of s2 ending at j
+                    int end = j + 1;
+                    k--;
+                    int i = j;                           // walk back to the tightest start
+                    while (k >= 0) {
+                        if (s1.charAt(i) == s2.charAt(k)) {
+                            k--;
+                        }
+                        i--;
+                    }
+                    i++;                                 // i now points at window start
+                    k++;
+                    if (end - i < minLen) {
+                        minLen = end - i;
+                        start = i;
+                    }
+                    j = i;                               // resume scan just after the start
+                    k = 0;
+                }
+            }
+        }
+        return start == -1 ? "" : s1.substring(start, start + minLen);
+    }
+}
+```
+**Time** O(n * m) | **Space** O(1)
+
+---
+
+### #1044 Longest Duplicate Substring
+
+**Description:** Return any longest substring that appears at least twice in `s` (overlaps allowed); return `""` if none.
+
+**Intuition:** Binary search the answer length: if a duplicate of length `L` exists, a duplicate of any shorter length also exists. Check each candidate length with a rolling hash over a fixed-size window.
+
+**Algorithm:** Binary search on length `L`. For each `L`, slide a window of size `L`, compute its rolling (Rabin-Karp) hash, and store hashes in a set; a collision (verified by substring compare) means a duplicate of length `L` exists.
+
+```java
+class Solution {
+    public String longestDupSubstring(String s) {
+        int n = s.length();
+        long mod = (1L << 61) - 1;
+        long base = 131;
+        int lo = 1, hi = n - 1;
+        String result = "";
+        while (lo <= hi) {                               // ← VARIATION: binary search the window size
+            int len = lo + (hi - lo) / 2;
+            int start = search(s, len, base, mod);
+            if (start != -1) {
+                result = s.substring(start, start + len);
+                lo = len + 1;
+            } else {
+                hi = len - 1;
+            }
+        }
+        return result;
+    }
+
+    private int search(String s, int len, long base, long mod) {
+        long hash = 0, power = 1;
+        for (int j = 0; j < len; j++) {                  // hash of first window [0, len)
+            hash = (hash * base + s.charAt(j)) % mod;
+        }
+        for (int j = 0; j < len - 1; j++) {
+            power = (power * base) % mod;                // base^(len-1)
+        }
+        Map<Long, List<Integer>> seen = new HashMap<>();
+        seen.computeIfAbsent(hash, x -> new ArrayList<>()).add(0);
+        int i = 1;                                       // window start
+        for (int j = len; j < s.length(); j++) {         // slide fixed window of size len
+            hash = (hash - s.charAt(i - 1) * power % mod + mod) % mod;
+            hash = (hash * base + s.charAt(j)) % mod;
+            String window = s.substring(i, j + 1);
+            List<Integer> candidates = seen.get(hash);
+            if (candidates != null) {
+                for (int idx : candidates) {
+                    if (s.substring(idx, idx + len).equals(window)) {
+                        return i;
+                    }
+                }
+            }
+            seen.computeIfAbsent(hash, x -> new ArrayList<>()).add(i);
+            i++;
+        }
+        return -1;
+    }
+}
+```
+**Time** O(n log n) average | **Space** O(n)
+
+---
+
+### #1838 Frequency of the Most Frequent Element
+
+**Description:** Given `nums` and `k` operations (each increments one element by 1), return the maximum possible frequency of any single value.
+
+**Intuition:** Sort the array; the cheapest target to raise a window of elements to is its maximum (the rightmost in a sorted window). A window `[i, j]` is achievable if raising all elements to `nums[j]` costs at most `k`.
+
+**Algorithm:** Sort. Max-variable sliding window over a running `sum`. Cost to level the window up to `nums[j]` is `(long)(j - i + 1) * nums[j] - sum`; shrink while that exceeds `k`. Track the largest window size.
+
+```java
+class Solution {
+    public int maxFrequency(int[] nums, int k) {
+        Arrays.sort(nums);                               // ← VARIATION: sort so the window max is the cheapest target
+        int i = 0, result = 0;
+        long sum = 0;
+        for (int j = 0; j < nums.length; j++) {
+            sum += nums[j];
+            while ((long) (j - i + 1) * nums[j] - sum > k) {  // shrink while leveling cost exceeds k
+                sum -= nums[i];
+                i++;
+            }
+            result = Math.max(result, j - i + 1);
+        }
+        return result;
+    }
+}
+```
+**Time** O(n log n) | **Space** O(1)

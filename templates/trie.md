@@ -4,14 +4,18 @@
 
 ## Quick Reference Table
 
-| # | Name | Description | Algorithm | Variation from Template | Time | Space |
-|---|---|---|---|---|---|---|
-| 208 | Implement Trie | insert / search / startsWith | Standard insert + traverse | **Standard** | O(k) per op | O(n·k) |
-| 211 | Add and Search Words | Like Trie but `.` matches any letter | Insert standard; search with DFS for `.` | **DFS for wildcard**: `.` triggers recursive search over all children | O(k) insert, O(26^k) search worst | O(n·k) |
-| 212 | Word Search II | Find all words from list that exist in grid | Trie built from words + DFS grid backtracking | **Grid DFS with Trie pruning**: cut branch when no Trie path matches | O(M·N·4·3^(L-1)) | O(total chars) |
-| 648 | Replace Words | Replace each word with its shortest root in dictionary | Trie + early return on first `isEnd` hit | **Early-exit**: return prefix immediately when `isEnd` found | O(n·k) build + O(sentence) search | O(dict·k) |
-| 745 | Prefix and Suffix Search | Given words list, find index of word with given prefix AND suffix | Build Trie keyed by "prefix#suffix" for all prefix-suffix pairs of each word; O(1) query | **Precompute all pairs**: for each word, store every (prefix+#+ suffix) combo in HashMap | O(W·L²) build, O(p+s) query | O(W·L²) |
-| 1268 | Search Suggestions System | For each prefix, return 3 lexicographic suggestions | Trie; store up to 3 words at each node during insert | **Store words at node**: each node caches its top-3 suggestions | O(n·k log n) build + O(k) search | O(n·k) |
+| # | Name | Description | Intuition | Variation |
+|---|---|---|---|---|
+| 208 | Implement Trie | Implement `insert(word)`, `search(word)`, and `startsWith(prefix)`. | each word is a path of letters down the tree; shared prefixes share the same path, so searching is just walking that path. | Standard |
+| 211 | Design Add and Search Words Data Structure | Same as Trie but `search` supports `.` which matches any single letter. |  | when character is `.`, recursively try every non-null child. |
+| 212 | Word Search II | Given a board and a list of words, find all words that exist in the board (connected adjacent cells, no reuse). |  | build a Trie from the word list; during grid DFS, follow the Trie path to prune branches that can't form any word. This avoids re-scanning the grid for each word independently. |
+| 648 | Replace Words | Replace every word in a sentence with its shortest root from a dictionary. If multiple roots are prefixes, use the shortest. |  | insert dictionary into Trie. For each word in sentence, traverse the Trie and return immediately when `isEnd` is hit — that's the shortest matching root. |
+| 1268 | Search Suggestions System | For each prefix of `searchWord` (length 1, 2, ..., n), return up to 3 products from `products` that share that prefix, in lexicographic order. |  | sort products first, then insert into Trie. At each node on the insertion path, cache the word (up to 3) — since products are sorted, the first 3 cached are always lexicographically smallest. Lookup is then O(1) per prefix. |
+| 745 | Prefix and Suffix Search | Design a class `WordFilter` with `f(pref, suff)` that returns the index of the word with the given prefix and suffix. If multiple words match, return the largest index. |  | precompute all prefix-suffix pairs |
+| 336 | Palindrome Pairs | Given a list of unique words, find all pairs of distinct indices `(i, j)` such that `words[i] + words[j]` is a palindrome. | insert every word **reversed** into a Trie, tagging each end node with its index. For a query word, walk the Trie char by char; whenever the remainder of the word is itself a palindrome and we sit on a complete reversed word, those two concatenate into a palindrome. | words whose remaining suffix is a palindrome |
+| 676 | Implement Magic Dictionary | Build a dictionary from a list of words. Implement `search(word)` that returns true if you can change **exactly one** character of `word` to make it match a dictionary word. | standard Trie insert; on search, DFS the Trie tracking how many characters have been changed so far. Allow exactly one mismatch. | exactly one change required |
+| 720 | Longest Word in Dictionary | Given a list of words, return the longest word that can be built one character at a time by other words in the list. If multiple, return the lexicographically smallest. | a word is buildable only if **every** prefix of it is also a complete word in the list. Insert all words, then DFS the Trie only through `isEnd` nodes — any reachable end node represents a fully buildable word. | longest, ties broken lexicographically |
+| 1233 | Remove Sub-Folders from the Filesystem | Given a list of folder paths, remove all sub-folders so only top-level folders remain. `"/a/b"` is a sub-folder of `"/a"`. | split each path into its `/`-separated components and build a Trie keyed by component (map-based, since components are arbitrary strings). Mark the node ending a folder. A folder is a sub-folder iff some ancestor node on its path is already an `isEnd` folder. | map keyed by path component |
 
 ---
 
@@ -473,3 +477,283 @@ class WordFilter {
 }
 ```
 **Time** O(W·L²) build, O(p+s) query | **Space** O(W·L²) where W=words.length, L=max word length
+
+---
+
+# Additional Reference Problems
+
+## #336 Palindrome Pairs
+
+**Description:** Given a list of unique words, find all pairs of distinct indices `(i, j)` such that `words[i] + words[j]` is a palindrome.
+
+**Intuition:** insert every word **reversed** into a Trie, tagging each end node with its index. For a query word, walk the Trie char by char; whenever the remainder of the word is itself a palindrome and we sit on a complete reversed word, those two concatenate into a palindrome.
+
+**Algorithm:** store at each `isEnd` node the word's index, and at every node a list of indices whose remaining (un-traversed) suffix is a palindrome. While matching `words[i]` against the reversed-word Trie, collect index matches that pair into palindromes.
+
+```java
+class Solution {
+    static class TrieNode {
+        TrieNode[] children = new TrieNode[26];
+        int index = -1;                 // index of word ending here (reversed), -1 if none
+        List<Integer> palindromeBelow = new ArrayList<>();  // ← VARIATION: words whose remaining suffix is a palindrome
+    }
+
+    public List<List<Integer>> palindromePairs(String[] words) {
+        TrieNode root = new TrieNode();
+        for (int i = 0; i < words.length; i++) {
+            insert(root, words[i], i);
+        }
+
+        List<List<Integer>> result = new ArrayList<>();
+        for (int i = 0; i < words.length; i++) {
+            search(root, words[i], i, result);
+        }
+        return result;
+    }
+
+    private void insert(TrieNode root, String word, int index) {
+        TrieNode node = root;
+        int n = word.length();
+        for (int j = n - 1; j >= 0; j--) {                  // ← VARIATION: insert reversed
+            if (isPalindrome(word, 0, j)) {
+                node.palindromeBelow.add(index);            // prefix [0..j] is a palindrome
+            }
+            int idx = word.charAt(j) - 'a';
+            if (node.children[idx] == null) {
+                node.children[idx] = new TrieNode();
+            }
+            node = node.children[idx];
+        }
+        node.palindromeBelow.add(index);                    // empty remainder is a palindrome
+        node.index = index;
+    }
+
+    private void search(TrieNode root, String word, int i, List<List<Integer>> result) {
+        TrieNode node = root;
+        int n = word.length();
+        for (int k = 0; k < n; k++) {
+            // case: matched a full reversed word AND the rest of this word is a palindrome
+            if (node.index != -1 && node.index != i && isPalindrome(word, k, n - 1)) {
+                result.add(Arrays.asList(i, node.index));
+            }
+            int idx = word.charAt(k) - 'a';
+            if (node.children[idx] == null) {
+                return;
+            }
+            node = node.children[idx];
+        }
+        // consumed all of word: pair with any reversed word whose extra suffix is a palindrome
+        for (int j : node.palindromeBelow) {
+            if (j != i) {
+                result.add(Arrays.asList(i, j));
+            }
+        }
+    }
+
+    private boolean isPalindrome(String word, int left, int right) {
+        while (left < right) {
+            if (word.charAt(left) != word.charAt(right)) {
+                return false;
+            }
+            left++;
+            right--;
+        }
+        return true;
+    }
+}
+```
+**Time** O(n·k²) where n = words count, k = max word length | **Space** O(n·k)
+
+---
+
+## #676 Implement Magic Dictionary
+
+**Description:** Build a dictionary from a list of words. Implement `search(word)` that returns true if you can change **exactly one** character of `word` to make it match a dictionary word.
+
+**Intuition:** standard Trie insert; on search, DFS the Trie tracking how many characters have been changed so far. Allow exactly one mismatch.
+
+**Algorithm:** at each position try the matching child with `changed` unchanged, and (if budget remains) every other child with `changed = 1`. Succeed only when the whole word is consumed, the node is a word end, and exactly one change was used.
+
+```java
+class MagicDictionary {
+    private TrieNode root = new TrieNode();
+
+    static class TrieNode {
+        TrieNode[] children = new TrieNode[26];
+        boolean isEnd = false;
+    }
+
+    public void buildDict(String[] dictionary) {
+        for (String word : dictionary) {
+            insert(word);
+        }
+    }
+
+    private void insert(String word) {
+        TrieNode node = root;
+        for (char c : word.toCharArray()) {
+            int idx = c - 'a';
+            if (node.children[idx] == null) {
+                node.children[idx] = new TrieNode();
+            }
+            node = node.children[idx];
+        }
+        node.isEnd = true;
+    }
+
+    public boolean search(String word) {
+        return dfs(root, word, 0, 0);
+    }
+
+    private boolean dfs(TrieNode node, String word, int i, int changed) {
+        if (i == word.length()) {
+            return node.isEnd && changed == 1;              // ← VARIATION: exactly one change required
+        }
+        int idx = word.charAt(i) - 'a';
+        for (int c = 0; c < 26; c++) {
+            if (node.children[c] == null) {
+                continue;
+            }
+            int nextChanged = (c == idx) ? changed : changed + 1;
+            if (nextChanged > 1) {
+                continue;                                   // ← VARIATION: prune after a second change
+            }
+            if (dfs(node.children[c], word, i + 1, nextChanged)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+```
+**Time** O(k) insert, O(26^k) search worst case | **Space** O(n·k)
+
+---
+
+## #720 Longest Word in Dictionary
+
+**Description:** Given a list of words, return the longest word that can be built one character at a time by other words in the list. If multiple, return the lexicographically smallest.
+
+**Intuition:** a word is buildable only if **every** prefix of it is also a complete word in the list. Insert all words, then DFS the Trie only through `isEnd` nodes — any reachable end node represents a fully buildable word.
+
+**Algorithm:** DFS from root; descend only into children that are themselves word ends. Track the best (longest, then lexicographically smallest) reachable word.
+
+```java
+class Solution {
+    static class TrieNode {
+        TrieNode[] children = new TrieNode[26];
+        boolean isEnd = false;
+    }
+
+    private String best = "";
+
+    public String longestWord(String[] words) {
+        TrieNode root = new TrieNode();
+        for (String word : words) {
+            insert(root, word);
+        }
+        dfs(root, new StringBuilder());
+        return best;
+    }
+
+    private void insert(TrieNode root, String word) {
+        TrieNode node = root;
+        for (char c : word.toCharArray()) {
+            int idx = c - 'a';
+            if (node.children[idx] == null) {
+                node.children[idx] = new TrieNode();
+            }
+            node = node.children[idx];
+        }
+        node.isEnd = true;
+    }
+
+    private void dfs(TrieNode node, StringBuilder builder) {
+        String word = builder.toString();
+        if (word.length() > best.length()
+                || (word.length() == best.length() && word.compareTo(best) < 0)) {
+            best = word;                                    // ← VARIATION: longest, ties broken lexicographically
+        }
+        for (int i = 0; i < 26; i++) {
+            TrieNode child = node.children[i];
+            if (child != null && child.isEnd) {             // ← VARIATION: only descend through word ends
+                builder.append((char) ('a' + i));
+                dfs(child, builder);
+                builder.deleteCharAt(builder.length() - 1);
+            }
+        }
+    }
+}
+```
+**Time** O(n·k) build + O(n·k) DFS | **Space** O(n·k)
+
+---
+
+## #1233 Remove Sub-Folders from the Filesystem
+
+**Description:** Given a list of folder paths, remove all sub-folders so only top-level folders remain. `"/a/b"` is a sub-folder of `"/a"`.
+
+**Intuition:** split each path into its `/`-separated components and build a Trie keyed by component (map-based, since components are arbitrary strings). Mark the node ending a folder. A folder is a sub-folder iff some ancestor node on its path is already an `isEnd` folder.
+
+**Algorithm:** insert all folders; then for each folder walk its components and keep it only if no ancestor along the way is marked as a folder end.
+
+```java
+class Solution {
+    static class TrieNode {
+        Map<String, TrieNode> children = new HashMap<>();   // ← VARIATION: map keyed by path component
+        boolean isEnd = false;
+    }
+
+    public List<String> removeSubfolders(String[] folder) {
+        TrieNode root = new TrieNode();
+        for (String path : folder) {
+            insert(root, path);
+        }
+
+        List<String> result = new ArrayList<>();
+        for (String path : folder) {
+            if (isTopLevel(root, path)) {
+                result.add(path);
+            }
+        }
+        return result;
+    }
+
+    private void insert(TrieNode root, String path) {
+        TrieNode node = root;
+        for (String part : path.split("/")) {
+            if (part.isEmpty()) {                           // skip the leading empty token from leading '/'
+                continue;
+            }
+            node.children.putIfAbsent(part, new TrieNode());
+            node = node.children.get(part);
+        }
+        node.isEnd = true;
+    }
+
+    private boolean isTopLevel(TrieNode root, String path) {
+        TrieNode node = root;
+        String[] parts = path.split("/");
+        for (int i = 0; i < parts.length; i++) {
+            if (parts[i].isEmpty()) {
+                continue;
+            }
+            node = node.children.get(parts[i]);
+            if (node.isEnd && !isLast(parts, i)) {          // ← VARIATION: ancestor folder end → sub-folder
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isLast(String[] parts, int i) {
+        for (int j = i + 1; j < parts.length; j++) {
+            if (!parts[j].isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+```
+**Time** O(n·k) where n = folders, k = avg components | **Space** O(n·k)
