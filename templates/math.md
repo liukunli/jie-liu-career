@@ -337,4 +337,3 @@ x / gcd(x,y) * y     // LCM without overflow (divide first)
 | "count primes below n" | Sieve of Eratosthenes, mark from `i*i` | O(n log log n) |
 | "nth number divisible by a/b/c" | Binary search on answer + inclusion-exclusion (LCM) | O(log range) |
 | "check if n is power of 2/4" | Bit trick `n & (n-1) == 0` (see bit_manipulation) | O(1) |
-```

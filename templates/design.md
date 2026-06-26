@@ -45,8 +45,10 @@ public class Solution {
 | Context | Convention |
 |---|---|
 | Index variables | `i`, `j`, `k` (never `left`, `right`, `low`, `mid`, `high`) |
-| Linked list | `sentinel`, `previous`, `current` |
-| Queue | `Queue<Integer> queue = new ArrayDeque<>();` |
+| Linked list | `sentinel`, `previous`, `current` (never `prev`, `cur`, `curr`) |
+| String building | `StringBuilder builder = new StringBuilder();` (never `sb`) |
+| Result accumulator | `result` (never `res`); use `output` if `result` is already taken in scope |
+| Queue / deque | `Queue<Integer> queue = new ArrayDeque<>();` (never `dq`) |
 | BFS over tree | `Queue<TreeNode> queue = new ArrayDeque<>();` |
 | Grid directions | `int[][] dirs = {{-1,0},{1,0},{0,-1},{0,1}};` (UP, DOWN, LEFT, RIGHT) |
 | Character frequency | `count[ch - 'a']++;` |
@@ -59,23 +61,23 @@ public class Solution {
 
 | File | Category | Core Pattern |
 |---|---|---|
-| `binary_search_templates.md` | Binary Search | Closed `[i,j]`, half-open, minimize/maximize answer space |
-| `two_pointer_templates.md` | Two Pointers | Opposite ends, same-direction write pointer, Dutch flag |
-| `prefix_sum_hashmap_templates.md` | Prefix Sum | Count/length with HashMap, tree path sums |
-| `sorting_templates.md` | Sorting | Merge sort, quick sort, quick select, count-during-merge |
-| `sliding_window_templates.md` | Sliding Window | Fixed, max-variable, min-variable windows |
-| `linked_list_templates.md` | Linked List | Delete/filter, reversal, fast/slow, merge, composite |
-| `dfs_templates.md` | DFS / Backtracking | Tree return-up/pass-down, grid DFS, graph 3-color, backtracking, BST |
-| `bfs_templates.md` | BFS | Level-order with size snapshot, position indexing |
-| `graph_templates.md` | Graph | BFS shortest path, topo sort, union find, Dijkstra, bipartite, Prim's MST |
-| `dp_templates.md` | Dynamic Programming | 1D/2D/grid/interval DP, knapsack, state machine |
-| `stack_queue_templates.md` | Stack / Queue / Heap | Monotone stack/deque, two heaps, priority queue |
-| `greedy_templates.md` | Greedy | Sort-by-end, sort-by-start, sort + heap, non-interval |
-| `string_templates.md` | String | Frequency counting, hashing, bucket sort, expand-from-center |
-| `bit_manipulation_templates.md` | Bit Manipulation | XOR cancel, mod-k state machine, bitmask as set, power checks |
-| `trie_templates.md` | Trie | Insert/search/startsWith, wildcard DFS, grid pruning |
-| `design_templates.md` | Design | HashMap + linked list (LRU), frequency maps (LFU), array + map |
-| `math_templates.md` | Math | Fast power, base conversion, sieve, digit manipulation |
+| `binary_search.md` | Binary Search | Closed `[i,j]`, half-open, minimize/maximize answer space |
+| `two_pointers.md` | Two Pointers | Opposite ends, same-direction write pointer, Dutch flag |
+| `prefix_sum_hashmap.md` | Prefix Sum | Count/length with HashMap, tree path sums |
+| `sorting.md` | Sorting | Merge sort, quick sort, quick select, count-during-merge |
+| `sliding_window.md` | Sliding Window | Fixed, max-variable, min-variable windows |
+| `linked_list.md` | Linked List | Delete/filter, reversal, fast/slow, merge, composite |
+| `dfs.md` | DFS / Backtracking | Tree return-up/pass-down, grid DFS, graph 3-color, backtracking, BST |
+| `bfs.md` | BFS | Level-order with size snapshot, position indexing |
+| `graph.md` | Graph | BFS shortest path, topo sort, union find, Dijkstra, bipartite, Prim's MST |
+| `dynamic_programming.md` | Dynamic Programming | 1D/2D/grid/interval DP, knapsack, state machine |
+| `stack_queue.md` | Stack / Queue / Heap | Monotone stack/deque, two heaps, priority queue |
+| `greedy.md` | Greedy | Sort-by-end, sort-by-start, sort + heap, non-interval |
+| `string.md` | String | Frequency counting, hashing, bucket sort, expand-from-center |
+| `bit_manipulation.md` | Bit Manipulation | XOR cancel, mod-k state machine, bitmask as set, power checks |
+| `trie.md` | Trie | Insert/search/startsWith, wildcard DFS, grid pruning |
+| `design.md` | Design | HashMap + linked list (LRU), frequency maps (LFU), array + map |
+| `math.md` | Math | Fast power, base conversion, sieve, digit manipulation |
 
 ---
 

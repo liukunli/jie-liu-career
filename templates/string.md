@@ -1,7 +1,7 @@
 # String Templates
 
 Core idioms first, then problems grouped by pattern.  
-For sliding window string problems (#3, #76, #567, #424), see `sliding_window_templates.md`.
+For sliding window string problems (#3, #76, #567, #424), see `sliding_window.md`.
 
 ---
 
@@ -470,4 +470,4 @@ map.computeIfAbsent(key, k -> new ArrayList<>()).add(value);
 | Longest/count palindromic substrings | Expand from center (i,i) odd + (i,i+1) even |
 | Parse a number from string | `num = num * 10 + (ch - '0')` |
 | Remove adjacent duplicate pairs | Stack: push, pop on match |
-| Sliding window over characters | See `sliding_window_templates.md` |
+| Sliding window over characters | See `sliding_window.md` |
