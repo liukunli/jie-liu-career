@@ -231,6 +231,20 @@ Store:              map.merge(sum, 1, +)     map.putIfAbsent(sum, i)
 - Use `long` for the prefix sum when values can be large (e.g., `nums[i]` up to `10^4` × `n` up to `2×10^4` → sum up to `2×10^8`, safe as int, but `10^5 × 10^5 = 10^10` overflows).
 - Use `int` for the remainder key (modulo result is always in `[0, k-1]`).
 
+### Why `0L` (not `0`) in the seed
+
+When the map is `Map<Long, Integer>`, the seed **key** must be a `long` literal:
+
+```java
+Map<Long, Integer> map = new HashMap<>();
+map.put(0L, 1);     // ✓ long literal → boxes to Long (matches key type)
+map.put(0, 1);      // ✗ compile error: int boxes to Integer, not Long
+```
+
+- The `L` suffix makes it a `long` literal so it autoboxes to `Long`, matching the key type (the keys are `long` because `sum` is `long` for the overflow guard above).
+- **Subtle trap:** even numerically equal boxes of different types never compare equal — `Long.valueOf(0).equals(Integer.valueOf(0))` is `false`. Keeping every key `long`/`Long` avoids silent lookup misses.
+- If `int` sums can't overflow, use `Map<Integer, Integer>` with plain `map.put(0, 1)` instead — simpler, no `L` needed.
+
 ---
 
 ## #1 Two Sum

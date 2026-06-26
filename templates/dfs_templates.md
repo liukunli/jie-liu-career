@@ -799,9 +799,13 @@ void inorder(TreeNode node) {
 // Navigate BST like binary search: go left or right based on comparison
 TreeNode search(TreeNode root, int target) {
     while (root != null) {
-        if      (root.val == target) return root;
-        else if (root.val <  target) root = root.right;
-        else                         root = root.left;
+        if (root.val == target) {
+            return root;
+        } else if (root.val < target) {
+            root = root.right;
+        } else {
+            root = root.left;
+        }
     }
     return null;
 }

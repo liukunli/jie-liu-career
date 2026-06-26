@@ -48,12 +48,12 @@ for (int i = 0; i < s.length(); i++)
 String hashKey(String s) {
     int[] count = new int[26];
     for (char ch : s.toCharArray()) count[ch - 'a']++;
-    StringBuilder sb = new StringBuilder();
+    StringBuilder builder = new StringBuilder();
     for (int i = 0; i < 26; i++) {
-        sb.append((char)('a' + i));                    // ← letter as label
-        sb.append(count[i]);                           // ← its count
+        builder.append((char)('a' + i));                    // ← letter as label
+        builder.append(count[i]);                           // ← its count
     }
-    return sb.toString();                              // e.g., "a2b0c1...z0"
+    return builder.toString();                              // e.g., "a2b0c1...z0"
 }
 // Alternative: sort the characters (simpler, slightly slower)
 char[] chars = s.toCharArray();
@@ -71,11 +71,11 @@ for (int i = 0; i < 128; i++) {
         buckets[freq].add((char) i);
     }
 }
-StringBuilder sb = new StringBuilder();
+StringBuilder builder = new StringBuilder();
 for (int freq = buckets.length - 1; freq > 0; freq--) {    // ← descending frequency
     if (buckets[freq] == null) continue;
     for (char ch : buckets[freq])
-        for (int i = 0; i < freq; i++) sb.append(ch);
+        for (int i = 0; i < freq; i++) builder.append(ch);
 }
 
 // 6. EXPAND FROM CENTER — palindrome check in O(1) space
@@ -171,12 +171,12 @@ class Solution {
     private String hashKey(String s) {                                  // O(k) — no sort needed
         int[] count = new int[26];
         for (char ch : s.toCharArray()) count[ch - 'a']++;             // ← count each char
-        StringBuilder sb = new StringBuilder();
+        StringBuilder builder = new StringBuilder();
         for (int i = 0; i < 26; i++) {
-            sb.append((char)('a' + i));                                 // ← letter label
-            sb.append(count[i]);                                        // ← its count
+            builder.append((char)('a' + i));                                 // ← letter label
+            builder.append(count[i]);                                        // ← its count
         }
-        return sb.toString();                                           // e.g., "a1e1t1"
+        return builder.toString();                                           // e.g., "a1e1t1"
     }
 }
 // Time O(n·k) | Space O(n)   — k = avg string length
@@ -212,13 +212,13 @@ class Solution {
             }
         }
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder builder = new StringBuilder();
         for (int freq = s.length(); freq > 0; freq--) {                // ← descending frequency
             if (buckets[freq] == null) continue;
             for (char ch : buckets[freq])
-                for (int i = 0; i < freq; i++) sb.append(ch);          // ← repeat char `freq` times
+                for (int i = 0; i < freq; i++) builder.append(ch);          // ← repeat char `freq` times
         }
-        return sb.toString();
+        return builder.toString();
     }
 }
 // Time O(n) | Space O(n)
@@ -411,12 +411,15 @@ class Solution {
     public String removeDuplicates(String s) {
         Deque<Character> stack = new ArrayDeque<>();
         for (char ch : s.toCharArray()) {
-            if (!stack.isEmpty() && stack.peek() == ch) stack.pop();  // ← pair → cancel
-            else                                         stack.push(ch);
+            if (!stack.isEmpty() && stack.peek() == ch) {
+                stack.pop();  // ← pair → cancel
+            } else {
+                stack.push(ch);
+            }
         }
-        StringBuilder sb = new StringBuilder();
-        while (!stack.isEmpty()) sb.append(stack.pop());
-        return sb.reverse().toString();
+        StringBuilder builder = new StringBuilder();
+        while (!stack.isEmpty()) builder.append(stack.pop());
+        return builder.reverse().toString();
     }
 }
 ```
@@ -446,11 +449,11 @@ s.startsWith(prefix)                 // boolean
 s.split("\\s+")                      // split on whitespace
 
 // Building strings
-StringBuilder sb = new StringBuilder();
-sb.append(ch);        sb.append(str);
-sb.deleteCharAt(i);
-sb.reverse();
-sb.toString();
+StringBuilder builder = new StringBuilder();
+builder.append(ch);        builder.append(str);
+builder.deleteCharAt(i);
+builder.reverse();
+builder.toString();
 String.join(", ", list)              // join with delimiter
 
 // computeIfAbsent — key pattern for grouping

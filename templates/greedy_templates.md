@@ -26,11 +26,18 @@ Two interval templates plus non-interval greedy patterns.
 ## Two Interval Templates
 
 ```
-TEMPLATE 1 — Sort by END time, track end of last kept interval
+MERGE DIRECTION RULE (for merge-style problems like #56, where both keys work):
+    Sort by START  →  traverse FORWARD  (i = 0 → n-1), extend the END of last kept
+    Sort by END    →  traverse BACKWARD (i = n-1 → 0), extend the START of last kept
+    These two are exact mirror images. See #56 for both written out side by side.
+    (NOTE: this mirror only applies to merging. Template 1 below sorts by end but
+     still sweeps FORWARD — there the goal is counting, not merging.)
+
+TEMPLATE 1 — Sort by END time, sweep forward, track end of last kept interval
              Use when: maximizing count of non-overlapping intervals
              Greedy insight: earliest-finishing interval leaves most room for future ones
 
-TEMPLATE 2 — Sort by START time, merge when overlapping
+TEMPLATE 2 — Sort by START time, sweep forward, merge when overlapping
              Use when: merging/counting overlapping intervals
              Greedy insight: processing in start order → each interval only needs to
              compare with the last merged result
@@ -176,24 +183,32 @@ Why 435 uses >= but 452/646 use >:
 ## #56 Merge Intervals
 
 **Description:** Merge all overlapping intervals. Return the minimum set of non-overlapping intervals.  
-**Intuition:** Once sorted by start, overlaps can only be with the most recently kept interval, so you either extend its end or open a fresh one.  
-**Template:** sort by start. If current interval's start ≤ last merged interval's end → overlap → extend the end. Otherwise start a new interval.
+**Intuition:** sort to make overlaps adjacent, then sweep once — each interval only ever compares against the most recently kept one.
+
+> **The direction rule — sort key dictates traversal direction:**
+> - **Sort by START → traverse forward** (`i = 0 → n-1`). The newest interval can only extend the last kept interval's **END**, so you compare `interval.start` against `last.end` and update `last[1]`.
+> - **Sort by END → traverse backward** (`i = n-1 → 0`). The newest interval can only extend the last kept interval's **START**, so you compare `interval.end` against `last.start` and update `last[0]`.
+>
+> Both are symmetric and equally valid. Pick the one whose sort key you already have.
+
+### Method A — Sort by START, traverse forward
+Compare current `start` to last kept `end`; on overlap, extend the **end**.
 
 ```java
 class Solution {
     public int[][] merge(int[][] intervals) {
         Arrays.sort(intervals, (a, b) -> a[0] - b[0]);          // sort by START
         List<int[]> result = new ArrayList<>();
-        for (int[] interval : intervals) {
-            if(result.isEmpty()) {
+        for (int[] interval : intervals) {                       // ← traverse FORWARD
+            if (result.isEmpty()) {
                 result.add(interval);
                 continue;
             }
-            int[] last = result.get(result.size()-1);
-            if(last[1] < interval[0]) { // no overlap
+            int[] last = result.get(result.size() - 1);
+            if (last[1] < interval[0]) {                         // no overlap (last.end < cur.start)
                 result.add(interval);
             } else {
-                last[1] = Math.max(last[1], interval[1]);
+                last[1] = Math.max(last[1], interval[1]);        // overlap → extend END
             }
         }
         return result.toArray(new int[0][]);
@@ -201,22 +216,25 @@ class Solution {
 }
 ```
 
+### Method B — Sort by END, traverse backward
+Mirror image: compare current `end` to last kept `start`; on overlap, extend the **start**.
+
 ```java
 class Solution {
     public int[][] merge(int[][] intervals) {
         Arrays.sort(intervals, (a, b) -> a[1] - b[1]);          // sort by END
         List<int[]> result = new ArrayList<>();
-        for(int i = intervals.length - 1; i >= 0; i--) {
-            if(result.isEmpty()) {
+        for (int i = intervals.length - 1; i >= 0; i--) {        // ← traverse BACKWARD
+            if (result.isEmpty()) {
                 result.add(intervals[i]);
                 continue;
             }
-            int[] last = result.get(result.size()-1);
+            int[] last = result.get(result.size() - 1);
             int[] current = intervals[i];
-            if(last[0] > current[1]) {
+            if (last[0] > current[1]) {                          // no overlap (last.start > cur.end)
                 result.add(current);
             } else {
-                last[0] = Math.min(last[0], current[0]);
+                last[0] = Math.min(last[0], current[0]);         // overlap → extend START
             }
         }
         return result.toArray(new int[0][]);

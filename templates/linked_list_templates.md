@@ -52,8 +52,11 @@ ListNode sentinel = new ListNode(0);
 sentinel.next = head;
 ListNode previous = sentinel, current = head;
 while (current != null) {
-    if (shouldDelete(current)) previous.next = current.next;  // skip node
-    else                       previous = current;             // keep node, advance previous
+    if (shouldDelete(current)) {
+        previous.next = current.next;   // skip node
+    } else {
+        previous = current;             // keep node, advance previous
+    }
     current = current.next;
 }
 return sentinel.next;
@@ -86,8 +89,13 @@ while (fast != null && fast.next != null) {
 ListNode sentinel = new ListNode(0);
 ListNode current = sentinel;
 while (a != null && b != null) {
-    if (a.val <= b.val) { current.next = a; a = a.next; }
-    else                { current.next = b; b = b.next; }
+    if (a.val <= b.val) {
+        current.next = a;
+        a = a.next;
+    } else {
+        current.next = b;
+        b = b.next;
+    }
     current = current.next;
 }
 current.next = (a != null) ? a : b;
@@ -112,8 +120,11 @@ class Solution {
         sentinel.next = head;
         ListNode previous = sentinel, current = head;
         while (current != null) {
-            if (current.val == val) previous.next = current.next;
-            else                    previous = current;
+            if (current.val == val) {
+                previous.next = current.next;
+            } else {
+                previous = current;
+            }
             current = current.next;
         }
         return sentinel.next;
@@ -135,10 +146,11 @@ class Solution {
         sentinel.next = head;
         ListNode previous = sentinel, current = head;
         while (current != null) {
-            if (previous != sentinel && previous.val == current.val)
+            if (previous != sentinel && previous.val == current.val) {
                 previous.next = current.next;   // skip duplicate
-            else
+            } else {
                 previous = current;
+            }
             current = current.next;
         }
         return sentinel.next;
@@ -377,8 +389,13 @@ class Solution {
         ListNode sentinel = new ListNode(0);
         ListNode current = sentinel;
         while (list1 != null && list2 != null) {
-            if (list1.val <= list2.val) { current.next = list1; list1 = list1.next; }
-            else                        { current.next = list2; list2 = list2.next; }
+            if (list1.val <= list2.val) {
+                current.next = list1;
+                list1 = list1.next;
+            } else {
+                current.next = list2;
+                list2 = list2.next;
+            }
             current = current.next;
         }
         current.next = (list1 != null) ? list1 : list2;

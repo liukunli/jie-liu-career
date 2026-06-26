@@ -46,10 +46,11 @@ private void mergeSort(int[] nums, int start, int end, int[] temp) {
 private void merge(int[] nums, int start, int mid, int end, int[] temp) {
     int i = start, j = mid, k = start;
     while (i < mid || j < end) {
-        if (j >= end || (i < mid && nums[i] <= nums[j]))
+        if (j >= end || (i < mid && nums[i] <= nums[j])) {
             temp[k++] = nums[i++];
-        else
+        } else {
             temp[k++] = nums[j++];
+        }
     }
     for (i = start; i < end; i++) nums[i] = temp[i];
 }
@@ -74,9 +75,13 @@ private void quickSort(int[] nums, int start, int end) {
     int i = start, k = start, j = end - 1;
     // Invariant: [start,i) < pivot  |  [i,k) == pivot  |  [k,j] unknown  |  (j,end) > pivot
     while (k <= j) {
-        if      (nums[k] < pivot) swap(nums, k++, i++);
-        else if (nums[k] == pivot) k++;
-        else                       swap(nums, k, j--);
+        if (nums[k] < pivot) {
+            swap(nums, k++, i++);
+        } else if (nums[k] == pivot) {
+            k++;
+        } else {
+            swap(nums, k, j--);
+        }
     }
     // After: [start,i) < pivot, [i,k) == pivot, [k,end) > pivot
     quickSort(nums, start, i);   // recurse on < region
@@ -102,14 +107,22 @@ private int quickSelect(int[] nums, int start, int end, int target) {
     int pivot = nums[start + (end - start) / 2];
     int i = start, k = start, j = end - 1;
     while (k <= j) {
-        if      (nums[k] < pivot) swap(nums, k++, i++);
-        else if (nums[k] == pivot) k++;
-        else                       swap(nums, k, j--);
+        if (nums[k] < pivot) {
+            swap(nums, k++, i++);
+        } else if (nums[k] == pivot) {
+            k++;
+        } else {
+            swap(nums, k, j--);
+        }
     }
     // [start,i) < pivot, [i,k) == pivot, [k,end) > pivot
-    if      (target < i) return quickSelect(nums, start, i, target);
-    else if (target < k) return pivot;                          // target lands in == region
-    else                 return quickSelect(nums, k, end, target);
+    if (target < i) {
+        return quickSelect(nums, start, i, target);
+    } else if (target < k) {
+        return pivot;                          // target lands in == region
+    } else {
+        return quickSelect(nums, k, end, target);
+    }
 }
 ```
 
@@ -158,8 +171,11 @@ class Solution {
     private void merge(int[] nums, int start, int mid, int end, int[] temp) {
         int i = start, j = mid, k = start;
         while (i < mid || j < end) {
-            if (j >= end || (i < mid && nums[i] <= nums[j])) temp[k++] = nums[i++];
-            else                                               temp[k++] = nums[j++];
+            if (j >= end || (i < mid && nums[i] <= nums[j])) {
+                temp[k++] = nums[i++];
+            } else {
+                temp[k++] = nums[j++];
+            }
         }
         for (i = start; i < end; i++) nums[i] = temp[i];
     }
@@ -176,9 +192,13 @@ class Solution {
         int pivot = nums[start + (end - start) / 2];
         int i = start, k = start, j = end - 1;
         while (k <= j) {
-            if      (nums[k] < pivot) swap(nums, k++, i++);
-            else if (nums[k] == pivot) k++;
-            else                       swap(nums, k, j--);
+            if (nums[k] < pivot) {
+                swap(nums, k++, i++);
+            } else if (nums[k] == pivot) {
+                k++;
+            } else {
+                swap(nums, k, j--);
+            }
         }
         quickSort(nums, start, i);
         quickSort(nums, k,     end);
@@ -207,13 +227,21 @@ class Solution {
         int pivot = nums[start + (end - start) / 2];
         int i = start, k = start, j = end - 1;
         while (k <= j) {
-            if      (nums[k] < pivot) swap(nums, k++, i++);
-            else if (nums[k] == pivot) k++;
-            else                       swap(nums, k, j--);
+            if (nums[k] < pivot) {
+                swap(nums, k++, i++);
+            } else if (nums[k] == pivot) {
+                k++;
+            } else {
+                swap(nums, k, j--);
+            }
         }
-        if      (target < i) return quickSelect(nums, start, i, target);
-        else if (target < k) return pivot;
-        else                 return quickSelect(nums, k, end, target);
+        if (target < i) {
+            return quickSelect(nums, start, i, target);
+        } else if (target < k) {
+            return pivot;
+        } else {
+            return quickSelect(nums, k, end, target);
+        }
     }
     private void swap(int[] nums, int i, int j) {
         int t = nums[i]; nums[i] = nums[j]; nums[j] = t;
@@ -242,15 +270,23 @@ class Solution {
         int i = start, cur = start, j = end - 1;
         while (cur <= j) {
             long d = dist(pts[cur]);
-            if      (d < pivot) swap(pts, cur++, i++);
-            else if (d == pivot) cur++;
-            else                 swap(pts, cur, j--);
+            if (d < pivot) {
+                swap(pts, cur++, i++);
+            } else if (d == pivot) {
+                cur++;
+            } else {
+                swap(pts, cur, j--);
+            }
         }
         // [start,i) < pivot, [i,cur) == pivot, [cur,end) > pivot
         int less = i - start, equal = cur - i;
-        if      (k <= less)          quickSelect(pts, start, i, k);
-        else if (k <= less + equal)  return;           // enough elements in [start,cur)
-        else                         quickSelect(pts, cur, end, k - less - equal);
+        if (k <= less) {
+            quickSelect(pts, start, i, k);
+        } else if (k <= less + equal) {
+            return;           // enough elements in [start,cur)
+        } else {
+            quickSelect(pts, cur, end, k - less - equal);
+        }
     }
     private long dist(int[] p) { return (long) p[0]*p[0] + (long) p[1]*p[1]; }
     private void swap(int[][] pts, int i, int j) {
@@ -285,8 +321,13 @@ class Solution {
     private ListNode merge(ListNode a, ListNode b) {
         ListNode dummy = new ListNode(0), cur = dummy;
         while (a != null && b != null) {
-            if (a.val <= b.val) { cur.next = a; a = a.next; }
-            else                { cur.next = b; b = b.next; }
+            if (a.val <= b.val) {
+                cur.next = a;
+                a = a.next;
+            } else {
+                cur.next = b;
+                b = b.next;
+            }
             cur = cur.next;
         }
         cur.next = (a != null) ? a : b;
@@ -376,10 +417,11 @@ class Solution {
         Arrays.sort(intervals, (a, b) -> a[0] - b[0]);
         List<int[]> res = new ArrayList<>();
         for (int[] iv : intervals) {
-            if (res.isEmpty() || res.get(res.size() - 1)[1] < iv[0])
+            if (res.isEmpty() || res.get(res.size() - 1)[1] < iv[0]) {
                 res.add(iv);
-            else
+            } else {
                 res.get(res.size() - 1)[1] = Math.max(res.get(res.size() - 1)[1], iv[1]);
+            }
         }
         return res.toArray(new int[0][]);
     }

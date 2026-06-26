@@ -166,8 +166,11 @@ class Solution {
             LinkedList<Integer> level = new LinkedList<>();
             for (int i = 0; i < size; i++) {
                 TreeNode node = queue.poll();
-                if (leftToRight) level.addLast(node.val);
-                else             level.addFirst(node.val);
+                if (leftToRight) {
+                    level.addLast(node.val);
+                } else {
+                    level.addFirst(node.val);
+                }
                 if (node.left  != null) queue.offer(node.left);
                 if (node.right != null) queue.offer(node.right);
             }

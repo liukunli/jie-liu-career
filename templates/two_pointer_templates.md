@@ -26,9 +26,13 @@ Two patterns — pick based on whether pointers converge or march together.
 // WHY sorted: moving inward only safely eliminates half the space if the array is sorted
 int i = 0, j = n - 1;
 while (i < j) {
-    if      (condition == target) { /* record */ i++; j--; }
-    else if (tooSmall)            i++;
-    else                          j--;
+    if (condition == target) {
+        /* record */ i++; j--;
+    } else if (tooSmall) {
+        i++;
+    } else {
+        j--;
+    }
 }
 ```
 
@@ -49,9 +53,13 @@ class Solution {
         int i = 0, j = nums.length - 1;
         while (i < j) {
             int sum = nums[i] + nums[j];
-            if      (sum == target) return new int[]{i + 1, j + 1};
-            else if (sum < target)  i++;
-            else                    j--;
+            if (sum == target) {
+                return new int[]{i + 1, j + 1};
+            } else if (sum < target) {
+                i++;
+            } else {
+                j--;
+            }
         }
         return new int[]{-1, -1};
     }
@@ -83,8 +91,11 @@ class Solution {
                     // dup-skip after a hit — see "Duplicate-skip Cheat Sheet" below
                     while (i < j && nums[i] == nums[i - 1]) i++;  // skip dup i
                     while (i < j && nums[j] == nums[j + 1]) j--;  // skip dup j
-                } else if (sum < 0) i++;
-                else                j--;
+                } else if (sum < 0) {
+                    i++;
+                } else {
+                    j--;
+                }
             }
         }
         return res;
@@ -120,8 +131,11 @@ class Solution {
                         // dup-skip after a hit — see "Duplicate-skip Cheat Sheet" below
                         while (i < j && nums[i] == nums[i - 1]) i++;
                         while (i < j && nums[j] == nums[j + 1]) j--;
-                    } else if (sum < target) i++;
-                    else                     j--;
+                    } else if (sum < target) {
+                        i++;
+                    } else {
+                        j--;
+                    }
                 }
             }
         }
@@ -146,8 +160,11 @@ class Solution {
         int i = 0, j = height.length - 1, max = 0;
         while (i < j) {
             max = Math.max(max, Math.min(height[i], height[j]) * (j - i));
-            if (height[i] < height[j]) i++;
-            else                       j--;
+            if (height[i] < height[j]) {
+                i++;
+            } else {
+                j--;
+            }
         }
         return max;
     }
@@ -311,9 +328,13 @@ class Solution {
 // WHEN: 3-way partition — sort 0/1/2, segregate by a pivot category
 int i = 0, k = 0, j = n - 1;
 while (k <= j) {
-    if      (nums[k] == LO) swap(nums, i++, k++);  // confirmed small
-    else if (nums[k] == MID) k++;                   // confirmed mid, skip
-    else                     swap(nums, k, j--);    // large — don't advance k
+    if (nums[k] == LO) {
+        swap(nums, i++, k++);  // confirmed small
+    } else if (nums[k] == MID) {
+        k++;                   // confirmed mid, skip
+    } else {
+        swap(nums, k, j--);    // large — don't advance k
+    }
 }
 ```
 
@@ -334,9 +355,13 @@ class Solution {
     public void sortColors(int[] nums) {
         int i = 0, k = 0, j = nums.length - 1;
         while (k <= j) {
-            if      (nums[k] == 0) swap(nums, i++, k++);
-            else if (nums[k] == 1) k++;
-            else                   swap(nums, k, j--);
+            if (nums[k] == 0) {
+                swap(nums, i++, k++);
+            } else if (nums[k] == 1) {
+                k++;
+            } else {
+                swap(nums, k, j--);
+            }
         }
     }
     private void swap(int[] a, int x, int y) {

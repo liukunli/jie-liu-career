@@ -48,12 +48,12 @@ double fastPow(double x, long n) {
 
 // ── BASE CONVERSION ── generic base b, 0-indexed
 // number → digits: peel with % b, shift with / b, collect, then reverse
-StringBuilder sb = new StringBuilder();
+StringBuilder builder = new StringBuilder();
 while (num > 0) {
-    sb.append(num % b);
+    builder.append(num % b);
     num /= b;
 }
-sb.reverse();
+builder.reverse();
 // digits → number: Horner's rule
 int value = 0;
 for (int digit : digits) value = value * b + digit;
@@ -185,13 +185,13 @@ class Solution {
 ```java
 class Solution {
     public String convertToTitle(int columnNumber) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder builder = new StringBuilder();
         while (columnNumber > 0) {
             columnNumber--;                      // ← VARIATION: 1-indexed → shift to 0-indexed
-            sb.append((char)('A' + columnNumber % 26));
+            builder.append((char)('A' + columnNumber % 26));
             columnNumber /= 26;
         }
-        return sb.reverse().toString();
+        return builder.reverse().toString();
     }
 }
 ```
@@ -230,16 +230,16 @@ class Solution {
 ```java
 class Solution {
     public String addBinary(String a, String b) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder builder = new StringBuilder();
         int i = a.length() - 1, j = b.length() - 1, carry = 0;
         while (i >= 0 || j >= 0 || carry != 0) {
             int sum = carry;
             if (i >= 0) sum += a.charAt(i--) - '0';   // ← VARIATION: char → digit
             if (j >= 0) sum += b.charAt(j--) - '0';
-            sb.append(sum % 2);                  // ← VARIATION: base-2 digit (sum % 2)
+            builder.append(sum % 2);                  // ← VARIATION: base-2 digit (sum % 2)
             carry = sum / 2;                     // base-2 carry (sum / 2)
         }
-        return sb.reverse().toString();
+        return builder.reverse().toString();
     }
 }
 ```
@@ -291,8 +291,11 @@ class Solution {
         while (lo < hi) {
             long mid = lo + (hi - lo) / 2;
             long count = mid/a + mid/b + mid/c - mid/ab - mid/bc - mid/ac + mid/abc;  // ← VARIATION: inclusion-exclusion via LCMs
-            if (count < n) lo = mid + 1;         // not enough yet → search higher
-            else hi = mid;                        // enough → mid might be the answer
+            if (count < n) {
+                lo = mid + 1;        // not enough yet → search higher
+            } else {
+                hi = mid;            // enough → mid might be the answer
+            }
         }
         return (int) lo;
     }

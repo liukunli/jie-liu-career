@@ -32,9 +32,13 @@ Binary search appears in two forms: searching an **array index**, or searching a
 int i = 0, j = n - 1;
 while (i <= j) {
     int k = i + (j - i) / 2;
-    if      (arr[k] == target) return k;
-    else if (arr[k] <  target) i = k + 1;
-    else                       j = k - 1;
+    if (arr[k] == target) {
+        return k;
+    } else if (arr[k] < target) {
+        i = k + 1;
+    } else {
+        j = k - 1;
+    }
 }
 return -1;
 
@@ -44,8 +48,11 @@ return -1;
 int i = 0, j = n;            // j = n (or n-1 for #162)
 while (i < j) {
     int k = i + (j - i) / 2;
-    if (arr[k] < target) i = k + 1;   // lowerBound: < 
-    else                 j = k;        // upperBound: swap < for <=
+    if (arr[k] < target) {
+        i = k + 1;   // lowerBound: < 
+    } else {
+        j = k;        // upperBound: swap < for <=
+    }
 }
 return i;
 
@@ -55,8 +62,11 @@ return i;
 int i = minPossible, j = maxPossible;
 while (i < j) {
     int k = i + (j - i) / 2;          // floor mid
-    if (condition(k)) j = k;
-    else              i = k + 1;
+    if (condition(k)) {
+        j = k;
+    } else {
+        i = k + 1;
+    }
 }
 return i;
 
@@ -66,8 +76,11 @@ return i;
 int i = minPossible, j = maxPossible;
 while (i < j) {
     int k = i + (j - i + 1) / 2;      // ceiling mid ← avoids infinite loop
-    if (condition(k)) i = k;
-    else              j = k - 1;
+    if (condition(k)) {
+        i = k;
+    } else {
+        j = k - 1;
+    }
 }
 return i;
 ```
@@ -113,9 +126,13 @@ class Solution {
         int i = 0, j = arr.length - 1;
         while (i <= j) {
             int k = i + (j - i) / 2;
-            if      (arr[k] == target) return k;
-            else if (arr[k] <  target) i = k + 1;
-            else                       j = k - 1;
+            if (arr[k] == target) {
+                return k;
+            } else if (arr[k] < target) {
+                i = k + 1;
+            } else {
+                j = k - 1;
+            }
         }
         return -1;
     }
@@ -143,8 +160,11 @@ class Solution {
         int i = 0, j = arr.length;
         while (i < j) {
             int k = i + (j - i) / 2;
-            if (arr[k] < target) i = k + 1;  // must go right
-            else                 j = k;        // k might be answer
+            if (arr[k] < target) {
+                i = k + 1;  // must go right
+            } else {
+                j = k;        // k might be answer
+            }
         }
         return i;
     }
@@ -152,8 +172,11 @@ class Solution {
         int i = 0, j = arr.length;
         while (i < j) {
             int k = i + (j - i) / 2;
-            if (arr[k] <= target) i = k + 1;  // still <= target, go right
-            else                  j = k;
+            if (arr[k] <= target) {
+                i = k + 1;  // still <= target, go right
+            } else {
+                j = k;
+            }
         }
         return i;
     }
@@ -176,8 +199,11 @@ class Solution {
         int i = 0, j = arr.length;
         while (i < j) {
             int k = i + (j - i) / 2;
-            if (arr[k] < target) i = k + 1;
-            else                 j = k;
+            if (arr[k] < target) {
+                i = k + 1;
+            } else {
+                j = k;
+            }
         }
         return i;
     }
@@ -202,11 +228,17 @@ class Solution {
             int k = i + (j - i) / 2;
             if (arr[k] == target) return k;
             if (arr[i] <= arr[k]) {                           // left half [i..k] is sorted
-                if (arr[i] <= target && target < arr[k]) j = k - 1;
-                else                                     i = k + 1;
+                if (arr[i] <= target && target < arr[k]) {
+                    j = k - 1;
+                } else {
+                    i = k + 1;
+                }
             } else {                                          // right half [k..j] is sorted
-                if (arr[k] < target && target <= arr[j]) i = k + 1;
-                else                                     j = k - 1;
+                if (arr[k] < target && target <= arr[j]) {
+                    i = k + 1;
+                } else {
+                    j = k - 1;
+                }
             }
         }
         return -1;
@@ -232,8 +264,11 @@ class Solution {
         int i = 0, j = arr.length - 1;
         while (i < j) {
             int k = i + (j - i) / 2;
-            if (arr[k] < arr[k + 1]) i = k + 1;  // slope up → go right
-            else                      j = k;        // slope down → peak at k or left
+            if (arr[k] < arr[k + 1]) {
+                i = k + 1;  // slope up → go right
+            } else {
+                j = k;        // slope down → peak at k or left
+            }
         }
         return i;
     }
@@ -275,8 +310,11 @@ class Solution {
         int i = 1, j = Arrays.stream(piles).max().getAsInt();
         while (i < j) {
             int k = i + (j - i) / 2;
-            if (canFinish(piles, k, h)) j = k;
-            else                        i = k + 1;
+            if (canFinish(piles, k, h)) {
+                j = k;
+            } else {
+                i = k + 1;
+            }
         }
         return i;
     }
@@ -305,8 +343,11 @@ class Solution {
         int j = Arrays.stream(weights).sum();
         while (i < j) {
             int k = i + (j - i) / 2;
-            if (canShip(weights, k, days)) j = k;
-            else                           i = k + 1;
+            if (canShip(weights, k, days)) {
+                j = k;
+            } else {
+                i = k + 1;
+            }
         }
         return i;
     }
@@ -338,8 +379,11 @@ class Solution {
         int j = Arrays.stream(nums).sum();
         while (i < j) {
             int k = i + (j - i) / 2;
-            if (canSplit(nums, k, m)) j = k;
-            else                      i = k + 1;
+            if (canSplit(nums, k, m)) {
+                j = k;
+            } else {
+                i = k + 1;
+            }
         }
         return i;
     }
@@ -370,8 +414,11 @@ class Solution {
         int i = 1, j = Arrays.stream(nums).max().getAsInt();
         while (i < j) {
             int k = i + (j - i) / 2;
-            if (divSum(nums, k) <= threshold) j = k;
-            else                              i = k + 1;
+            if (divSum(nums, k) <= threshold) {
+                j = k;
+            } else {
+                i = k + 1;
+            }
         }
         return i;
     }
@@ -401,8 +448,11 @@ class Solution {
         int j = Arrays.stream(s).sum() / (k + 1);
         while (i < j) {
             int m = i + (j - i + 1) / 2;  // ceiling: guarantees progress when j == i+1
-            if (canDivide(s, k + 1, m)) i = m;
-            else                         j = m - 1;
+            if (canDivide(s, k + 1, m)) {
+                i = m;
+            } else {
+                j = m - 1;
+            }
         }
         return i;
     }

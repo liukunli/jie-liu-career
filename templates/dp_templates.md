@@ -107,8 +107,11 @@ for (int i = 0; i < nums.length; i++)
 int[][] dp = new int[m + 1][n + 1];
 for (int i = 1; i <= m; i++) {
     for (int j = 1; j <= n; j++) {
-        if (match(i, j)) dp[i][j] = dp[i-1][j-1] + val;
-        else             dp[i][j] = combine(dp[i-1][j], dp[i][j-1]);
+        if (match(i, j)) {
+            dp[i][j] = dp[i-1][j-1] + val;
+        } else {
+            dp[i][j] = combine(dp[i-1][j], dp[i][j-1]);
+        }
     }
 }
 
@@ -125,6 +128,8 @@ for (int i = n - 1; i >= 0; i--) {              // ← right-to-left
 }
 
 // 5. GRID DP — 4-directional neighbors
+// MENTAL MODEL: each cell's answer accumulates from the cells you could have arrived from.
+// WHEN: "paths / min-cost in a grid moving right+down", "largest square"
 int[][] dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};   // UP DOWN LEFT RIGHT
 // Standard grid (dag, only right/down):
 int[][] dp = new int[rows][cols];
@@ -133,6 +138,8 @@ for (int i = 0; i < rows; i++)
         dp[i][j] = grid[i][j] + combine(dp[i-1][j], dp[i][j-1]);
 
 // 6. STATE MACHINE — named states updated simultaneously each step
+// MENTAL MODEL: track the best value in each named situation; each day every state updates from yesterday's states.
+// WHEN: "buy/sell/hold", "limited transactions", "cooldown/fee"
 int cash = 0, hold = -prices[0];
 for (int i = 1; i < prices.length; i++) {
     cash = Math.max(cash, hold + prices[i]);
@@ -159,7 +166,8 @@ Want count or min/max?
 
 ## #70 Climbing Stairs
 
-**Description:** Each step you can climb 1 or 2 steps. How many distinct ways to reach step n?
+**Description:** Each step you can climb 1 or 2 steps. How many distinct ways to reach step n?  
+**Intuition:** the last move was a 1-step or a 2-step, so ways to reach n = ways to n-1 + ways to n-2.
 
 ```java
 class Solution {
@@ -172,12 +180,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 
 ## #198 House Robber
 
-**Description:** Rob houses on a line — can't rob two adjacent. Maximize total.
+**Description:** Rob houses on a line — can't rob two adjacent. Maximize total.  
+**Intuition:** at each house, either skip it (keep `dp[i-1]`) or rob it (`dp[i-2] + value`, since i-1 is now off-limits).
 
 ```java
 class Solution {
@@ -192,13 +202,15 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 
 ## #213 House Robber II
 
 **Description:** Houses arranged in a circle — first and last are adjacent. Can't rob both.  
-**Key:** run House Robber on `[0, n-2]` and `[1, n-1]`; take the max. Two passes, exact same helper.
+**Key:** run House Robber on `[0, n-2]` and `[1, n-1]`; take the max. Two passes, exact same helper.  
+**Intuition:** breaking the circle means either the first house is excluded or the last is — solve both lines and keep the better.
 
 ```java
 class Solution {
@@ -218,13 +230,15 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
 ## #300 Longest Increasing Subsequence
 
 **Description:** Length of the longest strictly increasing subsequence.  
-**Template:** Look-back 1D — `dp[i]` depends on all `dp[j]` where `j < i` and `nums[j] < nums[i]`.
+**Template:** Look-back 1D — `dp[i]` depends on all `dp[j]` where `j < i` and `nums[j] < nums[i]`.  
+**Intuition:** the best subsequence ending at i extends the longest earlier one whose last value is still smaller.
 
 ```java
 class Solution {
@@ -243,13 +257,15 @@ class Solution {
     }
 }
 ```
+**Time** O(n²) | **Space** O(n)
 
 ---
 
 ## #139 Word Break
 
 **Description:** Can `s` be segmented into a sequence of dictionary words?  
-**Template:** Look-back 1D — `dp[i]` is true if some `dp[j]` is true and `s[j..i)` is a word.
+**Template:** Look-back 1D — `dp[i]` is true if some `dp[j]` is true and `s[j..i)` is a word.  
+**Intuition:** a prefix is breakable if some earlier breakable cut leaves a dictionary word as the final piece.
 
 ```java
 class Solution {
@@ -270,6 +286,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n²·L) where L = substring length | **Space** O(n)
 
 ---
 
@@ -490,10 +507,11 @@ int[][] dp = new int[m + 1][n + 1];
 // Init dp[0][*] and dp[*][0] based on problem
 for (int i = 1; i <= m; i++) {
     for (int j = 1; j <= n; j++) {
-        if (s1.charAt(i-1) == s2.charAt(j-1))
+        if (s1.charAt(i-1) == s2.charAt(j-1)) {
             dp[i][j] = dp[i-1][j-1] + 1;          // characters match
-        else
+        } else {
             dp[i][j] = combine(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+        }
     }
 }
 ```
@@ -502,7 +520,8 @@ for (int i = 1; i <= m; i++) {
 
 ## #1143 Longest Common Subsequence
 
-**Description:** Length of the longest subsequence present in both strings.
+**Description:** Length of the longest subsequence present in both strings.  
+**Intuition:** if the last chars match, they're part of the LCS (+1 on the diagonal); otherwise drop one char from whichever string and keep the better.
 
 ```java
 class Solution {
@@ -511,23 +530,26 @@ class Solution {
         int[][] dp = new int[m + 1][n + 1];
         for (int i = 1; i <= m; i++) {
             for (int j = 1; j <= n; j++) {
-                if (text1.charAt(i-1) == text2.charAt(j-1))
+                if (text1.charAt(i-1) == text2.charAt(j-1)) {
                     dp[i][j] = dp[i-1][j-1] + 1;
-                else
+                } else {
                     dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
+                }
             }
         }
         return dp[m][n];
     }
 }
 ```
+**Time** O(m·n) | **Space** O(m·n)
 
 ---
 
 ## #72 Edit Distance
 
 **Description:** Minimum operations (insert, delete, replace) to convert `word1` to `word2`.  
-**Init:** `dp[i][0] = i` (delete all), `dp[0][j] = j` (insert all).
+**Init:** `dp[i][0] = i` (delete all), `dp[0][j] = j` (insert all).  
+**Intuition:** matched chars cost nothing (diagonal); otherwise take the cheapest of replace/delete/insert and add 1.
 
 ```java
 class Solution {
@@ -538,25 +560,28 @@ class Solution {
         for (int j = 0; j <= n; j++) dp[0][j] = j;
         for (int i = 1; i <= m; i++) {
             for (int j = 1; j <= n; j++) {
-                if (word1.charAt(i-1) == word2.charAt(j-1))
+                if (word1.charAt(i-1) == word2.charAt(j-1)) {
                     dp[i][j] = dp[i-1][j-1];                          // match: no cost
-                else
+                } else {
                     dp[i][j] = 1 + Math.min(dp[i-1][j-1],             // replace
                                     Math.min(dp[i-1][j],               // delete
                                              dp[i][j-1]));             // insert
+                }
             }
         }
         return dp[m][n];
     }
 }
 ```
+**Time** O(m·n) | **Space** O(m·n)
 
 ---
 
 ## #115 Distinct Subsequences
 
 **Description:** Number of ways `s` contains `t` as a subsequence.  
-**Init:** `dp[i][0] = 1` (empty t matched by any s prefix).
+**Init:** `dp[i][0] = 1` (empty t matched by any s prefix).  
+**Intuition:** you can always skip the current char of s; if it matches the current char of t, you may also use it to advance t.
 
 ```java
 class Solution {
@@ -575,6 +600,7 @@ class Solution {
     }
 }
 ```
+**Time** O(m·n) | **Space** O(m·n)
 
 ## 1143 vs 72 vs 115 — Transition Cheat Sheet
 
@@ -620,7 +646,8 @@ for (int len = 2; len <= n; len++) {           // outer: length of interval
 
 ## #647 Palindromic Substrings
 
-**Description:** Count all palindromic substrings of `s`.
+**Description:** Count all palindromic substrings of `s`.  
+**Intuition:** `s[i..j]` is a palindrome when its two ends match AND the inside `s[i+1..j-1]` already is.
 
 ```java
 class Solution {
@@ -638,12 +665,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n²) | **Space** O(n²)
 
 ---
 
 ## #516 Longest Palindromic Subsequence
 
-**Description:** Length of the longest subsequence of `s` that is a palindrome.
+**Description:** Length of the longest subsequence of `s` that is a palindrome.  
+**Intuition:** matching ends add 2 to the inner range's best; otherwise drop one end and keep the larger.
 
 ```java
 class Solution {
@@ -653,14 +682,18 @@ class Solution {
         for (int i = 0; i < n; i++) dp[i][i] = 1;
         for (int i = n - 1; i >= 0; i--) {
             for (int j = i + 1; j < n; j++) {
-                if (s.charAt(i) == s.charAt(j)) dp[i][j] = dp[i+1][j-1] + 2;
-                else                             dp[i][j] = Math.max(dp[i+1][j], dp[i][j-1]);
+                if (s.charAt(i) == s.charAt(j)) {
+                    dp[i][j] = dp[i+1][j-1] + 2;
+                } else {
+                    dp[i][j] = Math.max(dp[i+1][j], dp[i][j-1]);
+                }
             }
         }
         return dp[0][n-1];
     }
 }
 ```
+**Time** O(n²) | **Space** O(n²)
 
 ---
 
@@ -692,6 +725,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n³) | **Space** O(n²)
 
 ---
 
@@ -721,7 +755,8 @@ for (int i = 0; i < rows; i++)
 ## #62 Unique Paths
 
 **Description:** Number of paths from top-left to bottom-right, moving only right or down.  
-**Init:** first row and column are all 1 (only one way to reach any edge cell).
+**Init:** first row and column are all 1 (only one way to reach any edge cell).  
+**Intuition:** you reach a cell only from above or from the left, so its path count is the sum of those two.
 
 ```java
 class Solution {
@@ -736,13 +771,15 @@ class Solution {
     }
 }
 ```
+**Time** O(m·n) | **Space** O(m·n)
 
 ---
 
 ## #64 Minimum Path Sum
 
 **Description:** Minimum sum path from top-left to bottom-right, moving only right or down.  
-**Init:** first row/column are cumulative sums (no choice on edges).
+**Init:** first row/column are cumulative sums (no choice on edges).  
+**Intuition:** the cheapest way into a cell is its own value plus the cheaper of the cell above or to its left.
 
 ```java
 class Solution {
@@ -759,6 +796,7 @@ class Solution {
     }
 }
 ```
+**Time** O(m·n) | **Space** O(m·n)
 
 ---
 
@@ -785,13 +823,15 @@ class Solution {
     }
 }
 ```
+**Time** O(m·n) | **Space** O(m·n)
 
 ---
 
 ## #329 Longest Increasing Path in a Matrix
 
 **Description:** Find the longest strictly increasing path. Can move in all 4 directions.  
-**Template:** DFS + memoization (grid has ordering from values, so no cycle in the recursion DAG).
+**Template:** DFS + memoization (grid has ordering from values, so no cycle in the recursion DAG).  
+**Intuition:** strictly increasing values forbid revisiting, so each cell's longest path is 1 + the best of its larger neighbors — cache it.
 
 ```java
 class Solution {
@@ -819,6 +859,7 @@ class Solution {
     }
 }
 ```
+**Time** O(m·n) | **Space** O(m·n)
 
 ---
 
@@ -847,6 +888,8 @@ cooldown  = max profit right after selling (can't buy today)
 
 ## #121 Best Time to Buy and Sell Stock (at most 1 transaction)
 
+**Intuition:** `hold` is the best profit if you currently own a share bought at the lowest price seen; sell whenever today's price beats that.
+
 ```java
 class Solution {
     public int maxProfit(int[] prices) {
@@ -859,12 +902,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
 ## #122 Best Time to Buy and Sell Stock II (unlimited transactions)
 
-**Key difference from #121:** `hold = max(hold, cash - prices[i])` — can reinvest all prior profits.
+**Key difference from #121:** `hold = max(hold, cash - prices[i])` — can reinvest all prior profits.  
+**Intuition:** with unlimited trades, buying can fund itself from accumulated `cash`, so capture every upward move.
 
 ```java
 class Solution {
@@ -878,12 +923,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
 ## #123 Best Time to Buy and Sell Stock III (at most 2 transactions)
 
-**Key:** 4 named states chained in order: buy1 → sell1 → buy2 → sell2.
+**Key:** 4 named states chained in order: buy1 → sell1 → buy2 → sell2.  
+**Intuition:** the second buy can only spend profit left after the first sell, so chain the states in trade order.
 
 ```java
 class Solution {
@@ -899,13 +946,15 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
 ## #309 Best Time to Buy and Sell Stock with Cooldown
 
 **Description:** After selling, must wait 1 day before buying again.  
-**Key:** `hold` can only use `cooldown` (yesterday's `cash`), not today's `cash`. Save `prevCash` before updating.
+**Key:** `hold` can only use `cooldown` (yesterday's `cash`), not today's `cash`. Save `prevCash` before updating.  
+**Intuition:** the cooldown forces buying to draw from cash that's at least one day old, so carry yesterday's cash forward.
 
 ```java
 class Solution {
@@ -921,13 +970,15 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
 ## #714 Best Time to Buy and Sell Stock with Transaction Fee
 
 **Description:** Pay a fee per transaction (on sell). Unlimited transactions.  
-**Key:** same as #122 but subtract `fee` when selling.
+**Key:** same as #122 but subtract `fee` when selling.  
+**Intuition:** the fee just shrinks every sale, so a trade is only worth making when the gain clears the fee.
 
 ```java
 class Solution {
@@ -941,6 +992,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
@@ -1103,12 +1155,15 @@ class Solution {
     public int minDistance(String word1, String word2) {
         int m = word1.length(), n = word2.length();
         int[][] dp = new int[m+1][n+1];                        // dp[i][j] = LCS length
-        for (int i = 1; i <= m; i++)
-            for (int j = 1; j <= n; j++)
-                if (word1.charAt(i-1) == word2.charAt(j-1))
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (word1.charAt(i-1) == word2.charAt(j-1)) {
                     dp[i][j] = dp[i-1][j-1] + 1;
-                else
+                } else {
                     dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
+                }
+            }
+        }
         return m + n - 2 * dp[m][n];                           // ← VARIATION: reduce to LCS
     }
 }
@@ -1283,10 +1338,11 @@ class Solution {
         for (int i = n - 1; i >= 0; i--) {           // ← interval DP: shorter spans first
             dp[i][i] = 1;
             for (int j = i + 1; j < n; j++) {
-                if (s.charAt(i) == s.charAt(j))
+                if (s.charAt(i) == s.charAt(j)) {
                     dp[i][j] = dp[i+1][j-1] + 2;
-                else
+                } else {
                     dp[i][j] = Math.max(dp[i+1][j], dp[i][j-1]);
+                }
             }
         }
         return n - dp[0][n-1];                         // ← VARIATION: insertions = n - LPS

@@ -76,13 +76,13 @@ for (int i = 0; i < n; i++) {
 // MENTAL MODEL: the front is the current window's answer; anything a newer-and-bigger value beats is dead weight.
 // WHEN: "max/min of every window of size k"
 // Deque stores INDICES; values at those indices are decreasing front-to-back (for max)
-Deque<Integer> deque = new ArrayDeque<>();
+Deque<Integer> queue = new ArrayDeque<>();
 for (int i = 0; i < n; i++) {
-    while (!deque.isEmpty() && nums[deque.peekLast()] <= nums[i])
-        deque.pollLast();               // remove smaller elements — they can never be window max
-    deque.offerLast(i);
-    if (deque.peekFirst() < i - k + 1) deque.pollFirst();  // evict out-of-window elements
-    if (i >= k - 1) result[i - k + 1] = nums[deque.peekFirst()];
+    while (!queue.isEmpty() && nums[queue.peekLast()] <= nums[i])
+        queue.pollLast();               // remove smaller elements — they can never be window max
+    queue.offerLast(i);
+    if (queue.peekFirst() < i - k + 1) queue.pollFirst();  // evict out-of-window elements
+    if (i >= k - 1) result[i - k + 1] = nums[queue.peekFirst()];
 }
 
 // 4. PRIORITY QUEUE
@@ -128,8 +128,9 @@ class Solution {
     public boolean isValid(String s) {
         Deque<Character> stack = new ArrayDeque<>();
         for (char c : s.toCharArray()) {
-            if (c == '(' || c == '[' || c == '{') stack.push(c);
-            else {
+            if (c == '(' || c == '[' || c == '{') {
+                stack.push(c);
+            } else {
                 if (stack.isEmpty()) return false;
                 char top = stack.pop();
                 if (c == ')' && top != '(') return false;
@@ -361,15 +362,15 @@ class Solution {
     public int[] maxSlidingWindow(int[] nums, int k) {
         int n = nums.length;
         int[] result = new int[n - k + 1];
-        Deque<Integer> deque = new ArrayDeque<>();   // indices, values decrease front→back
+        Deque<Integer> queue = new ArrayDeque<>();   // indices, values decrease front→back
         for (int i = 0; i < n; i++) {
-            while (!deque.isEmpty() && nums[deque.peekLast()] <= nums[i])
-                deque.pollLast();                    // ← remove smaller: they can never be max
-            deque.offerLast(i);
-            if (deque.peekFirst() < i - k + 1)
-                deque.pollFirst();                   // ← evict index out of window
+            while (!queue.isEmpty() && nums[queue.peekLast()] <= nums[i])
+                queue.pollLast();                    // ← remove smaller: they can never be max
+            queue.offerLast(i);
+            if (queue.peekFirst() < i - k + 1)
+                queue.pollFirst();                   // ← evict index out of window
             if (i >= k - 1)
-                result[i - k + 1] = nums[deque.peekFirst()];  // ← front = window max
+                result[i - k + 1] = nums[queue.peekFirst()];  // ← front = window max
         }
         return result;
     }
@@ -494,20 +495,20 @@ class Solution {
         for (char c : s.toCharArray()) count[c - 'a']++;
         PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> b[1] - a[1]); // max-heap on count
         for (int i = 0; i < 26; i++) if (count[i] > 0) pq.offer(new int[]{i, count[i]});
-        StringBuilder sb = new StringBuilder();
+        StringBuilder builder = new StringBuilder();
         while (pq.size() > 1) {
             int[] a = pq.poll(), b = pq.poll();
-            sb.append((char)('a' + a[0]));
-            sb.append((char)('a' + b[0]));
+            builder.append((char)('a' + a[0]));
+            builder.append((char)('a' + b[0]));
             if (--a[1] > 0) pq.offer(a);
             if (--b[1] > 0) pq.offer(b);
         }
         if (!pq.isEmpty()) {
             int[] last = pq.poll();
             if (last[1] > 1) return "";                            // ← only one char left, count > 1: impossible
-            sb.append((char)('a' + last[0]));
+            builder.append((char)('a' + last[0]));
         }
-        return sb.toString();
+        return builder.toString();
     }
 }
 ```
@@ -528,22 +529,43 @@ class Solution {
 
 ## Deque API Cheat Sheet
 
+**One class, three roles.** `ArrayDeque` adds/removes at *both* ends, so stack, queue, and deque are just usage patterns of the same structure — the only difference is **which end you remove from**. Always declare it `Deque<Integer> queue = new ArrayDeque<>();` (never the legacy `Stack` class, which is synchronized and `Vector`-backed; and `ArrayDeque` beats `LinkedList` as a queue). Name the variable for the *role* it plays (`stack` / `queue`).
+
+```
+        addFirst / push                          addLast / offer
+              ↓                                       ↓
+            [ FRONT ............................. BACK ]
+              ↑                                       ↑
+        pollFirst / pop                          pollLast
+
+STACK (LIFO): add + remove at FRONT  → newest out first
+QUEUE (FIFO): add at BACK, remove at FRONT → oldest out first
+```
+
+| Intent | Stack (LIFO) | Queue (FIFO) |
+|---|---|---|
+| Add | `push(x)` → `addFirst` | `offer(x)` → `addLast` |
+| Remove | `pop()` → `removeFirst` | `poll()` → `removeFirst` |
+| Peek | `peek()` → `peekFirst` | `peek()` → `peekFirst` |
+
+Both **remove from the front** — the discipline comes from *where you add*: stack adds to the front (so newest is popped = LIFO), queue adds to the back (so oldest is polled = FIFO).
+
 ```java
-Deque<Integer> d = new ArrayDeque<>();
+Deque<Integer> queue = new ArrayDeque<>();
 
 // As STACK (LIFO):    push()/pop()/peek()  → operate on FRONT
-d.push(x);    // = offerFirst
-d.pop();      // = pollFirst
-d.peek();     // = peekFirst
+queue.push(x);    // = offerFirst
+queue.pop();      // = pollFirst
+queue.peek();     // = peekFirst
 
 // As QUEUE (FIFO):   offer()/poll()/peek() → back-in, front-out
-d.offerLast(x);
-d.pollFirst();
-d.peekFirst();
+queue.offerLast(x);
+queue.pollFirst();
+queue.peekFirst();
 
-// As DEQUE:          explicit first/last
-d.offerFirst(x);  d.pollFirst();  d.peekFirst();
-d.offerLast(x);   d.pollLast();   d.peekLast();
+// As DEQUE:          explicit first/last (e.g. monotone sliding-window)
+queue.offerFirst(x);  queue.pollFirst();  queue.peekFirst();
+queue.offerLast(x);   queue.pollLast();   queue.peekLast();
 ```
 
 ---
@@ -696,8 +718,11 @@ class Solution {
         int i = matrix[0][0], j = matrix[n-1][n-1];        // ← VARIATION: binary search on value range
         while (i < j) {
             int mid = i + (j - i) / 2;
-            if (countLE(matrix, mid, n) >= k) j = mid;
-            else i = mid + 1;
+            if (countLE(matrix, mid, n) >= k) {
+                j = mid;
+            } else {
+                i = mid + 1;
+            }
         }
         return i;
     }
@@ -705,8 +730,12 @@ class Solution {
     private int countLE(int[][] matrix, int target, int n) {
         int count = 0, row = n - 1, col = 0;               // ← VARIATION: scan from bottom-left
         while (row >= 0 && col < n) {
-            if (matrix[row][col] <= target) { count += row + 1; col++; }
-            else row--;
+            if (matrix[row][col] <= target) {
+                count += row + 1;
+                col++;
+            } else {
+                row--;
+            }
         }
         return count;
     }
@@ -782,17 +811,17 @@ class Solution {
             new PriorityQueue<>((a, b) -> b.getValue() - a.getValue());
         maxHeap.addAll(count.entrySet());
         Queue<Map.Entry<Character,Integer>> cooldown = new ArrayDeque<>();  // ← VARIATION: cooldown queue
-        StringBuilder sb = new StringBuilder();
+        StringBuilder builder = new StringBuilder();
         while (!maxHeap.isEmpty()) {
             var entry = maxHeap.poll();
-            sb.append(entry.getKey());
+            builder.append(entry.getKey());
             entry.setValue(entry.getValue() - 1);
             cooldown.offer(entry);
             if (cooldown.size() < k) continue;             // ← VARIATION: wait k slots before reuse
             var ready = cooldown.poll();
             if (ready.getValue() > 0) maxHeap.offer(ready);
         }
-        return sb.length() == s.length() ? sb.toString() : "";
+        return builder.length() == s.length() ? builder.toString() : "";
     }
 }
 ```
@@ -810,12 +839,18 @@ class Solution {
         PriorityQueue<Integer> minHeap = new PriorityQueue<>();
         double[] result = new double[nums.length - k + 1];
         for (int i = 0; i < nums.length; i++) {
-            if (maxHeap.isEmpty() || nums[i] <= maxHeap.peek()) maxHeap.offer(nums[i]);
-            else minHeap.offer(nums[i]);
+            if (maxHeap.isEmpty() || nums[i] <= maxHeap.peek()) {
+                maxHeap.offer(nums[i]);
+            } else {
+                minHeap.offer(nums[i]);
+            }
             if (i >= k) {                                   // ← VARIATION: remove element leaving window
                 int out = nums[i - k];
-                if (out <= maxHeap.peek()) maxHeap.remove(out);
-                else minHeap.remove(out);
+                if (out <= maxHeap.peek()) {
+                    maxHeap.remove(out);
+                } else {
+                    minHeap.remove(out);
+                }
             }
             // rebalance
             while (maxHeap.size() > minHeap.size() + 1) minHeap.offer(maxHeap.poll());
