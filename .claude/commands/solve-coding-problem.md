@@ -44,530 +44,1376 @@ Expert coding interview coach. When given a LeetCode problem, produce a complete
 
 ### Arrays & Two Pointers
 
-Two pointers: opposite ends converge, or slow/fast same direction. O(n).
+#### Opposite Two Pointers
+
+Sort first. i=0, j=n-1 converge toward each other. O(n) or O(n log n) with sort.
 
 ```java
-// Opposite direction
-int left = 0, right = n - 1;
-while (left < right) {
-    if (condition_met) { /* FOUND */ }
-    else if (tooSmall) left++;
-    else right--;
-}
-// Fast/slow (filter in-place)
-int slow = 0;
-for (int fast = 0; fast < n; fast++)
-    if (valid(nums[fast])) nums[slow++] = nums[fast];  ← write at slow pointer
-// Dutch Flag 3-way partition
-int left = 0, cur = 0, right = n - 1;
-while (cur <= right) {
-    if (nums[cur] == 0)      swap(cur++, left++);
-    else if (nums[cur] == 1) cur++;
-    else                     swap(cur, right--);  ← don't increment cur here
-}
-// Prefix sum + HashMap (subarray sum = k)
-Map<Integer, Integer> prefixCount = new HashMap<>();
-prefixCount.put(0, 1);  ← empty prefix has sum 0
-int sum = 0;
-for (int num : nums) {
-    sum += num;
-    result += prefixCount.getOrDefault(sum - k, 0);  ← how many prefixes have sum-k
-    prefixCount.merge(sum, 1, Integer::sum);
-}
-// Kadane's (max subarray)
-int maxEndingHere = nums[0], maxSoFar = nums[0];
-for (int i = 1; i < n; i++) {
-    maxEndingHere = Math.max(nums[i], maxEndingHere + nums[i]);  ← extend or restart
-    maxSoFar = Math.max(maxSoFar, maxEndingHere);
-}
-// ── Sorting Algorithms ──────────────────────────────────────────────
-// Merge Sort — O(n log n) time, O(n) space, stable
-void mergeSort(int[] nums, int lo, int hi) {
-    if (lo >= hi) return;
-    int mid = lo + (hi - lo) / 2;
-    mergeSort(nums, lo, mid);
-    mergeSort(nums, mid + 1, hi);
-    merge(nums, lo, mid, hi);
-}
-void merge(int[] nums, int lo, int mid, int hi) {
-    int[] tmp = Arrays.copyOfRange(nums, lo, hi + 1);
-    int i = lo, j = mid + 1, k = lo;
-    while (i <= mid && j <= hi)
-        nums[k++] = tmp[i-lo] <= tmp[j-lo] ? tmp[i++-lo] : tmp[j++-lo];
-    while (i <= mid) nums[k++] = tmp[i++-lo];  ← copy remaining left half
-}
-// Quick Sort — O(n log n) avg, O(log n) space, NOT stable
-void quickSort(int[] nums, int lo, int hi) {
-    if (lo >= hi) return;
-    int p = partition(nums, lo, hi);
-    quickSort(nums, lo, p - 1);
-    quickSort(nums, p + 1, hi);
-}
-int partition(int[] nums, int lo, int hi) {
-    int pivot = nums[hi], i = lo - 1;
-    for (int j = lo; j < hi; j++)
-        if (nums[j] <= pivot) swap(nums, ++i, j);
-    swap(nums, ++i, hi);  ← place pivot at final position
-    return i;
-}
-// Quick Select — O(n) avg for k-th smallest (k is 0-indexed)
-int quickSelect(int[] nums, int lo, int hi, int k) {
-    int p = partition(nums, lo, hi);
-    if (p == k) return nums[p];
-    return p < k ? quickSelect(nums, p + 1, hi, k)
-                 : quickSelect(nums, lo, p - 1, k);  ← recurse only one side
-}
-// Counting Sort — O(n + k) for integers in known range [min, max]
-int[] countingSort(int[] nums, int min, int max) {
-    int[] count = new int[max - min + 1];
-    for (int n : nums) count[n - min]++;
-    int k = 0;
-    for (int v = min; v <= max; v++)
-        while (count[v - min]-- > 0) nums[k++] = v;  ← rebuild from counts
-    return nums;
-}
-// Bucket Sort — O(n) avg for uniformly distributed values
-void bucketSort(float[] arr, int n) {
-    List<Float>[] buckets = new ArrayList[n];
-    for (int i = 0; i < n; i++) buckets[i] = new ArrayList<>();
-    for (float f : arr) buckets[(int)(n * f)].add(f);  ← map to bucket
-    int k = 0;
-    for (List<Float> b : buckets) { Collections.sort(b); for (float f : b) arr[k++] = f; }
+// Overflow guard: sum can overflow int — use long when values are large
+int i = 0, j = n - 1;
+while (i < j) {
+    long sum = (long) nums[i] + nums[j];  // ← cast before add
+    if (sum == target) { /* record */ i++; j--; }
+    else if (sum < target) i++;
+    else j--;
 }
 ```
 
-### Sliding Window
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #1 Two Sum | O(n) / O(1) | Q: Two numbers in sorted array summing to target. Return 1-based indices. |
+| #11 Container With Most Water | O(n) / O(1) | Q: Max water between two vertical lines of given heights. |
+| #15 3Sum | O(n²) / O(n) | Q: All unique triplets [a,b,c] summing to 0. No duplicate triplets. |
+| #42 Trapping Rain Water | O(n) / O(1) | Q: Total water trapped between elevation bars after rain. |
+| #18 4Sum | O(n³) / O(n) | Q: All unique quadruplets summing to target. |
 
-Expand right, shrink left when invalid. Track state with map/counter. O(n).
+#### Fast/Slow Same Direction
+
+slow marks write position; fast scans. Filters/partitions in-place in O(n) / O(1).
 
 ```java
-// Variable-size (generic)
-int left = 0; Map<Character, Integer> window = new HashMap<>();
+int slow = 0;
+for (int fast = 0; fast < n; fast++) {
+    if (keepCondition(nums[fast]))
+        nums[slow++] = nums[fast];  // ← write only valid values
+}
+return slow;  // new length
+// Dutch Flag 3-way partition (0/1/2 or < / = / > pivot):
+int i = 0, k = 0, j = n - 1;
+while (k <= j) {
+    if      (nums[k] == 0) swap(nums, i++, k++);
+    else if (nums[k] == 1) k++;
+    else                   swap(nums, k, j--);  // ← don't increment k
+}
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #26 Remove Duplicates from Sorted Array | O(n) / O(1) | Q: Remove duplicates in-place from sorted array. Return new length. |
+| #27 Remove Element | O(n) / O(1) | Q: Remove all occurrences of val in-place. Return new length. |
+| #75 Sort Colors | O(n) / O(1) | Q: Sort array of 0s, 1s, 2s in-place without library sort. |
+| #283 Move Zeroes | O(n) / O(1) | Q: Move all zeroes to end while preserving relative order of non-zeroes. |
+| #80 Remove Duplicates from Sorted Array II | O(n) / O(1) | Q: Remove duplicates so each element appears at most twice in-place. |
+
+#### Prefix Sum + HashMap
+
+prefix[i] = sum of nums[0..i-1]. Use HashMap to find complement prefix in O(1).
+
+```java
+// Overflow guard: prefix sums can exceed int — use long[]
+long[] prefix = new long[n + 1];
+for (int i = 0; i < n; i++) prefix[i + 1] = prefix[i] + nums[i];
+// range sum [l, r] = prefix[r+1] - prefix[l]  (O(1) query after O(n) build)
+// Subarray sum = k — O(n) / O(n):
+Map<Long, Integer> seen = new HashMap<>();
+seen.put(0L, 1);  // ← empty prefix has sum 0
+long sum = 0;
+for (int num : nums) {
+    sum += num;
+    result += seen.getOrDefault(sum - k, 0);  // ← how many prefixes sum to (sum-k)
+    seen.merge(sum, 1, Integer::sum);
+}
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #560 Subarray Sum Equals K | O(n) / O(n) | Q: Count subarrays whose sum equals k. |
+| #523 Continuous Subarray Sum | O(n) / O(n) | Q: Subarray summing to multiple of k with length >= 2. |
+| #974 Subarray Sums Divisible by K | O(n) / O(k) | Q: Count subarrays whose sum is divisible by k. |
+| #325 Maximum Size Subarray Sum Equals k | O(n) / O(n) | Q: Longest subarray summing to k. |
+| #437 Path Sum III | O(n) / O(n) | Q: Count paths in binary tree summing to targetSum (any start/end). |
+
+#### Merge Sort
+
+Divide and conquer. O(n log n) time, O(n) space, stable. Used when merge step computes answer.
+
+```java
+void mergeSort(int[] a, int i, int j) {
+    if (i >= j) return;
+    int k = i + (j - i) / 2;  // ← overflow-safe midpoint
+    mergeSort(a, i, k);
+    mergeSort(a, k + 1, j);
+    merge(a, i, k, j);
+}
+void merge(int[] a, int i, int k, int j) {
+    int[] tmp = Arrays.copyOfRange(a, i, j + 1);  // ← O(n) extra space
+    int p = i, q = k + 1, r = i;
+    while (p <= k && q <= j)
+        a[r++] = tmp[p-i] <= tmp[q-i] ? tmp[p++-i] : tmp[q++-i];
+    while (p <= k) a[r++] = tmp[p++ - i];  // ← copy remaining left half
+}
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #912 Sort an Array | O(n log n) / O(n) | Q: Sort an integer array. |
+| #315 Count of Smaller Numbers After Self | O(n log n) / O(n) | Q: For each element, count how many smaller elements appear to its right. |
+| #327 Count of Range Sum | O(n log n) / O(n) | Q: Count range sums that lie in [lower, upper]. |
+
+#### Quick Sort / Quick Select
+
+Quick Sort: in-place O(n log n) avg. Quick Select: O(n) avg for k-th element — recurse ONE side only.
+
+```java
+int partition(int[] a, int i, int j) {
+    int pivot = a[j], p = i - 1;
+    for (int q = i; q < j; q++)
+        if (a[q] <= pivot) swap(a, ++p, q);
+    swap(a, ++p, j);  // ← place pivot at final position
+    return p;
+}
+void quickSort(int[] a, int i, int j) {
+    if (i >= j) return;
+    int p = partition(a, i, j);
+    quickSort(a, i, p - 1); quickSort(a, p + 1, j);
+}
+// Quick Select — k-th smallest (0-indexed), O(n) avg / O(n²) worst
+int quickSelect(int[] a, int i, int j, int k) {
+    int p = partition(a, i, j);
+    if (p == k) return a[p];
+    return p < k ? quickSelect(a, p + 1, j, k)   // ← only one side
+                 : quickSelect(a, i, p - 1, k);
+}
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #215 Kth Largest Element in an Array | O(n) avg / O(1) | Q: Find kth largest element in unsorted array without full sort. |
+| #973 K Closest Points to Origin | O(n) avg / O(k) | Q: K points closest to origin. |
+| #912 Sort an Array | O(n log n) / O(1) | Q: Sort an integer array in-place. |
+
+#### Counting Sort / Bucket Sort
+
+O(n + k) when integer range k is small, or values are uniformly distributed.
+
+```java
+// Counting Sort — integers in known range [min, max]
+int[] cnt = new int[max - min + 1];
+for (int x : nums) cnt[x - min]++;
+int k = 0;
+for (int v = min; v <= max; v++)
+    while (cnt[v - min]-- > 0) nums[k++] = v;  // ← rebuild sorted
+// Bucket Sort (frequency buckets for top-K)
+int[] freq = new int[n + 1];                    // freq[i] = count of elements with frequency i
+List<Integer>[] buckets = new ArrayList[n + 1];
+for (int i = 0; i <= n; i++) buckets[i] = new ArrayList<>();
+Map<Integer, Integer> count = new HashMap<>();
+for (int x : nums) count.merge(x, 1, Integer::sum);
+for (Map.Entry<Integer,Integer> e : count.entrySet())
+    buckets[e.getValue()].add(e.getKey());  // ← bucket by frequency
+// Walk buckets from high to low to get top-K
+List<Integer> result = new ArrayList<>();
+for (int i = n; i >= 1 && result.size() < k; i--)
+    result.addAll(buckets[i]);
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #347 Top K Frequent Elements | O(n) / O(n) | Q: K most frequent elements. |
+| #692 Top K Frequent Words | O(n log k) / O(n) | Q: K most frequent words, sorted lex on ties. |
+| #164 Maximum Gap | O(n) / O(n) | Q: Maximum gap between successive elements in sorted form. |
+| #75 Sort Colors | O(n) / O(1) | Q: Sort 0s, 1s, 2s — three-bucket special case. |
+
+### Sliding Window
+
+#### Variable-Size Window (maximize/count)
+
+Expand right freely; shrink left until window is valid again.
+
+```java
+int left = 0, result = 0;
+int[] freq = new int[128];     // ← int[128] faster than HashMap for ASCII
 for (int right = 0; right < s.length(); right++) {
-    window.merge(s.charAt(right), 1, Integer::sum);      ← add to window
-    while (windowInvalid(window))
-        window.merge(s.charAt(left++), -1, Integer::sum);
+    freq[s.charAt(right)]++;   // expand
+    while (windowInvalid(freq))
+        freq[s.charAt(left++)]--;  // shrink
     result = Math.max(result, right - left + 1);
 }
-// Fixed-size k
-for (int i = 0; i < nums.length; i++) {
-    windowSum += nums[i];
-    if (i >= k) windowSum -= nums[i - k];
-    if (i >= k - 1) result = Math.max(result, windowSum);
-}
-// Minimum window substring — need/formed counter pattern
-Map<Character, Integer> need = new HashMap<>(), have = new HashMap<>();
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #3 Longest Substring Without Repeating Characters | O(n) / O(1) | Q: Length of longest substring without repeating characters. |
+| #159 Longest Substring with At Most Two Distinct Characters | O(n) / O(1) | Q: Longest substring with at most two distinct characters. |
+| #340 Longest Substring with At Most K Distinct Characters | O(n) / O(k) | Q: Longest substring with at most k distinct characters. |
+| #424 Longest Repeating Character Replacement | O(n) / O(1) | Q: Replace at most k chars — longest substring with one repeated char. |
+| #1004 Max Consecutive Ones III | O(n) / O(1) | Q: Flip at most k zeroes — max consecutive ones. |
+
+#### Minimum Window (need/formed)
+
+Track how many characters are fully satisfied. Shrink while all satisfied.
+
+```java
+Map<Character,Integer> need = new HashMap<>(), have = new HashMap<>();
 for (char c : t.toCharArray()) need.merge(c, 1, Integer::sum);
 int formed = 0, required = need.size(), left = 0;
+int[] best = {-1, 0, 0};  // {len, left, right}
 for (int right = 0; right < s.length(); right++) {
     char c = s.charAt(right); have.merge(c, 1, Integer::sum);
-    if (need.containsKey(c) && have.get(c).equals(need.get(c))) formed++;  ← char satisfied
-    while (formed == required) {  ← valid window: try to shrink
-        updateResult(left, right);
+    if (need.containsKey(c) && have.get(c).equals(need.get(c))) formed++;
+    while (formed == required) {          // ← valid: try to shrink
+        if (best[0] == -1 || right - left + 1 < best[0])
+            best = new int[]{right - left + 1, left, right};
         char rem = s.charAt(left++); have.merge(rem, -1, Integer::sum);
         if (need.containsKey(rem) && have.get(rem) < need.get(rem)) formed--;
     }
 }
-// int[128] for ASCII chars (faster than HashMap)
-int[] freq = new int[128];
-for (char c : s.toCharArray()) freq[c]++;
 ```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #76 Minimum Window Substring | O(n) / O(k) | Q: Smallest substring of s containing all chars of t. |
+| #438 Find All Anagrams in a String | O(n) / O(1) | Q: All start indices where an anagram of p appears in s. |
+| #567 Permutation in String | O(n) / O(1) | Q: Does any permutation of s1 appear as a substring of s2? |
+
+#### Fixed-Size Window
+
+Add incoming element, remove element that falls out of window.
+
+```java
+for (int i = 0; i < n; i++) {
+    add(nums[i]);                          // expand right
+    if (i >= k) remove(nums[i - k]);       // ← evict element leaving window
+    if (i >= k - 1) updateResult();        // window is full
+}
+// For max/min in O(1): use monotonic deque (see Stack & Queue template)
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #239 Sliding Window Maximum | O(n) / O(k) | Q: Max value in every sliding window of size k. |
+| #567 Permutation in String | O(n) / O(1) | Q: Permutation of s1 in s2 — fixed window of size len(s1). |
+| #219 Contains Duplicate II | O(n) / O(k) | Q: Any two duplicate indices at most k apart. |
+| #1343 #1343 | O(n) / O(1) | Q: Count subarrays of size k with average >= threshold. |
 
 ### Binary Search
 
-Eliminate half each step. O(log n). Key: which half to cut.
+#### Standard / Left / Right Bound
+
+Eliminate half each step. Three variants: exact match, first occurrence, last occurrence.
 
 ```java
-int left = 0, right = n - 1;
-while (left <= right) {
-    int mid = left + (right - left) / 2;  ← overflow-safe midpoint
-    if (nums[mid] == target) return mid;
-    else if (nums[mid] < target) left = mid + 1;
-    else right = mid - 1;
+// Overflow-safe mid: i + (j - i) / 2  NOT  (i + j) / 2
+// Exact match
+int i = 0, j = n - 1;
+while (i <= j) {
+    int k = i + (j - i) / 2;
+    if      (nums[k] == target) return k;
+    else if (nums[k] <  target) i = k + 1;
+    else                        j = k - 1;
 }
-// Left bound: if (nums[mid] < target) left=mid+1; else right=mid-1; return left
-// Right bound: if (nums[mid] > target) right=mid-1; else left=mid+1; return right
-// Binary search on answer space: lo=min, hi=max, find smallest valid x
+// Left bound (first index where nums[i] >= target)
+i = 0; j = n;
+while (i < j) {
+    int k = i + (j - i) / 2;
+    if (nums[k] < target) i = k + 1;  // ← must go right
+    else                  j = k;       // ← might be answer
+}
+return i;  // i == j == answer (or n if not found)
+// Right bound: flip condition → if (nums[k] <= target) i=k+1; return j
 ```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #704 Binary Search | O(log n) / O(1) | Q: Find index of target in sorted array, -1 if absent. |
+| #34 Find First and Last Position of Element in Sorted Array | O(log n) / O(1) | Q: First and last position of target in sorted array. |
+| #35 Search Insert Position | O(log n) / O(1) | Q: Index to insert target to keep array sorted. |
+| #33 Search in Rotated Sorted Array | O(log n) / O(1) | Q: Search target in rotated sorted array. |
+| #162 Find Peak Element | O(log n) / O(1) | Q: Find any peak element (greater than neighbors). |
+
+#### Binary Search on Answer Space
+
+When answer is monotone: if X works then X+1 works (or vice versa). Binary search on X itself.
+
+```java
+// Template: find smallest X where condition(X) is true
+int i = minPossible, j = maxPossible;
+while (i < j) {
+    int k = i + (j - i) / 2;
+    if (condition(k)) j = k;   // ← k might be answer, keep it
+    else              i = k + 1;
+}
+return i;
+// condition() typically: can we accomplish task within limit k?
+// Overflow guard: if j = 10^9, use long for k
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #875 Koko Eating Bananas | O(n log max) / O(1) | Q: Min eating speed k so Koko finishes all piles in h hours. |
+| #1011 Capacity To Ship Packages Within D Days | O(n log sum) / O(1) | Q: Min ship capacity to deliver all packages within d days. |
+| #410 Split Array Largest Sum | O(n log sum) / O(1) | Q: Minimize the largest sum when splitting array into m subarrays. |
+| #1283 #1283 | O(n log max) / O(1) | Q: Smallest divisor so sum of ceil(nums[i]/divisor) <= threshold. |
+| #1231 #1231 | O(n log max) / O(1) | Q: Max min-piece when cutting chocolate into k pieces. |
 
 ### Linked List
 
-Dummy head simplifies edge cases. Slow/fast pointers for middle and cycle.
+#### Dummy Head
+
+Prepend dummy node so head modifications need no special case.
 
 ```java
-ListNode dummy = new ListNode(0); dummy.next = head;
-ListNode prev = dummy, current = head;
-while (current != null) {
-    if (shouldDelete(current)) prev.next = current.next;  ← skip node
-    else prev = current;
-    current = current.next;
+ListNode dummy = new ListNode(0);
+dummy.next = head;
+ListNode prev = dummy, curr = head;
+while (curr != null) {
+    if (shouldDelete(curr)) prev.next = curr.next;  // ← skip node
+    else prev = curr;
+    curr = curr.next;
 }
-return dummy.next;
-// Middle: while (fast!=null && fast.next!=null) { slow=slow.next; fast=fast.next.next; }
-// Cycle entry: after slow==fast, reset fast=head; advance both by 1 until equal
+return dummy.next;  // new head
 ```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #21 Merge Two Sorted Lists | O(n) / O(1) | Q: Merge two sorted linked lists into one sorted list. |
+| #2 Add Two Numbers | O(n) / O(1) | Q: Add two numbers represented as reversed linked lists. |
+| #82 Remove Duplicates from Sorted List II | O(n) / O(1) | Q: Remove all nodes with duplicate values from sorted list. |
+| #203 Remove Linked List Elements | O(n) / O(1) | Q: Remove all nodes with value equal to val. |
+| #25 Reverse Nodes in k-Group | O(n) / O(1) | Q: Reverse nodes in k-group, leave remainder as-is. |
+
+#### Slow / Fast Pointers
+
+Fast moves 2x. When fast reaches end, slow is at middle. When slow==fast, cycle found.
+
+```java
+ListNode slow = head, fast = head;
+// Find middle
+while (fast != null && fast.next != null) {
+    slow = slow.next; fast = fast.next.next;
+}
+// slow is at middle (or right-of-middle for even length)
+// Detect cycle + find entry:
+while (fast != null && fast.next != null) {
+    slow = slow.next; fast = fast.next.next;
+    if (slow == fast) {         // ← cycle detected
+        fast = head;
+        while (slow != fast) { slow = slow.next; fast = fast.next; }
+        return slow;            // ← cycle entry point
+    }
+}
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #141 Linked List Cycle | O(n) / O(1) | Q: Does the linked list contain a cycle? |
+| #142 Linked List Cycle II | O(n) / O(1) | Q: Node where the cycle begins. |
+| #876 Middle of the Linked List | O(n) / O(1) | Q: Return the middle node of a linked list. |
+| #234 Palindrome Linked List | O(n) / O(1) | Q: Is the linked list a palindrome? |
+| #160 Intersection of Two Linked Lists | O(n) / O(1) | Q: Intersection node of two linked lists. |
 
 ### Trees
 
-DFS (pre/in/post) or BFS (level). Pass state down; return results up.
+#### DFS — Return Value (bottom-up)
+
+Recurse left and right, combine results at current node, return up.
 
 ```java
-// Recursive DFS — return value floats results up
 int dfs(TreeNode root) {
-    if (root == null) return 0;          ← base case
-    int left = dfs(root.left);
+    if (root == null) return BASE;  // ← define base (0, Integer.MIN_VALUE, etc.)
+    int left  = dfs(root.left);
     int right = dfs(root.right);
-    return Math.max(left, right) + 1;   ← combine at node
+    // combine and return — result propagates upward
+    return Math.max(left, right) + 1;
 }
-// Global result pattern (when node can't just return the answer)
-int[] ans = new int[]{Integer.MIN_VALUE};
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #104 Maximum Depth of Binary Tree | O(n) / O(h) | Q: Maximum depth of a binary tree. |
+| #111 Minimum Depth of Binary Tree | O(n) / O(h) | Q: Minimum depth — shortest path from root to any leaf. |
+| #110 Balanced Binary Tree | O(n) / O(h) | Q: Is the binary tree height-balanced? |
+| #543 Diameter of Binary Tree | O(n) / O(h) | Q: Diameter — longest path between any two nodes. |
+| #687 #687 | O(n) / O(h) | Q: Longest univalue path — edges between nodes of equal value. |
+
+#### DFS — Global int[] Result
+
+When the answer at a node uses BOTH subtrees and cannot be returned up directly.
+
+```java
+int[] ans = new int[]{Integer.MIN_VALUE};  // ← global; use long[] if values can overflow
 void dfs(TreeNode root) {
     if (root == null) return;
-    int left = dfs2(root.left), right = dfs2(root.right);
-    ans[0] = Math.max(ans[0], left + right + root.val);  ← update global at each node
+    // Compute a value that cannot be the return type of the helper
+    int left  = Math.max(0, helper(root.left));   // ← ignore negative paths
+    int right = Math.max(0, helper(root.right));
+    ans[0] = Math.max(ans[0], left + right + root.val);  // ← update at every node
 }
-// BST: pass min/max bounds down to validate
+int helper(TreeNode root) {
+    if (root == null) return 0;
+    int left  = Math.max(0, helper(root.left));
+    int right = Math.max(0, helper(root.right));
+    ans[0] = Math.max(ans[0], left + right + root.val);
+    return Math.max(left, right) + root.val;  // ← can only extend ONE branch upward
+}
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #124 Binary Tree Maximum Path Sum | O(n) / O(h) | Q: Max path sum — path can start and end at any node. |
+| #543 Diameter of Binary Tree | O(n) / O(h) | Q: Diameter — longest path (in edges) between any two nodes. |
+| #549 Binary Tree Longest Consecutive Sequence II | O(n) / O(h) | Q: Longest consecutive sequence path in binary tree. |
+
+#### BST Pass-Down Bounds
+
+Pass min/max constraints downward. Use long to avoid int boundary edge cases.
+
+```java
 boolean validate(TreeNode node, long min, long max) {
     if (node == null) return true;
-    if (node.val <= min || node.val >= max) return false;  ← violates BST property
-    return validate(node.left, min, node.val) && validate(node.right, node.val, max);
+    if (node.val <= min || node.val >= max) return false;  // ← strict inequality for BST
+    return validate(node.left,  min, node.val)   // ← left subtree: max shrinks
+        && validate(node.right, node.val, max);  // ← right subtree: min grows
 }
-// Iterative inorder (left-root-right)
-Deque<TreeNode> stack = new ArrayDeque<>(); TreeNode current = root;
-while (current != null || !stack.isEmpty()) {
-    while (current != null) { stack.push(current); current = current.left; }
-    current = stack.pop(); process(current); current = current.right;
+// Call: validate(root, Long.MIN_VALUE, Long.MAX_VALUE)
+// Inorder of BST = strictly increasing — verify with inorder traversal:
+long prev = Long.MIN_VALUE;
+boolean inorder(TreeNode node) {
+    if (node == null) return true;
+    if (!inorder(node.left)) return false;
+    if (node.val <= prev) return false;  // ← not strictly increasing
+    prev = node.val; return inorder(node.right);
 }
-// BFS level order
-Queue<TreeNode> queue = new LinkedList<>(); queue.offer(root);
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #98 Validate Binary Search Tree | O(n) / O(h) | Q: Validate binary search tree. |
+| #230 Kth Smallest Element in a BST | O(n) / O(h) | Q: Kth smallest element in a BST. |
+| #285 Inorder Successor in BST | O(h) / O(1) | Q: Inorder successor in BST. |
+| #270 Closest Binary Search Tree Value | O(h) / O(1) | Q: Closest value in BST to a target. |
+
+#### BFS Level Order
+
+Snapshot queue.size() at start of each level to process level-by-level.
+
+```java
+Queue<TreeNode> queue = new LinkedList<>();
+if (root != null) queue.offer(root);
 while (!queue.isEmpty()) {
-    for (int size = queue.size(); size-- > 0;) {
+    int size = queue.size();  // ← number of nodes in THIS level
+    for (int i = 0; i < size; i++) {
         TreeNode node = queue.poll();
-        if (node.left != null) queue.offer(node.left);
+        // process node
+        if (node.left  != null) queue.offer(node.left);
         if (node.right != null) queue.offer(node.right);
     }
 }
 ```
 
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #102 Binary Tree Level Order Traversal | O(n) / O(n) | Q: Level order traversal — list of values per level. |
+| #103 Binary Tree Zigzag Level Order Traversal | O(n) / O(n) | Q: Zigzag level order — alternate left-to-right and right-to-left. |
+| #199 Binary Tree Right Side View | O(n) / O(n) | Q: Right side view — rightmost node at each level. |
+| #513 #513 | O(n) / O(n) | Q: Find leftmost value in last row of binary tree. |
+| #662 Maximum Width of Binary Tree | O(n) / O(n) | Q: Maximum width of binary tree across any level. |
+
 ### Dynamic Programming
 
-Define dp[i]=subproblem. Set base cases. Fill with recurrence.
+#### 1D Linear (dp[i] ← dp[i-1])
+
+Each state depends on O(1) previous states. Fill left to right. Often reducible to O(1) space.
 
 ```java
-// 1D DP
-int[] dp = new int[n + 1]; dp[0] = baseCase;
-for (int i = 1; i <= n; i++) dp[i] = transition(dp[i-1], ...);
-// 0/1 Knapsack — BACKWARD (no reuse)
-for (int num : nums) for (int i = target; i >= num; i--) dp[i] |= dp[i-num];  ← backward
-// Unbounded Knapsack — FORWARD (reuse allowed)
-for (int coin : coins) for (int i = coin; i <= amount; i++) dp[i] += dp[i-coin];
-// 2D DP (LCS / edit distance)
-if (s1.charAt(i-1) == s2.charAt(j-1)) dp[i][j] = dp[i-1][j-1] + 1;  ← match
-else dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
-// Interval DP (burst balloons, palindrome partition)
-for (int len = 2; len <= n; len++) {        ← iterate by subproblem length
-    for (int i = 0; i + len <= n; i++) {
+// dp[i] = answer for subproblem of size i
+int[] dp = new int[n + 1];
+dp[0] = 0; dp[1] = 1;  // ← base cases
+for (int i = 2; i <= n; i++)
+    dp[i] = dp[i-1] + dp[i-2];  // ← recurrence
+// Space optimize to O(1) when only last 1-2 states needed:
+int a = 0, b = 1;
+for (int i = 2; i <= n; i++) { int c = a + b; a = b; b = c; }
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #70 Climbing Stairs | O(n) / O(1) | Q: Count ways to climb n stairs (1 or 2 steps at a time). |
+| #198 House Robber | O(n) / O(1) | Q: Max money from non-adjacent houses. |
+| #746 Min Cost Climbing Stairs | O(n) / O(1) | Q: Min cost to reach top of staircase (can skip one step). |
+| #91 Decode Ways | O(n) / O(1) | Q: Number of ways to decode a digit string into letters. |
+| #213 House Robber II | O(n) / O(1) | Q: House Robber II — houses arranged in a circle. |
+
+#### 1D Prefix Scan O(n²) (dp[i] ← best of all dp[j], j<i)
+
+Fill left to right. For each i scan all j < i. Track running best inline. ORDER: i outer, j inner.
+
+```java
+// Concrete: Longest Increasing Subsequence (#300)
+// dp[i] = length of LIS ending at index i
+int[] dp = new int[n];
+int result = 1;
+for (int i = 0; i < n; i++) {
+    dp[i] = 1;                          // <- base: subsequence of just nums[i]
+    for (int j = 0; j < i; j++) {
+        if (nums[i] > nums[j])          // <- condition varies by problem
+            dp[i] = Math.max(dp[i], dp[j] + 1);
+    }
+    result = Math.max(result, dp[i]);   // <- update best inline (no second pass)
+}
+return result;
+// Adapt condition for other problems:
+//   Word Break (#139):  if (dict.contains(s[j..i]))  dp[i] = true
+//   Perfect Squares (#279):  if (j*j == cost)  dp[i] = min(dp[i], dp[i-j*j]+1)
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #300 Longest Increasing Subsequence | O(n²) / O(n) | Q: Length of longest strictly increasing subsequence. |
+| #139 Word Break | O(n²) / O(n) | Q: Can string s be segmented into dictionary words? |
+| #279 Perfect Squares | O(n·√n) / O(n) | Q: Fewest perfect squares summing to n. |
+| #368 Largest Divisible Subset | O(n²) / O(n) | Q: Largest subset where every pair i%j==0 or j%i==0. |
+| #96 Unique Binary Search Trees | O(n²) / O(n) | Q: Number of structurally unique BSTs with n nodes. |
+
+#### 0/1 Knapsack — Backward Scan
+
+Each item used AT MOST ONCE. Traverse capacity BACKWARD to prevent reuse.
+
+```java
+// dp[i] = can we achieve exactly sum i?  (or min cost, max value...)
+boolean[] dp = new boolean[target + 1];
+dp[0] = true;
+for (int num : nums)
+    for (int i = target; i >= num; i--)  // ← BACKWARD prevents using num twice
+        dp[i] |= dp[i - num];
+// For counting (Target Sum, ways to partition):
+int[] dp = new int[target + 1]; dp[0] = 1;
+for (int num : nums)
+    for (int i = target; i >= num; i--)
+        dp[i] += dp[i - num];
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #416 Partition Equal Subset Sum | O(n·sum) / O(sum) | Q: Can the array be partitioned into two equal-sum subsets? |
+| #494 Target Sum | O(n·sum) / O(sum) | Q: Count ways to assign + or - to each element to reach target. |
+| #474 #474 | O(l·mn) / O(mn) | Q: Max strings from list fitting within m zeros and n ones. |
+| #1049 #1049 | O(n·sum) / O(sum) | Q: Smallest possible weight of last remaining stone. |
+
+#### Unbounded Knapsack — Forward Scan
+
+Item can be used MULTIPLE TIMES. Traverse capacity FORWARD to allow reuse.
+
+```java
+// dp[i] = min coins (or ways) to make amount i
+int[] dp = new int[amount + 1];
+Arrays.fill(dp, Integer.MAX_VALUE / 2);  // ← /2 avoids overflow on dp[i]+1
+dp[0] = 0;
+for (int coin : coins)
+    for (int i = coin; i <= amount; i++)  // ← FORWARD allows reusing coin
+        dp[i] = Math.min(dp[i], dp[i - coin] + 1);
+// For counting (all ways):
+dp[0] = 1;
+for (int coin : coins)
+    for (int i = coin; i <= amount; i++)
+        dp[i] += dp[i - coin];
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #322 Coin Change | O(amount·n) / O(amount) | Q: Fewest coins to make amount. Return -1 if impossible. |
+| #518 Coin Change 2 | O(amount·n) / O(amount) | Q: Number of coin combinations that sum to amount. |
+| #377 Combination Sum IV | O(target·n) / O(target) | Q: Number of ordered combinations summing to target. |
+| #279 Perfect Squares | O(n·√n) / O(n) | Q: Min number of perfect squares summing to n. |
+
+#### 2D Two-Sequence DP
+
+dp[i][j] = answer for s1[0..i-1] and s2[0..j-1]. Fill row by row, left to right.
+
+```java
+// Require: dp[i-1][j-1], dp[i-1][j], dp[i][j-1] must exist — row-by-row fill ensures this
+int[][] dp = new int[m + 1][n + 1];
+// base: dp[0][j] = dp[i][0] = 0 (or problem-specific)
+for (int i = 1; i <= m; i++) {
+    for (int j = 1; j <= n; j++) {
+        if (s1.charAt(i-1) == s2.charAt(j-1))
+            dp[i][j] = dp[i-1][j-1] + 1;       // ← match: extend diagonal
+        else
+            dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);  // ← skip one char
+    }
+}
+// Overflow guard: if counting (e.g., distinct subsequences), use long[][] or apply MOD
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #1143 Longest Common Subsequence | O(mn) / O(mn) | Q: Length of longest common subsequence of two strings. |
+| #72 Edit Distance | O(mn) / O(mn) | Q: Min insert/delete/replace operations to convert word1 to word2. |
+| #115 Distinct Subsequences | O(mn) / O(mn) | Q: Number of distinct subsequences of s equal to t. |
+| #583 Delete Operation for Two Strings | O(mn) / O(mn) | Q: Min deletions to make two strings equal. |
+| #10 Regular Expression Matching | O(mn) / O(mn) | Q: Full regex match with . (any char) and * (zero or more). |
+
+#### Interval DP
+
+dp[i][j] = answer for subarray/substring [i..j]. ORDER: shorter intervals FIRST.
+
+```java
+// Fill by increasing length — dp[i][k] and dp[k+1][j] (shorter) must exist before dp[i][j]
+int[][] dp = new int[n][n];
+// base: single elements (len=1) — fill diagonal
+for (int i = 0; i < n; i++) dp[i][i] = baseCaseSingle;
+// fill by length
+for (int len = 2; len <= n; len++) {        // ← length grows: ensures shorter sub-intervals ready
+    for (int i = 0; i + len - 1 < n; i++) {
         int j = i + len - 1;
-        for (int k = i; k < j; k++)         ← try all split points
+        for (int k = i; k < j; k++)          // ← try all split points
             dp[i][j] = Math.max(dp[i][j], dp[i][k] + dp[k+1][j] + cost(i,k,j));
     }
 }
-// Memoization with int[][] (faster than Map<String>)
-int[][] memo = new int[m][n];
-for (int[] row : memo) Arrays.fill(row, -1);  ← -1 = unvisited
-int solve(int i, int j) {
-    if (memo[i][j] != -1) return memo[i][j];
-    return memo[i][j] = compute(i, j);         ← store and return
-}
-// MOD for counting problems
-private static final int MOD = 1_000_000_007;
-dp[i] = (dp[i-1] + dp[i-2]) % MOD;  ← apply mod after each addition
 ```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #312 Burst Balloons | O(n³) / O(n²) | Q: Max coins from bursting all balloons (last burst uses neighbors). |
+| #516 Longest Palindromic Subsequence | O(n²) / O(n²) | Q: Length of longest palindromic subsequence. |
+| #1312 #1312 | O(n²) / O(n²) | Q: Min insertions to make string a palindrome. |
+| #87 #87 | O(n³) / O(n²) | Q: Is s2 a scramble of s1 (recursive splits)? |
+
+#### Grid DP
+
+dp[i][j] = answer for cell (i,j). Fill top-to-bottom, left-to-right.
+
+```java
+// Each cell depends on dp[i-1][j] (above) and dp[i][j-1] (left)
+int[][] dp = new int[m][n];
+dp[0][0] = grid[0][0];
+for (int i = 0; i < m; i++)
+    for (int j = 0; j < n; j++) {
+        if (i == 0 && j == 0) continue;
+        int fromUp   = i > 0 ? dp[i-1][j] : Integer.MAX_VALUE / 2;  // ← /2 avoids overflow
+        int fromLeft = j > 0 ? dp[i][j-1] : Integer.MAX_VALUE / 2;
+        dp[i][j] = Math.min(fromUp, fromLeft) + grid[i][j];
+    }
+// Space: reduce to O(n) using 1D rolling array (one row)
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #64 Minimum Path Sum | O(mn) / O(1) | Q: Min path sum from top-left to bottom-right (right/down moves only). |
+| #62 Unique Paths | O(mn) / O(n) | Q: Count paths from top-left to bottom-right (right/down only). |
+| #63 Unique Paths II | O(mn) / O(n) | Q: Unique paths with obstacles. |
+| #931 #931 | O(mn) / O(1) | Q: Min sum of a falling path through an n×n matrix. |
+| #221 Maximal Square | O(mn) / O(mn) | Q: Area of largest square of 1s in binary matrix. |
+
+#### State Machine (Stock Trading)
+
+Multiple states at each time step. Transitions encode buy/sell/hold/cooldown rules.
+
+```java
+// States: hold (own stock), cash (no stock, can buy), sold (just sold, cooling down)
+// ORDER: update in reverse dependency so you use PREVIOUS day values, not current
+int hold = Integer.MIN_VALUE / 2;  // ← /2 avoids overflow on hold + price
+int cash = 0, sold = 0;
+for (int price : prices) {
+    int prevHold = hold, prevCash = cash, prevSold = sold;
+    hold = Math.max(prevHold, prevCash - price);  // ← keep holding OR buy today
+    sold = prevHold + price;                       // ← sell today
+    cash = Math.max(prevCash, prevSold);           // ← stay in cash OR come off cooldown
+}
+return Math.max(cash, sold);
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #121 Best Time to Buy and Sell Stock | O(n) / O(1) | Q: Max profit with exactly 1 buy and 1 sell. |
+| #122 Best Time to Buy and Sell Stock II | O(n) / O(1) | Q: Max profit with unlimited transactions. |
+| #309 Best Time to Buy and Sell Stock with Cooldown | O(n) / O(1) | Q: Max profit with cooldown day after each sell. |
+| #714 Best Time to Buy and Sell Stock with Transaction Fee | O(n) / O(1) | Q: Max profit with unlimited transactions, transaction fee. |
+| #123 Best Time to Buy and Sell Stock III | O(n) / O(1) | Q: Max profit with at most 2 transactions. |
 
 ### Backtracking
 
-DFS decision tree: make choice → recurse → undo. Prune early.
+#### Subsets / Combinations
+
+Sort first. At each index choose include or skip. Dedup by skipping same value at same level.
 
 ```java
-List<List<Integer>> result = new ArrayList<>(); List<Integer> path = new ArrayList<>();
+List<List<Integer>> result = new ArrayList<>();
+List<Integer> path = new ArrayList<>();
+// Sort nums first to group duplicates
 void backtrack(int[] nums, int start) {
-    if (satisfiesCondition()) { result.add(new ArrayList<>(path)); return; }
+    result.add(new ArrayList<>(path));          // ← record every prefix (subsets)
     for (int i = start; i < nums.length; i++) {
-        if (i > start && nums[i] == nums[i-1]) continue;  ← skip duplicates
-        path.add(nums[i]);            ← make choice
-        backtrack(nums, i + 1);      // i+1 = no reuse; i = reuse allowed
-        path.remove(path.size() - 1); ← undo choice
+        if (i > start && nums[i] == nums[i-1]) continue;  // ← skip dup at same level
+        path.add(nums[i]);
+        backtrack(nums, i + 1);  // i+1 = no reuse  |  i = reuse allowed
+        path.remove(path.size() - 1);
     }
 }
-// Permutations: boolean[] used; skip if used[i] or (i>0 && nums[i]==nums[i-1] && !used[i-1])
-// Grid backtracking — mark cell in-place, then restore
-void dfs(char[][] board, int r, int c) {
-    if (outOfBounds || board[r][c] != target) return;
-    char saved = board[r][c]; board[r][c] = '#';  ← mark visited in-place
-    dfs(board, r+1, c); dfs(board, r-1, c); dfs(board, r, c+1); dfs(board, r, c-1);
-    board[r][c] = saved;  ← restore (backtrack)
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #78 Subsets | O(2ⁿ) / O(n) | Q: All subsets of a set with no duplicates. |
+| #90 Subsets II | O(2ⁿ) / O(n) | Q: All unique subsets — input may contain duplicates. |
+| #39 Combination Sum | O(2ⁿ) / O(n) | Q: All combinations summing to target, reuse allowed. |
+| #40 Combination Sum II | O(2ⁿ) / O(n) | Q: All unique combinations summing to target, no reuse. |
+| #216 Combination Sum III | O(C(9,k)) / O(k) | Q: All k-length combinations from 1–9 summing to n. |
+
+#### Permutations
+
+boolean[] used tracks which elements are in current path.
+
+```java
+boolean[] used = new boolean[n];
+void backtrack(int[] nums) {
+    if (path.size() == n) { result.add(new ArrayList<>(path)); return; }
+    for (int i = 0; i < n; i++) {
+        if (used[i]) continue;
+        // Dedup: same value as previous AND previous not in use → skip
+        if (i > 0 && nums[i] == nums[i-1] && !used[i-1]) continue;
+        used[i] = true; path.add(nums[i]);
+        backtrack(nums);
+        path.remove(path.size() - 1); used[i] = false;
+    }
 }
 ```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #46 Permutations | O(n!) / O(n) | Q: All permutations of distinct integers. |
+| #47 Permutations II | O(n!) / O(n) | Q: All unique permutations — input may contain duplicates. |
+| #60 Permutation Sequence | O(n) / O(n) | Q: Kth permutation sequence of 1..n (direct math, no backtrack). |
+
+#### Grid / Board Backtracking
+
+Mark cell visited in-place (no extra visited array). Restore after recursion.
+
+```java
+int[][] dirs = {{0,1},{0,-1},{1,0},{-1,0}};
+void dfs(char[][] board, int r, int c, ...) {
+    if (r < 0 || r >= rows || c < 0 || c >= cols) return;
+    if (board[r][c] == VISITED || board[r][c] != target) return;
+    char saved = board[r][c]; board[r][c] = '#';  // ← mark visited in-place
+    for (int[] d : dirs) dfs(board, r + d[0], c + d[1], ...);
+    board[r][c] = saved;  // ← restore (backtrack)
+}
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #79 Word Search | O(mn·4^L) / O(L) | Q: Does word exist in grid — contiguous path of letters? |
+| #212 Word Search II | O(mn·4^L) / O(L) | Q: Find all words from dictionary that exist in grid. |
+| #51 N-Queens | O(n!) / O(n) | Q: All solutions to n-queens — no two queens attack each other. |
+| #37 Sudoku Solver | O(9^m) / O(1) | Q: Solve Sudoku — fill blank cells so each row/col/box has 1–9. |
 
 ### Stack & Queue
 
-Stack for matching. Monotonic stack for next greater/smaller. Queue for BFS.
+#### Monotonic Stack
+
+Maintain stack in increasing (or decreasing) order. Each element pushed/popped at most once: O(n).
 
 ```java
-// Monotonic stack — next greater element
-int[] result = new int[n]; Arrays.fill(result, -1);
-Deque<Integer> stack = new ArrayDeque<>();
+Deque<Integer> stack = new ArrayDeque<>();  // stores indices
+int[] result = new int[n];
+Arrays.fill(result, -1);
 for (int i = 0; i < n; i++) {
+    // Pop while current element BREAKS the monotonic property
     while (!stack.isEmpty() && nums[stack.peek()] < nums[i])
-        result[stack.pop()] = nums[i];  ← found next greater
+        result[stack.pop()] = nums[i];  // ← nums[i] is next greater for popped index
     stack.push(i);
 }
-// Parentheses matching: push open; on close check peek matches, pop
-// Calculator
-int num = 0, sign = 1, result = 0; Deque<Integer> stack = new ArrayDeque<>();
-for (char c : s.toCharArray()) {
-    if (Character.isDigit(c)) num = num * 10 + (c - '0');
-    else if (c=='+' || c=='-') { result+=sign*num; num=0; sign=(c=='+')?1:-1; }
-    else if (c=='(') { stack.push(result); stack.push(sign); result=0; sign=1; }
-    else if (c==')') { result+=sign*num; num=0; result=stack.pop()*result+stack.pop(); }
-}
+// Increasing stack → finds next GREATER to the right
+// Decreasing stack → finds next SMALLER to the right
+// For circular array: loop i from 0 to 2n-1, use i % n
 ```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #739 Daily Temperatures | O(n) / O(n) | Q: Days to wait for a warmer temperature (next greater). |
+| #496 Next Greater Element I | O(n) / O(n) | Q: Next greater element for each element in nums1 (from nums2). |
+| #503 Next Greater Element II | O(n) / O(n) | Q: Next greater element II in circular array. |
+| #84 Largest Rectangle in Histogram | O(n) / O(n) | Q: Largest rectangle area in histogram. |
+| #85 Maximal Rectangle | O(mn) / O(n) | Q: Maximal rectangle of 1s in binary matrix. |
+
+#### Calculator (Stack for Parentheses)
+
+Push result+sign before (, restore after ). Process +/- with running total.
+
+```java
+int result = 0, sign = 1, num = 0;
+Deque<Integer> stack = new ArrayDeque<>();
+for (char c : s.toCharArray()) {
+    if (Character.isDigit(c)) {
+        num = num * 10 + (c - ''0''');  // ← build multi-digit number
+    } else if (c == ''+''  || c == ''-''") {
+        result += sign * num; num = 0;
+        sign = (c == ''+''") ? 1 : -1;
+    } else if (c == '''(''") {
+        stack.push(result); stack.push(sign);  // ← save context
+        result = 0; sign = 1;
+    } else if (c == ''')''") {
+        result += sign * num; num = 0;
+        result = stack.pop() * result + stack.pop();  // ← restore context
+    }
+}
+return result + sign * num;
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #224 Basic Calculator | O(n) / O(n) | Q: Evaluate expression with +, -, and parentheses. |
+| #227 Basic Calculator II | O(n) / O(n) | Q: Evaluate expression with +, -, *, / (no parentheses). |
+| #772 Basic Calculator III | O(n) / O(n) | Q: Evaluate expression with all four operators and parentheses. |
+| #20 Valid Parentheses | O(n) / O(n) | Q: Valid parentheses — check (), [], {} are properly closed. |
 
 ### Heap
 
-PriorityQueue for top-K, streaming median, merge K. Min heap default.
+#### K Largest / K-th Element
+
+Min-heap of size k: evict when oversized. Peek = k-th largest in O(n log k).
 
 ```java
 PriorityQueue<Integer> minHeap = new PriorityQueue<>();
-PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder());
-PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[0] - b[0]);
-// K largest: min-heap size k, evict when oversized → peek = kth largest
-for (int num : nums) { pq.offer(num); if (pq.size() > k) pq.poll(); }  ← evict smallest
+for (int num : nums) {
+    minHeap.offer(num);
+    if (minHeap.size() > k) minHeap.poll();  // ← evict smallest, keeping top-k
+}
+return minHeap.peek();  // k-th largest
+// Custom key: sort by frequency
+PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[1] - b[1]);  // min by freq
+Map<Integer, Integer> freq = new HashMap<>();
+for (int n : nums) freq.merge(n, 1, Integer::sum);
+for (Map.Entry<Integer,Integer> e : freq.entrySet()) {
+    pq.offer(new int[]{e.getKey(), e.getValue()});
+    if (pq.size() > k) pq.poll();
+}
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #215 Kth Largest Element in an Array | O(n log k) / O(k) | Q: Kth largest element in unsorted array. |
+| #347 Top K Frequent Elements | O(n log k) / O(n) | Q: K most frequent elements. |
+| #692 Top K Frequent Words | O(n log k) / O(n) | Q: K most frequent words, sorted lexicographically on ties. |
+| #378 Kth Smallest Element in a Sorted Matrix | O(n log n) / O(n) | Q: Kth smallest element in n×n sorted matrix. |
+| #373 Find K Pairs with Smallest Sums | O(k log k) / O(k) | Q: K pairs (u,v) with smallest sums from two sorted arrays. |
+
+#### Merge K Sorted + Streaming
+
+Start with one element per sequence. Poll min, push its successor.
+
+```java
 // Merge K sorted lists
 PriorityQueue<ListNode> pq = new PriorityQueue<>((a, b) -> a.val - b.val);
 for (ListNode head : lists) if (head != null) pq.offer(head);
+ListNode dummy = new ListNode(0), curr = dummy;
 while (!pq.isEmpty()) {
-    current.next = pq.poll();
-    if (current.next.next != null) pq.offer(current.next.next);  ← push successor
-    current = current.next;
+    curr.next = pq.poll(); curr = curr.next;
+    if (curr.next != null) pq.offer(curr.next);  // ← push successor
 }
-// Sliding window median: maxHeap (lower) + minHeap (upper), balance sizes
+// Streaming median: two heaps balanced so |maxH| - |minH| <= 1
+PriorityQueue<Integer> maxH = new PriorityQueue<>(Collections.reverseOrder()); // lower half
+PriorityQueue<Integer> minH = new PriorityQueue<>();  // upper half
+void add(int num) {
+    maxH.offer(num);
+    minH.offer(maxH.poll());   // ← balance: push max of lower half into upper
+    if (maxH.size() < minH.size()) maxH.offer(minH.poll());
+}
+double median() { return maxH.size() > minH.size() ? maxH.peek() : (maxH.peek() + minH.peek()) / 2.0; }
 ```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #23 Merge k Sorted Lists | O(n log k) / O(k) | Q: Merge k sorted linked lists into one sorted list. |
+| #295 Find Median from Data Stream | O(log n) / O(n) | Q: MedianFinder — addNum() and findMedian() on data stream. |
+| #88 Merge Sorted Array | O(m+n) / O(1) | Q: Merge two sorted arrays in-place into nums1. |
+| #480 Sliding Window Median | O(n log k) / O(k) | Q: Sliding window median as window moves. |
 
 ### Graph
 
-BFS = shortest path. DFS = components/cycles. Topo sort for DAGs. Union Find for connectivity.
+#### BFS Shortest Path (unweighted)
+
+Level-by-level BFS. Steps count = shortest distance. Mark visited before enqueue.
 
 ```java
-// BFS shortest path
-Queue<Integer> queue = new LinkedList<>(); boolean[] visited = new boolean[n];
+Queue<Integer> queue = new LinkedList<>();
+boolean[] visited = new boolean[n];
 queue.offer(start); visited[start] = true; int steps = 0;
 while (!queue.isEmpty()) {
     for (int size = queue.size(); size-- > 0;) {
-        int node = queue.poll(); if (node == target) return steps;
-        for (int next : graph.get(node)) if (!visited[next]) { visited[next]=true; queue.offer(next); }
+        int node = queue.poll();
+        if (node == target) return steps;
+        for (int next : graph.get(node))
+            if (!visited[next]) { visited[next] = true; queue.offer(next); }
     }
     steps++;
 }
-// Grid BFS/DFS — 4-direction traversal
+return -1;  // unreachable
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #127 Word Ladder | O(V+E) / O(V) | Q: Min transformations from beginWord to endWord changing one letter. |
+| #994 Rotting Oranges | O(mn) / O(mn) | Q: Minutes until all fresh oranges rot (multi-source BFS). |
+| #286 Walls and Gates | O(mn) / O(mn) | Q: Fill each empty cell with distance to nearest gate. |
+| #1091 Shortest Path in Binary Matrix | O(mn) / O(mn) | Q: Shortest path in binary matrix from top-left to bottom-right. |
+| #909 Snakes and Ladders | O(n²) / O(n²) | Q: Min moves to reach end of Snakes and Ladders board. |
+
+#### Grid DFS/BFS — 4-Direction
+
+Define dirs array. Check bounds and visited before recursing. Mark before, not after.
+
+```java
 int[][] dirs = {{0,1},{0,-1},{1,0},{-1,0}};
-for (int[] d : dirs) {
-    int nr = r + d[0], nc = c + d[1];
-    if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited[nr][nc]) { /* visit */ }
+void dfs(int[][] grid, boolean[][] visited, int r, int c) {
+    if (r < 0 || r >= rows || c < 0 || c >= cols) return;
+    if (visited[r][c] || grid[r][c] == 0) return;
+    visited[r][c] = true;  // ← mark BEFORE recursing
+    for (int[] d : dirs) dfs(grid, visited, r + d[0], c + d[1]);
 }
-// Dijkstra — weighted shortest path
+// In-place marking (no visited array):
+grid[r][c] = 0;  // ← mark as visited by setting to empty
+for (int[] d : dirs) dfs(grid, r + d[0], c + d[1]);
+// grid[r][c] = 1;  ← only restore if backtracking needed
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #200 Number of Islands | O(mn) / O(mn) | Q: Count islands — connected groups of 1s in grid. |
+| #695 Max Area of Island | O(mn) / O(mn) | Q: Max area of island — largest connected group of 1s. |
+| #130 Surrounded Regions | O(mn) / O(mn) | Q: Capture surrounded regions — flip O to X if enclosed by X. |
+| #417 Pacific Atlantic Water Flow | O(mn) / O(mn) | Q: Pacific Atlantic water flow — cells reachable by both oceans. |
+| #827 Making A Large Island | O(mn) / O(mn) | Q: Making a large island — flip one 0 to maximize island size. |
+
+#### Dijkstra (weighted shortest path)
+
+Min-heap on (distance, node). Skip stale entries with dist check.
+
+```java
 int[] dist = new int[n]; Arrays.fill(dist, Integer.MAX_VALUE); dist[src] = 0;
-PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[0] - b[0]);
+PriorityQueue<int[]> pq = new PriorityQueue<>((a,b) -> a[0] - b[0]);
 pq.offer(new int[]{0, src});
 while (!pq.isEmpty()) {
     int[] curr = pq.poll(); int d = curr[0], u = curr[1];
-    if (d > dist[u]) continue;  ← stale entry, skip
+    if (d > dist[u]) continue;  // ← stale entry: a shorter path was already found
     for (int[] edge : graph.get(u)) {
-        if (dist[u] + edge[1] < dist[edge[0]]) {
-            dist[edge[0]] = dist[u] + edge[1]; pq.offer(new int[]{dist[edge[0]], edge[0]});
+        int v = edge[0], w = edge[1];
+        // Overflow guard: dist[u] + w may overflow if w is large
+        if ((long) dist[u] + w < dist[v]) {
+            dist[v] = dist[u] + w; pq.offer(new int[]{dist[v], v});
         }
     }
 }
-// Topological sort DFS — 3-color cycle detection
-int[] state = new int[n];  // 0=unvisited 1=visiting 2=done
-boolean dfs(int u) {
-    state[u] = 1;
-    for (int v : graph.get(u)) {
-        if (state[v] == 1) return false;  ← back edge = cycle
-        if (state[v] == 0 && !dfs(v)) return false;
-    }
-    state[u] = 2; order.addFirst(u); return true;  ← post-order = topo order
-}
-// Kahn's topo sort (BFS): int[] indegree; seed queue with 0-indegree nodes; reduce on pop
-// Union Find
-int[] parent = new int[n]; for (int i=0;i<n;i++) parent[i]=i;
-int find(int x) { return parent[x]==x ? x : (parent[x]=find(parent[x])); }  ← path compression
-void union(int x, int y) { parent[find(x)]=find(y); }
 ```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #743 Network Delay Time | O((V+E) log V) / O(V+E) | Q: Time for a signal to reach all n nodes — return -1 if impossible. |
+| #787 Cheapest Flights Within K Stops | O(E log E) / O(V+E) | Q: Cheapest flight from src to dst with at most k stops. |
+| #1514 #1514 | O(E log V) / O(V+E) | Q: Max probability path between two nodes. |
+| #1631 Path With Minimum Effort | O(mn log mn) / O(mn) | Q: Min effort path from top-left to bottom-right (max step). |
+
+#### Topological Sort (Kahn's BFS)
+
+Seed queue with 0-indegree nodes. Pop → reduce neighbors. Valid only if all nodes processed.
+
+```java
+int[] indegree = new int[n];
+for (int[] edge : edges) indegree[edge[1]]++;
+Queue<Integer> queue = new LinkedList<>();
+for (int i = 0; i < n; i++) if (indegree[i] == 0) queue.offer(i);
+List<Integer> order = new ArrayList<>();
+while (!queue.isEmpty()) {
+    int node = queue.poll(); order.add(node);
+    for (int next : graph.get(node))
+        if (--indegree[next] == 0) queue.offer(next);  // ← unlocked a new node
+}
+return order.size() == n ? order : new ArrayList<>();  // ← size < n means cycle
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #207 Course Schedule | O(V+E) / O(V+E) | Q: Can finish all courses given prerequisite pairs? |
+| #210 Course Schedule II | O(V+E) / O(V+E) | Q: Return one valid course order, or [] if impossible. |
+| #310 Minimum Height Trees | O(V+E) / O(V+E) | Q: Roots of minimum height trees (repeatedly trim leaves). |
+| #269 Alien Dictionary | O(V+E) / O(V+E) | Q: Alien dictionary — derive char order from sorted word list. |
+
+#### Union Find
+
+find() with path compression: O(α) ≈ O(1). union() merges components.
+
+```java
+int[] parent = new int[n], rank = new int[n];
+for (int i = 0; i < n; i++) parent[i] = i;
+int find(int x) {
+    return parent[x] == x ? x : (parent[x] = find(parent[x]));  // ← path compression
+}
+boolean union(int x, int y) {
+    int px = find(x), py = find(y);
+    if (px == py) return false;  // ← already connected (cycle if edge)
+    if (rank[px] < rank[py]) { int tmp = px; px = py; py = tmp; }
+    parent[py] = px;
+    if (rank[px] == rank[py]) rank[px]++;
+    return true;
+}
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #200 Number of Islands | O(mn·α) / O(mn) | Q: Number of islands. |
+| #261 Graph Valid Tree | O((V+E)α) / O(V) | Q: Is graph with n nodes and edges a valid tree? |
+| #323 Number of Connected Components in an Undirected Graph | O((V+E)α) / O(V) | Q: Number of connected components in undirected graph. |
+| #684 #684 | O(E·α) / O(V) | Q: Remove one redundant edge to make graph a tree. |
+| #721 #721 | O(n²·α) / O(n) | Q: Merge email accounts sharing a common email address. |
 
 ### String
 
-int[26] for char freq. Sliding window for substrings. StringBuilder for building. DP for palindrome/match.
+#### int[26] / int[128] Char Frequency
+
+int[26] for lowercase only. int[128] for any ASCII. Both O(1) space (constant size).
 
 ```java
-// Char frequency (lowercase only)
+// Anagram / frequency compare
 int[] count = new int[26];
 for (char c : s.toCharArray()) count[c - 'a']++;
-// Sliding window on string
-int left = 0, distinct = 0; int[] window = new int[128];
-for (int right = 0; right < s.length(); right++) {
-    if (window[s.charAt(right)]++ == 0) distinct++;  ← new char enters window
-    while (distinct > k) if (--window[s.charAt(left++)] == 0) distinct--;
-    result = Math.max(result, right - left + 1);
+for (char c : t.toCharArray()) count[c - 'a']--;
+for (int x : count) if (x != 0) return false;  // ← any non-zero = not anagram
+// int[128] for full ASCII (track window in sliding window)
+int[] freq = new int[128];
+for (char c : t.toCharArray()) freq[c]++;
+int need = t.length();  // how many chars still unmatched
+for (int r = 0; r < s.length(); r++) {
+    if (freq[s.charAt(r)]-- > 0) need--;   // ← positive count = still needed
+    if (need == 0) /* window contains all t chars */;
 }
-// Palindrome check / expand around center
-int expandAroundCenter(String s, int left, int right) {
-    while (left >= 0 && right < s.length() && s.charAt(left)==s.charAt(right)) { left--; right++; }
-    return right - left - 1;
-}
-// StringBuilder (avoid O(n²) string concatenation)
-StringBuilder sb = new StringBuilder();
-for (char c : s.toCharArray()) { sb.append(transform(c)); }
-return sb.toString();
-// Two-pointer on sorted char array for anagram / palindrome
-char[] arr = s.toCharArray(); Arrays.sort(arr);
-int left = 0, right = arr.length - 1;
-while (left < right) if (arr[left++] != arr[right--]) return false;
 ```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #242 Valid Anagram | O(n) / O(1) | Q: Are two strings anagrams of each other? |
+| #383 Ransom Note | O(n) / O(1) | Q: Can you build ransom note using magazine letters? |
+| #49 Group Anagrams | O(nk) / O(n) | Q: Group anagrams together from list of strings. |
+| #438 Find All Anagrams in a String | O(n) / O(1) | Q: All start indices of anagrams of p in s. |
+| #567 Permutation in String | O(n) / O(1) | Q: Does any permutation of s1 appear in s2? |
+
+#### Expand Around Center (Palindrome)
+
+O(n²) time, O(1) space. Try each center (n odd + n-1 even centers).
+
+```java
+int expandAroundCenter(String s, int lo, int hi) {
+    while (lo >= 0 && hi < s.length() && s.charAt(lo) == s.charAt(hi)) {
+        lo--; hi++;  // ← expand while chars match
+    }
+    return hi - lo - 1;  // ← length of palindrome
+}
+// Scan all centers:
+int start = 0, maxLen = 1;
+for (int i = 0; i < n; i++) {
+    int odd  = expandAroundCenter(s, i, i);      // ← odd length
+    int even = expandAroundCenter(s, i, i + 1);  // ← even length
+    if (Math.max(odd, even) > maxLen) {
+        maxLen = Math.max(odd, even);
+        start = i - (maxLen - 1) / 2;
+    }
+}
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #5 Longest Palindromic Substring | O(n²) / O(1) | Q: Longest palindromic substring. |
+| #647 Palindromic Substrings | O(n²) / O(1) | Q: Count all palindromic substrings. |
+| #131 Palindrome Partitioning | O(n·2ⁿ) / O(n) | Q: All partitions of s where every substring is a palindrome. |
 
 ### Greedy
 
-Locally optimal at each step. Sort first. Prove via exchange argument.
+#### Interval Scheduling (sort by end)
+
+Sort intervals by end time. Greedily pick non-overlapping intervals — O(n log n).
 
 ```java
-// Interval scheduling (sort by end time)
-Arrays.sort(intervals, (a, b) -> a[1] - b[1]);
-int end = intervals[0][1], count = 1;
-for (int i = 1; i < intervals.length; i++)
-    if (intervals[i][0] >= end) { end = intervals[i][1]; count++; }  ← no overlap
-// Jump game
+Arrays.sort(intervals, (a, b) -> a[1] - b[1]);  // sort by end time
+int count = 0, end = Integer.MIN_VALUE;
+for (int[] interval : intervals) {
+    if (interval[0] >= end) {   // starts at or after last chosen end
+        count++;
+        end = interval[1];      // update last end
+    }
+}
+// Merge intervals: sort by start, merge overlapping
+Arrays.sort(intervals, (a, b) -> a[0] - b[0]);  // sort by start
+List<int[]> merged = new ArrayList<>();
+for (int[] iv : intervals) {
+    if (merged.isEmpty() || merged.get(merged.size()-1)[1] < iv[0])
+        merged.add(iv);                                 // no overlap: new interval
+    else
+        merged.get(merged.size()-1)[1] = Math.max(merged.get(merged.size()-1)[1], iv[1]);
+}
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #435 Non-overlapping Intervals | O(n log n) / O(1) | Q: Min number of intervals to remove so none overlap. |
+| #56 Merge Intervals | O(n log n) / O(n) | Q: Merge all overlapping intervals. |
+| #57 Insert Interval | O(n) / O(n) | Q: Insert new interval into sorted non-overlapping list. |
+| #252 Meeting Rooms | O(n log n) / O(1) | Q: Can one person attend all meetings (no overlaps)? |
+| #253 Meeting Rooms II | O(n log n) / O(n) | Q: Min meeting rooms to hold all meetings simultaneously. |
+
+#### Jump Game (track max reach)
+
+Greedily maintain the farthest index reachable at each step. O(n) / O(1).
+
+```java
+// Can reach end? (Jump Game I)
 int maxReach = 0;
-for (int i = 0; i <= maxReach && i < n; i++) {
-    maxReach = Math.max(maxReach, i + nums[i]);  ← extend reach greedily
-    if (maxReach >= n - 1) return true;
+for (int i = 0; i <= maxReach && i < n; i++)  // stop if i exceeds reach
+    maxReach = Math.max(maxReach, i + nums[i]);
+return maxReach >= n - 1;
+// Min jumps (Jump Game II) — BFS-greedy
+int jumps = 0, currentEnd = 0, farthest = 0;
+for (int i = 0; i < n - 1; i++) {
+    farthest = Math.max(farthest, i + nums[i]);
+    if (i == currentEnd) {        // exhausted current jump range
+        jumps++;
+        currentEnd = farthest;    // advance to farthest reachable
+    }
 }
-// Two-array matching (cookies, tasks)
-Arrays.sort(a); Arrays.sort(b);
-for (int i = 0, j = 0; i < a.length && j < b.length; j++)
-    if (b[j] >= a[i]) i++;  ← satisfy smallest unmet requirement
-return i;
+return jumps;
 ```
 
-### Design
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #55 Jump Game | O(n) / O(1) | Q: Can you reach the last index from index 0? |
+| #45 Jump Game II | O(n) / O(1) | Q: Min number of jumps to reach last index. |
+| #134 Gas Station | O(n) / O(1) | Q: Can complete circular gas station route — if so, find starting index. |
 
-Match data structures to operation requirements. LRU = HashMap + DLL.
+#### Task / Character Cooldown
+
+Most-frequent element drives the minimum time. Use count array or max-heap.
 
 ```java
-// LRU Cache: O(1) get and put
-class LRUCache {
-    Map<Integer, Node> map = new HashMap<>();
-    Node head = new Node(), tail = new Node();  ← sentinel nodes
-    int capacity;
-    // Doubly linked list: head(MRU) ↔ ... ↔ tail(LRU)
-    int get(int key) {
-        if (!map.containsKey(key)) return -1;
-        moveToFront(map.get(key)); return map.get(key).val;  ← mark recently used
-    }
-    void put(int key, int val) {
-        if (map.containsKey(key)) { map.get(key).val=val; moveToFront(map.get(key)); return; }
-        if (map.size()==capacity) { map.remove(tail.prev.key); remove(tail.prev); }  ← evict LRU
-        Node node = new Node(key, val); addToFront(node); map.put(key, node);
-    }
+// Task Scheduler: n cooldown between same tasks
+int[] freq = new int[26];
+for (char c : tasks) freq[c - 'A']++;
+Arrays.sort(freq);
+int maxFreq = freq[25];
+int idleSlots = (maxFreq - 1) * n;
+for (int i = 24; i >= 0 && freq[i] > 0; i--)
+    idleSlots -= Math.min(freq[i], maxFreq - 1);  // fill idle slots with other tasks
+return tasks.length + Math.max(0, idleSlots);
+// Reorganize String: no two adjacent same chars
+// Use max-heap; always place most-frequent char not equal to previous
+PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> b[1] - a[1]); // max by freq
+for (int[] e : freqMap.entrySet()) pq.offer(new int[]{e.getKey(), e.getValue()});
+int[] prev = null;
+StringBuilder sb = new StringBuilder();
+while (!pq.isEmpty()) {
+    int[] top = pq.poll();
+    sb.append((char) top[0]); top[1]--;
+    if (prev != null && prev[1] > 0) pq.offer(prev);
+    prev = top;
 }
 ```
 
-### Trie
-
-Prefix tree: TrieNode with children[26] + isEnd. O(L) per operation.
-
-```java
-class TrieNode { TrieNode[] children = new TrieNode[26]; boolean isEnd; }
-void insert(String word) {
-    TrieNode node = root;
-    for (char c : word.toCharArray()) {
-        int i = c - 'a';
-        if (node.children[i] == null) node.children[i] = new TrieNode();  ← create on demand
-        node = node.children[i];
-    }
-    node.isEnd = true;
-}
-boolean search(String word) {
-    TrieNode node = root;
-    for (char c : word.toCharArray()) {
-        if (node.children[c-'a'] == null) return false;
-        node = node.children[c-'a'];
-    }
-    return node.isEnd;  ← must be complete word, not just prefix
-}
-// startsWith: same as search but return true at end (don't check isEnd)
-```
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #621 Task Scheduler | O(n) / O(1) | Q: Min intervals to execute all tasks with n cooldown between same tasks. |
+| #767 Reorganize String | O(n log n) / O(n) | Q: Rearrange string so no two adjacent chars are same. |
+| #358 Rearrange String k Distance Apart | O(n log k) / O(k) | Q: Rearrange string k distance apart. |
 
 ### Bit Manipulation
 
-XOR/AND/OR tricks. n&(n-1) clears lowest bit. n&(-n) isolates lowest bit.
+#### XOR Tricks
+
+a XOR a = 0. a XOR 0 = a. XOR all elements to cancel duplicates — O(n) / O(1).
 
 ```java
-n & (n-1)      // clear lowest set bit — check power of 2, count set bits
-n & (-n)       // isolate lowest set bit — used in Fenwick tree
-a ^ b ^ b = a  // XOR is self-inverse — find single number in pairs
-(n >> k) & 1   // check kth bit
-n | (1 << k)   // set kth bit
-n & ~(1 << k)  // clear kth bit
-// Count set bits (Kernighan): while (n!=0) { n &= n-1; count++; }
-// XOR all elements → pairs cancel → single survivor ← key insight for "find unique"
-// Subset enumeration: for (int mask=0; mask<(1<<n); mask++) { /* use bits of mask */ }
+// Single Number I: one element appears once, rest appear twice
+int result = 0;
+for (int num : nums) result ^= num;   // pairs cancel, lone remains
+// Single Number III: two elements appear once, rest appear twice
+int xor = 0;
+for (int num : nums) xor ^= num;      // xor = a ^ b
+int diff = xor & (-xor);              // isolate any differing bit (lowest set bit)
+int a = 0;
+for (int num : nums)
+    if ((num & diff) != 0) a ^= num;  // partition into two groups by that bit
+int b = xor ^ a;
+// Missing number in [0..n]: XOR with index 0..n
+int missing = n;
+for (int i = 0; i < n; i++) missing ^= i ^ nums[i];
 ```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #136 Single Number | O(n) / O(1) | Q: One number appears once, all others twice. Find it. |
+| #260 Single Number III | O(n) / O(1) | Q: Two numbers appear once, all others twice. Find both. |
+| #268 Missing Number | O(n) / O(1) | Q: Array contains [0..n] with one missing. Find the missing number. |
+| #287 Find the Duplicate Number | O(n) / O(1) | Q: Array [1..n] with one duplicate. Find it without modifying array. |
+
+#### Bit Masking & Brian Kernighan
+
+n & (n-1) clears lowest set bit. n & (-n) isolates lowest set bit. Both are O(1).
+
+```java
+n & (n - 1)    // clear lowest set bit — true if n is power of two when result==0
+n & (-n)       // isolate lowest set bit (two's complement)
+Integer.bitCount(n)  // count set bits — O(1) via hardware instruction
+// Count set bits manually (Brian Kernighan):
+int count = 0;
+while (n != 0) { n &= (n - 1); count++; }  // each step removes one set bit
+// Power of two: exactly one bit set
+boolean isPow2 = n > 0 && (n & (n - 1)) == 0;
+// Power of four: power of two AND set bit at even position
+boolean isPow4 = isPow2 && (n & 0xAAAAAAAA) == 0;
+// Subset enumeration via bitmask (2^n subsets)
+for (int mask = 0; mask < (1 << n); mask++)
+    for (int i = 0; i < n; i++)
+        if ((mask & (1 << i)) != 0) { /* i is in subset */ }
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #191 Number of 1 Bits | O(1) / O(1) | Q: Count number of 1 bits (Hamming weight) in integer. |
+| #231 Power of Two | O(1) / O(1) | Q: Is n a power of two? |
+| #342 Power of Four | O(1) / O(1) | Q: Is n a power of four? |
+| #338 Counting Bits | O(n) / O(n) | Q: Count set bits for every number from 0 to n. |
+| #201 #201 | O(log n) / O(1) | Q: Bitwise AND of all numbers in range [left, right]. |
+
+### Design
+
+#### LRU Cache (LinkedHashMap or HashMap + DLL)
+
+O(1) get and put. LinkedHashMap with accessOrder=true is the 3-line solution.
+
+```java
+// Approach 1: LinkedHashMap (simplest)
+class LRUCache extends LinkedHashMap<Integer, Integer> {
+    private final int capacity;
+    LRUCache(int capacity) {
+        super(capacity, 0.75f, true);  // accessOrder=true: get() moves to tail
+        this.capacity = capacity;
+    }
+    public int get(int key) { return getOrDefault(key, -1); }
+    public void put(int key, int value) { super.put(key, value); }
+    @Override protected boolean removeEldestEntry(Map.Entry e) {
+        return size() > capacity;      // evict head (LRU) when over capacity
+    }
+}
+// Approach 2: HashMap + Doubly Linked List (interview expected)
+// head.next = LRU, tail.prev = MRU
+// get: find in map, move node to tail
+// put: if exists move to tail + update; else add at tail, evict head if over capacity
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #146 LRU Cache | O(1) / O(capacity) | Q: LRU Cache — get(key) and put(key,val), evict least recently used. |
+| #460 LFU Cache | O(1) / O(capacity) | Q: LFU Cache — evict least frequently used (ties broken by LRU). |
+
+#### Trie (Prefix Tree)
+
+Each node has children[26] and isEnd flag. Insert/search/startsWith all O(L) where L = word length.
+
+```java
+class TrieNode {
+    TrieNode[] children = new TrieNode[26];
+    boolean isEnd;
+}
+class Trie {
+    TrieNode root = new TrieNode();
+    void insert(String word) {
+        TrieNode node = root;
+        for (char c : word.toCharArray()) {
+            int i = c - 'a';
+            if (node.children[i] == null) node.children[i] = new TrieNode();
+            node = node.children[i];
+        }
+        node.isEnd = true;
+    }
+    boolean search(String word) {
+        TrieNode node = find(word);
+        return node != null && node.isEnd;   // full word must end here
+    }
+    boolean startsWith(String prefix) { return find(prefix) != null; }
+    private TrieNode find(String s) {
+        TrieNode node = root;
+        for (char c : s.toCharArray()) {
+            node = node.children[c - 'a'];
+            if (node == null) return null;
+        }
+        return node;
+    }
+}
+```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #208 Implement Trie (Prefix Tree) | O(L) / O(n·L) | Q: Implement Trie with insert, search, startsWith. |
+| #211 Design Add and Search Words Data Structure | O(L) / O(n·L) | Q: WordDictionary with addWord and search (supports . wildcard). |
+| #212 Word Search II | O(mn·4^L) / O(n·L) | Q: Find all words from dictionary that exist in board. |
+| #745 #745 | O(L) / O(n·L) | Q: Prefix and suffix search — find word with given prefix and suffix. |
 
 ### Math
 
-GCD/LCM, modular arithmetic, sieve, fast power. Use long to avoid overflow.
+#### GCD / LCM (overflow-safe)
+
+Use long for LCM — a/gcd*b avoids overflow vs a*b/gcd.
 
 ```java
+// GCD — Euclidean algorithm O(log min(a,b))
 int gcd(int a, int b) { return b == 0 ? a : gcd(b, a % b); }
-int lcm(int a, int b) { return a / gcd(a, b) * b; }  ← divide first to avoid overflow
-// MOD for count/combination problems (appears in ~30% of medium/hard)
-static final int MOD = 1_000_000_007;
-result = (result + value) % MOD;          ← apply after addition
-result = result * value % MOD;            ← apply after multiplication
-// NEVER: (a + b) % MOD where a,b can be up to MOD-1 — use long to avoid int overflow
-long result = ((long) a * b) % MOD;      ← cast to long before multiply
-// Fast power mod
+// LCM — divide BEFORE multiply to prevent overflow
+long lcm(long a, long b) { return a / gcd((int)a, (int)b) * b; }
+// Count primes ≤ n — Sieve of Eratosthenes O(n log log n)
+boolean[] isComposite = new boolean[n + 1];
+int primeCount = 0;
+for (int i = 2; i <= n; i++) {
+    if (!isComposite[i]) {
+        primeCount++;
+        for (long j = (long) i * i; j <= n; j += i)  // start at i² — smaller multiples already marked
+            isComposite[(int) j] = true;
+    }
+}
+// Fast power mod — O(log exp), avoids overflow with long
 long powMod(long base, long exp, long mod) {
     long result = 1; base %= mod;
     while (exp > 0) {
-        if ((exp & 1) == 1) result = result * base % mod;  ← odd exponent: multiply
+        if ((exp & 1) == 1) result = result * base % mod;
         base = base * base % mod; exp >>= 1;
     }
     return result;
 }
-// Sieve of Eratosthenes
-boolean[] isComposite = new boolean[n + 1];
-for (int i = 2; i * i <= n; i++)
-    if (!isComposite[i]) for (int j = i*i; j <= n; j += i) isComposite[j] = true;
 ```
 
-### Concurrency
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #204 Count Primes | O(n log log n) / O(n) | Q: Count prime numbers less than n. |
+| #1201 Ugly Number III | O(log(min)) / O(1) | Q: Nth ugly number divisible only by a, b, or c. |
+| #372 Super Pow | O(log n) / O(1) | Q: Super Pow — compute a^b mod 1337. |
+| #50 Pow(x, n) | O(log n) / O(1) | Q: Pow(x, n) — implement fast power. |
 
-Semaphore for ordering. ReentrantLock+Condition for signaling. AtomicInteger for counters.
+#### Digit / Base Conversion
+
+Mod 10 extracts last digit. Div 10 removes it. Reverse: accumulate with * 10 + digit.
 
 ```java
-// Ordered execution with Semaphore
-Semaphore s1 = new Semaphore(0), s2 = new Semaphore(0);
-// Thread A: work(); s1.release();
-// Thread B: s1.acquire(); work(); s2.release();
-// Thread C: s2.acquire(); work();
-// ReentrantLock + Condition for wait/notify pattern
-ReentrantLock lock = new ReentrantLock(); Condition cond = lock.newCondition();
-// Await: lock.lock(); try { while (!ready) cond.await(); work(); } finally { lock.unlock(); }
-// Signal: lock.lock(); try { ready=true; cond.signalAll(); } finally { lock.unlock(); }
-// AtomicInteger for thread-safe counter without lock
-AtomicInteger count = new AtomicInteger(0); count.incrementAndGet();
+// Reverse integer — detect overflow BEFORE multiplying
+int reversed = 0;
+while (n != 0) {
+    int digit = n % 10; n /= 10;
+    if (reversed > Integer.MAX_VALUE / 10 ||        // overflow check before *10
+        (reversed == Integer.MAX_VALUE / 10 && digit > 7)) return 0;
+    reversed = reversed * 10 + digit;
+}
+// Is palindrome number (no string conversion)
+if (n < 0 || (n % 10 == 0 && n != 0)) return false;
+int half = 0;
+while (n > half) { half = half * 10 + n % 10; n /= 10; }
+return n == half || n == half / 10;  // odd length: drop middle digit
+// Convert to any base
+StringBuilder sb = new StringBuilder();
+while (n > 0) { sb.append(digits[n % base]); n /= base; }
+sb.reverse();
 ```
+
+| Problem | Complexity | Q |
+|---------|-----------|---|
+| #7 Reverse Integer | O(log n) / O(1) | Q: Reverse digits of integer. Return 0 on overflow. |
+| #9 Palindrome Number | O(log n) / O(1) | Q: Is integer a palindrome without converting to string? |
+| #168 Excel Sheet Column Title | O(log n) / O(1) | Q: Convert column number to Excel column title (base-26). |
+| #171 Excel Sheet Column Number | O(L) / O(1) | Q: Convert Excel column title back to column number. |
+| #67 Add Binary | O(n) / O(n) | Q: Add two binary strings and return sum as binary string. |
 
 ---
 
@@ -2972,7 +3818,7 @@ class Solution {
         if (left == right) {
             return 0;
         } else {
-            int mid = (left + right) / 2;
+            int mid = left + (right - left) / 2;
             int n1 = countRangeSumRecursive(sum, lower, upper, left, mid);
             int n2 = countRangeSumRecursive(sum, lower, upper, mid + 1, right);
             int ret = n1 + n2;
@@ -3609,7 +4455,7 @@ class Solution {
         if (left == right) {
             return 0;
         } else {
-            int mid = (left + right) / 2;
+            int mid = left + (right - left) / 2;
             int n1 = reversePairsRecursive(nums, left, mid);
             int n2 = reversePairsRecursive(nums, mid + 1, right);
             int ret = n1 + n2;
@@ -7926,7 +8772,7 @@ class Solution {
         int n = nums.length;
         int l = 0, r = n - 1;
         while (l < r) {
-            int mid = l + r >> 1;
+            int mid = l + (r - l) / 2;
             if (mid % 2 != 0) mid--; //mid
             if (nums[mid] == nums[mid + 1]) l = mid + 2; //mid
             else r = mid; //mid
@@ -8131,7 +8977,7 @@ class Solution {
         int n = nums.length;
         int left = 0, right = nums[n - 1] - nums[0];
         while(left <= right){
-            int mid = (left + right) / 2;
+            int mid = left + (right - left) / 2;
             if(getCount(mid, nums) < k){
                 left = mid + 1;
             }else{
@@ -18246,70 +19092,19 @@ class Solution {
 ```java
 class Solution {
     public int lengthOfLIS(int[] nums) {
-        if (nums.length == 0) {
-            return 0;
-        }
+        if (nums == null || nums.length == 0) return 0;
         int[] dp = new int[nums.length];
-        Arrays.fill(dp, 1);
-        dp[0] = 1;
-        int max = 1;
-        for (int i = 1; i < nums.length; i++) {
+        int result = 1;
+        for (int i = 0; i < nums.length; i++) {
+            dp[i] = 1;
             for (int j = 0; j < i; j++) {
-                if (nums[i] > nums[j]) {
-                    dp[i] = Math.max(dp[i], dp[j] + 1);
-                }
+                if (nums[i] > nums[j])
+                dp[i] = Math.max(dp[i], dp[j] + 1);
             }
-            max = Math.max(max, dp[i]);
+            result = Math.max(result, dp[i]);
         }
-        return max;
+        return result;
     }
-}
-class Solution {
-    public int lengthOfLIS(int[] nums) {
-        if(nums == null || nums.length == 0) {
-            return 0;
-        }
-        int n = nums.length;
-        int len = 1;
-        int[] dp = new int[n+1];
-        dp[len] = nums[0];
-        for(int i = 1; i < n; i++) {
-            if(nums[i] > dp[len]) {
-                len++;
-                dp[len] = nums[i];
-            } else {
-                //  nums[i]  d[1] pos  0
-                int pos = 0, left = 1, right = len;
-                while(left <= right) {
-                    int mid = left + (right - left) / 2;
-                    if(nums[i] > dp[mid]) {
-                        pos = mid;
-                        left = mid + 1;
-                    } else {
-                        right = mid - 1;
-                    }
-                }
-                dp[pos + 1] =  nums[i];
-            }
-        }
-        return len;
-    }
-}
-public int lengthOfLIS(int[] nums) {
-    int result = 0;
-    Map<Integer, Integer> dp = new HashMap<>();
-    for (int num : nums) {
-        int count = 1;
-        for(int previous : dp.keySet()) {
-            if(previous < num) {
-                count = Math.max(count, dp.get(previous) + 1);
-            }
-        }
-        dp.put(num, count);
-        result = Math.max(result, dp.get(num));
-    }
-    return result;
-}
 }
 ```
 
@@ -19680,7 +20475,7 @@ class Solution {
     public int findLength(int[] A, int[] B) {
         int left = 1, right = Math.min(A.length, B.length) + 1;
         while (left < right) {
-            int mid = (left + right) >> 1;
+            int mid = left + (right - left) / 2;
             if (check(A, B, mid)) {
                 left = mid + 1;
             } else {
@@ -25095,7 +25890,7 @@ class Solution {
         if (l > r) {
             return null;
         }
-        int mid = (l + r) >> 1;
+        int mid = l + (r - l) / 2;
         return mergeTwoLists(merge(lists, l, mid), merge(lists, mid + 1, r));
     }
     public ListNode mergeTwoLists(ListNode a, ListNode b) {
@@ -26180,7 +26975,7 @@ class Solution {
         for (int i = 0; i < m; ++i) {
             int l = 0, r = n - 1, pos = -1;
             while (l <= r) {
-                int mid = (l + r) / 2;
+                int mid = l + (r - l) / 2;
                 if (mat[i][mid] == 0) {
                     r = mid - 1;
                 } else {
@@ -26216,7 +27011,7 @@ class Solution {
         for (int i = 0; i < m; ++i) {
             int l = 0, r = n - 1, pos = -1;
             while (l <= r) {
-                int mid = (l + r) / 2;
+                int mid = l + (r - l) / 2;
                 if (mat[i][mid] == 0) {
                     r = mid - 1;
                 } else {
@@ -39712,7 +40507,7 @@ class Solution {
     }
     private int threeWayPartition(int[] nums, int start, int end) {
         int left = start, current = start, right = end - 1;
-        int pivot = nums[(left + right) / 2];
+        int pivot = nums[left + (right - left) / 2];
         while (current <= right) {
             if (nums[current] < pivot) {
                 swap(nums, left, current);
@@ -39847,7 +40642,7 @@ class Solution {
             return ;
         }
         int left = start, current = start, right = end - 1;
-        int pivot = nums[(left + right) / 2];
+        int pivot = nums[left + (right - left) / 2];
         while (current <= right) {
             if (nums[current] < pivot) {
                 swap(nums, left, current);

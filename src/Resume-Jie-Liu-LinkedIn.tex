@@ -1,0 +1,97 @@
+\documentclass[10pt, letterpaper]{article}
+
+\usepackage[top=0.4in, bottom=0.4in, left=0.55in, right=0.55in]{geometry}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{xcolor}
+\usepackage[normalem]{ulem}
+
+\definecolor{primary}{HTML}{1A3A5C}
+\definecolor{accent}{HTML}{2E86AB}
+
+\hypersetup{colorlinks=true, urlcolor=accent, linkcolor=accent}
+
+\newcommand{\linkedinlink}[2]{\href{#1}{\textcolor{accent}{\uline{#2}}}}
+
+\titleformat{\section}
+    {\normalsize\bfseries\color{primary}}
+    {}{0em}{\MakeUppercase}
+    [{\color{accent}\titlerule}]
+\titlespacing{\section}{0pt}{5pt}{3pt}
+
+\pagestyle{empty}
+\setlength{\parskip}{0pt}
+\setlength{\parindent}{0pt}
+\setlist[itemize]{leftmargin=1.5em, itemsep=0pt, parsep=0pt, topsep=1pt}
+
+\begin{document}
+
+%---------- HEADER ----------
+\begin{center}
+    {\LARGE\bfseries\color{primary} Jie Liu}\\[3pt]
+    \small
+    jieliu0100@gmail.com \textbar{}
+    669-328-9963 \textbar{}
+    \linkedinlink{https://www.linkedin.com/in/jieliu36/}{linkedin.com/in/jieliu36} \textbar{}
+    San Jose, CA
+\end{center}
+
+%---------- SUMMARY ----------
+\section{Summary}
+
+\textit{Senior Product Manager \textbar{} Ex JD.com \textbar{} Authorized to Work in the U.S. \textbar{} Flexible Start Date}
+
+AI-native Product Manager with 5+ years shipping high-impact gen AI, LLM, and ML products across ads and e-commerce at JD.com (China's \#2 e-commerce platform) and Chongbang Group (China's largest commercial retail platform). Led 0$\rightarrow$1 launch of Ads AI Copilot (JD.com's first LLM-powered ad generation tool), ML feature engineering initiatives on Ads Recommendation System, and LLM-powered semantic search system. Combines deep AI product expertise --- prompt engineering, ML model evaluation, A/B testing, human-in-the-loop, AI observability --- with rigorous PM execution: OKRs, PRD authorship, roadmap prioritization, cross-functional leadership, and scope tradeoff decisions. Targeting technical PM, data PM, AI PM or ads PM roles at product-led technology companies.
+
+%---------- EDUCATION ----------
+\section{Education}
+
+\textbf{Northeastern University} \hfill San Jose, CA\\
+Master of Science in Management
+
+\smallskip
+
+\textbf{University of Dundee} \hfill Scotland, U.K.\\
+Master of Science in Management
+
+%---------- SKILLS ----------
+\section{Skills}
+
+\textbf{PM Skills:} Product Roadmap, OKRs, PRD Development, Product Discovery, Feature Prioritization, Backlog Management, Agile/Scrum, Sprint Planning, Stakeholder Management, Go-to-Market Strategy, Scope Management, Risk Management, Program Management, Cross-functional Leadership, Trust \& Safety, Content Moderation\\
+\textbf{AI \& ML:} LLM Product Integration, Prompt Engineering, Foundation Models, RAG Architectures, Model Fine-tuning, Agentic Systems, AI Observability, Recommendation Systems, Personalization Engines, Generative AI, Predictive Modeling, A/B Testing, AI Evaluation Frameworks, Responsible AI, Human-in-the-Loop Design, ML Pipeline Management, Neural Networks, Decision Trees, Clustering, Random Forest, Logistic Regression\\
+\textbf{Data Analytics:} Data Visualization, Statistical Analysis, Performance Reporting, Dashboard Development\\
+\textbf{Programming \& Tools:} Python, SQL, Tableau, TensorFlow, Jira\\
+
+%---------- EXPERIENCE ----------
+\section{Experience}
+
+\textbf{Product Lead}, \textit{JD.com Inc.\ (China's \#2 e-commerce platform)} \hfill Shanghai, China \textbar{} 11/2022--05/2025\\
+\textit{Ads AI Copilot}
+\begin{itemize}
+    \item Delivered \textbf{80\% reduction in ad creation time} (3 hours $\rightarrow$ 20 minutes), \textbf{100\% advertiser adoption} and \textbf{10\% revenue uplift} (\$13B+ impact), by owning the 0$\rightarrow$1 launch of Ads AI Copilot --- JD.com's first-of-its-kind AI-powered ad generation tool.
+    \item Validated the performance of Ads AI Copilot via A/B testing, implementing responsible AI guardrails with human-in-the-loop review --- confirming \textbf{20\% accuracy improvement} while preventing hallucination and brand misrepresentation.
+    \item Authored end-to-end PRD, led prompt engineering strategy, and drove cross-functional alignment across Data, Engineering, and Marketing --- delivering \textbf{100\% on schedule} and earning Director and VP endorsement.
+\end{itemize}
+
+\textit{Ads Recommendation System}
+\begin{itemize}
+    \item Delivered \textbf{10\% ROI improvement} for JD's advertisers by spearheading ML feature engineering initiatives on JD.com's Ads Recommendation System --- replacing static demographic signals with real-time user intent features (live search, browsing behavior, contextual interests) for more precise ad ranking.
+    \item Owned end-to-end execution --- authored PRD, led cross-functional teams across ML Engineering, Data, and Business Operations for model fine-tuning and production migration, and introduced AI observability and human-in-the-loop review.
+    \item Led model evaluation via 30-day A/B test against legacy ranking baseline --- confirmed \textbf{20\% CTR uplift} and drove \textbf{100\% platform-wide adoption}.
+\end{itemize}
+
+\smallskip
+
+\textbf{Product Manager}, \textit{Chongbang Group (China's largest commercial retail platform)} \hfill Shanghai, China \textbar{} 10/2020--10/2022\\
+\textit{Semantic Search}
+\begin{itemize}
+    \item Delivered \textbf{5\% revenue increase} by shipping Chongbang's first LLM-powered semantic search --- replacing keyword-only discovery with AI-driven intent understanding.
+    \item Identified low brand discoverability as a key revenue risk; prioritized semantic search as the top product strategy, defined OKRs and north star metrics, and authored end-to-end PRD (scope, requirements, success metrics).
+    \item Drove cross-functional execution across Data and Engineering --- managing backlog, sprint priorities, and stakeholder alignment; navigated cross-team timeline conflicts through clear prioritization and scope decisions --- maintaining on-schedule and within-budget delivery.
+    \item Designed A/B testing to benchmark semantic search against keyword-only discovery; partnered with the Data team to quantify per-brand CTR lift, validate rollout readiness, and drive platform-wide adoption.
+\end{itemize}
+
+\end{document}
