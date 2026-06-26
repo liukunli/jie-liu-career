@@ -2,6 +2,83 @@
 
 ---
 
+## Generic Template — Format Guide & Test Harness
+
+Every template file in this folder follows the same two-part structure:
+
+1. **Template algorithm + template code** — the reusable pattern, with specific LeetCode problems used as concrete examples inside the code.
+2. **Quick reference table + question/solution** — a table listing every problem (with a *Variation from Template* column), followed by each problem's full solution where deviations are marked `// ← VARIATION: explanation`.
+
+---
+
+### Generic Test Harness
+
+Use this boilerplate to run any single problem locally. Replace `data`/`solve()` with the problem's input and logic.
+
+```java
+class Question {
+
+    private int data;
+
+    public Question(int data) {
+        this.data = data;
+    }
+
+    public void solve() {
+        // TODO
+    }
+}
+
+public class Solution {
+
+    public static void main(String[] args) {
+        Question q = new Question(0);
+        q.solve();
+    }
+}
+```
+
+---
+
+### Naming Conventions (enforced across all template files)
+
+| Context | Convention |
+|---|---|
+| Index variables | `i`, `j`, `k` (never `left`, `right`, `low`, `mid`, `high`) |
+| Linked list | `sentinel`, `previous`, `current` |
+| Queue | `Queue<Integer> queue = new ArrayDeque<>();` |
+| BFS over tree | `Queue<TreeNode> queue = new ArrayDeque<>();` |
+| Grid directions | `int[][] dirs = {{-1,0},{1,0},{0,-1},{0,1}};` (UP, DOWN, LEFT, RIGHT) |
+| Character frequency | `count[ch - 'a']++;` |
+| Digit frequency | `count[ch - '0']++;` |
+| Char to integer build | `num = num * 10 + (ch - '0');` |
+
+---
+
+### Template Index
+
+| File | Category | Core Pattern |
+|---|---|---|
+| `binary_search_templates.md` | Binary Search | Closed `[i,j]`, half-open, minimize/maximize answer space |
+| `two_pointer_templates.md` | Two Pointers | Opposite ends, same-direction write pointer, Dutch flag |
+| `prefix_sum_hashmap_templates.md` | Prefix Sum | Count/length with HashMap, tree path sums |
+| `sorting_templates.md` | Sorting | Merge sort, quick sort, quick select, count-during-merge |
+| `sliding_window_templates.md` | Sliding Window | Fixed, max-variable, min-variable windows |
+| `linked_list_templates.md` | Linked List | Delete/filter, reversal, fast/slow, merge, composite |
+| `dfs_templates.md` | DFS / Backtracking | Tree return-up/pass-down, grid DFS, graph 3-color, backtracking, BST |
+| `bfs_templates.md` | BFS | Level-order with size snapshot, position indexing |
+| `graph_templates.md` | Graph | BFS shortest path, topo sort, union find, Dijkstra, bipartite, Prim's MST |
+| `dp_templates.md` | Dynamic Programming | 1D/2D/grid/interval DP, knapsack, state machine |
+| `stack_queue_templates.md` | Stack / Queue / Heap | Monotone stack/deque, two heaps, priority queue |
+| `greedy_templates.md` | Greedy | Sort-by-end, sort-by-start, sort + heap, non-interval |
+| `string_templates.md` | String | Frequency counting, hashing, bucket sort, expand-from-center |
+| `bit_manipulation_templates.md` | Bit Manipulation | XOR cancel, mod-k state machine, bitmask as set, power checks |
+| `trie_templates.md` | Trie | Insert/search/startsWith, wildcard DFS, grid pruning |
+| `design_templates.md` | Design | HashMap + linked list (LRU), frequency maps (LFU), array + map |
+| `math_templates.md` | Math | Fast power, base conversion, sieve, digit manipulation |
+
+---
+
 ## Quick Reference Table
 
 | # | Name | Description | Algorithm | Variation from Template | Time | Space |
@@ -15,26 +92,29 @@
 ## Canonical Template — HashMap + Doubly Linked List (LRU)
 
 ```java
-// Node for doubly linked list
-class Node {
+// MENTAL MODEL: HashMap gives O(1) lookup; the doubly linked list orders by recency so the LRU is always one hop from tail.
+// WHEN: "O(1) get/put with eviction by recency or frequency"
+
+// CacheNode for doubly linked list (named CacheNode to distinguish from ListNode contexts)
+class CacheNode {
     int key, value;
-    Node prev, next;
-    Node(int key, int value) { this.key = key; this.value = value; }
+    CacheNode prev, next;
+    CacheNode(int key, int value) { this.key = key; this.value = value; }
 }
 
 // ── SENTINEL NODES ── head (MRU side) ↔ ... ↔ tail (LRU side)
-Node head = new Node(0, 0), tail = new Node(0, 0);
+CacheNode head = new CacheNode(0, 0), tail = new CacheNode(0, 0);
 // Initialize: head <-> tail
 head.next = tail; tail.prev = head;
 
 // ── REMOVE NODE ──
-void remove(Node node) {
+void remove(CacheNode node) {
     node.prev.next = node.next;
     node.next.prev = node.prev;
 }
 
 // ── INSERT AFTER HEAD (= mark as MRU) ──
-void insertAfterHead(Node node) {
+void insertAfterHead(CacheNode node) {
     node.next = head.next;
     node.prev = head;
     head.next.prev = node;
@@ -42,7 +122,7 @@ void insertAfterHead(Node node) {
 }
 
 // ── LRU EVICTION ── tail.prev is LRU
-Node lru = tail.prev;
+CacheNode lru = tail.prev;
 remove(lru);
 map.remove(lru.key);
 ```
@@ -74,11 +154,13 @@ map.remove(lru.key);
 
 **Algorithm:** Combine a HashMap (O(1) key lookup) with a doubly linked list (O(1) insertion/deletion). The list order represents recency — most recently used at head, least recently used at tail. On every `get` or `put`, move the accessed node to the front.
 
+**Intuition:** the HashMap answers "where is this key" instantly while the linked list keeps everything ordered by recency, so the victim to evict is always the node next to the tail.
+
 ```java
 class LRUCache {
     private final int capacity;
-    private final Map<Integer, Node> map = new HashMap<>();
-    private final Node head = new Node(0, 0), tail = new Node(0, 0);
+    private final Map<Integer, CacheNode> map = new HashMap<>();
+    private final CacheNode head = new CacheNode(0, 0), tail = new CacheNode(0, 0);
 
     public LRUCache(int capacity) {
         this.capacity = capacity;
@@ -88,7 +170,7 @@ class LRUCache {
 
     public int get(int key) {
         if (!map.containsKey(key)) return -1;
-        Node node = map.get(key);
+        CacheNode node = map.get(key);
         remove(node);
         insertAfterHead(node);          // ← move to MRU position
         return node.value;
@@ -96,38 +178,38 @@ class LRUCache {
 
     public void put(int key, int value) {
         if (map.containsKey(key)) {
-            Node node = map.get(key);
+            CacheNode node = map.get(key);
             node.value = value;
             remove(node);
             insertAfterHead(node);      // ← update and move to MRU position
         } else {
             if (map.size() == capacity) {
-                Node lru = tail.prev;   // ← LRU is just before tail sentinel
+                CacheNode lru = tail.prev;   // ← LRU is just before tail sentinel
                 remove(lru);
                 map.remove(lru.key);
             }
-            Node node = new Node(key, value);
+            CacheNode node = new CacheNode(key, value);
             map.put(key, node);
             insertAfterHead(node);
         }
     }
 
-    private void remove(Node node) {
+    private void remove(CacheNode node) {
         node.prev.next = node.next;
         node.next.prev = node.prev;
     }
 
-    private void insertAfterHead(Node node) {
+    private void insertAfterHead(CacheNode node) {
         node.next = head.next;
         node.prev = head;
         head.next.prev = node;
         head.next = node;
     }
 
-    static class Node {
+    static class CacheNode {
         int key, value;
-        Node prev, next;
-        Node(int key, int value) { this.key = key; this.value = value; }
+        CacheNode prev, next;
+        CacheNode(int key, int value) { this.key = key; this.value = value; }
     }
 }
 ```
@@ -142,6 +224,8 @@ class LRUCache {
 **Description:** Design a data structure for a Least Frequently Used cache. Both `get` and `put` must be O(1). On eviction, remove the least frequently used key; among ties in frequency, remove the least recently used.
 
 **Algorithm:** Three maps: `keyToVal`, `keyToFreq`, `freqToKeys` (freq → LinkedHashSet for insertion-order LRU within same freq). Track `minFreq`. On access: increment freq, move key from old to new freq set; if old freq set is now empty and it was minFreq, increment minFreq.
+
+**Intuition:** bucket keys by how often they're used; the eviction victim is always the oldest key in the lowest-frequency bucket, which `minFreq` points straight at.
 
 ```java
 class LFUCache {
@@ -206,6 +290,8 @@ class LFUCache {
 **Description:** Design a set where `insert`, `remove`, and `getRandom` all run in O(1) average time. `getRandom` returns any element with equal probability.
 
 **Algorithm:** HashMap maps value→index in an ArrayList. On remove, swap the target with the last element (update the swapped element's index in the map), then remove the last. This keeps the array dense without shifting. `getRandom` uses `Random.nextInt(size)`.
+
+**Intuition:** an array gives O(1) random indexing but O(n) middle-deletion; swapping the victim with the last element turns deletion into an O(1) pop while staying dense.
 
 ```java
 class RandomizedSet {

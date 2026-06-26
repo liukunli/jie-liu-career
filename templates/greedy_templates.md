@@ -37,6 +37,8 @@ TEMPLATE 2 — Sort by START time, merge when overlapping
 ```
 
 ```java
+// MENTAL MODEL: sort to expose a local greedy choice, then sweep once making the locally-best pick.
+// WHEN: intervals + "max non-overlapping / min arrows / merge / min rooms", or jump/partition sweeps.
 // TEMPLATE 1: Sort by end, compare start
 Arrays.sort(intervals, (a, b) -> a[1] - b[1]);      // sort by END time
 int lastEnd = Integer.MIN_VALUE;
@@ -62,6 +64,7 @@ for (int[] interval : intervals) {
 }
 
 // TEMPLATE 3: Sort by start + min-heap of end times (multi-resource)
+// USE WHEN counting simultaneous/overlapping resources — "minimum rooms", "max concurrent".
 Arrays.sort(intervals, (a, b) -> a[0] - b[0]);
 PriorityQueue<Integer> pq = new PriorityQueue<>();   // min-heap of active end times
 for (int[] interval : intervals) {
@@ -79,6 +82,7 @@ for (int[] interval : intervals) {
 ## #435 Non-overlapping Intervals
 
 **Description:** Remove the minimum number of intervals to make the rest non-overlapping.  
+**Intuition:** Always keep the interval that finishes earliest — it leaves the most room for the rest, so greedily picking by end maximizes how many you keep.  
 **Key:** equivalent to keeping the maximum number of non-overlapping intervals. Sort by end, greedily keep each interval whose start ≥ last kept end.
 
 ```java
@@ -97,12 +101,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n log n) | **Space** O(1)
 
 ---
 
 ## #452 Minimum Number of Arrows to Burst Balloons
 
 **Description:** Balloons span `[start, end]`. An arrow shot at `x` pops all balloons with `start ≤ x ≤ end`. Minimum arrows to pop all balloons.  
+**Intuition:** Shoot the arrow at the earliest end point to pop every balloon overlapping it; only start a new arrow when a balloon begins past the current arrow.  
 **Key:** same structure as #435 — sort by end, count groups. One arrow suffices per group. New group starts when `start > current arrow position (= last group's end)`.
 
 ```java
@@ -121,12 +127,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n log n) | **Space** O(1)
 
 ---
 
 ## #646 Maximum Length of Pair Chain
 
 **Description:** Given pairs `[a, b]`, form a chain where `b < c` for each consecutive pair `[a,b]` → `[c,d]`. Maximum chain length.  
+**Intuition:** Picking the pair that ends earliest each time leaves the most slack for later links, maximizing the chain.  
 **Key:** identical to #435 / #452 — sort by end, greedily pick non-overlapping pairs.
 
 ```java
@@ -144,6 +152,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n log n) | **Space** O(1)
 
 ## 435 vs 452 vs 646 — The One Difference
 
@@ -167,6 +176,7 @@ Why 435 uses >= but 452/646 use >:
 ## #56 Merge Intervals
 
 **Description:** Merge all overlapping intervals. Return the minimum set of non-overlapping intervals.  
+**Intuition:** Once sorted by start, overlaps can only be with the most recently kept interval, so you either extend its end or open a fresh one.  
 **Template:** sort by start. If current interval's start ≤ last merged interval's end → overlap → extend the end. Otherwise start a new interval.
 
 ```java
@@ -213,12 +223,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n log n) | **Space** O(n)
 
 ---
 
 ## #57 Insert Interval
 
 **Description:** Insert a new interval into a sorted list of non-overlapping intervals; merge if necessary. The input is already sorted — no sort needed.  
+**Intuition:** Walk the sorted list in three phases — copy everything that ends before the new interval, absorb everything that overlaps it, then copy the rest.  
 **Key:** three phases: (1) add all intervals that end before new starts, (2) merge all overlapping, (3) add remaining.
 
 ```java
@@ -241,6 +253,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 
@@ -249,6 +262,7 @@ class Solution {
 ## #253 Meeting Rooms II
 
 **Description:** Minimum number of meeting rooms required to host all meetings.  
+**Intuition:** USE WHEN counting simultaneous/overlapping resources — "minimum rooms", "max concurrent". The heap size at any moment is exactly how many meetings are running at once.  
 **Template:** sort by start. Min-heap tracks end times of active meetings. When a new meeting starts after the earliest-ending meeting finishes, reuse that room.
 
 ```java
@@ -265,6 +279,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n log n) | **Space** O(n)
 
 ## Sort-by-End vs Sort-by-Start+Heap
 
@@ -283,6 +298,7 @@ Examples:           #435, #452, #646        #253 Meeting Rooms
 ## #55 Jump Game
 
 **Description:** Each element is the max jump from that position. Can you reach the last index?  
+**Intuition:** Sweep left to right tracking the farthest index reachable; if you ever stand past that frontier you're stuck.  
 **Key:** track the farthest index reachable so far. If current index exceeds it, you're stuck.
 
 ```java
@@ -297,12 +313,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
 ## #45 Jump Game II
 
 **Description:** Minimum jumps to reach the last index.  
+**Intuition:** Treat each jump as a BFS layer — extend through the whole current reach before incrementing the jump count.  
 **Key:** BFS layer-by-layer. `currentEnd` = farthest we can reach with current jumps. `farthest` = farthest reachable with one more jump from anywhere in current layer. When we reach `currentEnd`, we must jump.
 
 ```java
@@ -320,12 +338,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
 ## #763 Partition Labels
 
 **Description:** Partition string into as many parts as possible so each letter appears in at most one part. Return the size of each part.  
+**Intuition:** A partition can't close until you pass the last occurrence of every letter seen inside it, so extend `end` to that frontier and cut when you reach it.  
 **Key:** precompute the last occurrence of each character. Extend the current partition's end to `max(end, last[c])` for each character. Close partition when `i == end`.
 
 ```java
@@ -346,12 +366,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
 ## #406 Queue Reconstruction by Height
 
 **Description:** People given as `[h, k]` (height h, k taller/equal people in front). Reconstruct the queue.  
+**Intuition:** Place tallest first so that inserting a person at index `k` is always correct — only taller/equal people are already placed, and shorter insertions later don't disturb their counts.  
 **Key:** sort descending by height (ties: ascending by k). Insert each person at index `k`. Since taller people are placed first, inserting at position `k` is always valid — there are already exactly k people ≥ this height already placed.
 
 ```java
@@ -365,6 +387,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n²) | **Space** O(n)
 
 ---
 
@@ -385,9 +408,13 @@ class Solution {
 
 ---
 
+# Part 5 — Overlap & Circular Patterns
+
 ## #252 Meeting Rooms
 
 **Description:** Given an array of meeting intervals, determine if a person could attend all meetings (no two meetings overlap).
+
+**Intuition:** After sorting by start, any overlap must be between adjacent intervals, so one linear scan comparing neighbors is enough.
 
 **Algorithm:** Sort by start time. If any meeting starts before the previous one ends, there is an overlap — return false.
 
@@ -408,6 +435,8 @@ class Solution {
 ## #134 Gas Station
 
 **Description:** There are n gas stations on a circular route. `gas[i]` is the gas at station i; `cost[i]` is the gas needed to travel from i to i+1. Return the starting station index if you can complete the circuit, or -1 if not.
+
+**Intuition:** If the tank ever drops below 0, no station between the old start and here can work, so jump the start past the failure point; a valid start exists iff total gas ≥ total cost.
 
 **Algorithm:** Greedy. Track cumulative tank. When tank goes negative, reset start to `i+1` and reset tank. If total gas >= total cost, a valid start exists (the last reset start).
 

@@ -8,6 +8,7 @@ Six template families. Every problem maps to one loop skeleton and one dp-state 
 
 | # | Name | Category | dp state | Init | Key transition |
 |---|---|---|---|---|---|
+| 10 | Regular Expression Matching | Match string s against pattern p with . and * | 2D DP: dp[i][j] = s[0..i] matches p[0..j]; '*' means zero or more of preceding char | **'*' two cases**: zero occurrence dp[i][j-2], or match dp[i-1][j] if chars match | O(m·n) | O(m·n) |
 | 70 | Climbing Stairs | Linear 1D | dp[i] = ways to reach step i | dp[1]=1, dp[2]=2 | dp[i-1]+dp[i-2] |
 | 198 | House Robber | Linear 1D | dp[i] = max rob up to i | dp[0]=nums[0] | max(dp[i-1], dp[i-2]+nums[i]) |
 | 213 | House Robber II | Linear 1D | same, two runs | skip first or skip last | max of two runs |
@@ -22,6 +23,7 @@ Six template families. Every problem maps to one loop skeleton and one dp-state 
 | 377 | Combination Sum IV | Permutation count | dp[j] = ordered arrangements for j | dp[0]=1 | target outer, nums inner |
 | 1143 | LCS | 2D Sequence | dp[i][j] = LCS of s1[..i) and s2[..j) | dp[0][*]=0 | match:+1, else max(up,left) |
 | 72 | Edit Distance | 2D Sequence | dp[i][j] = edits to convert s1[..i) to s2[..j) | dp[i][0]=i | match:diag, else 1+min3 |
+| 87 | Scramble String | Is s2 a scramble of s1 via recursive partition swaps? | 3D DP/memo: dp[i][j][len]; try every split point, with and without swap | **Split + optional swap**: check both swapped and non-swapped partitions | O(n⁴) | O(n³) |
 | 91 | Decode Ways | Look-back 1D | dp[i] = ways to decode s[0..i) | dp[0]=1, dp[1]=1 | dp[i]+=dp[i-1] if 1-digit valid; dp[i]+=dp[i-2] if 2-digit valid | **Two sources**: each position can be decoded from 1 or 2 prior digits | O(n) | O(n) |
 | 96 | Unique Binary Search Trees | 1D DP (Catalan) | dp[i] = count of unique BSTs with i nodes | dp[0]=dp[1]=1 | dp[i]+=dp[j-1]*dp[i-j] for j=1..i | **Catalan recurrence**: choose each value as root; left/right subtree counts multiply | O(n²) | O(n) |
 | 115 | Distinct Subsequences | 2D Sequence | dp[i][j] = ways s[..i) contains t[..j) | dp[i][0]=1 | skip+match |
@@ -42,6 +44,8 @@ Six template families. Every problem maps to one loop skeleton and one dp-state 
 | 714 | Stock with Fee | State Machine | hold/cash | hold=-p[0] | sell: hold+p[i]-fee |
 | 746 | Min Cost Climbing Stairs | Linear 1D | dp[i] = min cost to reach step i | dp[0]=dp[1]=0 | min(dp[i-1]+cost[i-1], dp[i-2]+cost[i-2]) | **Start from 0 or 1**: dp[0]=dp[1]=0, reach top at index n | O(n) | O(n) |
 | 931 | Minimum Falling Path Sum | Grid DP | dp[i][j] = min falling path sum to (i,j) | dp[0]=matrix[0] | matrix[i][j] + min(dp[i-1][j-1], dp[i-1][j], dp[i-1][j+1]) | **Three sources above**: each cell can come from 3 cells in previous row | O(n²) | O(n²) |
+| 1049 | Last Stone Weight II | Min possible weight of last stone after smashing | Partition into two near-equal subsets; 0/1 knapsack on sum/2 | **Reduce to subset sum**: minimize \|S1 - S2\| = total - 2*maxSubset≤sum/2 | O(n·sum) | O(sum) |
+| 1312 | Minimum Insertion Steps to Make Palindrome | Min insertions to make string palindrome | Interval DP: dp[i][j] = min insertions for s[i..j]; reduce to n - LPS | **LPS reduction**: answer = n - longestPalindromicSubsequence | O(n²) | O(n²) |
 
 ---
 
@@ -49,12 +53,16 @@ Six template families. Every problem maps to one loop skeleton and one dp-state 
 
 ```java
 // 1. LINEAR 1D — each cell depends on a fixed number of previous cells
+// MENTAL MODEL: the answer at i is a fixed recipe over the last one or two answers.
+// WHEN: "ways/cost to reach step i", "can't pick adjacent"
 int[] dp = new int[n + 1];
 dp[0] = base;
 for (int i = 1; i <= n; i++)
     dp[i] = f(dp[i-1], dp[i-2], ...);
 
 // 2A. LOOK-BACK 1D — dp[i] depends on all j < i
+// MENTAL MODEL: to finish position i, scan every earlier position j and extend the best valid one.
+// WHEN: "longest increasing/chain ending here", "can the prefix be segmented"
 int[] dp = new int[n];
 for (int i = 0; i < n; i++) {
     for (int j = 0; j < i; j++) {
@@ -94,6 +102,8 @@ for (int i = 0; i < nums.length; i++)
         //                       → "current row" → item i can reappear → reuse
 
 // 3. 2D SEQUENCE — two strings/arrays; i indexes one, j indexes the other
+// MENTAL MODEL: compare the last char of each prefix — match consumes both, mismatch drops one side.
+// WHEN: "compare two strings/arrays" (LCS, edit distance, subsequence count)
 int[][] dp = new int[m + 1][n + 1];
 for (int i = 1; i <= m; i++) {
     for (int j = 1; j <= n; j++) {
@@ -104,6 +114,8 @@ for (int i = 1; i <= m; i++) {
 
 // 4. INTERVAL DP — i goes RIGHT to LEFT; j goes i+1 to end
 //    "shorter comes first": when computing dp[i][j], dp[i+1][*] is already done
+// MENTAL MODEL: build answers for short ranges first, then combine them into longer ranges.
+// WHEN: "palindrome substring/subseq", "merge/burst in a range", split-point problems
 int[][] dp = new int[n][n];
 for (int i = 0; i < n; i++) dp[i][i] = base;   // length-1 intervals
 for (int i = n - 1; i >= 0; i--) {              // ← right-to-left
@@ -1165,6 +1177,119 @@ class Solution {
         int min = Integer.MAX_VALUE;
         for (int val : dp[n-1]) min = Math.min(min, val);
         return min;
+    }
+}
+```
+**Time** O(n²) | **Space** O(n²)
+
+---
+
+## #10 Regular Expression Matching
+**Description:** Implement regex matching with `.` (any single char) and `*` (zero or more of the preceding element). Match must cover the entire input string.
+**Variation:** 2D DP. `dp[i][j]` = whether `s[0..i)` matches `p[0..j)`. The `*` has two cases: zero occurrences (`dp[i][j-2]`) or one-more occurrence when the preceding pattern char matches `s[i-1]`.
+```java
+class Solution {
+    public boolean isMatch(String s, String p) {
+        int m = s.length(), n = p.length();
+        boolean[][] dp = new boolean[m+1][n+1];
+        dp[0][0] = true;
+        for (int j = 1; j <= n; j++)
+            if (p.charAt(j-1) == '*') dp[0][j] = dp[0][j-2];   // ← VARIATION: '*' can erase preceding
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (p.charAt(j-1) == '*') {
+                    dp[i][j] = dp[i][j-2];                      // ← VARIATION: zero occurrence
+                    if (matches(s, p, i, j-1))
+                        dp[i][j] = dp[i][j] || dp[i-1][j];      // ← VARIATION: one more occurrence
+                } else if (matches(s, p, i, j)) {
+                    dp[i][j] = dp[i-1][j-1];
+                }
+            }
+        }
+        return dp[m][n];
+    }
+    private boolean matches(String s, String p, int i, int j) {
+        return p.charAt(j-1) == '.' || s.charAt(i-1) == p.charAt(j-1);
+    }
+}
+```
+**Time** O(m·n) | **Space** O(m·n)
+
+---
+
+## #87 Scramble String
+**Description:** Given s1 and s2, return true if s2 is a scrambled string of s1 (formed by recursively partitioning into two non-empty substrings and optionally swapping them).
+**Variation:** memoized recursion over (i1, i2, len). At each length, try every split point both swapped and non-swapped.
+```java
+class Solution {
+    private Map<String, Boolean> memo = new HashMap<>();
+    public boolean isScramble(String s1, String s2) {
+        if (s1.equals(s2)) return true;
+        if (s1.length() != s2.length()) return false;
+        String key = s1 + "#" + s2;
+        if (memo.containsKey(key)) return memo.get(key);
+        int n = s1.length();
+        int[] count = new int[26];
+        for (int i = 0; i < n; i++) { count[s1.charAt(i)-'a']++; count[s2.charAt(i)-'a']--; }
+        for (int c : count) if (c != 0) { memo.put(key, false); return false; }  // char mismatch prune
+        for (int i = 1; i < n; i++) {
+            // no swap
+            if (isScramble(s1.substring(0,i), s2.substring(0,i))
+             && isScramble(s1.substring(i), s2.substring(i))) { memo.put(key, true); return true; }
+            // swap                                            // ← VARIATION: try swapped partitions
+            if (isScramble(s1.substring(0,i), s2.substring(n-i))
+             && isScramble(s1.substring(i), s2.substring(0,n-i))) { memo.put(key, true); return true; }
+        }
+        memo.put(key, false); return false;
+    }
+}
+```
+**Time** O(n⁴) | **Space** O(n³)
+
+---
+
+## #1049 Last Stone Weight II
+**Description:** Repeatedly smash the two heaviest stones (result is their difference). Return the smallest possible weight of the remaining stone.
+**Variation:** equivalent to splitting stones into two groups to minimize the difference of their sums. 0/1 knapsack to find the max subset sum ≤ total/2.
+```java
+class Solution {
+    public int lastStoneWeightII(int[] stones) {
+        int total = 0;
+        for (int s : stones) total += s;
+        int target = total / 2;                     // ← VARIATION: subset sum target
+        boolean[] dp = new boolean[target + 1];
+        dp[0] = true;
+        for (int s : stones)
+            for (int j = target; j >= s; j--)        // ← 0/1 knapsack: j descending
+                dp[j] = dp[j] || dp[j - s];
+        for (int j = target; j >= 0; j--)
+            if (dp[j]) return total - 2 * j;          // ← VARIATION: minimize |S1-S2|
+        return 0;
+    }
+}
+```
+**Time** O(n·sum) | **Space** O(sum)
+
+---
+
+## #1312 Minimum Insertion Steps to Make a String Palindrome
+**Description:** Return the minimum number of insertions needed to make a string a palindrome.
+**Variation:** answer = n − longest palindromic subsequence (LPS). LPS = LCS of the string and its reverse; or solve directly via interval DP.
+```java
+class Solution {
+    public int minInsertions(String s) {
+        int n = s.length();
+        int[][] dp = new int[n][n];                  // dp[i][j] = LPS length in s[i..j]
+        for (int i = n - 1; i >= 0; i--) {           // ← interval DP: shorter spans first
+            dp[i][i] = 1;
+            for (int j = i + 1; j < n; j++) {
+                if (s.charAt(i) == s.charAt(j))
+                    dp[i][j] = dp[i+1][j-1] + 2;
+                else
+                    dp[i][j] = Math.max(dp[i+1][j], dp[i][j-1]);
+            }
+        }
+        return n - dp[0][n-1];                         // ← VARIATION: insertions = n - LPS
     }
 }
 ```

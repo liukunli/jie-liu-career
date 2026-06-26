@@ -10,6 +10,8 @@ Window = `[i, j]`, size = `j - i + 1`.
 
 ```java
 // FIXED window of size k — shrink exactly once when full
+// MENTAL MODEL: a constant-width window slides one step at a time; add the new cell, drop the old one.
+// WHEN: "subarray/substring of size k"
 int i = 0;
 for (int j = 0; j < n; j++) {
     // 1. add nums[j] to state
@@ -21,11 +23,12 @@ for (int j = 0; j < n; j++) {
 }
 
 // MAX variable window — find LONGEST valid window
-// shrink until valid, then record
+// MENTAL MODEL: grow greedily; shrink only enough to restore validity, then the window is the best ending here.
+// WHEN: "longest" + "at most k ..."
 int i = 0, result = 0;
 for (int j = 0; j < n; j++) {
     // 1. add nums[j] to state
-    while (/* window INVALID */) {
+    while (/* window exceeds constraint */) {  // shrink WHILE window exceeds constraint
         // remove nums[i] from state
         i++;
     }
@@ -33,11 +36,12 @@ for (int j = 0; j < n; j++) {
 }
 
 // MIN variable window — find SHORTEST valid window
-// record first, then shrink to find smaller
+// MENTAL MODEL: grow until valid, then shrink aggressively while still valid to find the tightest fit.
+// WHEN: "shortest/minimum" + "sum >= target" / "contains all of t"
 int i = 0, result = Integer.MAX_VALUE;
 for (int j = 0; j < n; j++) {
     // 1. add nums[j] to state
-    while (/* window VALID */) {
+    while (/* window VALID */) {                // record then shrink WHILE window still valid
         result = Math.min(result, j - i + 1);  // record while valid
         // remove nums[i] from state
         i++;                                    // then try to shrink
@@ -49,20 +53,21 @@ for (int j = 0; j < n; j++) {
 
 ## Quick Reference Table
 
-| # | Name | Description | Type | State | Shrink / Record condition |
-|---|---|---|---|---|---|
-| 643 | Max Average Subarray I | Max average of subarray of size k | Fixed | sum | shrink when `j-i+1 == k` |
-| 567 | Permutation in String | Does s2 contain any permutation of s1? | Fixed | freq + required count | shrink when `j-i+1 == len(s1)` |
-| 219 | Contains Duplicate II | Any duplicate indices ≤ k apart | Fixed | HashSet | shrink when `j-i+1 > k` |
-| 239 | Sliding Window Maximum | Max element in every window of size k | Fixed | monotone deque | shrink when front out of `[i,j]` |
-| 1004 | Max Consecutive Ones III | Longest subarray with at most k zeros | Max | zero count | shrink while `zeros > k` |
-| 3 | Longest No-Repeat Substring | Longest substring without duplicates | Max | freq array | shrink while `freq[j] > 1` |
-| 424 | Longest Char Replacement | Longest with at most k replacements | Max | freq + maxFreq | shrink while `size - maxFreq > k` |
-| 209 | Min Size Subarray Sum | Shortest subarray with sum ≥ target | Min | sum | record + shrink while `sum >= target` |
-| 76 | Minimum Window Substring | Shortest substring containing all of t | Min | freq + required count | record + shrink while `required == 0` |
-| 159 | Longest Substring with At Most 2 Distinct | Max length substring with ≤2 distinct chars | Max-variable window: shrink when freq map size > 2 | **K=2 distinct**: generalized k-distinct with k=2; use HashMap for freq | O(n) | O(1) |
-| 340 | Longest Substring with At Most K Distinct | Max length substring with ≤k distinct chars | Max-variable window: shrink when freq map size > k | **K-distinct generalization**: parameterized k version of #159 | O(n) | O(k) |
-| 438 | Find All Anagrams in a String | Find all start indices of p's anagrams in s | Fixed-size window of len(p); compare freq arrays | **Fixed window + freq compare**: window size fixed at p.length(); compare int[26] arrays | O(n) | O(1) |
+| # | Name | Description | Problem phrase trigger | Type | State | Shrink / Record condition |
+|---|---|---|---|---|---|---|
+| 643 | Max Average Subarray I | Max average of subarray of size k | "subarray of size k" | Fixed | sum | shrink when `j-i+1 == k` |
+| 567 | Permutation in String | Does s2 contain any permutation of s1? | "substring of size len(s1)" / "permutation" | Fixed | freq + required count | shrink when `j-i+1 == len(s1)` |
+| 219 | Contains Duplicate II | Any duplicate indices ≤ k apart | "within k indices" | Fixed | HashSet | shrink when `j-i+1 > k` |
+| 239 | Sliding Window Maximum | Max element in every window of size k | "max of every window of size k" | Fixed | monotone deque | shrink when front out of `[i,j]` |
+| 1004 | Max Consecutive Ones III | Longest subarray with at most k zeros | "longest" + "at most k zeros" | Max | zero count | shrink while `zeros > k` |
+| 3 | Longest No-Repeat Substring | Longest substring without duplicates | "longest" + "no repeats" | Max | freq array | shrink while `freq[j] > 1` |
+| 424 | Longest Char Replacement | Longest with at most k replacements | "longest" + "at most k replacements" | Max | freq + maxFreq | shrink while `size - maxFreq > k` |
+| 209 | Min Size Subarray Sum | Shortest subarray with sum ≥ target | "shortest" + "sum >= target" | Min | sum | record + shrink while `sum >= target` |
+| 76 | Minimum Window Substring | Shortest substring containing all of t | "shortest substring containing" all of t | Min (freq) | freq + required count | record + shrink while `required == 0` |
+| 159 | Longest Substring with At Most 2 Distinct | Max length substring with ≤2 distinct chars | "longest" + "at most 2 distinct" | Max | freq map (size ≤ 2) | shrink while `freq.size() > 2` |
+| 340 | Longest Substring with At Most K Distinct | Max length substring with ≤k distinct chars | "longest" + "at most k distinct" | Max | freq map (size ≤ k) | shrink while `freq.size() > k` |
+| 438 | Find All Anagrams in a String | Find all start indices of p's anagrams in s | "all anagrams" / "all windows of size len(p)" | Fixed | freq compare `int[26]` | shrink when `j-i == len(p)` |
+| 1343 | Number of Subarrays of Size K and Avg ≥ Threshold | Count fixed-size windows with average ≥ threshold | "subarrays of size k" + "average >= threshold" | Fixed | sum (compare `sum >= k*threshold`) | shrink when `j >= k` |
 
 ---
 
@@ -90,6 +95,8 @@ i++;
 
 **Description:** Find the contiguous subarray of length k with the maximum average value.
 
+**Intuition:** Max average of fixed length = max sum; slide a width-k window and track the best running sum.
+
 ```java
 class Solution {
     public double findMaxAverage(int[] nums, int k) {
@@ -105,6 +112,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
@@ -114,6 +122,8 @@ class Solution {
 
 **Description:** Return true if any permutation of s1 appears as a substring of s2.  
 **Key:** fixed window of size `s1.length()`. Use `required` counter — no need to compare maps.
+
+**Intuition:** A permutation is just a fixed-length window whose letter counts match s1, so slide and check the counts.
 
 ```java
 class Solution {
@@ -133,6 +143,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
@@ -142,6 +153,8 @@ class Solution {
 
 **Description:** Return true if any two equal values are at most k indices apart.  
 **Key:** fixed window of size k, maintained as a HashSet.
+
+**Intuition:** Keep only the last k values in a set; a failed insert means a duplicate within k indices.
 
 ```java
 class Solution {
@@ -156,6 +169,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(k)
 
 ---
 
@@ -165,6 +179,8 @@ class Solution {
 
 **Description:** Return the maximum of every contiguous subarray of size k.  
 **Key:** monotone deque stores indices in decreasing value order. Front is always the max of current window.
+
+**Intuition:** A smaller value with a larger one still in the window can never be the max again, so discard it.
 
 ```java
 class Solution {
@@ -185,6 +201,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(k)
 
 ---
 
@@ -194,6 +211,8 @@ class Solution {
 
 **Description:** Flip at most k zeros. Return the length of the longest subarray of 1s.  
 **State:** count of zeros in window. Invalid when `zeros > k`.
+
+**Intuition:** "Flip at most k zeros" = longest window containing at most k zeros; grow, and shrink only when zeros exceed k.
 
 ```java
 class Solution {
@@ -210,6 +229,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
@@ -219,6 +239,8 @@ class Solution {
 
 **Description:** Find the length of the longest substring with all unique characters.  
 **State:** `freq[]` array. Invalid when `freq[nums[j]] > 1` after expanding.
+
+**Intuition:** A repeat appears the moment you add it, so shrink from the left until that one character is unique again.
 
 ```java
 class Solution {
@@ -234,11 +256,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ### #424 Longest Repeating Character Replacement
 
 **Description:** Replace at most k characters. Find the longest substring with one repeated char.  
 **State:** `freq[]` + `maxFreq`. Invalid when `(window size) - maxFreq > k` (too many to replace).  
+**Intuition:** A window is valid if the non-dominant chars (size − maxFreq) fit within k replacements; otherwise shrink.
+
 **Note:** `maxFreq` never decreases when shrinking — we only care about windows larger than current best, so a stale maxFreq is safe and avoids a rescan.
 
 ```java
@@ -256,6 +281,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
@@ -265,6 +291,8 @@ class Solution {
 
 **Description:** Find the minimum length subarray with sum ≥ target.  
 **State:** running `sum`. Valid when `sum >= target` — record then shrink.
+
+**Intuition:** Once the window reaches target, every extra left-trim that stays ≥ target gives a shorter candidate.
 
 ```java
 class Solution {
@@ -281,6 +309,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
@@ -290,6 +319,8 @@ class Solution {
 
 **Description:** Find the shortest substring of s that contains all characters of t.  
 **State:** `need[]` freq array + `required` counter. Valid when `required == 0`.
+
+**Intuition:** Expand until all of t is covered, then shrink as far as you can while still covering it to find the tightest window.
 
 ```java
 class Solution {
@@ -309,6 +340,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
@@ -359,6 +391,8 @@ Shrink:             sum -= nums[i]              need[c]++ >= 0 → required++
 
 **Description:** Given strings `s` and `p`, return a list of all start indices of `p`'s anagrams in `s`. (An anagram uses same characters with same frequencies.)
 
+**Intuition:** An anagram is a fixed-length window whose letter counts equal p's, so slide width-`p.length()` and compare counts.
+
 **Algorithm:** Fixed-size window of length `p.length()`. Maintain a frequency count for the window. Compare with `p`'s frequency count at each step using `Arrays.equals`.
 
 ```java
@@ -389,6 +423,8 @@ class Solution {
 
 **Description:** Return the length of the longest substring with at most 2 distinct characters.
 
+**Intuition:** Grow the window freely; whenever a third distinct character appears, drop from the left until only 2 remain.
+
 **Algorithm:** Max-variable sliding window. Expand `j`; shrink `i` when the frequency map has more than 2 distinct characters.
 
 ```java
@@ -417,6 +453,8 @@ class Solution {
 
 **Description:** Return the length of the longest substring with at most `k` distinct characters.
 
+**Intuition:** Same as #159 but the distinct cap is `k`; shrink whenever the map holds more than k distinct characters.
+
 **Variation:** Parameterized generalization of #159 — replace the hard-coded `2` with `k`.
 
 ```java
@@ -438,3 +476,30 @@ class Solution {
 }
 ```
 **Time** O(n) | **Space** O(k)
+
+
+---
+
+## Fixed Window — Sum vs Threshold (No Division)
+
+## #1343 Number of Sub-arrays of Size K and Average Greater than or Equal to Threshold
+**Description:** Return the number of contiguous subarrays of size `k` whose average is greater than or equal to `threshold`.
+
+**Intuition:** "Average ≥ threshold" over fixed width k is just "sum ≥ k·threshold"; slide a width-k window and count the hits.
+
+**Variation:** fixed-size sliding window. To avoid floating-point division, compare `windowSum >= k * threshold`.
+```java
+class Solution {
+    public int numOfSubarrays(int[] arr, int k, int threshold) {
+        int target = k * threshold;                          // ← VARIATION: compare sum vs k*threshold (no division)
+        int windowSum = 0, count = 0;
+        for (int j = 0; j < arr.length; j++) {
+            windowSum += arr[j];
+            if (j >= k) windowSum -= arr[j - k];             // shrink to size k
+            if (j >= k - 1 && windowSum >= target) count++;
+        }
+        return count;
+    }
+}
+```
+**Time** O(n) | **Space** O(1)

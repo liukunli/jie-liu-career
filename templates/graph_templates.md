@@ -5,29 +5,45 @@ Six algorithms — each with a canonical template and representative problems.
 
 ---
 
+## Complexity Legend
+
+```
+BFS / DFS         O(V + E)            visit each vertex and edge once
+Topo sort (Kahn)  O(V + E)            each node enqueued once, each edge relaxed once
+Union-Find        ~O(n·α(n)) ≈ O(n)   α = inverse Ackermann, effectively constant
+Dijkstra          O((V + E) log V)    non-negative weights ONLY
+Bellman-Ford      O(V · E)            allows negative weights; run k+1 rounds for a k-hop limit
+Prim's MST        O(E log V)          PQ of candidate edges
+```
+
 ## Quick Reference Table
 
-| # | Name | Algorithm | Graph type | Key structure | Return |
-|---|---|---|---|---|---|
-| 994 | Rotting Oranges | Multi-source BFS | Grid | `Queue<int[]>` | `int` (minutes) |
-| 542 | 01 Matrix | Multi-source BFS | Grid | `Queue<int[]>` + `dist[][]` | `int[][]` |
-| 127 | Word Ladder | BFS on state | Implicit | `Queue<String>` + `Set` | `int` (steps) |
-| 130 | Surrounded Regions | BFS flood fill | Grid | `Queue<int[]>` | void |
-| 417 | Pacific Atlantic | Multi-source BFS ×2 | Grid | `Queue<int[]>` ×2 | `List<List<int>>` |
-| 207 | Course Schedule | Topo sort (Kahn's) | Directed | `int[] inDegree` | `boolean` |
-| 210 | Course Schedule II | Topo sort (Kahn's) | Directed | `int[] inDegree` | `int[]` |
-| 310 | Minimum Height Trees | Topo sort (leaf trim) | Undirected | `Set<Integer>[]` | `List<Integer>` |
-| 547 | Number of Provinces | Union Find | Undirected | `int[] parent` | `int` |
-| 684 | Redundant Connection | Union Find | Undirected | `int[] parent` | `int[]` |
-| 1319 | Connect Network | Union Find | Undirected | `int[] parent` | `int` |
-| 743 | Network Delay Time | Dijkstra | Directed weighted | `PriorityQueue<int[]>` | `int` |
-| 787 | Cheapest Flights K Stops | Bellman-Ford (k rounds) | Directed weighted | `int[] dist` per round | `int` |
-| 1514 | Max Probability Path | Dijkstra (maximize) | Undirected weighted | `PriorityQueue` max-heap | `double` |
-| 785 | Is Graph Bipartite? | BFS 2-coloring | Undirected | `int[] color` | `boolean` |
-| 1584 | Min Cost Connect Points | Prim's MST | Complete graph | `PriorityQueue<int[]>` | `int` |
+| # | Name | Algorithm | Graph type | Key structure | Return | Time | Space |
+|---|---|---|---|---|---|---|---|
+| 994 | Rotting Oranges | Multi-source BFS | Grid | `Queue<int[]>` | `int` (minutes) | O(V+E) | O(V) |
+| 542 | 01 Matrix | Multi-source BFS | Grid | `Queue<int[]>` + `dist[][]` | `int[][]` | O(V+E) | O(V) |
+| 127 | Word Ladder | BFS on state | Implicit | `Queue<String>` + `Set` | `int` (steps) | O(N·L·26) | O(N·L) |
+| 130 | Surrounded Regions | BFS flood fill | Grid | `Queue<int[]>` | void | O(V+E) | O(V) |
+| 417 | Pacific Atlantic | Multi-source BFS ×2 | Grid | `Queue<int[]>` ×2 | `List<List<int>>` | O(V+E) | O(V) |
+| 207 | Course Schedule | Topo sort (Kahn's) | Directed | `int[] inDegree` | `boolean` | O(V+E) | O(V+E) |
+| 210 | Course Schedule II | Topo sort (Kahn's) | Directed | `int[] inDegree` | `int[]` | O(V+E) | O(V+E) |
+| 310 | Minimum Height Trees | Topo sort (leaf trim) | Undirected | `Set<Integer>[]` | `List<Integer>` | O(V+E) | O(V+E) |
+| 547 | Number of Provinces | Union Find | Undirected | `int[] parent` | `int` | O(n²·α(n)) | O(n) |
+| 684 | Redundant Connection | Union Find | Undirected | `int[] parent` | `int[]` | O(n·α(n)) | O(n) |
+| 1319 | Connect Network | Union Find | Undirected | `int[] parent` | `int` | O(E·α(n)) | O(n) |
+| 743 | Network Delay Time | Dijkstra | Directed weighted | `PriorityQueue<int[]>` | `int` | O((V+E)logV) | O(V+E) |
+| 787 | Cheapest Flights K Stops | Bellman-Ford (k rounds) | Directed weighted | `int[] dist` per round | `int` | O(k·E) | O(V) |
+| 1514 | Max Probability Path | Dijkstra (maximize) | Undirected weighted | `PriorityQueue` max-heap | `double` | O((V+E)logV) | O(V+E) |
+| 785 | Is Graph Bipartite? | BFS 2-coloring | Undirected | `int[] color` | `boolean` | O(V+E) | O(V) |
+| 1584 | Min Cost Connect Points | Prim's MST | Complete graph | `PriorityQueue<int[]>` | `int` | O(n²logn) | O(n²) |
 | 261 | Graph Valid Tree | Check if n nodes and edges form a valid tree | Union Find: valid tree has exactly n-1 edges AND no cycles | **Tree check**: edges.length == n-1 is necessary; UF detects cycles | O(n·α(n)) | O(n) |
 | 269 | Alien Dictionary | Determine character order from sorted alien words | Build directed graph from adjacent word pairs; topological sort | **Topo sort on char graph**: compare adjacent words letter-by-letter to extract ordering edges | O(C) C=total chars | O(1) |
+| 286 | Walls and Gates | Fill each empty room with distance to nearest gate | Multi-source BFS from all gates simultaneously | **Multi-source BFS**: seed queue with ALL gates at distance 0 | O(m·n) | O(m·n) |
 | 323 | Number of Connected Components | Count connected components in undirected graph | Union Find: union all edges; count distinct roots | **Standard UF component count**: start with n, decrement per successful union | O(n·α(n)) | O(n) |
+| 721 | Accounts Merge | Merge accounts sharing any common email | Union Find on emails; group by root | **Union Find on strings**: map each email to an id, union emails within an account | O(n·α) | O(n) |
+| 827 | Making A Large Island | Flip one 0 to 1 to maximize island size | Label islands with id+size map; for each 0 sum unique neighbor island sizes +1 | **Two-pass labeling**: first DFS-color islands, then test each 0 | O(m·n) | O(m·n) |
+| 909 | Snakes and Ladders | Min moves to reach last square (board with snakes/ladders) | BFS on flattened board; convert square number to (row,col) via boustrophedon | **BFS on board cells**: number→coordinate conversion for zigzag rows | O(n²) | O(n²) |
+| 1091 | Shortest Path in Binary Matrix | Shortest 8-directional path top-left to bottom-right through 0s | BFS with 8 directions | **8-directional BFS**: include diagonals in dirs | O(m·n) | O(m·n) |
 | 1631 | Path With Minimum Effort | Min effort path from top-left to bottom-right; effort = max abs difference along path | Dijkstra with effort[r][c] = min-so-far max diff; PQ sorted by effort | **Modified Dijkstra**: dist = max(currEffort, edgeCost) instead of sum | O(m·n·log(m·n)) | O(m·n) |
 
 ---
@@ -60,6 +76,8 @@ int[] dc = {0,  0, 1, -1};
 
 ```java
 // 1. BFS — shortest path / level order
+// MENTAL MODEL: explore in rings of equal distance, so the first time you reach a node is the shortest.
+// WHEN: "fewest steps", "shortest path" on an unweighted graph
 Queue<Integer> queue = new ArrayDeque<>();
 boolean[] visited = new boolean[n];
 queue.offer(start);
@@ -75,6 +93,8 @@ while (!queue.isEmpty()) {
 }
 
 // 2. TOPOLOGICAL SORT — Kahn's BFS
+// MENTAL MODEL: peel off nodes with no remaining prerequisites; if any get stuck, a cycle exists.
+// WHEN: "valid order", "dependencies/prerequisites", "detect cycle" on a directed graph
 int[] inDegree = new int[n];
 for (int[] edge : edges) inDegree[edge[1]]++;
 Queue<Integer> queue = new ArrayDeque<>();
@@ -89,6 +109,8 @@ while (!queue.isEmpty()) {
 // order.size() == n → no cycle
 
 // 3. UNION FIND
+// MENTAL MODEL: each set points to one representative; merge sets by linking roots, query by finding roots.
+// WHEN: "connected components", "is it already connected", "merge groups dynamically"
 int[] parent, rank;
 void init(int n) {
     parent = new int[n]; rank = new int[n];
@@ -108,6 +130,8 @@ boolean union(int x, int y) {
 }
 
 // 4. DIJKSTRA — shortest path (non-negative weights)
+// MENTAL MODEL: greedily settle the closest unfinished node; non-negative weights guarantee it's final.
+// WHEN: "shortest/cheapest path" with non-negative weights
 int[] dist = new int[n];
 Arrays.fill(dist, Integer.MAX_VALUE);
 dist[src] = 0;
@@ -127,6 +151,8 @@ while (!pq.isEmpty()) {
 }
 
 // 5. BIPARTITE CHECK — BFS 2-coloring
+// MENTAL MODEL: paint neighbors the opposite color; a neighbor that's already your color means an odd cycle.
+// WHEN: "split into two groups", "2-colorable", "no edge within a group"
 int[] color = new int[n];
 Arrays.fill(color, -1);
 Queue<Integer> queue = new ArrayDeque<>();
@@ -145,6 +171,8 @@ for (int start = 0; start < n; start++) {
 return true;
 
 // 6. PRIM'S MST — greedy, always add cheapest edge to growing tree
+// MENTAL MODEL: grow one tree outward, each step absorbing the cheapest edge that reaches a new node.
+// WHEN: "connect all nodes at minimum total cost"
 boolean[] inMST = new boolean[n];
 int[] minEdge = new int[n];
 Arrays.fill(minEdge, Integer.MAX_VALUE);
@@ -217,6 +245,7 @@ class Solution {
     }
 }
 ```
+**Time** O(V+E) | **Space** O(V)
 
 ---
 
@@ -252,6 +281,7 @@ class Solution {
     }
 }
 ```
+**Time** O(m·n) | **Space** O(m·n)
 
 ---
 
@@ -293,6 +323,7 @@ class Solution {
     }
 }
 ```
+**Time** O(N·L·26) where N = words, L = word length | **Space** O(N·L)
 
 ---
 
@@ -329,6 +360,7 @@ class Solution {
     }
 }
 ```
+**Time** O(m·n) | **Space** O(m·n)
 
 ---
 
@@ -379,6 +411,7 @@ class Solution {
     }
 }
 ```
+**Time** O(m·n) | **Space** O(m·n)
 
 ---
 
@@ -413,6 +446,7 @@ class Solution {
     }
 }
 ```
+**Time** O(V+E) | **Space** O(V+E)
 
 ---
 
@@ -444,13 +478,15 @@ class Solution {
     }
 }
 ```
+**Time** O(V+E) | **Space** O(V+E)
 
 ---
 
 ## #310 Minimum Height Trees
 
 **Description:** Find all roots that minimize tree height. At most 2 answers — they are the center node(s) of the longest path.  
-**Algorithm:** Iteratively trim leaves (degree-1 nodes) until ≤ 2 nodes remain — same as topo sort but on undirected tree.
+**Algorithm:** Iteratively trim leaves (degree-1 nodes) until ≤ 2 nodes remain — same as topo sort but on undirected tree.  
+**Intuition:** the best root sits at the center of the longest path; peeling leaves layer by layer converges there.
 
 ```java
 class Solution {
@@ -476,6 +512,7 @@ class Solution {
     }
 }
 ```
+**Time** O(V+E) | **Space** O(V+E)
 
 ---
 
@@ -520,7 +557,8 @@ boolean union(int x, int y) {               // returns false if already connecte
 
 ## #547 Number of Provinces
 
-**Description:** Count the number of connected components (provinces) in an undirected graph given as an adjacency matrix.
+**Description:** Count the number of connected components (provinces) in an undirected graph given as an adjacency matrix.  
+**Intuition:** start with `n` separate sets; every successful merge drops the count by one.
 
 ```java
 class Solution {
@@ -546,13 +584,15 @@ class Solution {
     }
 }
 ```
+**Time** O(n²·α(n)) | **Space** O(n)
 
 ---
 
 ## #684 Redundant Connection
 
 **Description:** Find the edge that creates a cycle in an undirected graph that would otherwise be a tree.  
-**Key:** try to union each edge in order. The first edge where both nodes already share a root is the redundant one.
+**Key:** try to union each edge in order. The first edge where both nodes already share a root is the redundant one.  
+**Intuition:** if both endpoints are already in the same set, this edge closes a cycle — it's the redundant one.
 
 ```java
 class Solution {
@@ -576,13 +616,15 @@ class Solution {
     }
 }
 ```
+**Time** O(n·α(n)) | **Space** O(n)
 
 ---
 
 ## #1319 Number of Operations to Make Network Connected
 
 **Description:** Minimum cable moves to connect all `n` computers. Return -1 if impossible.  
-**Key:** need at least `n-1` edges for `n` nodes. Count extra edges (cycles); count components. Answer = `components - 1` if enough extras exist.
+**Key:** need at least `n-1` edges for `n` nodes. Count extra edges (cycles); count components. Answer = `components - 1` if enough extras exist.  
+**Intuition:** each redundant cable can be moved to bridge one gap, so `components - 1` moves suffice if you have enough spare cables.
 
 ```java
 class Solution {
@@ -606,6 +648,7 @@ class Solution {
     }
 }
 ```
+**Time** O(E·α(n)) | **Space** O(n)
 
 ---
 
@@ -614,7 +657,8 @@ class Solution {
 ## #743 Network Delay Time
 
 **Description:** Time for a signal from `k` to reach all `n` nodes. Return -1 if unreachable.  
-**Algorithm:** Dijkstra from source `k`. Answer = max of all shortest distances.
+**Algorithm:** Dijkstra from source `k`. Answer = max of all shortest distances.  
+**Intuition:** every node is reached by its shortest delay; the network is "done" when the slowest of those arrives.
 
 ```java
 class Solution {
@@ -648,13 +692,15 @@ class Solution {
     }
 }
 ```
+**Time** O((V+E)logV) | **Space** O(V+E)
 
 ---
 
 ## #787 Cheapest Flights Within K Stops
 
 **Description:** Cheapest price from `src` to `dst` using at most `k` stops (k+1 edges).  
-**Algorithm:** Bellman-Ford with exactly `k+1` relaxation rounds. Use a copy `temp[]` each round to prevent using the same edge twice in one round.
+**Algorithm:** Bellman-Ford with exactly `k+1` relaxation rounds. Use a copy `temp[]` each round to prevent using the same edge twice in one round.  
+**Intuition:** each round lets paths grow by one more edge, so `k+1` rounds caps the path at `k` stops.
 
 ```java
 class Solution {
@@ -675,13 +721,15 @@ class Solution {
     }
 }
 ```
+**Time** O(k·E) | **Space** O(V)
 
 ---
 
 ## #1514 Path with Maximum Probability
 
 **Description:** Find the path from `start` to `end` with maximum success probability (product of edge probabilities).  
-**Algorithm:** Dijkstra with **max-heap** (maximize probability instead of minimize distance). Multiply probabilities instead of adding weights.
+**Algorithm:** Dijkstra with **max-heap** (maximize probability instead of minimize distance). Multiply probabilities instead of adding weights.  
+**Intuition:** probabilities in [0,1] only shrink when multiplied, so the "closest" (highest-probability) node settles first — Dijkstra still applies.
 
 ```java
 class Solution {
@@ -716,6 +764,7 @@ class Solution {
     }
 }
 ```
+**Time** O((V+E)logV) | **Space** O(V+E)
 
 ## Dijkstra vs Bellman-Ford
 
@@ -736,7 +785,8 @@ Key trick:          stale check: d > dist[node] copy array each round (temp[])
 
 **Description:** Can graph nodes be split into two groups where every edge connects nodes in different groups?  
 **Algorithm:** BFS 2-coloring. If any neighbor has the same color as the current node → not bipartite.  
-**Key:** run BFS from every unvisited node (graph may be disconnected).
+**Key:** run BFS from every unvisited node (graph may be disconnected).  
+**Intuition:** paint each neighbor the opposite color; a clash means an odd-length cycle, which can't be 2-colored.
 
 ```java
 class Solution {
@@ -765,6 +815,7 @@ class Solution {
     }
 }
 ```
+**Time** O(V+E) | **Space** O(V)
 
 ---
 
@@ -774,7 +825,8 @@ class Solution {
 
 **Description:** Connect all points (on a 2D plane) with minimum total Manhattan distance. Return that total cost.  
 **Algorithm:** Prim's MST — always add the cheapest edge from the growing tree to a new node.  
-**Key:** `minEdge[i]` tracks the cheapest known edge from any tree node to node `i`. Update lazily via priority queue; skip nodes already in MST.
+**Key:** `minEdge[i]` tracks the cheapest known edge from any tree node to node `i`. Update lazily via priority queue; skip nodes already in MST.  
+**Intuition:** grow one tree, always swallowing the cheapest edge that reaches a node not yet in it.
 
 ```java
 class Solution {
@@ -808,6 +860,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n²logn) | **Space** O(n²)
 
 ---
 
@@ -995,3 +1048,188 @@ class Solution {
 }
 ```
 **Time** O(n·α(n)) ≈ O(n) | **Space** O(n)
+
+---
+
+## #286 Walls and Gates
+**Description:** Each cell is a gate (0), wall (-1), or empty (INF = 2147483647). Fill each empty room with distance to its nearest gate.
+**Variation:** multi-source BFS — seed the queue with every gate at distance 0, then expand outward simultaneously.
+```java
+class Solution {
+    public void wallsAndGates(int[][] rooms) {
+        if (rooms.length == 0) return;
+        int m = rooms.length, n = rooms[0].length;
+        Queue<int[]> queue = new ArrayDeque<>();
+        for (int i = 0; i < m; i++)
+            for (int j = 0; j < n; j++)
+                if (rooms[i][j] == 0) queue.offer(new int[]{i, j});  // ← VARIATION: seed ALL gates
+        int[][] dirs = {{-1,0},{1,0},{0,-1},{0,1}};
+        while (!queue.isEmpty()) {
+            int[] cell = queue.poll();
+            for (int[] d : dirs) {
+                int ni = cell[0] + d[0], nj = cell[1] + d[1];
+                if (ni < 0 || ni >= m || nj < 0 || nj >= n || rooms[ni][nj] != Integer.MAX_VALUE) continue;
+                rooms[ni][nj] = rooms[cell[0]][cell[1]] + 1;
+                queue.offer(new int[]{ni, nj});
+            }
+        }
+    }
+}
+```
+**Time** O(m·n) | **Space** O(m·n)
+
+---
+
+## #721 Accounts Merge
+**Description:** Each account has a name and a list of emails. Merge accounts that share any email. Return merged accounts with emails sorted.
+**Variation:** Union Find over emails. Assign each unique email an integer id, union all emails within the same account, then group emails by their root.
+```java
+class Solution {
+    private int[] parent;
+    public List<List<String>> accountsMerge(List<List<String>> accounts) {
+        Map<String, Integer> emailToId = new HashMap<>();
+        Map<String, String> emailToName = new HashMap<>();
+        int id = 0;
+        for (List<String> account : accounts)
+            for (int i = 1; i < account.size(); i++) {
+                String email = account.get(i);
+                if (!emailToId.containsKey(email)) emailToId.put(email, id++);
+                emailToName.put(email, account.get(0));
+            }
+        parent = new int[id];
+        for (int i = 0; i < id; i++) parent[i] = i;
+        for (List<String> account : accounts)
+            for (int i = 2; i < account.size(); i++)
+                union(emailToId.get(account.get(1)), emailToId.get(account.get(i)));  // ← VARIATION: union emails in account
+        Map<Integer, List<String>> groups = new HashMap<>();
+        for (String email : emailToId.keySet())
+            groups.computeIfAbsent(find(emailToId.get(email)), x -> new ArrayList<>()).add(email);
+        List<List<String>> result = new ArrayList<>();
+        for (List<String> emails : groups.values()) {
+            Collections.sort(emails);
+            List<String> merged = new ArrayList<>();
+            merged.add(emailToName.get(emails.get(0)));
+            merged.addAll(emails);
+            result.add(merged);
+        }
+        return result;
+    }
+    private int find(int x) { return parent[x] == x ? x : (parent[x] = find(parent[x])); }
+    private void union(int x, int y) { parent[find(x)] = find(y); }
+}
+```
+**Time** O(n·α) with sorting O(n log n) | **Space** O(n)
+
+---
+
+## #827 Making A Large Island
+**Description:** In a binary grid you may change at most one 0 to 1. Return the size of the largest island possible.
+**Variation:** two passes. First DFS-color each island with a unique id (starting at 2) and record its size. Then for every 0, sum the sizes of distinct neighboring islands + 1.
+```java
+class Solution {
+    private int[][] dirs = {{-1,0},{1,0},{0,-1},{0,1}};
+    public int largestIsland(int[][] grid) {
+        int n = grid.length, id = 2;
+        Map<Integer, Integer> size = new HashMap<>();
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                if (grid[i][j] == 1) size.put(id, dfs(grid, i, j, id++));  // ← VARIATION: color + record size
+        int max = size.values().stream().mapToInt(x -> x).max().orElse(0);
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                if (grid[i][j] == 0) {
+                    Set<Integer> seen = new HashSet<>();
+                    int total = 1;
+                    for (int[] d : dirs) {
+                        int ni = i + d[0], nj = j + d[1];
+                        if (ni < 0 || ni >= n || nj < 0 || nj >= n || grid[ni][nj] <= 1) continue;
+                        if (seen.add(grid[ni][nj])) total += size.get(grid[ni][nj]);  // ← VARIATION: sum distinct neighbors
+                    }
+                    max = Math.max(max, total);
+                }
+        return max;
+    }
+    private int dfs(int[][] grid, int i, int j, int id) {
+        if (i < 0 || i >= grid.length || j < 0 || j >= grid.length || grid[i][j] != 1) return 0;
+        grid[i][j] = id;
+        int count = 1;
+        for (int[] d : dirs) count += dfs(grid, i + d[0], j + d[1], id);
+        return count;
+    }
+}
+```
+**Time** O(m·n) | **Space** O(m·n)
+
+---
+
+## #909 Snakes and Ladders
+**Description:** On an n×n board numbered in boustrophedon (zigzag) order, find the minimum dice moves (1-6) from square 1 to square n². Ladders/snakes teleport you.
+**Variation:** BFS over square numbers. Convert a square number to (row, col) accounting for the zigzag layout.
+```java
+class Solution {
+    public int snakesAndLadders(int[][] board) {
+        int n = board.length;
+        boolean[] visited = new boolean[n * n + 1];
+        Queue<Integer> queue = new ArrayDeque<>();
+        queue.offer(1);
+        visited[1] = true;
+        int moves = 0;
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            for (int s = 0; s < size; s++) {
+                int curr = queue.poll();
+                if (curr == n * n) return moves;
+                for (int k = 1; k <= 6 && curr + k <= n * n; k++) {
+                    int next = curr + k;
+                    int[] rc = toCoord(next, n);            // ← VARIATION: number → zigzag coordinate
+                    if (board[rc[0]][rc[1]] != -1) next = board[rc[0]][rc[1]];  // snake/ladder
+                    if (!visited[next]) { visited[next] = true; queue.offer(next); }
+                }
+            }
+            moves++;
+        }
+        return -1;
+    }
+    private int[] toCoord(int num, int n) {
+        int row = (num - 1) / n, col = (num - 1) % n;
+        if (row % 2 == 1) col = n - 1 - col;               // ← VARIATION: reverse on odd rows
+        return new int[]{n - 1 - row, col};
+    }
+}
+```
+**Time** O(n²) | **Space** O(n²)
+
+---
+
+## #1091 Shortest Path in Binary Matrix
+**Description:** In an n×n binary grid, find the length of the shortest clear path (cells of 0) from top-left to bottom-right, moving in 8 directions.
+**Variation:** standard BFS but with 8-directional movement (includes diagonals).
+```java
+class Solution {
+    public int shortestPathBinaryMatrix(int[][] grid) {
+        int n = grid.length;
+        if (grid[0][0] == 1 || grid[n-1][n-1] == 1) return -1;
+        int[][] dirs = {{-1,0},{1,0},{0,-1},{0,1},{-1,-1},{-1,1},{1,-1},{1,1}};  // ← VARIATION: 8 directions
+        Queue<int[]> queue = new ArrayDeque<>();
+        queue.offer(new int[]{0, 0});
+        grid[0][0] = 1;
+        int path = 1;
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            for (int s = 0; s < size; s++) {
+                int[] cell = queue.poll();
+                if (cell[0] == n-1 && cell[1] == n-1) return path;
+                for (int[] d : dirs) {
+                    int ni = cell[0] + d[0], nj = cell[1] + d[1];
+                    if (ni < 0 || ni >= n || nj < 0 || nj >= n || grid[ni][nj] != 0) continue;
+                    grid[ni][nj] = 1;
+                    queue.offer(new int[]{ni, nj});
+                }
+            }
+            path++;
+        }
+        return -1;
+    }
+}
+```
+**Time** O(m·n) | **Space** O(m·n)

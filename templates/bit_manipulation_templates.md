@@ -25,6 +25,8 @@
 ## Canonical Template
 
 ```java
+// MENTAL MODEL: bits are a set/counter — XOR cancels duplicates, AND/OR/shift edit individual bits.
+// WHEN: "appears once/odd among pairs", "count set bits", "no shared letters", "power of 2/4".
 // ── XOR CANCEL ── pairs cancel; lone element survives
 int result = 0;
 for (int num : nums) result ^= num;
@@ -38,6 +40,10 @@ int lowest     = n & (-n);                 // isolate lowest set bit
 boolean isPow2 = n > 0 && (n & (n-1)) == 0;
 
 // ── COUNT SET BITS ── Brian Kernighan: each iteration removes one set bit
+// WHY n & (n-1) clears the lowest set bit:
+//   n     = ...1000   (lowest set bit at this position)
+//   n-1   = ...0111   (borrow flips that bit to 0 and all lower bits to 1)
+//   n&(n-1)=...0000   (AND keeps higher bits, wipes the lowest set bit + below)
 int count = 0;
 while (n != 0) { count++; n &= (n - 1); }  // n & (n-1) clears lowest set bit
 
@@ -54,6 +60,8 @@ if ((mask[i] & mask[j]) == 0) { /* no shared letter */ }
 
 ```java
 // VARIATION 1: mod-3 state machine (Single Number II)
+// MENTAL MODEL: extend XOR from mod-2 (cancel pairs) to mod-3 (cancel triples);
+//               ones/twos track bits seen 1 or 2 times mod 3.
 // Instead of XOR canceling pairs (mod 2), cancel triples (mod 3)
 // ones = bits seen exactly 1 mod 3 times; twos = bits seen exactly 2 mod 3 times
 int ones = 0, twos = 0;
@@ -108,6 +116,7 @@ int add(int a, int b) {
 ## #136 Single Number
 
 **Description:** Array where every element appears twice except one. Find it.  
+**Intuition:** XOR is its own inverse, so every duplicated pair cancels to 0 and only the lone element is left standing.  
 **Algorithm:** XOR all — every pair cancels (`a ^ a = 0`), leaving the single element.
 
 ```java
@@ -126,6 +135,7 @@ class Solution {
 ## #268 Missing Number
 
 **Description:** Array of n distinct numbers from [0, n] with one missing. Find it.  
+**Intuition:** XOR-ing every index against every value pairs each present number with its index — the missing number's index has no partner to cancel.  
 **Variation:** XOR each index `i` with `nums[i]`. Indices 0..n XOR'd with the n elements — the missing index has no pair.
 
 ```java
@@ -145,6 +155,7 @@ class Solution {
 ## #137 Single Number II
 
 **Description:** Every element appears three times except one. Find it.  
+**Intuition:** XOR cancels pairs (mod 2); here we need a counter mod 3, so two state bits (`ones`, `twos`) cycle each bit through 1→2→0 and the survivor sits in `ones`.  
 **Variation:** Two-state XOR machine. `ones` tracks bits seen 1 mod 3 times, `twos` tracks bits seen 2 mod 3 times. When a bit reaches 3, it clears from both.
 
 ```java
@@ -166,6 +177,7 @@ class Solution {
 ## #260 Single Number III
 
 **Description:** Two elements appear exactly once; all others appear twice. Find both.  
+**Intuition:** XOR of all leaves `a ^ b`; any set bit in it is a bit where a and b differ, so it splits the array into two groups each holding one unique.  
 **Variation:** XOR all → get `a ^ b`. Use lowest set bit of `a ^ b` to partition nums into two groups (one containing `a`, one containing `b`). XOR each group independently.
 
 ```java
@@ -191,6 +203,7 @@ class Solution {
 ## #191 Number of 1 Bits
 
 **Description:** Return the number of set bits in an unsigned integer.  
+**Intuition:** Each `n & (n-1)` erases exactly one set bit, so the loop runs once per set bit — no need to scan all 32 positions.  
 **Algorithm:** Brian Kernighan — `n & (n-1)` clears the lowest set bit each iteration.
 
 ```java
@@ -212,6 +225,7 @@ public class Solution {
 ## #338 Counting Bits
 
 **Description:** Return an array `result` where `result[i]` = number of 1 bits in `i`, for i in [0, n].  
+**Intuition:** `i` has the same set bits as `i >> 1` plus possibly its own last bit, so reuse the already-computed smaller answer instead of recounting.  
 **Variation:** DP relation — `i >> 1` is `i` with last bit removed (already computed), plus the last bit `i & 1`.
 
 ```java
@@ -231,6 +245,7 @@ class Solution {
 ## #190 Reverse Bits
 
 **Description:** Reverse the 32 bits of an unsigned integer.  
+**Intuition:** Peel the lowest bit off `n` and stack it onto `result` from the bottom — after 32 shifts the bit order is fully mirrored.  
 **Variation:** Fixed 32 iterations — each time take the LSB of `n`, append it to `result`, then shift both.
 
 ```java
@@ -254,6 +269,7 @@ public class Solution {
 ## #201 Bitwise AND of Numbers Range
 
 **Description:** Return the AND of all numbers in `[left, right]`.  
+**Intuition:** AND only keeps bits that are 1 in every number; the low bits flip somewhere in the range, so only the common high-bit prefix of `left` and `right` survives.  
 **Key insight:** any two adjacent numbers in the range differ in at least the lowest bit. AND of a range clears all bits that differ across any pair in the range. The result is the common high-bit prefix of `left` and `right`.  
 **Variation:** right-shift both until equal to find shared prefix; shift back.
 
@@ -277,6 +293,7 @@ class Solution {
 ## #371 Sum of Two Integers
 
 **Description:** Return `a + b` without using `+` or `-`.  
+**Intuition:** Addition splits into a carry-free sum (XOR) and the carries (AND shifted left); feed the carry back until nothing carries over.  
 **Variation:** XOR computes bit sum without carry; AND shifted left computes carry. Repeat until no carry.
 
 ```java
@@ -300,6 +317,7 @@ class Solution {
 ## #318 Maximum Product of Word Lengths
 
 **Description:** Given a list of words, find the maximum product `len(a) * len(b)` where `a` and `b` share no common letters.  
+**Intuition:** Compress each word's letter set into a 26-bit integer so "share a letter?" becomes a single AND, replacing slow character-by-character comparison.  
 **Variation:** encode each word as a 26-bit integer where bit `i` = 1 if letter `'a' + i` appears. Two words share a letter iff their bitmasks have any common bit (`mask[i] & mask[j] != 0`).
 
 ```java
@@ -337,23 +355,32 @@ n & ~(1 << i)      // clear bit i
 n ^ (1 << i)       // toggle bit i
 i >> 1             // divide by 2 (fast)
 i & 1              // last bit (0 = even, 1 = odd)
+
+// --- Divisibility by powers of two ---
+(n & 1) == 0           // divisible by 2  (even)   ← LSB is the 2^0 place
+(n & 1) == 1           // NOT divisible by 2 (odd)
+(n & ((1 << k) - 1))   // remainder of n / 2^k ; == 0 means divisible by 2^k
+(n & 3) == 0           // divisible by 4   (k = 2)
+(n & 7) == 0           // divisible by 8   (k = 3)
+// Note: n & 1 is safe for NEGATIVE numbers (two's complement) where
+//       n % 2 returns -1 for odd negatives. Prefer & 1 for parity.
 ```
 
 ## Pattern Chooser
 
-| Signal | Technique |
-|---|---|
-| "appears odd/once, rest appear even/twice" | XOR all |
-| "appears once, rest appear 3 times" | mod-3 state machine (`ones`, `twos`) |
-| "two unique elements" | XOR → split by `xor & (-xor)` |
-| Count set bits | Brian Kernighan `n &= (n-1)` |
-| Count bits for all 0..n | DP: `dp[i] = dp[i>>1] + (i&1)` |
-| AND of a range | Right-shift to find common prefix |
-| Add without `+` | XOR + carry loop |
-| "no shared characters between two strings" | 26-bit bitmask, check AND == 0 |
-| "is n a power of two?" | `n > 0 && (n & (n-1)) == 0` |
-| "is n a power of four?" | Power of 2 AND set bit at even position: `(n & 0xAAAAAAAA) == 0` |
-| "find duplicate, no extra space, no modification" | Floyd's cycle detection on array-as-linked-list |
+| Signal | Technique | Time |
+|---|---|---|
+| "appears odd/once, rest appear even/twice" | XOR all | O(n) |
+| "appears once, rest appear 3 times" | mod-3 state machine (`ones`, `twos`) | O(n) |
+| "two unique elements" | XOR → split by `xor & (-xor)` | O(n) |
+| Count set bits | Brian Kernighan `n &= (n-1)` | O(k) k = set bits |
+| Count bits for all 0..n | DP: `dp[i] = dp[i>>1] + (i&1)` | O(n) |
+| AND of a range | Right-shift to find common prefix | O(log n) |
+| Add without `+` | XOR + carry loop | O(1) (32 iters) |
+| "no shared characters between two strings" | 26-bit bitmask, check AND == 0 | O(n²) pairwise |
+| "is n a power of two?" | `n > 0 && (n & (n-1)) == 0` | O(1) |
+| "is n a power of four?" | Power of 2 AND set bit at even position: `(n & 0xAAAAAAAA) == 0` | O(1) |
+| "find duplicate, no extra space, no modification" | Floyd's cycle detection on array-as-linked-list | O(n) |
 
 ---
 
@@ -362,6 +389,8 @@ i & 1              // last bit (0 = even, 1 = odd)
 ## #231 Power of Two
 
 **Description:** Given an integer `n`, return true if it is a power of two.
+
+**Intuition:** A power of two is a single 1 bit, and `n & (n-1)` clears that one bit to 0 — anything else leaves bits behind.
 
 **Algorithm:** A power of two has exactly one set bit. Check `n > 0` and `n & (n-1) == 0` (clearing the lowest set bit results in 0 only if there was one bit).
 
@@ -379,6 +408,8 @@ class Solution {
 ## #342 Power of Four
 
 **Description:** Given an integer `n`, return true if it is a power of four.
+
+**Intuition:** Powers of four are powers of two (one set bit) whose bit sits at an even position; masking against the odd-position mask `0xAAAAAAAA` must give 0.
 
 **Variation:** Power of four must be power of two (one set bit) AND that bit must be at an even bit position (0, 2, 4, 6, ...). Mask `0xAAAAAAAA` has bits set at ALL odd positions; if `n & 0xAAAAAAAA == 0`, the set bit is at an even position.
 
@@ -398,6 +429,8 @@ class Solution {
 ## #287 Find the Duplicate Number
 
 **Description:** Given an array of `n+1` integers where each is in `[1, n]`, find the duplicate. No extra space, no modifying the array.
+
+**Intuition:** Following `i → nums[i]` turns the array into a linked list; a duplicate value means two indices point to the same node, forming a cycle whose entry is the duplicate.
 
 **Variation:** Floyd's Cycle Detection. Treat the array as a linked list where `nums[i]` is the next node. Since there's a duplicate, two indices point to the same value → creates a cycle. Find cycle entry = duplicate.
 

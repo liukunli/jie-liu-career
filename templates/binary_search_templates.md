@@ -27,6 +27,8 @@ Binary search appears in two forms: searching an **array index**, or searching a
 
 ```java
 // 1. CLOSED [i, j] — exact match, return on hit
+// MENTAL MODEL: target is a specific value sitting at some index; shrink a fully-closed range until you land on it.
+// WHEN: "find this exact value in a sorted array"
 int i = 0, j = n - 1;
 while (i <= j) {
     int k = i + (j - i) / 2;
@@ -37,6 +39,8 @@ while (i <= j) {
 return -1;
 
 // 2. HALF-OPEN [i, j) — boundary search, answer falls out of i
+// MENTAL MODEL: the predicate is false...false TRUE...true; find the FIRST position that satisfies the condition.
+// WHEN: "first/last position", "insert position", "first index where condition holds"
 int i = 0, j = n;            // j = n (or n-1 for #162)
 while (i < j) {
     int k = i + (j - i) / 2;
@@ -46,6 +50,8 @@ while (i < j) {
 return i;
 
 // 3. ANSWER SPACE MINIMIZE — smallest k where condition(k) is true
+// MENTAL MODEL: condition goes false→TRUE as k grows (bigger k = more feasible); find the smallest k that flips it true.
+// WHEN: "minimum X such that feasible(X)" — min speed, min capacity, smallest divisor
 int i = minPossible, j = maxPossible;
 while (i < j) {
     int k = i + (j - i) / 2;          // floor mid
@@ -55,6 +61,8 @@ while (i < j) {
 return i;
 
 // 4. ANSWER SPACE MAXIMIZE — largest k where condition(k) is true
+// MENTAL MODEL: condition goes TRUE→false as k grows (bigger k = less feasible); find the largest k still true.
+// WHEN: "maximum X such that feasible(X)" — max min-piece, max guarantee
 int i = minPossible, j = maxPossible;
 while (i < j) {
     int k = i + (j - i + 1) / 2;      // ceiling mid ← avoids infinite loop
@@ -97,6 +105,8 @@ return i;
 **Description:** Given a sorted array and a target, return its index. Return -1 if not found.  
 **Template:** Closed `[i, j]` — return immediately on exact hit.
 
+**Intuition:** The target is one specific value; halve a closed range until you sit on it (or the range empties).
+
 ```java
 class Solution {
     public int search(int[] arr, int target) {
@@ -111,6 +121,7 @@ class Solution {
     }
 }
 ```
+**Time** O(log n) | **Space** O(1)
 
 ---
 
@@ -118,6 +129,8 @@ class Solution {
 
 **Description:** Return `[first, last]` index of target. Return `{-1,-1}` if absent.  
 **Template:** Half-open `[i, j)`. `lowerBound` vs `upperBound` differ by one char: `<` vs `<=`.
+
+**Intuition:** Find the boundary where "< target" flips to "≥ target" (first position), and the next boundary just past target.
 
 ```java
 class Solution {
@@ -146,6 +159,7 @@ class Solution {
     }
 }
 ```
+**Time** O(log n) | **Space** O(1)
 
 ---
 
@@ -153,6 +167,8 @@ class Solution {
 
 **Description:** Return the index where target is or would be inserted to keep the array sorted.  
 **Template:** Half-open `[i, j)` — identical to `lowerBound` from #34.
+
+**Intuition:** The insert position is the first index whose value is ≥ target — exactly `lowerBound`.
 
 ```java
 class Solution {
@@ -167,6 +183,7 @@ class Solution {
     }
 }
 ```
+**Time** O(log n) | **Space** O(1)
 
 ---
 
@@ -174,6 +191,8 @@ class Solution {
 
 **Description:** Array was sorted then rotated at an unknown pivot. Find target index, or -1.  
 **Template:** Closed `[i, j]`. One half is always sorted — identify which, then test if target lies in it.
+
+**Intuition:** Even rotated, one half is always sorted; check if target lies in that half and discard the other.
 
 ```java
 class Solution {
@@ -194,6 +213,7 @@ class Solution {
     }
 }
 ```
+**Time** O(log n) | **Space** O(1)
 
 `arr[i] <= arr[k]` (not `<`) handles the edge case where `i == k`.
 
@@ -203,6 +223,8 @@ class Solution {
 
 **Description:** Return any index where `arr[k] > arr[k-1]` and `arr[k] > arr[k+1]`. Edges are -∞.  
 **Template:** Half-open `[i, j)` with `j = n-1`. Binary search on slope: upward → peak is right, downward → peak is here or left.
+
+**Intuition:** Always walk uphill — an upward slope guarantees a peak to the right, so the slope direction is the "condition".
 
 ```java
 class Solution {
@@ -217,6 +239,7 @@ class Solution {
     }
 }
 ```
+**Time** O(log n) | **Space** O(1)
 
 ---
 
@@ -244,6 +267,8 @@ Search on the **answer value** itself, not an array index. All use half-open `[i
 **Description:** Minimum eating speed so Koko finishes all piles in h hours (one pile per hour, at most `speed` bananas eaten).  
 **Search space:** `[1, max(piles)]`
 
+**Intuition:** Feasibility is monotonic in speed (faster always works), so binary search the speed axis for the smallest that finishes in time.
+
 ```java
 class Solution {
     public int minEatingSpeed(int[] piles, int h) {
@@ -262,6 +287,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n log(max(piles))) | **Space** O(1)
 
 ---
 
@@ -269,6 +295,8 @@ class Solution {
 
 **Description:** Minimum ship capacity to deliver all packages (in order) within d days.  
 **Search space:** `[max(weights), sum(weights)]` — must fit heaviest; worst case ships one per day.
+
+**Intuition:** Bigger capacity is always feasible, so binary search capacity for the smallest that ships within the day budget.
 
 ```java
 class Solution {
@@ -292,6 +320,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n log(sum(weights))) | **Space** O(1)
 
 ---
 
@@ -299,6 +328,8 @@ class Solution {
 
 **Description:** Split array into m non-empty subarrays to minimize the largest subarray sum.  
 **Search space:** `[max(nums), sum(nums)]` — identical bounds to #1011.
+
+**Intuition:** A larger allowed max-sum needs fewer parts, so binary search that cap for the smallest splittable into ≤ m parts.
 
 ```java
 class Solution {
@@ -322,6 +353,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n log(sum(nums))) | **Space** O(1)
 
 ---
 
@@ -329,6 +361,8 @@ class Solution {
 
 **Description:** Smallest positive divisor such that `sum of ceil(nums[i] / divisor) <= threshold`.  
 **Search space:** `[1, max(nums)]`
+
+**Intuition:** A bigger divisor shrinks the sum, so the condition flips false→true; binary search for the smallest divisor that fits the threshold.
 
 ```java
 class Solution {
@@ -348,6 +382,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n log(max(nums))) | **Space** O(1)
 
 ---
 
@@ -355,7 +390,9 @@ class Solution {
 
 **Description:** Cut chocolate into k+1 pieces; keep the minimum-sweetness piece. Maximize that minimum.  
 **Search space:** `[min(s), sum(s)/(k+1)]`  
-**Ceiling mid** is required — with floor mid, when `i+1 == j` and condition is true, `k == i` → `i = i` → infinite loop.
+
+**Intuition:** A larger target-minimum yields fewer pieces, so the condition flips true→false; binary search for the largest minimum still giving ≥ k+1 pieces.  
+**Ceiling mid** is required. Concrete trace: with floor mid, i=4,j=5 → mid=4 → on success i=4 → infinite loop; ceiling mid i+(j-i+1)/2 → mid=5 → i=5 → exits.
 
 ```java
 class Solution {
@@ -363,7 +400,7 @@ class Solution {
         int i = Arrays.stream(s).min().getAsInt();
         int j = Arrays.stream(s).sum() / (k + 1);
         while (i < j) {
-            int m = i + (j - i + 1) / 2;        // ceiling mid
+            int m = i + (j - i + 1) / 2;  // ceiling: guarantees progress when j == i+1
             if (canDivide(s, k + 1, m)) i = m;
             else                         j = m - 1;
         }
@@ -379,6 +416,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n log(sum(s))) | **Space** O(1)
 
 ---
 

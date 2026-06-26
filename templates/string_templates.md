@@ -26,8 +26,11 @@ For sliding window string problems (#3, #76, #567, #424), see `sliding_window_te
 ## Core Idioms
 
 ```java
+// MENTAL MODEL: a lowercase string is a length-26 frequency vector; most string problems are vector ops on it.
+// WHEN: "anagram", "char count", "group by letters", "first unique", "sort by frequency".
 // 1. CHAR COUNT — lowercase letters
 int[] count = new int[26];
+// WHY ch - 'a': ASCII 'a'=97, so 'a'→0, 'b'→1, ..., 'z'→25 — a clean 0–25 bucket index into count[].
 for (char ch : s.toCharArray()) count[ch - 'a']++;     // ← ch - 'a' maps a→0, b→1, ..., z→25
 
 // 2. CHAR COUNT — digits 0–9
@@ -40,6 +43,8 @@ for (int i = 0; i < s.length(); i++)
     num = num * 10 + (s.charAt(i) - '0');              // ← shift left × 10, add new digit
 
 // 4. ANAGRAM HASH KEY — frequency-based (bucket sort style) O(k) vs sort O(k log k)
+// WHY it works: anagrams share identical letter frequencies, so encoding the frequency vector
+//   ITSELF gives a unique key for the whole group — O(k) to build vs O(k log k) to sort the chars.
 String hashKey(String s) {
     int[] count = new int[26];
     for (char ch : s.toCharArray()) count[ch - 'a']++;
@@ -86,7 +91,8 @@ int expand(String s, int i, int j) {          // i == j: odd length; i+1 == j: e
 
 ## #242 Valid Anagram
 
-**Description:** Return true if `t` is an anagram of `s` (same characters, same counts).
+**Description:** Return true if `t` is an anagram of `s` (same characters, same counts).  
+**Intuition:** Anagrams have identical letter counts, so add up `s` and subtract `t` in one 26-slot array — all zeros means they match.
 
 ```java
 class Solution {
@@ -100,12 +106,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
 ## #383 Ransom Note
 
-**Description:** Can `ransomNote` be constructed from the letters in `magazine` (each letter used at most once)?
+**Description:** Can `ransomNote` be constructed from the letters in `magazine` (each letter used at most once)?  
+**Intuition:** Stock the letter counts from the magazine, then draw down for each note letter — if any count goes negative the magazine is short.
 
 ```java
 class Solution {
@@ -117,12 +125,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
 ## #387 First Unique Character in a String
 
-**Description:** Return the index of the first non-repeating character. Return -1 if none exists.
+**Description:** Return the index of the first non-repeating character. Return -1 if none exists.  
+**Intuition:** One pass to count every letter, a second pass to return the first whose count is exactly 1.
 
 ```java
 class Solution {
@@ -135,6 +145,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
@@ -143,6 +154,7 @@ class Solution {
 ## #49 Group Anagrams
 
 **Description:** Group strings that are anagrams of each other.  
+**Intuition:** Anagrams share identical letter frequencies, so the frequency vector encoded as a string is a unique group key — O(k) to build vs O(k log k) to sort the characters.  
 **Key:** each anagram group shares the same frequency hash key. `computeIfAbsent` cleanly handles first-time group creation.
 
 ```java
@@ -182,6 +194,7 @@ String key = new String(chars);   // "eat" → "aet", "tea" → "aet"
 ## #451 Sort Characters By Frequency
 
 **Description:** Sort characters in descending order of frequency. Ties can go in any order.  
+**Intuition:** Frequencies are bounded by string length, so bucket chars by their count and read buckets high-to-low — no O(n log n) comparison sort needed.  
 **Key:** bucket sort by frequency — avoids O(n log n) comparison sort. Each bucket holds all chars with that frequency.
 
 ```java
@@ -238,6 +251,7 @@ int expand(String s, int i, int j) {
 ## #5 Longest Palindromic Substring
 
 **Description:** Return the longest palindromic substring.  
+**Intuition:** Every palindrome has a center; try all 2n-1 centers (each char and each gap) and grow outward while characters mirror.  
 **Key:** expand from every center (odd and even), track the longest found.
 
 ```java
@@ -261,12 +275,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n²) | **Space** O(1)
 
 ---
 
 ## #647 Palindromic Substrings
 
 **Description:** Count all palindromic substrings.  
+**Intuition:** Same center-expansion, but each successful step outward is itself one more palindrome, so accumulate a count rather than a max.  
 **Key:** same expand helper — count expansions instead of tracking max length.
 
 ```java
@@ -289,6 +305,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n²) | **Space** O(1)
 
 ## #5 vs #647 — Same expand, different accumulation
 
@@ -307,6 +324,7 @@ Expand returns:     palindrome length          palindrome count
 ## #8 String to Integer (atoi)
 
 **Description:** Parse a string to an integer, handling leading spaces, optional sign, overflow, and non-digit stop.  
+**Intuition:** Process the string in strict phases — spaces, then sign, then digits accumulated as `num*10 + digit` — clamping to int bounds the moment overflow would occur.  
 **Key steps in order:** skip spaces → read sign → read digits (`num = num * 10 + (ch - '0')`) → clamp on overflow.
 
 ```java
@@ -328,12 +346,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
 ## #14 Longest Common Prefix
 
 **Description:** Find the longest common prefix string among an array of strings.  
+**Intuition:** Start with the first string as the candidate prefix and trim its tail until every other string starts with it.  
 **Key:** use the first string as the candidate prefix. Shrink it until every string starts with it.
 
 ```java
@@ -349,12 +369,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n·k) | **Space** O(1)
 
 ---
 
 ## #443 String Compression
 
 **Description:** Compress the char array in-place. Each group `aaa` becomes `a3`. Single chars stay as-is. Return new length.  
+**Intuition:** Two pointers — read scans each run while write lays down the compressed `char + count` behind it; write never overtakes read, so it's safe in place.  
 **Key:** write pointer `write` advances independently of read pointer `i`. Count run length, then write char + (count if > 1).
 
 ```java
@@ -374,12 +396,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(1)
 
 ---
 
 ## #1047 Remove All Adjacent Duplicates in String
 
 **Description:** Repeatedly remove adjacent equal characters until no more exist.  
+**Intuition:** A stack mirrors the partially-cleaned string — if the next char equals the top it's an adjacent pair, so pop instead of pushing.  
 **Key:** stack — push each char; if it equals the top, they form a pair → pop instead. Stack holds the result after all removals.
 
 ```java
@@ -396,6 +420,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 

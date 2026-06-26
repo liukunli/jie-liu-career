@@ -8,7 +8,9 @@ The only decision: do you need to know **which level** a node is on?
 ## The Two Templates
 
 ```java
-// 1. WITH LEVEL TRACKING — snapshot size before processing each level
+// 1. LEVEL-AWARE PROCESSING — snapshot size to make per-level decisions
+// MENTAL MODEL: the queue holds exactly one full level; freeze its size, then drain just that many.
+// WHEN: "level by level", "per row", "rightmost/leftmost in level", "min depth"
 Queue<TreeNode> queue = new ArrayDeque<>();
 queue.offer(root);
 int level = 0;
@@ -24,6 +26,7 @@ while (!queue.isEmpty()) {
 }
 
 // 2. WITHOUT LEVEL TRACKING — simple node-by-node
+// MENTAL MODEL: just visit every node in BFS order; you don't care which level it's on.
 Queue<TreeNode> queue = new ArrayDeque<>();
 queue.offer(root);
 while (!queue.isEmpty()) {
@@ -35,6 +38,30 @@ while (!queue.isEmpty()) {
 ```
 
 Almost all tree BFS problems use **Template 1** — you nearly always need `size` to know when a level ends.
+
+## When to Use — Signal → Pattern
+
+| Problem signal phrase | Pattern / group |
+|---|---|
+| "level order", "values per level", "each row" | Group 1 — collect entire level |
+| "average / max / sum of each level" | Group 2 — aggregate per level |
+| "right side view" (last in level), "bottom-left" (first in level) | Group 2 — record boundary node (`i==size-1` / `i==0`) |
+| "minimum depth", "first level that satisfies X" | Group 3 — early return on condition |
+| "connect next pointers at the same level" | Group 4 — wire nodes within a level |
+| "same depth, different parent" (cousins), per-node metadata | Group 5 — track per-node metadata |
+| "maximum width of a level" (counting null gaps) | Group 6 — position indexing |
+| no level info needed, just visit every node | Template 2 — node-by-node |
+
+## The One Rule — Snapshot Level Size First
+
+```
+Always snapshot the level size BEFORE the inner for loop:
+    int size = queue.size();
+    for (int i = 0; i < size; i++) { ... }
+
+Without the snapshot, newly added children mix with the current level
+and i == size-1 / i == 0 checks become meaningless.
+```
 
 ---
 
@@ -86,6 +113,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 
@@ -116,6 +144,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 
@@ -149,6 +178,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 
@@ -177,6 +207,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 
@@ -209,6 +240,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 
@@ -236,6 +268,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 
@@ -265,6 +298,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 
@@ -294,6 +328,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 
@@ -302,7 +337,8 @@ class Solution {
 ### #111 Minimum Depth of Binary Tree
 
 **Description:** Minimum number of nodes from root to the nearest leaf.  
-**Key:** BFS is optimal here (DFS must visit the whole tree). Return `depth` the moment the first leaf is dequeued — that is guaranteed to be the shallowest.
+**Key:** BFS is optimal here (DFS must visit the whole tree). Return `depth` the moment the first leaf is dequeued — that is guaranteed to be the shallowest.  
+**Intuition:** BFS reaches nodes in depth order, so the first leaf it dequeues is necessarily the shallowest.
 
 ```java
 class Solution {
@@ -325,6 +361,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 
@@ -333,7 +370,8 @@ class Solution {
 ### #116 Populating Next Right Pointers in Each Node
 
 **Description:** Connect each node's `next` to the node immediately to its right at the same level. Tree is a perfect binary tree.  
-**Key:** `previous` tracks the last node seen in the current level — wire `previous.next = node` before advancing. Reset `previous = null` at each level start.
+**Key:** `previous` tracks the last node seen in the current level — wire `previous.next = node` before advancing. Reset `previous = null` at each level start.  
+**Intuition:** BFS already visits a level left to right, so just chain each node to the one polled before it.
 
 ```java
 class Solution {
@@ -356,6 +394,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 
@@ -385,6 +424,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 
@@ -393,7 +433,8 @@ class Solution {
 ### #993 Cousins in Binary Tree
 
 **Description:** Two nodes `x` and `y` are cousins if they are at the same depth but have different parents. Return true if `x` and `y` are cousins.  
-**Key:** for each node polled, check if its children are `x` or `y`. After each full level, if both parents found → check `xParent != yParent`. If only one found → different depths → false.
+**Key:** for each node polled, check if its children are `x` or `y`. After each full level, if both parents found → check `xParent != yParent`. If only one found → different depths → false.  
+**Intuition:** cousins must surface in the *same* BFS level; if only one shows up per level, their depths differ.
 
 ```java
 class Solution {
@@ -423,6 +464,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 
@@ -460,16 +502,9 @@ Extra state:        —                           boolean leftToRight     result
 | Wire nodes together | `Node previous` | 116, 117 |
 | Track parent metadata | `TreeNode xParent, yParent` | 993 |
 
-## The One Rule
+## The One Rule (recap)
 
-```
-Always snapshot the level size BEFORE the inner for loop:
-    int size = queue.size();
-    for (int i = 0; i < size; i++) { ... }
-
-Without the snapshot, newly added children mix with the current level
-and i == size-1 / i == 0 checks become meaningless.
-```
+Snapshot the level size **before** the inner `for` loop — see "The One Rule" at the top of this file for the full explanation.
 
 ---
 

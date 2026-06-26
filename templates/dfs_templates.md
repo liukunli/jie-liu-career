@@ -4,6 +4,20 @@ DFS appears in five forms. The pattern determines naming, return type, and where
 
 ---
 
+## When to Use — Signal → Pattern
+
+| Problem signal phrase | Pattern / template |
+|---|---|
+| "height / depth / sum OF the subtree", combine results upward | #1 Process children first, combine at node (post-order) |
+| "root-to-leaf path", "number built along the path" | #2 Process node first, pass state down (pre-order) |
+| "longest/best path that may bend through a node" (spans both arms) | #3 Tree global answer |
+| "count islands / largest region / flood fill" on a grid | #4 Grid DFS |
+| "can finish all", "detect cycle", "valid course order" (directed) | #5 Graph DFS 3-color |
+| "all subsets / permutations / combinations", "find every way" | #6 Backtracking |
+| "valid BST", "kth smallest", "closest value", "successor" | BST templates (pass bounds / inorder / binary search) |
+
+---
+
 ## Quick Reference Table
 
 | # | Name | Description | Pattern | Returns | Global var |
@@ -31,14 +45,23 @@ DFS appears in five forms. The pattern determines naming, return type, and where
 | 230 | Kth Smallest Element in a BST | Find kth smallest element | Inorder traversal (left→node→right) counts ascending; stop at kth | **Inorder + counter**: global count/result; return early when count == k | O(k) | O(h) |
 | 270 | Closest BST Value | Find value in BST closest to target | BST search: go left if target < node, right if target > node; track closest | **BST binary search**: use BST structure to traverse in O(h) | O(h) | O(1) |
 | 285 | Inorder Successor in BST | Find the smallest node greater than p | BST traversal: if root > p it could be successor; else go right | **BST successor search**: save candidate when going left | O(h) | O(1) |
+| 549 | Binary Tree Longest Consecutive Sequence II | Longest consecutive path (increasing OR decreasing, may pass through node) | Post-order DFS returning {inc, dec} lengths per node | **Two lengths returned**: track both increasing and decreasing runs; combine at node | O(n) | O(h) |
 | 687 | Longest Univalue Path | Longest path where all nodes have same value | Post-order DFS; at each node, extend path from children only if values match | **Conditional extend**: leftPath = (left.val==node.val) ? left+1 : 0 | O(n) | O(h) |
+| 37 | Sudoku Solver | Fill 9x9 grid so each row/col/3x3 box has 1-9 | Backtracking; try 1-9 in each empty cell, validate, recurse | **Constraint validation**: check row, col, and 3x3 box before placing | O(9^m) | O(1) |
+| 47 | Permutations II | All unique permutations of array with duplicates | Backtracking + sort + used[]; skip used[i-1] duplicate | **Skip duplicate at same level**: if i>0 && nums[i]==nums[i-1] && !used[i-1] continue | O(n·n!) | O(n) |
+| 51 | N-Queens | All board placements where no queens attack | Backtracking by row; track cols, diag1 (r-c), diag2 (r+c) sets | **Diagonal sets**: r-c and r+c uniquely identify diagonals | O(n!) | O(n) |
+| 60 | Permutation Sequence | kth permutation of 1..n (1-indexed) | Math: factorial number system; pick each digit directly | **Direct math, no backtracking**: index = (k-1)/(n-1)!; remove used digit | O(n²) | O(n) |
+| 90 | Subsets II | All unique subsets of array with duplicates | Backtracking; sort first; skip i>start && nums[i]==nums[i-1] | **Skip duplicate branches**: sort + skip same value at same depth | O(n·2ⁿ) | O(n) |
+| 216 | Combination Sum III | k numbers from 1-9 summing to n, no reuse | Backtracking with start index advancing i+1 | **Two constraints**: track both count k and remaining sum | O(C(9,k)) | O(k) |
 
 ---
 
 ## All Templates
 
 ```java
-// 1. TREE — RETURN UP (post-order: process children first, combine at node)
+// 1. PROCESS CHILDREN FIRST, COMBINE AT NODE (post-order)
+// MENTAL MODEL: each node trusts its children to return a finished answer, then merges them.
+// WHEN: "what is the height/sum/property OF the subtree rooted here"
 private int dfs(TreeNode node) {
     if (node == null) return BASE;          // 0 for depth, true for balanced
     int left  = dfs(node.left);
@@ -47,7 +70,9 @@ private int dfs(TreeNode node) {
     return ...;
 }
 
-// 2. TREE — PASS DOWN (pre-order: use parent state at current node)
+// 2. PROCESS NODE FIRST, PASS STATE DOWN (pre-order)
+// MENTAL MODEL: carry what you've seen so far down the path; the leaf has the full picture.
+// WHEN: "root-to-leaf path", "running sum/number built along the way"
 private void dfs(TreeNode node, int accumulated) {
     if (node == null) return;
     accumulated += node.val;                // update state on way down
@@ -58,6 +83,8 @@ private void dfs(TreeNode node, int accumulated) {
 }
 
 // 3. TREE — GLOBAL ANSWER (return up the best single arm; update global across both arms)
+// MENTAL MODEL: the answer may bend through a node using both arms, but only one arm can extend upward.
+// WHEN: use when the best path spans across a node, not just up one arm.
 int answer = Integer.MIN_VALUE;
 private int dfs(TreeNode node) {
     if (node == null) return 0;
@@ -68,6 +95,8 @@ private int dfs(TreeNode node) {
 }
 
 // 4. GRID DFS — mark visited by mutating grid; 4-directional flood fill
+// MENTAL MODEL: stand on a cell, flood into all 4 neighbors, sinking each as you visit it.
+// WHEN: "connected region / island / flood fill" on a grid
 private void dfs(int[][] grid, int r, int c) {
     if (r < 0 || r >= grid.length || c < 0 || c >= grid[0].length) return;
     if (grid[r][c] != TARGET) return;
@@ -77,6 +106,8 @@ private void dfs(int[][] grid, int r, int c) {
 }
 
 // 5. GRAPH DFS — 3-color visited: 0=unseen 1=in-stack 2=done
+// MENTAL MODEL: if you re-enter a node still on the current stack, you've looped back → cycle.
+// WHEN: "can finish all", "detect cycle", "valid ordering" on a directed graph
 int[] state;
 private boolean dfs(int node) {
     if (state[node] == 1) return true;    // back edge → cycle
@@ -89,6 +120,8 @@ private boolean dfs(int node) {
 }
 
 // 6. BACKTRACKING — choose / recurse / undo
+// MENTAL MODEL: build a candidate one element at a time; undo each choice to explore the next branch.
+// WHEN: "all subsets / permutations / combinations", "find all ways"
 private void backtrack(int start, List<Integer> current) {
     if (baseCase) { result.add(new ArrayList<>(current)); return; }
     for (int i = start; i < n; i++) {
@@ -104,13 +137,14 @@ private void backtrack(int start, List<Integer> current) {
 
 # Part 1 — Tree DFS
 
-## Tree Return-Up Pattern
+## PROCESS CHILDREN FIRST, COMBINE AT NODE (post-order)
 
 Recurse into children first, then combine results at the current node. Answer propagates upward.
 
 ### #104 Maximum Depth of Binary Tree
 
-**Description:** Maximum number of nodes along the longest root-to-leaf path.
+**Description:** Maximum number of nodes along the longest root-to-leaf path.  
+**Intuition:** my depth is just one more than my deeper child's depth.
 
 ```java
 class Solution {
@@ -125,13 +159,15 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(h)
 
 ---
 
 ### #543 Diameter of Binary Tree
 
 **Description:** Length of the longest path between any two nodes (path does not need to pass through root).  
-**Key:** the path through a node = `left height + right height`. Track global max; return only the single best arm up.
+**Key:** the path through a node = `left height + right height`. Track global max; return only the single best arm up.  
+**Intuition:** the longest path bends at some node using both arms, but only one arm can extend to its parent.
 
 ```java
 class Solution {
@@ -149,13 +185,15 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(h)
 
 ---
 
 ### #124 Binary Tree Maximum Path Sum
 
 **Description:** Maximum sum of any path between any two nodes. Values can be negative.  
-**Key:** clamp negative arms to 0 (`Math.max(0, ...)`). Global tracks the best `left + right + node.val`; return only `max(left, right) + node.val` upward.
+**Key:** clamp negative arms to 0 (`Math.max(0, ...)`). Global tracks the best `left + right + node.val`; return only `max(left, right) + node.val` upward.  
+**Intuition:** a negative arm is worse than taking nothing, so clamp it to 0 before adding.
 
 ```java
 class Solution {
@@ -173,13 +211,15 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(h)
 
 ---
 
 ### #110 Balanced Binary Tree
 
 **Description:** Is every node's left and right subtree within 1 height of each other?  
-**Key:** return -1 as a sentinel for "unbalanced"; short-circuit immediately on -1.
+**Key:** return -1 as a sentinel for "unbalanced"; short-circuit immediately on -1.  
+**Intuition:** fold "is it balanced" into the height return — a poisoned -1 bubbles up and stops the work.
 
 ```java
 class Solution {
@@ -197,12 +237,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(h)
 
 ---
 
 ### #226 Invert Binary Tree
 
-**Description:** Mirror a binary tree — swap left and right subtrees at every node.
+**Description:** Mirror a binary tree — swap left and right subtrees at every node.  
+**Intuition:** invert both children, then swap the pointers at this node.
 
 ```java
 class Solution {
@@ -216,16 +258,18 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(h)
 
 ---
 
-## Tree Pass-Down Pattern
+## PROCESS NODE FIRST, PASS STATE DOWN (pre-order)
 
 State is built on the way **down** and consumed at leaves. Use backtracking when state is a mutable collection.
 
 ### #112 Path Sum
 
-**Description:** Does any root-to-leaf path sum to `targetSum`?
+**Description:** Does any root-to-leaf path sum to `targetSum`?  
+**Intuition:** subtract each node from the target on the way down; a leaf with remaining 0 is a hit.
 
 ```java
 class Solution {
@@ -240,13 +284,15 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(h)
 
 ---
 
 ### #113 Path Sum II
 
 **Description:** Return all root-to-leaf paths that sum to `targetSum`.  
-**Key:** pass a mutable `path` list down. **Backtrack** (remove last element) after returning from each child.
+**Key:** pass a mutable `path` list down. **Backtrack** (remove last element) after returning from each child.  
+**Intuition:** the same `path` list is reused for every branch, so undo your add as you unwind.
 
 ```java
 class Solution {
@@ -267,12 +313,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n) for output paths
 
 ---
 
 ### #257 Binary Tree Paths
 
-**Description:** Return all root-to-leaf paths as strings (`"1->2->5"`).
+**Description:** Return all root-to-leaf paths as strings (`"1->2->5"`).  
+**Intuition:** append to a shared StringBuilder, then truncate back to your entry length to undo.
 
 ```java
 class Solution {
@@ -294,12 +342,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n) for output paths
 
 ---
 
 ### #129 Sum Root to Leaf Numbers
 
-**Description:** Each root-to-leaf path represents a number (e.g., 1→2→3 = 123). Return the total sum.
+**Description:** Each root-to-leaf path represents a number (e.g., 1→2→3 = 123). Return the total sum.  
+**Intuition:** build the number digit by digit on the way down (`current*10 + val`); add it up at each leaf.
 
 ```java
 class Solution {
@@ -314,6 +364,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(h)
 
 ---
 
@@ -339,7 +390,8 @@ Mark visited by overwriting the cell value. Return the accumulated property (cou
 
 ### #200 Number of Islands
 
-**Description:** Count the number of islands (connected groups of `'1'`) in a binary grid.
+**Description:** Count the number of islands (connected groups of `'1'`) in a binary grid.  
+**Intuition:** each unvisited land cell starts a new island; flood-fill sinks the whole island so it's counted once.
 
 ```java
 class Solution {
@@ -359,13 +411,15 @@ class Solution {
     }
 }
 ```
+**Time** O(m·n) | **Space** O(m·n)
 
 ---
 
 ### #695 Max Area of Island
 
 **Description:** Return the area of the largest island.  
-**Key:** same flood fill but DFS returns the area of the connected component.
+**Key:** same flood fill but DFS returns the area of the connected component.  
+**Intuition:** an island's area is 1 (this cell) plus the areas its four neighbors flood back.
 
 ```java
 class Solution {
@@ -385,6 +439,7 @@ class Solution {
     }
 }
 ```
+**Time** O(m·n) | **Space** O(m·n)
 
 ---
 
@@ -395,7 +450,8 @@ A back edge (reaching a node with state `1`) means a cycle.
 
 ### #207 Course Schedule
 
-**Description:** Can you finish all courses given prerequisites? Return false if there is a cycle.
+**Description:** Can you finish all courses given prerequisites? Return false if there is a cycle.  
+**Intuition:** re-entering a node still on the current DFS stack means you looped back to a prerequisite → cycle.
 
 ```java
 class Solution {
@@ -422,13 +478,15 @@ class Solution {
     }
 }
 ```
+**Time** O(V+E) | **Space** O(V+E)
 
 ---
 
 ### #210 Course Schedule II
 
 **Description:** Return a valid order to take all courses. Return `[]` if a cycle exists.  
-**Key:** same 3-color DFS. Add node to `order` in **post-order** (after all neighbors done). Reverse at the end → topological order.
+**Key:** same 3-color DFS. Add node to `order` in **post-order** (after all neighbors done). Reverse at the end → topological order.  
+**Intuition:** a node finishes only after all it depends on do, so post-order reversed is a valid prerequisite order.
 
 ```java
 class Solution {
@@ -459,6 +517,7 @@ class Solution {
     }
 }
 ```
+**Time** O(V+E) | **Space** O(V+E)
 
 ---
 
@@ -479,6 +538,7 @@ Post-process:       —                          Collections.reverse(order)
 `start` controls which elements are eligible at each level. `current` is the in-progress candidate.
 
 ```java
+// MENTAL MODEL: grow one candidate by picking an element, recurse, then undo to try the next branch.
 private void backtrack(int start, List<Integer> current) {
     if (baseCase) { result.add(new ArrayList<>(current)); return; }
     for (int i = start; i < n; i++) {
@@ -505,7 +565,8 @@ private void backtrack(int start, List<Integer> current) {
 ### #46 Permutations
 
 **Description:** All permutations of distinct integers.  
-**Key:** loop always from 0; use `boolean[] used` to avoid reusing elements within one permutation.
+**Key:** loop always from 0; use `boolean[] used` to avoid reusing elements within one permutation.  
+**Intuition:** order matters, so every position considers all unused elements (no `start` index).
 
 ```java
 class Solution {
@@ -527,13 +588,15 @@ class Solution {
     }
 }
 ```
+**Time** O(n·n!) | **Space** O(n)
 
 ---
 
 ### #78 Subsets
 
 **Description:** All subsets (power set) of distinct integers.  
-**Key:** record at every node (not just leaves). Pass `i+1` — each element used at most once, order enforced by `start`.
+**Key:** record at every node (not just leaves). Pass `i+1` — each element used at most once, order enforced by `start`.  
+**Intuition:** every prefix on the way down is itself a valid subset, so record at every node.
 
 ```java
 class Solution {
@@ -552,13 +615,15 @@ class Solution {
     }
 }
 ```
+**Time** O(n·2ⁿ) | **Space** O(n)
 
 ---
 
 ### #39 Combination Sum
 
 **Description:** All combinations summing to target. Same element may be used unlimited times. No duplicate combos.  
-**Key:** pass `i` (not `i+1`) to allow reuse. Sort + prune when `candidates[i] > remaining`.
+**Key:** pass `i` (not `i+1`) to allow reuse. Sort + prune when `candidates[i] > remaining`.  
+**Intuition:** passing `i` (not `i+1`) lets you pick the same element again; `start` still forbids going backward, so no reordered dups.
 
 ```java
 class Solution {
@@ -579,13 +644,15 @@ class Solution {
     }
 }
 ```
+**Time** O(n · 2ⁿ) | **Space** O(target/min)
 
 ---
 
 ### #40 Combination Sum II
 
 **Description:** Each element used at most once. Input may have duplicates. No duplicate combos in output.  
-**Key:** sort first. Skip `candidates[i] == candidates[i-1]` when `i > start` — avoids duplicate combos at the same recursion level. Pass `i+1` — no reuse.
+**Key:** sort first. Skip `candidates[i] == candidates[i-1]` when `i > start` — avoids duplicate combos at the same recursion level. Pass `i+1` — no reuse.  
+**Intuition:** after sorting, equal values sit together; skipping a repeat at the *same level* prevents producing the same combo twice.
 
 ```java
 class Solution {
@@ -607,13 +674,15 @@ class Solution {
     }
 }
 ```
+**Time** O(n · 2ⁿ) | **Space** O(target/min)
 
 ---
 
 ### #79 Word Search
 
 **Description:** Given a board of characters, return true if the word exists as a connected path (no cell reused).  
-**Key:** mark cell as visited by overwriting, then restore after recursion (backtrack).
+**Key:** mark cell as visited by overwriting, then restore after recursion (backtrack).  
+**Intuition:** the grid itself is the state — temporarily blank a cell so the same path can't reuse it, then restore on the way back.
 
 ```java
 class Solution {
@@ -636,12 +705,14 @@ class Solution {
     }
 }
 ```
+**Time** O(m·n·4^L) where L = word length | **Space** O(L)
 
 ---
 
 ### #131 Palindrome Partitioning
 
-**Description:** Partition string `s` such that every substring is a palindrome. Return all such partitions.
+**Description:** Partition string `s` such that every substring is a palindrome. Return all such partitions.  
+**Intuition:** try every prefix as the first cut; only recurse on the rest when that prefix is a palindrome.
 
 ```java
 class Solution {
@@ -667,6 +738,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n · 2ⁿ) | **Space** O(n)
 
 ---
 
@@ -860,6 +932,202 @@ class Solution {
         int rightPath = (node.right != null && node.right.val == node.val) ? right + 1 : 0;  // ← VARIATION: conditional extension
         max = Math.max(max, leftPath + rightPath);   // ← path through this node
         return Math.max(leftPath, rightPath);         // ← return max single direction up
+    }
+}
+```
+**Time** O(n) | **Space** O(h)
+
+
+---
+
+## #37 Sudoku Solver
+**Description:** Fill a partially filled 9×9 Sudoku so every row, column, and 3×3 box contains digits 1-9.
+**Variation:** backtracking that tries digits 1-9 in each empty cell, validating against row, column, and box constraints before recursing.
+```java
+class Solution {
+    public void solveSudoku(char[][] board) { solve(board); }
+    private boolean solve(char[][] board) {
+        for (int i = 0; i < 9; i++)
+            for (int j = 0; j < 9; j++)
+                if (board[i][j] == '.') {
+                    for (char c = '1'; c <= '9'; c++) {
+                        if (isValid(board, i, j, c)) {     // ← VARIATION: validate row/col/box
+                            board[i][j] = c;
+                            if (solve(board)) return true;
+                            board[i][j] = '.';             // backtrack
+                        }
+                    }
+                    return false;                          // no digit fits → dead end
+                }
+        return true;                                       // all cells filled
+    }
+    private boolean isValid(char[][] board, int row, int col, char c) {
+        for (int i = 0; i < 9; i++) {
+            if (board[row][i] == c) return false;          // row
+            if (board[i][col] == c) return false;          // column
+            if (board[3*(row/3) + i/3][3*(col/3) + i%3] == c) return false;  // ← VARIATION: 3x3 box
+        }
+        return true;
+    }
+}
+```
+**Time** O(9^m) m=empty cells | **Space** O(1)
+
+## #47 Permutations II
+**Description:** Return all unique permutations of an array that may contain duplicates.
+**Variation:** sort first; use a `used[]` array; skip a value if the previous equal value at the same tree level has not been used (prevents duplicate permutations).
+```java
+class Solution {
+    public List<List<Integer>> permuteUnique(int[] nums) {
+        Arrays.sort(nums);                              // ← VARIATION: sort to group duplicates
+        List<List<Integer>> result = new ArrayList<>();
+        backtrack(nums, new boolean[nums.length], new ArrayList<>(), result);
+        return result;
+    }
+    private void backtrack(int[] nums, boolean[] used, List<Integer> path, List<List<Integer>> result) {
+        if (path.size() == nums.length) { result.add(new ArrayList<>(path)); return; }
+        for (int i = 0; i < nums.length; i++) {
+            if (used[i]) continue;
+            if (i > 0 && nums[i] == nums[i-1] && !used[i-1]) continue;  // ← VARIATION: skip duplicate at same level
+            used[i] = true; path.add(nums[i]);
+            backtrack(nums, used, path, result);
+            used[i] = false; path.remove(path.size() - 1);
+        }
+    }
+}
+```
+**Time** O(n·n!) | **Space** O(n)
+
+## #51 N-Queens
+**Description:** Place n queens on an n×n board so no two attack each other; return all distinct solutions.
+**Variation:** backtrack row by row; track occupied columns and both diagonals. Cells on the same `\` diagonal share `r-c`; cells on the same `/` diagonal share `r+c`.
+```java
+class Solution {
+    public List<List<String>> solveNQueens(int n) {
+        List<List<String>> result = new ArrayList<>();
+        Set<Integer> cols = new HashSet<>(), diag1 = new HashSet<>(), diag2 = new HashSet<>();
+        backtrack(0, n, new int[n], cols, diag1, diag2, result);
+        return result;
+    }
+    private void backtrack(int row, int n, int[] queens, Set<Integer> cols,
+                           Set<Integer> diag1, Set<Integer> diag2, List<List<String>> result) {
+        if (row == n) { result.add(build(queens, n)); return; }
+        for (int c = 0; c < n; c++) {
+            if (cols.contains(c) || diag1.contains(row - c) || diag2.contains(row + c)) continue;  // ← VARIATION: diagonal sets
+            queens[row] = c;
+            cols.add(c); diag1.add(row - c); diag2.add(row + c);
+            backtrack(row + 1, n, queens, cols, diag1, diag2, result);
+            cols.remove(c); diag1.remove(row - c); diag2.remove(row + c);
+        }
+    }
+    private List<String> build(int[] queens, int n) {
+        List<String> board = new ArrayList<>();
+        for (int r = 0; r < n; r++) {
+            char[] row = new char[n];
+            Arrays.fill(row, '.');
+            row[queens[r]] = 'Q';
+            board.add(new String(row));
+        }
+        return board;
+    }
+}
+```
+**Time** O(n!) | **Space** O(n)
+
+## #60 Permutation Sequence
+**Description:** Return the kth permutation (1-indexed) of the sequence 1..n.
+**Variation:** no backtracking — use the factorial number system. Each position's digit is determined directly by `(k-1) / (remaining-1)!`.
+```java
+class Solution {
+    public String getPermutation(int n, int k) {
+        List<Integer> digits = new ArrayList<>();
+        int[] factorial = new int[n + 1];
+        factorial[0] = 1;
+        for (int i = 1; i <= n; i++) { factorial[i] = factorial[i-1] * i; digits.add(i); }
+        k--;                                               // ← VARIATION: convert to 0-indexed
+        StringBuilder result = new StringBuilder();
+        for (int i = n; i >= 1; i--) {
+            int index = k / factorial[i-1];                // ← VARIATION: direct digit selection
+            k %= factorial[i-1];
+            result.append(digits.remove(index));
+        }
+        return result.toString();
+    }
+}
+```
+**Time** O(n²) | **Space** O(n)
+
+## #90 Subsets II
+**Description:** Return all possible unique subsets of an array that may contain duplicates.
+**Variation:** sort first; within a recursion level, skip a value equal to its predecessor to avoid duplicate subsets.
+```java
+class Solution {
+    public List<List<Integer>> subsetsWithDup(int[] nums) {
+        Arrays.sort(nums);                              // ← VARIATION: sort to group duplicates
+        List<List<Integer>> result = new ArrayList<>();
+        backtrack(nums, 0, new ArrayList<>(), result);
+        return result;
+    }
+    private void backtrack(int[] nums, int start, List<Integer> path, List<List<Integer>> result) {
+        result.add(new ArrayList<>(path));
+        for (int i = start; i < nums.length; i++) {
+            if (i > start && nums[i] == nums[i-1]) continue;  // ← VARIATION: skip duplicate at same depth
+            path.add(nums[i]);
+            backtrack(nums, i + 1, path, result);
+            path.remove(path.size() - 1);
+        }
+    }
+}
+```
+**Time** O(n·2ⁿ) | **Space** O(n)
+
+## #216 Combination Sum III
+**Description:** Find all combinations of k numbers from 1-9 (each used at most once) that sum to n.
+**Variation:** standard combination backtracking with start index `i+1` (no reuse), but with two stopping constraints — count and remaining sum.
+```java
+class Solution {
+    public List<List<Integer>> combinationSum3(int k, int n) {
+        List<List<Integer>> result = new ArrayList<>();
+        backtrack(k, n, 1, new ArrayList<>(), result);
+        return result;
+    }
+    private void backtrack(int k, int remain, int start, List<Integer> path, List<List<Integer>> result) {
+        if (path.size() == k && remain == 0) { result.add(new ArrayList<>(path)); return; }  // ← VARIATION: two constraints
+        if (path.size() == k || remain < 0) return;
+        for (int i = start; i <= 9; i++) {
+            path.add(i);
+            backtrack(k, remain - i, i + 1, path, result);  // i+1: no reuse
+            path.remove(path.size() - 1);
+        }
+    }
+}
+```
+**Time** O(C(9,k)) | **Space** O(k)
+
+## #549 Binary Tree Longest Consecutive Sequence II
+**Description:** Find the length of the longest consecutive path in a binary tree. The path can be increasing or decreasing and may go through a node (child-parent-child).
+**Variation:** post-order DFS returns a pair `{increasing, decreasing}` for each node. A path through the node combines an increasing run from one child with a decreasing run from the other.
+```java
+class Solution {
+    private int max = 0;
+    public int longestConsecutive(TreeNode root) {
+        dfs(root);
+        return max;
+    }
+    private int[] dfs(TreeNode node) {                       // returns {inc, dec}
+        if (node == null) return new int[]{0, 0};
+        int inc = 1, dec = 1;
+        int[] left = dfs(node.left), right = dfs(node.right);
+        if (node.left != null) {
+            if (node.left.val + 1 == node.val) inc = left[0] + 1;   // ← VARIATION: increasing run
+            else if (node.left.val - 1 == node.val) dec = left[1] + 1;  // ← VARIATION: decreasing run
+        }
+        if (node.right != null) {
+            if (node.right.val + 1 == node.val) inc = Math.max(inc, right[0] + 1);
+            else if (node.right.val - 1 == node.val) dec = Math.max(dec, right[1] + 1);
+        }
+        max = Math.max(max, inc + dec - 1);                  // ← VARIATION: combine both directions through node
+        return new int[]{inc, dec};
     }
 }
 ```

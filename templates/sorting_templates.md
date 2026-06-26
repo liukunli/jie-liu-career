@@ -14,6 +14,7 @@ Inside merge and partition: `i`, `j`, `k` as scan/write pointers (consistent wit
 | 215 | Kth Largest Element | Find k-th largest without full sort | Quick Select | O(n) avg | O(log n) | Recurse ONE side; skip equal-pivot range |
 | 973 | K Closest Points | K points closest to origin | Quick Select | O(n) avg | O(log n) | Same as 215 with custom dist comparator |
 | 148 | Sort List | Sort a linked list | Merge Sort | O(n log n) | O(log n) | Slow/fast to find mid; split then merge |
+| 164 | Maximum Gap | Max gap between successive elements in sorted order | Bucket sort: n+1 buckets sized (max-min)/n; gap spans bucket boundaries | **Pigeonhole buckets**: max gap ≥ bucket size, so compare across bucket min/max | O(n) | O(n) |
 | 179 | Largest Number | Form largest number from integers | Custom Sort | O(n log n) | O(n) | Compare `b+a` vs `a+b` as strings |
 | 315 | Count of Smaller After Self | Count smaller elements to the right | Merge Sort | O(n log n) | O(n) | Track original indices; count during merge |
 | 56 | Merge Intervals | Merge all overlapping intervals | Sort + Scan | O(n log n) | O(n) | Sort by start; greedily extend end |
@@ -25,6 +26,8 @@ Inside merge and partition: `i`, `j`, `k` as scan/write pointers (consistent wit
 ## Template 1 — Merge Sort
 
 ```java
+// MENTAL MODEL: split in half until trivially sorted, then merge two sorted halves into one.
+// WHEN: need stable sort, sort a linked list, or count cross-pairs (inversions) during the merge.
 // Entry point
 public void mergeSort(int[] nums) {
     mergeSort(nums, 0, nums.length, new int[nums.length]);
@@ -32,7 +35,7 @@ public void mergeSort(int[] nums) {
 
 // [start, end) half-open
 private void mergeSort(int[] nums, int start, int end, int[] temp) {
-    if (end - start <= 1) return;
+    if (end - start <= 1) return;        // base case: end - start <= 1 → 0 or 1 elements, already sorted
     int mid = start + (end - start) / 2;
     mergeSort(nums, start, mid, temp);   // sort [start, mid)
     mergeSort(nums, mid,   end, temp);   // sort [mid, end)
@@ -57,6 +60,8 @@ private void merge(int[] nums, int start, int mid, int end, int[] temp) {
 ## Template 2 — Quick Sort (3-way Dutch Flag Partition)
 
 ```java
+// MENTAL MODEL: pick a pivot, partition into <pivot | ==pivot | >pivot, recurse on the two ends only.
+// WHEN: in-place sort with O(log n) stack; the ==pivot middle is already in final position.
 // Entry point — no extra array needed (in-place)
 public void quickSort(int[] nums) {
     quickSort(nums, 0, nums.length);
@@ -90,6 +95,8 @@ private void swap(int[] nums, int i, int j) {
 Extends quick sort: after partition, only recurse into the side that contains `target` index.
 
 ```java
+// MENTAL MODEL: same partition as quick sort, but recurse into only the one side holding target → O(n) avg.
+// WHEN: "k-th largest/smallest", "k closest/most frequent" — you need a position, not a full sort.
 // Returns value at 0-indexed position target after sorting
 private int quickSelect(int[] nums, int start, int end, int target) {
     int pivot = nums[start + (end - start) / 2];
@@ -113,6 +120,8 @@ private int quickSelect(int[] nums, int start, int end, int target) {
 O(n + range). Use when values are bounded integers.
 
 ```java
+// MENTAL MODEL: tally how many times each value occurs, then emit values in order — no comparisons.
+// WHEN: integers in a small bounded range; beats O(n log n) when range = O(n).
 public void countingSort(int[] arr) {
     if (arr.length == 0) return;
     int min = Arrays.stream(arr).min().getAsInt();
@@ -129,7 +138,8 @@ public void countingSort(int[] arr) {
 
 ## #912 Sort an Array
 
-**Description:** Sort an integer array. No built-in sort allowed.
+**Description:** Sort an integer array. No built-in sort allowed.  
+**Intuition:** Divide and conquer — either split-then-merge (merge sort) or partition-then-recurse (quick sort); both reach O(n log n).
 
 ```java
 // Merge Sort version
@@ -178,12 +188,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n log n) | **Space** O(n) merge / O(log n) quick
 
 ---
 
 ## #215 Kth Largest Element in an Array
 
 **Description:** Return the k-th largest element without sorting the full array.  
+**Intuition:** Quick select partitions around a pivot and only recurses into the side containing the target rank, so it averages O(n) instead of fully sorting.  
 **Key:** k-th largest = `(n - k)`-th smallest (0-indexed). Quick select, recurse one side only.
 
 ```java
@@ -208,12 +220,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n) avg | **Space** O(log n)
 
 ---
 
 ## #973 K Closest Points to Origin
 
 **Description:** Return the k closest points to origin (0,0). Any order.  
+**Intuition:** Same quick select, but partition on squared distance — once the first k slots are filled with the closest points, their internal order doesn't matter.  
 **Key:** same quick select template; comparator = squared distance (avoid sqrt). After select, first k entries in `[0, k)` are the answer.
 
 ```java
@@ -244,12 +258,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n) avg | **Space** O(log n)
 
 ---
 
 ## #148 Sort List
 
 **Description:** Sort a linked list in O(n log n) time, O(log n) space.  
+**Intuition:** Merge sort fits linked lists — there's no random access for quick sort, but splitting at the middle and merging two sorted lists needs only pointer rewiring.  
 **Key:** same merge sort structure — slow/fast pointers to find mid, split, sort halves, merge.
 
 ```java
@@ -278,12 +294,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n log n) | **Space** O(log n)
 
 ---
 
 ## #179 Largest Number
 
 **Description:** Given a list of non-negative integers, arrange them to form the largest number.  
+**Intuition:** Order two numbers by which concatenation is bigger (`b+a` vs `a+b`) — this pairwise rule sorts the whole list into the largest possible string.  
 **Key:** custom comparator — between `a` and `b`, prefer whichever concatenation `a+b` vs `b+a` is lexicographically larger.
 
 ```java
@@ -297,12 +315,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n log n) | **Space** O(n)
 
 ---
 
 ## #315 Count of Smaller Numbers After Self
 
 **Description:** For each element, count how many elements to its right are smaller.  
+**Intuition:** During a merge, whenever a left-half element is placed, every right-half element already emitted is both smaller and to its right — so the merge counts the smaller-after-self pairs for free.  
 **Key:** same merge sort template but track original indices. When element from left side is placed, `j - mid` elements from the right side that have already been placed are all smaller and to its right.
 
 ```java
@@ -340,12 +360,14 @@ class Solution {
     }
 }
 ```
+**Time** O(n log n) | **Space** O(n)
 
 ---
 
 ## #56 Merge Intervals
 
 **Description:** Merge all overlapping intervals. Return array of non-overlapping intervals.  
+**Intuition:** After sorting by start, overlaps can only be with the most recent interval, so one scan either extends its end or appends a new one.  
 **Key:** sort by start time; greedily extend the last interval's end when overlap found.
 
 ```java
@@ -363,6 +385,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n log n) | **Space** O(n)
 
 ---
 
@@ -451,3 +474,38 @@ class Solution {
 }
 ```
 **Time** O(n log n) | **Space** O(n)
+
+---
+
+## #164 Maximum Gap
+**Description:** Given an unsorted array, return the maximum difference between successive elements in its sorted form. Must run in linear time.
+**Variation:** bucket sort by pigeonhole principle. With n elements, the max gap is at least `ceil((max-min)/(n-1))`. Place elements into buckets of that size; the max gap spans between one bucket's max and the next non-empty bucket's min.
+```java
+class Solution {
+    public int maximumGap(int[] nums) {
+        int n = nums.length;
+        if (n < 2) return 0;
+        int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
+        for (int num : nums) { min = Math.min(min, num); max = Math.max(max, num); }
+        if (min == max) return 0;
+        int bucketSize = Math.max(1, (max - min) / (n - 1));   // ← VARIATION: pigeonhole bucket size
+        int bucketCount = (max - min) / bucketSize + 1;
+        int[] bucketMin = new int[bucketCount], bucketMax = new int[bucketCount];
+        Arrays.fill(bucketMin, Integer.MAX_VALUE);
+        Arrays.fill(bucketMax, Integer.MIN_VALUE);
+        for (int num : nums) {
+            int b = (num - min) / bucketSize;
+            bucketMin[b] = Math.min(bucketMin[b], num);
+            bucketMax[b] = Math.max(bucketMax[b], num);
+        }
+        int maxGap = 0, previousMax = min;
+        for (int b = 0; b < bucketCount; b++) {
+            if (bucketMin[b] == Integer.MAX_VALUE) continue;   // empty bucket
+            maxGap = Math.max(maxGap, bucketMin[b] - previousMax);  // ← VARIATION: gap across boundary
+            previousMax = bucketMax[b];
+        }
+        return maxGap;
+    }
+}
+```
+**Time** O(n) | **Space** O(n)

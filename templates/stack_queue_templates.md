@@ -28,6 +28,10 @@ Four data structures — each with a canonical template and representative probl
 | 378 | Kth Smallest Element in Sorted Matrix | kth smallest in n×n matrix where rows and cols are sorted | Binary search on value range [min,max]; count elements ≤ mid from bottom-left | **Binary search on value**: count(mid) ≥ k → search lower; else search higher | O(n log(max-min)) | O(1) |
 | 503 | Next Greater Element II | Next greater element in circular array | Monotone decreasing stack; iterate array twice (i % n) | **Circular**: loop 2n, use i % n; only push indices in first pass (i < n) | O(n) | O(n) |
 | 621 | Task Scheduler | Minimum intervals to finish tasks with cooldown n | Count frequencies; answer = max((maxFreq-1)*(n+1)+maxCount, tasks.length) | **Greedy formula**: no simulation needed, direct calculation | O(k) k=tasks.length | O(1) |
+| 358 | Rearrange String k Distance Apart | Rearrange so same chars are ≥k apart | Max-heap by frequency + cooldown queue of size k | **Cooldown queue**: hold used char until k slots pass, then re-add to heap | O(n log k) | O(k) |
+| 480 | Sliding Window Median | Median of each window of size k | Two heaps (maxHeap lower, minHeap upper) + lazy deletion via HashMap | **Lazy deletion**: defer removing out-of-window elements; rebalance by counts | O(n log k) | O(k) |
+| 692 | Top K Frequent Words | k most frequent words, lexicographic on ties | Min-heap of size k ordered by (freq asc, word desc) | **Custom tie-break**: same freq → larger word first so it's evicted | O(n log k) | O(n) |
+| 772 | Basic Calculator III | Evaluate expression with +,-,*,/ and parentheses | Recursive/stack: handle parentheses recursively, apply *,/ immediately | **Full calculator**: combine #224 parentheses + #227 operator precedence | O(n) | O(n) |
 
 ---
 
@@ -41,6 +45,8 @@ stack.pop();       // remove from top
 stack.peek();      // view top, no remove
 
 // 2A. MONOTONE DECREASING STACK — next GREATER element
+// MENTAL MODEL: keep only candidates still waiting for a bigger neighbor; current resolves them all.
+// WHEN: "next/previous greater element", "warmer/taller to the right"
 // Invariant: stack values decrease from bottom to top
 // Pop when current is GREATER than top → top found its next greater
 Deque<Integer> stack = new ArrayDeque<>();  // stores indices
@@ -52,6 +58,8 @@ for (int i = 0; i < n; i++) {
 // Remaining in stack: no next greater element exists
 
 // 2B. MONOTONE INCREASING STACK — next SMALLER element / span width
+// MENTAL MODEL: each popped bar's reach extends until something shorter blocks it on both sides.
+// WHEN: "largest rectangle", "trapped water", "span/width bounded by smaller elements"
 // Invariant: stack values increase from bottom to top
 // Pop when current is SMALLER than top → use popped index to compute width/span
 Deque<Integer> stack = new ArrayDeque<>();  // stores indices
@@ -65,6 +73,8 @@ for (int i = 0; i < n; i++) {
 }
 
 // 3. MONOTONE DEQUE — sliding window max/min
+// MENTAL MODEL: the front is the current window's answer; anything a newer-and-bigger value beats is dead weight.
+// WHEN: "max/min of every window of size k"
 // Deque stores INDICES; values at those indices are decreasing front-to-back (for max)
 Deque<Integer> deque = new ArrayDeque<>();
 for (int i = 0; i < n; i++) {
@@ -84,6 +94,8 @@ pq.poll();     // remove and return min/max
 pq.peek();     // view min/max without removing
 
 // 5. TWO HEAPS — maintain median in O(log n)
+// MENTAL MODEL: split the data at the median; the median is always sitting on the two heaps' tops.
+// WHEN: "running median", "median of a data stream"
 // maxHeap = lower half (smaller numbers), minHeap = upper half (larger numbers)
 // Invariant: maxHeap.size() == minHeap.size() or maxHeap.size() == minHeap.size() + 1
 PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder());
@@ -109,6 +121,8 @@ double findMedian() {
 
 **Description:** Given a string of brackets `()[]{}`, return true if all brackets are properly closed and ordered.
 
+**Intuition:** the most recent unmatched open bracket is the only one a closing bracket can legally match — that is exactly LIFO.
+
 ```java
 class Solution {
     public boolean isValid(String s) {
@@ -127,6 +141,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 
@@ -149,6 +164,7 @@ class MinStack {
     public int getMin()  { return minStack.peek(); }
 }
 ```
+**Time** O(1) per operation | **Space** O(n)
 
 ---
 
@@ -185,6 +201,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) (n = length of decoded output) | **Space** O(n)
 
 ---
 
@@ -206,6 +223,8 @@ Both store INDICES (not values) so you can compute distances and widths.
 **Description:** For each day, how many days until a warmer temperature? Return 0 if none.  
 **Template:** monotone decreasing — when current temp is greater, pop and record the gap.
 
+**Intuition:** a colder day just waits on the stack until the first warmer day arrives and resolves it.
+
 ```java
 class Solution {
     public int[] dailyTemperatures(int[] temperatures) {
@@ -223,6 +242,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 
@@ -248,6 +268,7 @@ class Solution {
     }
 }
 ```
+**Time** O(m + n) | **Space** O(n)
 
 ---
 
@@ -256,6 +277,8 @@ class Solution {
 **Description:** Find the largest rectangle that can be formed within the histogram bars.  
 **Template:** monotone increasing stack (pop when current bar is shorter). Popped bar's width = from `stack.peek() + 1` to `i - 1`.  
 **Key:** add sentinel `0`s at both ends to flush all remaining bars from the stack.
+
+**Intuition:** a bar can only stretch sideways until it hits a shorter bar; the stack remembers each bar's left limit so the right limit (current shorter bar) closes the rectangle.
 
 ```java
 class Solution {
@@ -268,7 +291,8 @@ class Solution {
         for (int i = 0; i <= n + 1; i++) {
             while (!stack.isEmpty() && h[stack.peek()] > h[i]) {
                 int height = h[stack.pop()];
-                int width  = i - stack.peek() - 1;        // ← left boundary = stack.peek()
+                int left   = stack.isEmpty() ? -1 : stack.peek();  // left boundary
+                int width  = i - left - 1;                // bars strictly between left boundary and current
                 maxArea = Math.max(maxArea, height * width);
             }
             stack.push(i);
@@ -277,6 +301,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ---
 
@@ -284,6 +309,8 @@ class Solution {
 
 **Description:** How much water can be trapped between the bars after rain?  
 **Template:** monotone increasing stack — when current bar is taller, water fills the "valley" between the current bar and the bar now at the top of the stack.
+
+**Intuition:** water sits in a dip between a left wall and a right wall, and its depth is set by whichever wall is shorter.
 
 ```java
 class Solution {
@@ -295,7 +322,7 @@ class Solution {
                 int bottom   = height[stack.pop()];
                 if (stack.isEmpty()) break;
                 int left     = stack.peek();
-                int h        = Math.min(height[left], height[i]) - bottom;  // ← water height
+                int h        = Math.min(height[left], height[i]) - bottom;  // bounded by the shorter wall, minus the floor height
                 int w        = i - left - 1;
                 water       += h * w;
             }
@@ -305,6 +332,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(n)
 
 ## 84 vs 42 — Side by Side
 
@@ -326,6 +354,8 @@ Area/water:         height × width               min(left_wall, right_wall) × 
 **Description:** Return the maximum in each sliding window of size k.  
 **Template:** deque stores indices; values at those indices are strictly decreasing front-to-back (max at front).
 
+**Intuition:** any element smaller than a newer element can never be the window max again, so discard it; the front always holds the current best.
+
 ```java
 class Solution {
     public int[] maxSlidingWindow(int[] nums, int k) {
@@ -345,6 +375,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n) | **Space** O(k)
 
 ---
 
@@ -368,6 +399,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n log n) | **Space** O(n)
 
 ---
 
@@ -390,6 +422,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n log k) | **Space** O(n)
 
 ---
 
@@ -397,6 +430,8 @@ class Solution {
 
 **Description:** Add integers to a stream and find the median at any time in O(log n) add and O(1) find.  
 **Template:** two heaps — `maxHeap` holds lower half, `minHeap` holds upper half. Always rebalance so `maxHeap.size() ≥ minHeap.size()`.
+
+**Intuition:** keep the smaller half and larger half balanced; the median always lives right at the boundary, on the tops of the two heaps.
 
 ```java
 class MedianFinder {
@@ -416,6 +451,7 @@ class MedianFinder {
     }
 }
 ```
+**Time** O(log n) addNum, O(1) findMedian | **Space** O(n)
 
 ---
 
@@ -442,6 +478,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n log n) | **Space** O(n)
 
 ---
 
@@ -474,6 +511,7 @@ class Solution {
     }
 }
 ```
+**Time** O(n log k) (k = distinct chars ≤ 26) | **Space** O(k)
 
 ---
 
@@ -728,3 +766,126 @@ class Solution {
 }
 ```
 **Time** O(k) | **Space** O(1)
+
+---
+
+## #358 Rearrange String k Distance Apart
+**Description:** Rearrange a string so that the same characters are at least `k` distance apart. Return "" if impossible.
+**Variation:** greedy with a max-heap by frequency plus a cooldown queue of size k that holds recently used characters until they're eligible again.
+```java
+class Solution {
+    public String rearrangeString(String s, int k) {
+        if (k <= 1) return s;
+        Map<Character, Integer> count = new HashMap<>();
+        for (char c : s.toCharArray()) count.merge(c, 1, Integer::sum);
+        PriorityQueue<Map.Entry<Character,Integer>> maxHeap =
+            new PriorityQueue<>((a, b) -> b.getValue() - a.getValue());
+        maxHeap.addAll(count.entrySet());
+        Queue<Map.Entry<Character,Integer>> cooldown = new ArrayDeque<>();  // ← VARIATION: cooldown queue
+        StringBuilder sb = new StringBuilder();
+        while (!maxHeap.isEmpty()) {
+            var entry = maxHeap.poll();
+            sb.append(entry.getKey());
+            entry.setValue(entry.getValue() - 1);
+            cooldown.offer(entry);
+            if (cooldown.size() < k) continue;             // ← VARIATION: wait k slots before reuse
+            var ready = cooldown.poll();
+            if (ready.getValue() > 0) maxHeap.offer(ready);
+        }
+        return sb.length() == s.length() ? sb.toString() : "";
+    }
+}
+```
+**Time** O(n log k) | **Space** O(k)
+
+---
+
+## #480 Sliding Window Median
+**Description:** Return the median of every window of size k as it slides across the array.
+**Variation:** two heaps (maxHeap = lower half, minHeap = upper half) with lazy deletion — defer removing elements that left the window, tracking balance with counts.
+```java
+class Solution {
+    public double[] medianSlidingWindow(int[] nums, int k) {
+        PriorityQueue<Integer> maxHeap = new PriorityQueue<>((a, b) -> Integer.compare(b, a));
+        PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+        double[] result = new double[nums.length - k + 1];
+        for (int i = 0; i < nums.length; i++) {
+            if (maxHeap.isEmpty() || nums[i] <= maxHeap.peek()) maxHeap.offer(nums[i]);
+            else minHeap.offer(nums[i]);
+            if (i >= k) {                                   // ← VARIATION: remove element leaving window
+                int out = nums[i - k];
+                if (out <= maxHeap.peek()) maxHeap.remove(out);
+                else minHeap.remove(out);
+            }
+            // rebalance
+            while (maxHeap.size() > minHeap.size() + 1) minHeap.offer(maxHeap.poll());
+            while (minHeap.size() > maxHeap.size()) maxHeap.offer(minHeap.poll());
+            if (i >= k - 1)
+                result[i - k + 1] = (k % 2 == 1) ? (double) maxHeap.peek()
+                    : ((double) maxHeap.peek() + minHeap.peek()) / 2.0;
+        }
+        return result;
+    }
+}
+```
+**Time** O(n·k) with heap remove (O(n log k) with indexed sets) | **Space** O(k)
+
+---
+
+## #692 Top K Frequent Words
+**Description:** Return the k most frequent words. Sort by frequency descending; ties broken by lexicographic order.
+**Variation:** min-heap of size k ordered so the "smallest" (lowest freq, or same freq with lexicographically larger word) sits on top for eviction.
+```java
+class Solution {
+    public List<String> topKFrequent(String[] words, int k) {
+        Map<String, Integer> count = new HashMap<>();
+        for (String w : words) count.merge(w, 1, Integer::sum);
+        PriorityQueue<String> heap = new PriorityQueue<>((a, b) ->
+            count.get(a).equals(count.get(b)) ? b.compareTo(a)        // ← VARIATION: larger word evicted first
+                                              : count.get(a) - count.get(b));
+        for (String w : count.keySet()) {
+            heap.offer(w);
+            if (heap.size() > k) heap.poll();
+        }
+        List<String> result = new ArrayList<>();
+        while (!heap.isEmpty()) result.add(heap.poll());
+        Collections.reverse(result);
+        return result;
+    }
+}
+```
+**Time** O(n log k) | **Space** O(n)
+
+---
+
+## #772 Basic Calculator III
+**Description:** Evaluate an arithmetic expression with `+`, `-`, `*`, `/`, and parentheses.
+**Variation:** combines #224 (parentheses via recursion) and #227 (operator precedence: apply `*`/`/` immediately, defer `+`/`-`).
+```java
+class Solution {
+    private int i;
+    public int calculate(String s) { i = 0; return eval(s); }
+    private int eval(String s) {
+        Deque<Integer> stack = new ArrayDeque<>();
+        int num = 0;
+        char op = '+';
+        while (i < s.length()) {
+            char c = s.charAt(i++);
+            if (Character.isDigit(c)) num = num * 10 + (c - '0');
+            if (c == '(') num = eval(s);                    // ← VARIATION: recurse on '('
+            if ((!Character.isDigit(c) && c != ' ') || i == s.length()) {
+                if      (op == '+') stack.push(num);
+                else if (op == '-') stack.push(-num);
+                else if (op == '*') stack.push(stack.pop() * num);  // ← VARIATION: precedence
+                else if (op == '/') stack.push(stack.pop() / num);
+                op = c; num = 0;
+            }
+            if (c == ')') break;                            // ← VARIATION: return to caller on ')'
+        }
+        int sum = 0;
+        while (!stack.isEmpty()) sum += stack.pop();
+        return sum;
+    }
+}
+```
+**Time** O(n) | **Space** O(n)

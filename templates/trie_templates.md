@@ -15,10 +15,27 @@
 
 ---
 
+## When to Use Trie (vs HashMap/Array)
+
+| Signal | Use |
+|---|---|
+| Prefix queries / `startsWith` / autocomplete | **Trie** — shares prefixes, prefix lookup is O(k) |
+| Wildcard match (`.` matches any char) | **Trie** — DFS branches over children |
+| Prune a search space by shared prefixes (e.g. Word Search II) | **Trie** — dead branches cut early |
+| Exact-key lookup only (no prefix logic) | **HashMap** — O(k) hash is simpler and faster, no node overhead |
+
+---
+
 ## Canonical Template
 
 ```java
+// MENTAL MODEL: every node is a shared prefix; walking down spells a word, so common prefixes are stored once.
+// WHEN: "prefix / startsWith / autocomplete", "wildcard match", "prune a search by shared prefixes"
+
 // ── TRIE NODE ──
+// Array vs Map TrieNode mental model:
+//   array  = O(1) per char, fixed 26 letters, wastes space when sparse
+//   HashMap = variable alphabet, smaller for sparse, hashing overhead
 class TrieNode {
     TrieNode[] children = new TrieNode[26];   // array-based: O(1) access, O(26) per node
     boolean isEnd = false;
@@ -145,6 +162,8 @@ startsWith:  return true;         // any node reached = valid prefix
 ## #208 Implement Trie
 
 **Description:** Implement `insert(word)`, `search(word)`, and `startsWith(prefix)`.
+
+**Intuition:** each word is a path of letters down the tree; shared prefixes share the same path, so searching is just walking that path.
 
 ```java
 class Trie {

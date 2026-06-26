@@ -30,10 +30,24 @@ Consistent naming throughout: `sentinel`, `previous`, `current`, `next`, `slow`,
 
 ---
 
+## When to Use — Signal → Pattern
+
+| Signal in the prompt | Pattern |
+|---|---|
+| "remove / delete / skip" nodes by value or duplicate | Delete / Filter (sentinel + `previous`) |
+| "reverse" the list, a sub-range, or in k-groups | Reversal |
+| "middle node", "cycle", "nth node from the end" | Fast / Slow |
+| "merge two sorted lists" (or k lists) | Merge (sentinel + heap for k) |
+| chained steps ("reorder", "palindrome", "sort") | Composite (combine the above) |
+
+---
+
 ## All Four Templates
 
 ```java
 // 1. DELETE / FILTER  — sentinel guards head removal; previous tracks last kept node
+// MENTAL MODEL: previous always points at the last node you decided to keep, so re-wiring it skips anything unwanted.
+// WHEN: "remove / delete / skip nodes by value or duplicate"
 ListNode sentinel = new ListNode(0);
 sentinel.next = head;
 ListNode previous = sentinel, current = head;
@@ -45,6 +59,8 @@ while (current != null) {
 return sentinel.next;
 
 // 2. REVERSAL — re-wire one node at a time
+// MENTAL MODEL: flip each arrow to point backward; previous is the growing reversed list trailing behind current.
+// WHEN: "reverse the list (whole, partial, or in k-groups)"
 ListNode previous = null, current = head;
 while (current != null) {
     ListNode next = current.next;   // save before overwrite
@@ -55,6 +71,8 @@ while (current != null) {
 return previous;  // new head
 
 // 3. FAST / SLOW — two pointers at different speeds
+// MENTAL MODEL: fast covers twice the distance, so when it hits the end slow is exactly halfway; in a loop they must collide.
+// WHEN: "middle node", "detect/locate cycle", "nth from end"
 ListNode slow = head, fast = head;
 while (fast != null && fast.next != null) {
     slow = slow.next;
@@ -63,6 +81,8 @@ while (fast != null && fast.next != null) {
 // slow is at middle  (or cycle detection: slow == fast → cycle found)
 
 // 4. MERGE — sentinel collects nodes from two lists in order
+// MENTAL MODEL: repeatedly splice the smaller head onto a growing result tail, like a zipper.
+// WHEN: "merge two (or k) sorted lists"
 ListNode sentinel = new ListNode(0);
 ListNode current = sentinel;
 while (a != null && b != null) {
@@ -184,6 +204,8 @@ class Solution {
 
 **Description:** Reverse the entire linked list. Return the new head.  
 **Key:** re-wire one node per iteration. `previous` trails behind as the new "next" for each node.
+
+**Intuition:** flip each node's arrow to point at the node you just came from; `previous` is the reversed list built so far.
 
 ```java
 class Solution {
@@ -314,6 +336,8 @@ class Solution {
 **Description:** Return the node where the cycle begins. Return null if no cycle.  
 **Key:** after slow meets fast inside the cycle, reset `slow` to `head`. Both then move 1 step at a time — they meet at the cycle entry.
 
+**Intuition:** the distance from head to the cycle entry equals the distance from the meeting point to the entry, so two 1-step walkers from those spots collide exactly at the entry.
+
 ```java
 class Solution {
     public ListNode detectCycle(ListNode head) {
@@ -344,6 +368,8 @@ class Solution {
 ## #21 Merge Two Sorted Lists
 
 **Description:** Merge two sorted linked lists into one sorted list.
+
+**Intuition:** like a zipper — always splice on whichever current head is smaller, then advance that list.
 
 ```java
 class Solution {
@@ -463,6 +489,8 @@ class Solution {
 | Composite | Both | Mix of above | Reorder, sort, rearrange |
 
 ## Sentinel Cheat Sheet
+
+**SENTINEL:** dummy node before head so head removal needs no special-casing; use it whenever the head itself might be removed/replaced.
 
 ```java
 // Always use sentinel when the head itself might be removed or replaced:
