@@ -67,7 +67,7 @@ for (int j = 0; j < n; j++) {
 | 159 | Longest Substring with At Most 2 Distinct | Max length substring with ≤2 distinct chars | "longest" + "at most 2 distinct" | Max | freq map (size ≤ 2) | shrink while `freq.size() > 2` |
 | 340 | Longest Substring with At Most K Distinct | Max length substring with ≤k distinct chars | "longest" + "at most k distinct" | Max | freq map (size ≤ k) | shrink while `freq.size() > k` |
 | 438 | Find All Anagrams in a String | Find all start indices of p's anagrams in s | "all anagrams" / "all windows of size len(p)" | Fixed | freq compare `int[26]` | shrink when `j-i == len(p)` |
-| 1343 | Number of Subarrays of Size K and Avg ≥ Threshold | Count fixed-size windows with average ≥ threshold | "subarrays of size k" + "average >= threshold" | Fixed | sum (compare `sum >= k*threshold`) | shrink when `j >= k` |
+| 1343 | Number of Subarrays of Size K and Avg ≥ Threshold | Count fixed-size windows with average ≥ threshold | "subarrays of size k" + "average >= threshold" | Fixed | sum (compare `sum >= k*threshold`) | slide when window size `== k` |
 
 ---
 
@@ -491,12 +491,15 @@ class Solution {
 ```java
 class Solution {
     public int numOfSubarrays(int[] arr, int k, int threshold) {
-        int target = k * threshold;                          // ← VARIATION: compare sum vs k*threshold (no division)
+        int target = k * threshold;                  // compare sum vs k*threshold (no division)
         int windowSum = 0, count = 0;
+        int i = 0;                                   // i = left edge (standard i/j window)
         for (int j = 0; j < arr.length; j++) {
             windowSum += arr[j];
-            if (j >= k) windowSum -= arr[j - k];             // shrink to size k
-            if (j >= k - 1 && windowSum >= target) count++;
+            if (j - i + 1 == k) {                    // window has reached size k
+                if (windowSum >= target) count++;
+                windowSum -= arr[i++];               // slide: drop left, stay size k
+            }
         }
         return count;
     }

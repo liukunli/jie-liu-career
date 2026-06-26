@@ -4,6 +4,173 @@ High-level templates, core algorithms, and quick-reference tables for every patt
 
 ---
 
+## Common Java API Cheat-Sheet
+
+The APIs used over and over across these templates. Grouped by what you reach for.
+
+### Initialize the core structures
+
+```java
+Map<Integer, Integer> map   = new HashMap<>();      // key → value
+Map<Integer, List<Integer>> adj = new HashMap<>();  // adjacency / buckets
+Set<Integer> set            = new HashSet<>();       // membership
+List<Integer> list          = new ArrayList<>();     // dynamic array
+
+Deque<Integer> stack = new ArrayDeque<>();           // STACK: push / pop / peek
+Deque<Integer> queue = new ArrayDeque<>();           // QUEUE: offer / poll / peek
+                                                     // (ArrayDeque beats java.util.Stack / LinkedList)
+PriorityQueue<Integer> minHeap = new PriorityQueue<>();                       // min-heap (default)
+PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder()); // max-heap
+PriorityQueue<int[]>   pq      = new PriorityQueue<>((a, b) -> a[1] - b[1]);  // by field, min-first
+
+TreeMap<Integer, Integer> tmap = new TreeMap<>();    // sorted keys: floor/ceiling/first/last
+TreeSet<Integer> tset          = new TreeSet<>();    // sorted set: floor/ceiling/higher/lower
+LinkedHashSet<Integer> lset    = new LinkedHashSet<>(); // insertion-ordered set (LFU buckets)
+Random rand                    = new Random();       // rand.nextInt(n) → 0..n-1 (RandomizedSet)
+
+int[]      arr  = new int[n];                        // defaults to 0
+boolean[]  seen = new boolean[n];                    // defaults to false
+int[][]    grid = new int[m][n];                     // 2D, all 0
+int[][]    dirs = {{-1,0},{1,0},{0,-1},{0,1}};       // UP, DOWN, LEFT, RIGHT
+```
+
+### Map / Set / List operations
+
+```java
+// ── Map ──
+map.put(k, v);
+map.getOrDefault(k, 0);                              // safe read with default
+map.merge(k, 1, Integer::sum);                       // ← counting frequency (most common)
+map.computeIfAbsent(k, x -> new ArrayList<>()).add(v); // ← build adjacency / buckets
+map.putIfAbsent(k, v);                               // ← write only first occurrence (keep earliest index)
+map.containsKey(k);  map.remove(k);
+for (Map.Entry<Integer,Integer> e : map.entrySet()) { e.getKey(); e.getValue(); e.setValue(v); }
+map.keySet();  map.values();
+
+// ── Set ──
+set.add(x);  set.contains(x);  set.remove(x);
+
+// ── List ──
+list.add(x);  list.get(i);  list.set(i, x);
+list.remove(list.size() - 1);                        // ← pop in backtracking
+list.size();  list.isEmpty();  list.addAll(other);
+Collections.sort(list);                              // ascending
+list.sort((a, b) -> b - a);                          // custom / descending
+Collections.reverse(list);                           // ← reverse path after building it backwards
+```
+
+### Stack / Queue / Heap (all via the same two ops)
+
+```java
+// Deque as STACK (LIFO)             // Deque as QUEUE (FIFO)
+stack.push(x);                        queue.offer(x);
+int top = stack.pop();                int head = queue.poll();
+int look = stack.peek();              int look = queue.peek();
+stack.isEmpty();                      queue.isEmpty();
+
+// Deque BOTH ENDS — needed for the MONOTONE DEQUE (sliding-window max/min)
+// and for addFirst-style level building (zigzag BFS).
+deque.offerLast(x);   deque.pollLast();   deque.peekLast();    // back  (push/pop/peek tail)
+deque.offerFirst(x);  deque.pollFirst();  deque.peekFirst();   // front (push/pop/peek head)
+deque.addLast(x);     deque.addFirst(x);                       // same as offer*, throw if capacity-bound
+
+// PriorityQueue (heap)
+pq.offer(x);  int best = pq.poll();  int look = pq.peek();  pq.size();
+pq.remove(x); // ← O(n) removal of an arbitrary element (lazy-deletion alternative in #480)
+```
+
+### Integer / Long limits & overflow-safe idioms
+
+```java
+Integer.MAX_VALUE;   //  2147483647  (2^31 − 1)   — sentinel for "min so far"
+Integer.MIN_VALUE;   // -2147483648  (−2^31)      — sentinel for "max so far"
+Long.MAX_VALUE;      // when sums can overflow int, accumulate in long
+int mid = i + (j - i) / 2;            // ← avoid (i + j) overflow in binary search
+Integer.compare(a, b);                // ← overflow-safe comparator; use instead of (a - b)
+(a, b) -> Integer.compare(a[1], b[1]);// ← safe PriorityQueue/Arrays.sort comparator
+Double.compare(a, b);                 // ← comparator for double[] heaps (probability, median)
+```
+
+### Char ↔ int ↔ String conversions
+
+```java
+ch - 'a';                            // 'a'..'z'  → 0..25   (lowercase bucket index)
+ch - '0';                            // '0'..'9'  → 0..9    (digit value)
+(char) ('a' + i);                    // 0..25 → 'a'..'z'
+num = num * 10 + (ch - '0');         // ← build a number digit by digit
+
+Integer.parseInt("123");             // String → int (throws on bad input)
+Integer.valueOf(123);                // int → Integer (boxed)
+String.valueOf(123);                 // int/char/etc → String
+Character.getNumericValue('7');      // char → 7
+
+// char classification
+Character.isDigit(ch);  Character.isLetter(ch);  Character.isLetterOrDigit(ch);
+Character.isWhitespace(ch);  Character.toLowerCase(ch);  Character.toUpperCase(ch);
+```
+
+### String & StringBuilder
+
+```java
+s.length();  s.charAt(i);  s.substring(i, j);        // [i, j)
+s.toCharArray();  s.split(" ");  s.equals(t);  s.compareTo(t);
+s.indexOf("ab");  s.isEmpty();
+s.startsWith("ab");  s.endsWith("z");  s.contains("x"); // prefix / suffix / substring tests
+s.toLowerCase();  s.toUpperCase();                   // case-normalize (e.g. case-insensitive compare)
+s.trim();  s.replace('a', 'b');  s.repeat(n);        // strip ends / swap chars / repeat
+
+StringBuilder sb = new StringBuilder();
+sb.append(x);  sb.reverse();  sb.toString();
+sb.charAt(i);  sb.setCharAt(i, c);  sb.deleteCharAt(i);  sb.length();
+String.join(",", list);                              // list → "a,b,c"
+```
+
+### Arrays utilities
+
+```java
+Arrays.sort(arr);                                    // ascending in place
+Arrays.sort(intervals, (a, b) -> a[0] - b[0]);       // 2D by first field
+Arrays.fill(dp, Integer.MAX_VALUE);                  // seed a dp/dist array
+Arrays.equals(window, need);                         // ← element-wise array compare (anagram check)
+Arrays.copyOf(arr, len);  Arrays.copyOfRange(arr, i, j);
+System.arraycopy(src, srcPos, dst, dstPos, len);     // ← fast block copy (merge step)
+Arrays.asList(1, 2, 3);                              // fixed-size List view
+int sum = Arrays.stream(arr).sum();
+int max = Arrays.stream(arr).max().getAsInt();
+
+// List<Integer> ↔ int[]
+int[] a = list.stream().mapToInt(Integer::intValue).toArray();
+List<Integer> l = Arrays.stream(a).boxed().collect(Collectors.toList());
+```
+
+### Math & bit operations
+
+```java
+Math.max(a, b);  Math.min(a, b);  Math.abs(x);
+Math.pow(a, b);  Math.sqrt(x);  Math.ceil(x);  Math.floor(x);
+
+n & (n - 1);          // clear lowest set bit
+n & (-n);             // isolate lowest set bit
+1 << i;               // bit i set  (use 1L << i for i ≥ 31)
+(n >> i) & 1;         // read bit i
+(n & 1) == 0;         // ← even   (last bit 0)
+(n & 1) == 1;         // ← odd    (last bit 1)
+n >> 1;               // ← divide by 2 (drop last bit);  n << 1 = multiply by 2
+Integer.bitCount(n);  // # of set bits
+Integer.toBinaryString(n);
+```
+
+### Sorted-structure navigation (TreeMap / TreeSet)
+
+```java
+tmap.firstKey();  tmap.lastKey();
+tmap.floorKey(x);    // largest key ≤ x      tmap.ceilingKey(x);  // smallest key ≥ x
+tmap.lowerKey(x);    // largest key < x      tmap.higherKey(x);   // smallest key > x
+tset.floor(x);  tset.ceiling(x);  tset.lower(x);  tset.higher(x);  tset.first();  tset.last();
+```
+
+---
+
 ## Two Pointers  &nbsp;`two_pointers.md`
 
 Two patterns — pick based on whether pointers converge or march together.
@@ -188,7 +355,7 @@ for (int j = 0; j < n; j++) {
 | 159 | Longest Substring with At Most 2 Distinct | Max length substring with ≤2 distinct chars | "longest" + "at most 2 distinct" | Max | freq map (size ≤ 2) | shrink while `freq.size() > 2` |
 | 340 | Longest Substring with At Most K Distinct | Max length substring with ≤k distinct chars | "longest" + "at most k distinct" | Max | freq map (size ≤ k) | shrink while `freq.size() > k` |
 | 438 | Find All Anagrams in a String | Find all start indices of p's anagrams in s | "all anagrams" / "all windows of size len(p)" | Fixed | freq compare `int[26]` | shrink when `j-i == len(p)` |
-| 1343 | Number of Subarrays of Size K and Avg ≥ Threshold | Count fixed-size windows with average ≥ threshold | "subarrays of size k" + "average >= threshold" | Fixed | sum (compare `sum >= k*threshold`) | shrink when `j >= k` |
+| 1343 | Number of Subarrays of Size K and Avg ≥ Threshold | Count fixed-size windows with average ≥ threshold | "subarrays of size k" + "average >= threshold" | Fixed | sum (compare `sum >= k*threshold`) | slide when window size `== k` |
 
 ---
 
@@ -1475,7 +1642,7 @@ Prim's MST        O(E log V)          PQ of candidate edges
 | 721 | Accounts Merge | Merge accounts sharing any common email | Union Find on emails; group by root | **Union Find on strings**: map each email to an id, union emails within an account | `List<List<String>>` | O(n·α) | O(n) |
 | 827 | Making A Large Island | Flip one 0 to 1 to maximize island size | Label islands with id+size map; for each 0 sum unique neighbor island sizes +1 | **Two-pass labeling**: first DFS-color islands, then test each 0 | `int` | O(m·n) | O(m·n) |
 | 909 | Snakes and Ladders | Min moves to reach last square (board with snakes/ladders) | BFS on flattened board; convert square number to (row,col) via boustrophedon | **BFS on board cells**: number→coordinate conversion for zigzag rows | `int` | O(n²) | O(n²) |
-| 1091 | Shortest Path in Binary Matrix | Shortest 8-directional path top-left to bottom-right through 0s | BFS with 8 directions | **8-directional BFS**: include diagonals in dirs | `int` | O(m·n) | O(m·n) |
+| 1091 | Shortest Path in Binary Matrix | Shortest 8-directional path top-left to bottom-right through 0s | BFS with 8 directions | **8-directional BFS**: include diagonals in dr/dc | `int` | O(m·n) | O(m·n) |
 | 1631 | Path With Minimum Effort | Min effort path from top-left to bottom-right; effort = max abs difference along path | Dijkstra with effort[r][c] = min-so-far max diff; PQ sorted by effort | **Modified Dijkstra**: dist = max(currEffort, edgeCost) instead of sum | `int` | O(m·n·log(m·n)) | O(m·n) |
 
 ---
@@ -1951,7 +2118,7 @@ for (int i = n - 1; i >= 0; i--) {              // ← right-to-left
 // 5. GRID DP — 4-directional neighbors
 // MENTAL MODEL: each cell's answer accumulates from the cells you could have arrived from.
 // WHEN: "paths / min-cost in a grid moving right+down", "largest square"
-int[][] dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};   // UP DOWN LEFT RIGHT
+int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};   // DOWN UP RIGHT LEFT
 // Standard grid (dag, only right/down):
 int[][] dp = new int[rows][cols];
 for (int i = 0; i < rows; i++)
@@ -2079,7 +2246,7 @@ for (int len = 2; len <= n; len++) {           // outer: length of interval
 ### Canonical Template
 
 ```java
-int[][] dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};   // UP DOWN LEFT RIGHT
+int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};   // DOWN UP RIGHT LEFT
 
 // Standard grid (only move right/down — DAG, no cycle):
 int[][] dp = new int[rows][cols];
@@ -2092,7 +2259,7 @@ for (int i = 0; i < rows; i++)
 int[][] memo = new int[rows][cols];
 for (int i = 0; i < rows; i++)
     for (int j = 0; j < cols; j++)
-        dfs(grid, i, j, memo, dirs);
+        dfs(grid, i, j, memo, dr, dc);
 ```
 
 ---
@@ -2653,7 +2820,8 @@ for (int i = 2; i * i < n; i++) {
 n % 10               // last decimal digit
 n /= 10              // drop last digit
 result * 10 + digit  // push a digit (build number left-to-right)
-(n & 1) == 1         // exponent/number bit set (odd)
+(n & 1) == 1         // odd
+(n & 1) == 0         // even
 n >>= 1              // halve (consume one bit)
 x *= x               // square base in fast power
 c - '0'              // char → digit value

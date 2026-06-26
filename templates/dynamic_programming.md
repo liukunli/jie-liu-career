@@ -130,7 +130,7 @@ for (int i = n - 1; i >= 0; i--) {              // ← right-to-left
 // 5. GRID DP — 4-directional neighbors
 // MENTAL MODEL: each cell's answer accumulates from the cells you could have arrived from.
 // WHEN: "paths / min-cost in a grid moving right+down", "largest square"
-int[][] dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};   // UP DOWN LEFT RIGHT
+int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};   // DOWN UP RIGHT LEFT
 // Standard grid (dag, only right/down):
 int[][] dp = new int[rows][cols];
 for (int i = 0; i < rows; i++)
@@ -734,7 +734,7 @@ class Solution {
 ## Canonical Template
 
 ```java
-int[][] dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};   // UP DOWN LEFT RIGHT
+int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};   // DOWN UP RIGHT LEFT
 
 // Standard grid (only move right/down — DAG, no cycle):
 int[][] dp = new int[rows][cols];
@@ -747,7 +747,7 @@ for (int i = 0; i < rows; i++)
 int[][] memo = new int[rows][cols];
 for (int i = 0; i < rows; i++)
     for (int j = 0; j < cols; j++)
-        dfs(grid, i, j, memo, dirs);
+        dfs(grid, i, j, memo, dr, dc);
 ```
 
 ---
@@ -835,7 +835,7 @@ class Solution {
 
 ```java
 class Solution {
-    int[][] dirs = {{-1,0},{1,0},{0,-1},{0,1}};
+    int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
 
     public int longestIncreasingPath(int[][] matrix) {
         int m = matrix.length, n = matrix[0].length;
@@ -849,8 +849,8 @@ class Solution {
     private int dfs(int[][] matrix, int i, int j, int[][] memo) {
         if (memo[i][j] != 0) return memo[i][j];
         memo[i][j] = 1;
-        for (int[] d : dirs) {
-            int ni = i + d[0], nj = j + d[1];
+        for (int dir = 0; dir < 4; dir++) {
+            int ni = i + dr[dir], nj = j + dc[dir];
             if (ni >= 0 && ni < matrix.length && nj >= 0 && nj < matrix[0].length
                     && matrix[ni][nj] > matrix[i][j])
                 memo[i][j] = Math.max(memo[i][j], dfs(matrix, ni, nj, memo) + 1);

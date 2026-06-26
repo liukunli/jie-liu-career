@@ -313,7 +313,8 @@ class Solution {
 n % 10               // last decimal digit
 n /= 10              // drop last digit
 result * 10 + digit  // push a digit (build number left-to-right)
-(n & 1) == 1         // exponent/number bit set (odd)
+(n & 1) == 1         // odd
+(n & 1) == 0         // even
 n >>= 1              // halve (consume one bit)
 x *= x               // square base in fast power
 c - '0'              // char → digit value

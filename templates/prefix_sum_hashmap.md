@@ -155,7 +155,7 @@ class Solution {
         map.put(0, -1);
         int sum = 0;
         for (int i = 0; i < nums.length; i++) {
-            sum = (sum + nums[i]) % k;
+            sum = ((sum + nums[i]) % k + k) % k;   // normalize negative remainders (matches #974)
             if (map.containsKey(sum)) {
                 if (i - map.get(sum) >= 2) return true;
             } else {

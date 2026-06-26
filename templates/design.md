@@ -50,7 +50,7 @@ public class Solution {
 | Result accumulator | `result` (never `res`); use `output` if `result` is already taken in scope |
 | Queue / deque | `Queue<Integer> queue = new ArrayDeque<>();` (never `dq`) |
 | BFS over tree | `Queue<TreeNode> queue = new ArrayDeque<>();` |
-| Grid directions | `int[][] dirs = {{-1,0},{1,0},{0,-1},{0,1}};` (UP, DOWN, LEFT, RIGHT) |
+| Grid directions | `int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};` (DOWN, UP, RIGHT, LEFT); iterate `for (int dir=0; dir<4; dir++)` using `i+dr[dir]`, `j+dc[dir]` |
 | Character frequency | `count[ch - 'a']++;` |
 | Digit frequency | `count[ch - '0']++;` |
 | Char to integer build | `num = num * 10 + (ch - '0');` |

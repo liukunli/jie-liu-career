@@ -43,7 +43,7 @@ Prim's MST        O(E log V)          PQ of candidate edges
 | 721 | Accounts Merge | Merge accounts sharing any common email | Union Find on emails; group by root | **Union Find on strings**: map each email to an id, union emails within an account | `List<List<String>>` | O(n·α) | O(n) |
 | 827 | Making A Large Island | Flip one 0 to 1 to maximize island size | Label islands with id+size map; for each 0 sum unique neighbor island sizes +1 | **Two-pass labeling**: first DFS-color islands, then test each 0 | `int` | O(m·n) | O(m·n) |
 | 909 | Snakes and Ladders | Min moves to reach last square (board with snakes/ladders) | BFS on flattened board; convert square number to (row,col) via boustrophedon | **BFS on board cells**: number→coordinate conversion for zigzag rows | `int` | O(n²) | O(n²) |
-| 1091 | Shortest Path in Binary Matrix | Shortest 8-directional path top-left to bottom-right through 0s | BFS with 8 directions | **8-directional BFS**: include diagonals in dirs | `int` | O(m·n) | O(m·n) |
+| 1091 | Shortest Path in Binary Matrix | Shortest 8-directional path top-left to bottom-right through 0s | BFS with 8 directions | **8-directional BFS**: include diagonals in dr/dc | `int` | O(m·n) | O(m·n) |
 | 1631 | Path With Minimum Effort | Min effort path from top-left to bottom-right; effort = max abs difference along path | Dijkstra with effort[r][c] = min-so-far max diff; PQ sorted by effort | **Modified Dijkstra**: dist = max(currEffort, edgeCost) instead of sum | `int` | O(m·n·log(m·n)) | O(m·n) |
 
 ---
@@ -911,14 +911,14 @@ class Solution {
         effort[0][0] = 0;
         PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[0] - b[0]);
         pq.offer(new int[]{0, 0, 0});   // [effort, row, col]
-        int[][] dirs = {{-1,0},{1,0},{0,-1},{0,1}};
+        int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
         while (!pq.isEmpty()) {
             int[] current = pq.poll();
             int e = current[0], r = current[1], c = current[2];
             if (r == m-1 && c == n-1) return e;
             if (e > effort[r][c]) continue;             // stale entry
-            for (int[] d : dirs) {
-                int nr = r + d[0], nc = c + d[1];
+            for (int dir = 0; dir < 4; dir++) {
+                int nr = r + dr[dir], nc = c + dc[dir];
                 if (nr >= 0 && nr < m && nc >= 0 && nc < n) {
                     int newEffort = Math.max(e, Math.abs(heights[nr][nc] - heights[r][c]));  // ← VARIATION: max not sum
                     if (newEffort < effort[nr][nc]) {
@@ -1066,11 +1066,11 @@ class Solution {
         for (int i = 0; i < m; i++)
             for (int j = 0; j < n; j++)
                 if (rooms[i][j] == 0) queue.offer(new int[]{i, j});  // ← VARIATION: seed ALL gates
-        int[][] dirs = {{-1,0},{1,0},{0,-1},{0,1}};
+        int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
         while (!queue.isEmpty()) {
             int[] cell = queue.poll();
-            for (int[] d : dirs) {
-                int ni = cell[0] + d[0], nj = cell[1] + d[1];
+            for (int dir = 0; dir < 4; dir++) {
+                int ni = cell[0] + dr[dir], nj = cell[1] + dc[dir];
                 if (ni < 0 || ni >= m || nj < 0 || nj >= n || rooms[ni][nj] != Integer.MAX_VALUE) continue;
                 rooms[ni][nj] = rooms[cell[0]][cell[1]] + 1;
                 queue.offer(new int[]{ni, nj});
@@ -1130,7 +1130,7 @@ class Solution {
 **Variation:** two passes. First DFS-color each island with a unique id (starting at 2) and record its size. Then for every 0, sum the sizes of distinct neighboring islands + 1.
 ```java
 class Solution {
-    private int[][] dirs = {{-1,0},{1,0},{0,-1},{0,1}};
+    private int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
     public int largestIsland(int[][] grid) {
         int n = grid.length, id = 2;
         Map<Integer, Integer> size = new HashMap<>();
@@ -1143,8 +1143,8 @@ class Solution {
                 if (grid[i][j] == 0) {
                     Set<Integer> seen = new HashSet<>();
                     int total = 1;
-                    for (int[] d : dirs) {
-                        int ni = i + d[0], nj = j + d[1];
+                    for (int dir = 0; dir < 4; dir++) {
+                        int ni = i + dr[dir], nj = j + dc[dir];
                         if (ni < 0 || ni >= n || nj < 0 || nj >= n || grid[ni][nj] <= 1) continue;
                         if (seen.add(grid[ni][nj])) total += size.get(grid[ni][nj]);  // ← VARIATION: sum distinct neighbors
                     }
@@ -1156,7 +1156,7 @@ class Solution {
         if (i < 0 || i >= grid.length || j < 0 || j >= grid.length || grid[i][j] != 1) return 0;
         grid[i][j] = id;
         int count = 1;
-        for (int[] d : dirs) count += dfs(grid, i + d[0], j + d[1], id);
+        for (int dir = 0; dir < 4; dir++) count += dfs(grid, i + dr[dir], j + dc[dir], id);
         return count;
     }
 }
@@ -1212,7 +1212,7 @@ class Solution {
     public int shortestPathBinaryMatrix(int[][] grid) {
         int n = grid.length;
         if (grid[0][0] == 1 || grid[n-1][n-1] == 1) return -1;
-        int[][] dirs = {{-1,0},{1,0},{0,-1},{0,1},{-1,-1},{-1,1},{1,-1},{1,1}};  // ← VARIATION: 8 directions
+        int[] dr = {1,-1,0,0,1,1,-1,-1}, dc = {0,0,1,-1,1,-1,1,-1};  // ← VARIATION: 8 directions
         Queue<int[]> queue = new ArrayDeque<>();
         queue.offer(new int[]{0, 0});
         grid[0][0] = 1;
@@ -1222,8 +1222,8 @@ class Solution {
             for (int s = 0; s < size; s++) {
                 int[] cell = queue.poll();
                 if (cell[0] == n-1 && cell[1] == n-1) return path;
-                for (int[] d : dirs) {
-                    int ni = cell[0] + d[0], nj = cell[1] + d[1];
+                for (int dir = 0; dir < 8; dir++) {
+                    int ni = cell[0] + dr[dir], nj = cell[1] + dc[dir];
                     if (ni < 0 || ni >= n || nj < 0 || nj >= n || grid[ni][nj] != 0) continue;
                     grid[ni][nj] = 1;
                     queue.offer(new int[]{ni, nj});

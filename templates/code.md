@@ -107,7 +107,7 @@ map.merge(k, 1, Integer::sum);                       // ← counting frequency (
 map.computeIfAbsent(k, x -> new ArrayList<>()).add(v); // ← build adjacency / buckets
 map.putIfAbsent(k, v);                               // ← write only first occurrence (keep earliest index)
 map.containsKey(k);  map.remove(k);
-for (Map.Entry<Integer,Integer> e : map.entrySet()) { e.getKey(); e.getValue(); }
+for (Map.Entry<Integer,Integer> e : map.entrySet()) { e.getKey(); e.getValue(); e.setValue(v); }
 map.keySet();  map.values();
 
 // ── Set ──
@@ -148,9 +148,10 @@ pq.remove(x); // ← O(n) removal of an arbitrary element (lazy-deletion alterna
 Integer.MAX_VALUE;   //  2147483647  (2^31 − 1)   — sentinel for "min so far"
 Integer.MIN_VALUE;   // -2147483648  (−2^31)      — sentinel for "max so far"
 Long.MAX_VALUE;      // when sums can overflow int, accumulate in long
-int mid = i + (j - i) / 2;            // ← avoid (i + j) overflow in binary search
+int k = i + (j - i) / 2;              // ← avoid (i + j) overflow in binary search
 Integer.compare(a, b);                // ← overflow-safe comparator; use instead of (a - b)
 (a, b) -> Integer.compare(a[1], b[1]);// ← safe PriorityQueue/Arrays.sort comparator
+Double.compare(a, b);                 // ← comparator for double[] heaps (probability, median)
 ```
 
 ### Char ↔ int ↔ String conversions
@@ -177,6 +178,9 @@ Character.isWhitespace(ch);  Character.toLowerCase(ch);  Character.toUpperCase(c
 s.length();  s.charAt(i);  s.substring(i, j);        // [i, j)
 s.toCharArray();  s.split(" ");  s.equals(t);  s.compareTo(t);
 s.indexOf("ab");  s.isEmpty();
+s.startsWith("ab");  s.endsWith("z");  s.contains("x"); // prefix / suffix / substring tests
+s.toLowerCase();  s.toUpperCase();                   // case-normalize (e.g. case-insensitive compare)
+s.trim();  s.replace('a', 'b');  s.repeat(n);        // strip ends / swap chars / repeat
 
 StringBuilder sb = new StringBuilder();
 sb.append(x);  sb.reverse();  sb.toString();
@@ -212,6 +216,9 @@ n & (n - 1);          // clear lowest set bit
 n & (-n);             // isolate lowest set bit
 1 << i;               // bit i set  (use 1L << i for i ≥ 31)
 (n >> i) & 1;         // read bit i
+(n & 1) == 0;         // ← even   (last bit 0)
+(n & 1) == 1;         // ← odd    (last bit 1)
+n >> 1;               // ← divide by 2 (drop last bit);  n << 1 = multiply by 2
 Integer.bitCount(n);  // # of set bits
 Integer.toBinaryString(n);
 ```
@@ -223,6 +230,38 @@ tmap.firstKey();  tmap.lastKey();
 tmap.floorKey(x);    // largest key ≤ x      tmap.ceilingKey(x);  // smallest key ≥ x
 tmap.lowerKey(x);    // largest key < x      tmap.higherKey(x);   // smallest key > x
 tset.floor(x);  tset.ceiling(x);  tset.lower(x);  tset.higher(x);  tset.first();  tset.last();
+```
+
+### Optimization idioms
+
+Common speed/space wins used throughout the templates.
+
+```java
+// ── NEGATIVE-SAFE MODULO ── replaces the manual ((x % n) + n) % n
+Math.floorMod(x, n);                  // always in [0, n-1] even when x < 0 (prefix-sum % k)
+
+// ── int[] INSTEAD OF HashMap for a bounded key space ──
+int[] count = new int[26];            // O(1) no-boxing freq vs HashMap<Character,Integer>
+count[ch - 'a']++;                    // also faster to compare: Arrays.equals(a, b)
+
+// ── 1D ROLLING ARRAY for DP ── drop a dimension when row i only needs row i-1
+int[] dp = new int[n + 1];            // O(n) space instead of O(m·n)
+for (...) for (int j = target; j >= w; j--) dp[j] += dp[j - w];  // 0/1 knapsack: iterate j DOWN
+
+// ── FIXED-SIZE HEAP for top-k ── O(n log k) beats sorting O(n log n)
+if (heap.size() > k) heap.poll();     // keep only k best; min-heap for "k largest"
+
+// ── LAZY DELETION over pq.remove(obj) ── pq.remove is O(n); skip stale entries instead
+if (entry[0] != dist[node]) continue; // Dijkstra: ignore outdated heap entries
+
+// ── ArrayDeque over Stack / LinkedList ── faster, no synchronization, both ends O(1)
+Deque<Integer> stack = new ArrayDeque<>();   // never use java.util.Stack
+
+// ── StringBuilder over String += in a loop ── O(n) vs O(n²)
+StringBuilder sb = new StringBuilder();      // append, then sb.toString() once
+
+// ── EARLY EXIT / PRUNING ── return the moment the answer is decided
+if (found) return result;             // e.g. Trie shortest-root, backtracking bounds
 ```
 
 ---
