@@ -43,47 +43,47 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 315 | ★ | Count of Smaller Numbers After Self | O(n log n) / O(n) | For each element, count elements to its right that are smaller. |
 | 325 | ★ | Maximum Size Subarray Sum Equals k | O(n) / O(n) | Find the maximum length subarray with sum equal to k. |
 | 327 | ★ | Count of Range Sum | O(n log n) / O(n) | Count range sums that lie in [lower, upper]. |
-| 334 | ★ | Increasing Triplet Subsequence |  |  |
+| 334 | ★ | Increasing Triplet Subsequence |  | Return true if there exists `i < j < k` with `nums[i] < nums[j] < nums[k]`. |
 | 349 | ★ | Intersection of Two Arrays |  | Find the intersection of two integer arrays (unique elements only). |
 | 350 | ★ | Intersection of Two Arrays II |  | Find the intersection of two integer arrays including duplicates. |
-| 370 | ★ | Range Addition |  |  |
+| 370 | ★ | Range Addition |  | Apply range updates `[start, end] += inc` then return the final array. |
 | 384 | ★ | Shuffle an Array |  | Shuffle an integer array so each permutation is equally likely. |
 | 414 | ★ | Third Maximum Number |  | Find the third maximum distinct integer. Return the maximum if no third. |
 | 419 | ★ | Battleships in a Board |  | Count battleships in a board ('X's forming horizontal or vertical lines). |
-| 442 | ★ | Find All Duplicates in an Array |  |  |
+| 442 | ★ | Find All Duplicates in an Array |  | Values in [1,n], each appears once or twice. Return the ones appearing twice. O(n) time, O(1) extra space. |
 | 448 | ★ | Find All Numbers Disappeared in an Array |  | Find all integers in range [1,n] that are missing from an array of size n. |
 | 454 | ★ | 4Sum II |  | Count quadruplets (i,j,k,l) such that A[i]+B[j]+C[k]+D[l]==0. |
-| 457 | ★ | Circular Array Loop |  |  |
+| 457 | ★ | Circular Array Loop |  | Detect a cycle of length > 1 with consistent direction in a circular array of jumps. |
 | 485 | ★ | Max Consecutive Ones |  | Find the maximum number of consecutive 1s in a binary array. |
-| 493 | ★ | Reverse Pairs |  |  |
+| 493 | ★ | Reverse Pairs |  | Count pairs (i,j) with `i < j` and `nums[i] > 2 * nums[j]`. |
 | 498 | ★ | Diagonal Traverse |  | Traverse an m×n matrix diagonally, alternating direction. |
-| 517 | ★ | Super Washing Machines |  |  |
+| 517 | ★ | Super Washing Machines |  | Minimize the max number of moves to equalize dresses across machines (one dress to a neighbor per move). |
 | 523 | ★ | Continuous Subarray Sum | O(n) / O(n) | Check if a subarray exists with sum divisible by k. |
 | 525 | ★ | Contiguous Array |  | Find the maximum length subarray with equal number of 0s and 1s. |
 | 532 | ★ | K-diff Pairs in an Array |  | Count unique k-diff pairs (i,j) in an array where nums[i]-nums[j]==k. |
 | 560 | ★ | Subarray Sum Equals K | O(n) / O(n) | Count subarrays that sum to exactly k. |
 | 566 | ★ | Reshape the Matrix |  | Reshape an m×n matrix to r×c without changing element order. |
 | 581 | ★ | Shortest Unsorted Continuous Subarray |  | Find the shortest subarray that, if sorted, makes the whole array sorted. |
-| 594 | ★ | Longest Harmonious Subsequence |  |  |
+| 594 | ★ | Longest Harmonious Subsequence |  | Find the longest subsequence where max and min differ by exactly 1. |
 | 599 | ★ | Minimum Index Sum of Two Lists |  | Find the common strings between two lists with the minimum index sum. |
 | 611 | ★ | Valid Triangle Number |  | Count the number of valid triangles from a sorted array of lengths. |
-| 661 | ★ | Image Smoother |  |  |
+| 661 | ★ | Image Smoother |  | Replace each cell with the floor of the average of itself and its up-to-8 neighbors. |
 | 723 | ★ | Candy Crush |  | Simulate Candy Crush: repeatedly remove groups of 3 same-color candies and drop. |
 | 724 | ★ | Find Pivot Index |  | Find a pivot index where left sum equals right sum. |
 | 766 | ★ | Toeplitz Matrix |  | Check if a matrix is Toeplitz (all diagonals have the same value). |
-| 769 | ★ | Max Chunks To Make Sorted |  |  |
+| 769 | ★ | Max Chunks To Make Sorted |  | Array is a permutation of [0,n-1]. Max number of chunks that can be sorted independently to sort the whole. |
 | 795 | ★ | Number of Subarrays with Bounded Maximum |  | Count subarrays with a maximum value in range [L, R]. |
 | 807 | ★ | Max Increase to Keep City Skyline |  | Maximize the total increase in building heights while preserving the city's skyline from all 4 directions. |
 | 825 | ★ | Friends Of Appropriate Ages |  | Count pairs of people where one person's age allows them to friend the other. |
 | 838 | ★ | Push Dominoes |  | Given a string of dominoes ('L', 'R', '.'), simulate their fall. |
 | 845 | ★ | Longest Mountain in Array |  | Find the length of the longest mountain subarray (increases then decreases). |
 | 896 | ★ | Monotonic Array |  | Check if an array is monotonically increasing or decreasing. |
-| 912 | ★ | Sort an Array | O(n log n) / O(n) |  |
+| 912 | ★ | Sort an Array | O(n log n) / O(n) | Sort an integer array. Implement an O(n log n) sort. |
 | 974 | ★ | Subarray Sums Divisible by K | O(n) / O(k) | Count subarrays whose sum is divisible by k. |
 | 977 | ★ | Squares of a Sorted Array |  | Return the squares of a sorted array in sorted order. |
-| 1013 | ★ | Partition Array Into Three Parts With Equal Sum |  |  |
-| 1074 | ★ | Number of Submatrices That Sum to Target |  |  |
-| 1109 | ★ | Corporate Flight Bookings |  |  |
+| 1013 | ★ | Partition Array Into Three Parts With Equal Sum |  | Can the array be split into three contiguous parts with equal sums? |
+| 1074 | ★ | Number of Submatrices That Sum to Target |  | Count submatrices summing to target. |
+| 1109 | ★ | Corporate Flight Bookings |  | Given bookings `[first, last, seats]`, return total seats booked per flight. |
 | 1213 | ★ | Intersection of Three Sorted Arrays |  | Find the intersection of three sorted arrays. |
 | 1275 | ★ | Find Winner on a Tic Tac Toe Game |  | Determine the winner of a Tic-Tac-Toe game given a sequence of moves. |
 | 1351 | ★ | Count Negative Numbers in a Sorted Matrix |  | Count the number of negative numbers in a sorted matrix. |
@@ -115,11 +115,11 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 395 | ★ | Longest Substring with At Least K Repeating Characters |  | Find the longest substring where every character appears at least k times. |
 | 424 | ★ | Longest Repeating Character Replacement | O(n) / O(1) | Find the length of the longest substring where you can replace at most k characters to make all same. |
 | 438 | ★ | Find All Anagrams in a String | O(n) / O(1) | Find all anagram start indices of pattern p in string s. |
-| 487 | ★ | Max Consecutive Ones II |  |  |
+| 487 | ★ | Max Consecutive Ones II |  | Given a binary array `nums`, return the maximum number of consecutive 1s if you may flip at most one 0. |
 | 567 | ★ | Permutation in String | O(n) / O(1) | Check if any permutation of pattern p exists as a substring of string s. |
 | 643 | ★ | Maximum Average Subarray I |  | Find the maximum average of any subarray of length k. |
 | 689 | ★ | Maximum Sum of 3 Non-Overlapping Subarrays |  | Find 3 non-overlapping subarrays of length k with maximum total sum. |
-| 713 | ★ | Subarray Product Less Than K |  |  |
+| 713 | ★ | Subarray Product Less Than K |  | Return the number of contiguous subarrays whose product of all elements is strictly less than `k`. |
 | 727 | ★ | Minimum Window Subsequence |  | Find the minimum window in s that contains all characters of t in order (subsequence). |
 | 1004 | ★ | Max Consecutive Ones III | O(n) / O(1) | Find the maximum consecutive 1s if you can flip at most k zeros. |
 | 1044 | ★ | Longest Duplicate Substring |  | Find the longest duplicate substring using binary search and rolling hash. |
@@ -144,11 +144,11 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 374 | ★ | Guess Number Higher or Lower |  | Guess the number between 1 and n using a provided guess() API. Minimize calls. |
 | 378 | ★ | Kth Smallest Element in a Sorted Matrix | O(n log n) / O(n) | Find the kth smallest element in an n×n matrix where rows and columns are sorted. |
 | 410 | ★ | Split Array Largest Sum | O(n log sum) / O(1) | Split an array into m subarrays to minimize the largest subarray sum. |
-| 475 | ★ | Heaters |  |  |
+| 475 | ★ | Heaters |  | Given house and heater positions, find the minimum heater radius so every house is covered by some heater. |
 | 540 | ★ | Single Element in a Sorted Array |  | Find the single non-duplicate element in a sorted array where all others appear twice. O(log n). |
 | 658 | ★ | Find K Closest Elements |  | Find k integers in a sorted array closest to x, ordered by closeness then value. |
 | 704 | ★ | Binary Search | O(log n) / O(1) | Classic binary search: find target in sorted array. |
-| 719 | ★ | Find K-th Smallest Pair Distance |  |  |
+| 719 | ★ | Find K-th Smallest Pair Distance |  | Find the k-th smallest absolute distance among all pairs in the array. |
 | 852 | ★ | Peak Index in a Mountain Array |  | Find the peak index in a mountain array (element greater than both neighbors). |
 | 875 | ★ | Koko Eating Bananas | O(n log max) / O(1) | Find the minimum eating speed k so Koko can eat all banana piles within h hours. |
 | 1011 | ★ | Capacity To Ship Packages Within D Days | O(n log sum) / O(1) | Find the minimum capacity to ship all packages within D days. |
@@ -188,9 +188,9 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 237 | ★ | Delete Node in a Linked List |  | Delete a node from a singly linked list given only a reference to that node (not the head). |
 | 287 | ★ | Find the Duplicate Number | O(n) / O(1) | Find the duplicate number in an array of n+1 integers in range [1,n]. O(1) space required. |
 | 328 | ★ | Odd Even Linked List |  | Rearrange a linked list so all odd-indexed nodes come before even-indexed nodes. |
-| 369 | ★ | Plus One Linked List |  |  |
+| 369 | ★ | Plus One Linked List |  | A non-negative integer is stored as a linked list of digits in big-endian order (most significant first). Add one to it and return the resulting list. |
 | 430 | ★ | Flatten a Multilevel Doubly Linked List |  | Flatten a multilevel doubly linked list where nodes may have a child list. |
-| 445 | ★ | Add Two Numbers II |  |  |
+| 445 | ★ | Add Two Numbers II |  | Two numbers are stored as linked lists in big-endian order (most significant digit first). Add them and return the sum as a linked list, also in big-endian order. |
 | 708 | ★ | Insert into a Sorted Circular Linked List |  | Insert a value into a sorted circular linked list. |
 | 725 | ★ | Split Linked List in Parts |  | Split a linked list into k consecutive parts as equal in size as possible. |
 | 876 | ★ | Middle of the Linked List | O(n) / O(1) | Find the middle node of a linked list (if two middles, return second). |
@@ -227,9 +227,9 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 186 | ★ | Reverse Words in a String II |  | Reverse words in a character array in-place (words separated by spaces). |
 | 205 | ★ | Isomorphic Strings |  | Check if two strings follow the same character-substitution pattern (isomorphic). |
 | 214 | ★ | Shortest Palindrome |  | Find the shortest palindrome by adding characters in front of a string. |
-| 228 | ★ | Summary Ranges |  |  |
+| 228 | ★ | Summary Ranges |  | Given a sorted unique integer array, summarize consecutive runs as ranges. |
 | 242 | ★ | Valid Anagram | O(n) / O(1) | Determine if two strings are anagrams of each other. |
-| 246 | ★ | Strobogrammatic Number |  |  |
+| 246 | ★ | Strobogrammatic Number |  | Check if a number reads the same when rotated 180 degrees. |
 | 249 | ★ | Group Shifted Strings |  | Group strings that follow the same shift sequence (each char shifted by the same amount). |
 | 266 | ★ | Palindrome Permutation |  | Check if a string can be rearranged into a palindrome (at most one odd-count char). |
 | 271 | ★ | Encode and Decode Strings |  | Encode a list of strings to a single string and decode it back. |
@@ -243,13 +243,13 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 388 | ★ | Longest Absolute File Path |  | Find the length of the longest absolute file path in a file system string. |
 | 392 | ★ | Is Subsequence |  | Check if string s is a subsequence of string t. |
 | 408 | ★ | Valid Word Abbreviation |  | Check if an abbreviation matches a word (digits represent skipped characters). |
-| 409 | ★ | Longest Palindrome |  |  |
+| 409 | ★ | Longest Palindrome |  | Find the length of the longest palindrome that can be built from the given letters. |
 | 415 | ★ | Add Strings |  | Add two non-negative integers given as strings. Return the sum as a string. |
-| 422 | ★ | Valid Word Square |  |  |
+| 422 | ★ | Valid Word Square |  | Given a sequence of words, check whether they form a valid word square (kth row equals kth column). |
 | 423 | ★ | Reconstruct Original Digits from English |  | Given a scrambled string of digit-word letters, decode original digits in order. |
-| 434 | ★ | Number of Segments in a String |  |  |
+| 434 | ★ | Number of Segments in a String |  | Count the number of segments (maximal runs of non-space chars) in a string. |
 | 443 | ★ | String Compression |  | Compress an array of chars in-place: 'aabcc' 'a2bc2'. Return new length. |
-| 459 | ★ | Repeated Substring Pattern |  |  |
+| 459 | ★ | Repeated Substring Pattern |  | Check if a string can be built by repeating one of its substrings multiple times. |
 | 468 | ★ | Validate IP Address |  | Validate whether a string is a valid IPv4 or IPv6 address. |
 | 500 | ★ | Keyboard Row |  | Find all words that can be typed on a single row of a QWERTY keyboard. |
 | 520 | ★ | Detect Capital |  | Check if a word is capitalized correctly (all caps, all lower, or first letter only). |
@@ -259,7 +259,7 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 556 | ★ | Next Greater Element III |  | Find the next greater element by rearranging the digits of n. Return -1 if not possible or overflow. |
 | 557 | ★ | Reverse Words in a String III |  | Reverse individual words in a string while preserving word order. |
 | 592 | ★ | Fraction Addition and Subtraction |  | Add or subtract fractions, returning the result in lowest terms. |
-| 616 | ★ | Add Bold Tag in String |  |  |
+| 616 | ★ | Add Bold Tag in String |  | Wrap every substring of `s` that matches a word in the dictionary with `<b>...</b>`, merging overlaps. |
 | 657 | ★ | Robot Return to Origin |  | Check if a robot following instruction string (UDLR) returns to origin. |
 | 670 | ★ | Maximum Swap |  | Swap two digits in a number to get the maximum possible value. |
 | 680 | ★ | Valid Palindrome II |  | Check if a string is a palindrome after deleting at most one character. |
@@ -267,24 +267,24 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 686 | ★ | Repeated String Match |  | Find the minimum number of times string a must repeat so b is a substring. |
 | 709 | ★ | To Lower Case |  | Convert a string to lowercase. |
 | 726 | ★ | Number of Atoms |  | Parse a chemical formula string and return atom counts in sorted order. |
-| 748 | ★ | Shortest Completing Word |  |  |
-| 788 | ★ | Rotated Digits |  |  |
+| 748 | ★ | Shortest Completing Word |  | Find the shortest word in a list that contains all letters of a license plate (case-insensitive, with multiplicity). |
+| 788 | ★ | Rotated Digits |  | Count numbers in `[1, n]` that become a different valid number when each digit is rotated 180 degrees. |
 | 791 | ★ | Custom Sort String |  | Sort string s so its characters appear in the order given by string order. |
-| 794 | ★ | Valid Tic-Tac-Toe State |  |  |
+| 794 | ★ | Valid Tic-Tac-Toe State |  | Decide whether the given tic-tac-toe board is reachable from valid play. |
 | 796 | ★ | Rotate String |  | Check if string t is a rotation of string s. |
 | 809 | ★ | Expressive Words |  | Determine if a query word matches a stretched version of a word in a list. |
 | 824 | ★ | Goat Latin |  | Convert words to Goat Latin: append 'ma', move leading consonants to end + 'ma'. |
-| 833 | ★ | Find And Replace in String |  |  |
+| 833 | ★ | Find And Replace in String |  | Apply non-overlapping indexed replacements: at each index, if `sources[k]` matches, replace it with `targets[k]`. |
 | 859 | ★ | Buddy Strings |  | Check if two strings are 'buddy strings': swapping exactly one pair makes them equal. |
 | 953 | ★ | Verifying an Alien Dictionary |  | Check if words are sorted in a given alien language's alphabetical order. |
-| 1055 | ★ | Shortest Way to Form String |  |  |
+| 1055 | ★ | Shortest Way to Form String |  | Find the minimum number of subsequences of `source` whose concatenation equals `target`. Return -1 if impossible. |
 | 1108 | ★ | Defanging an IP Address |  | Defang an IP address by replacing '.' with '[.]'. |
 | 1221 | ★ | Split a String in Balanced Strings |  | Find the maximum number of balanced strings ('R' count == 'L' count) to split into. |
 | 1328 | ★ | Break a Palindrome |  | Break a palindrome by changing one character to get the lexicographically smallest non-palindrome. |
 | 1392 | ★ | Longest Happy Prefix |  | Find the longest happy prefix (prefix that is also a suffix). |
 | 1446 | ★ | Consecutive Characters |  | Find the maximum number of consecutive same characters in a string. |
 | 1554 | ★ | Strings Differ by One Character |  | Check if any two strings in a list differ by exactly one character. |
-| 1556 | ★ | Thousand Separator |  |  |
+| 1556 | ★ | Thousand Separator |  | Format an integer with a dot as the thousands separator. |
 | 1736 | ★ | Latest Time by Replacing Hidden Digits |  | Find the latest valid time by replacing '?' with appropriate digits. |
 | 1816 | ★ | Truncate Sentence |  | Truncate a sentence to the first k words. |
 | 1844 | ★ | Replace All Digits with Characters |  | Replace each digit at odd positions with the corresponding letter. |
@@ -304,7 +304,7 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 215 | ★ | Kth Largest Element in an Array | O(n) avg / O(1) | Find the kth largest element in an unsorted array (not necessarily distinct). |
 | 218 | ★ | The Skyline Problem |  | Given building rectangles, return the skyline as a list of key points. |
 | 224 | ★ | Basic Calculator | O(n) / O(n) | Evaluate a string expression with '+', '-', and nested parentheses. |
-| 225 | ★ | Implement Stack using Queues |  |  |
+| 225 | ★ | Implement Stack using Queues |  | Implement a LIFO stack using only queue operations. |
 | 227 | ★ | Basic Calculator II | O(n) / O(n) | Evaluate a string expression with '+', '-', '*', '/' (no parentheses, integer division). |
 | 232 | ★ | Implement Queue using Stacks |  | Implement a queue using two stacks. |
 | 295 | ★ | Find Median from Data Stream | O(log n) / O(n) | Design a data structure to find the median of a stream of integers efficiently. |
@@ -319,7 +319,7 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 496 | ★ | Next Greater Element I | O(n) / O(n) | For each element in nums1, find the first greater element to its right in nums2. |
 | 502 | ★ | IPO |  | Maximize profit by choosing at most k projects, each requiring capital and providing profit. |
 | 503 | ★ | Next Greater Element II | O(n) / O(n) | Find the next greater element for each element in a circular array. |
-| 506 | ★ | Relative Ranks |  |  |
+| 506 | ★ | Relative Ranks |  | Assign ranks ("Gold Medal", "Silver Medal", "Bronze Medal", then 4, 5, ...) to athletes by score. |
 | 636 | ★ | Exclusive Time of Functions |  | Given a log of function start/end times, compute exclusive time per function. |
 | 678 | ★ | Valid Parenthesis String |  | Check if a string with '(', ')', '*' (wildcard) can be a valid parenthesis string. |
 | 692 | ★ | Top K Frequent Words | O(n log k) / O(n) | Find the k most frequent words (sorted by frequency, then lex). |
@@ -329,7 +329,7 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 739 | ★ | Daily Temperatures | O(n) / O(n) | Given temperatures, find the number of days until a warmer temperature. |
 | 759 | ★ | Employee Free Time |  | Find the free time intervals common to all employees given their schedules. |
 | 767 | ★ | Reorganize String | O(n log n) / O(n) | Rearrange a string so no two adjacent characters are the same. |
-| 772 | ★ | Basic Calculator III | O(n) / O(n) |  |
+| 772 | ★ | Basic Calculator III | O(n) / O(n) | Evaluate an arithmetic expression with `+`, `-`, `*`, `/`, and parentheses. |
 | 844 | ★ | Backspace String Compare |  | Check if two strings are equal after processing '#' as backspace. |
 | 856 | ★ | Score of Parentheses |  | Calculate the score of a valid parentheses string (empty=0, AB=A+B, (A)=2A or 1 if empty). |
 | 862 | ★ | Shortest Subarray with Sum at Least K |  | Find the length of the shortest subarray with sum k (k can be negative). |
@@ -338,7 +338,7 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 946 | ★ | Validate Stack Sequences |  | Check if a sequence can be produced by a series of push-pop operations on a stack. |
 | 973 | ★ | K Closest Points to Origin | O(n) avg / O(k) | Find the k points closest to the origin. |
 | 1047 | ★ | Remove All Adjacent Duplicates In String |  | Remove all adjacent duplicate characters until no more adjacent duplicates exist. |
-| 1086 | ★ | High Five |  |  |
+| 1086 | ★ | High Five |  | For each student, compute the average of their top five scores. |
 | 1190 | ★ | Reverse Substrings Between Each Pair of Parentheses |  | Reverse the substrings between each pair of parentheses (innermost first). |
 | 1209 | ★ | Remove All Adjacent Duplicates in String II |  | Remove all adjacent duplicates of length k in a string repeatedly. |
 | 1249 | ★ | Minimum Remove to Make Valid Parentheses |  | Remove the minimum number of parentheses to make the string valid. |
@@ -390,8 +390,8 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 117 | ★ | Populating Next Right Pointers in Each Node II |  | Same as 116 but for an arbitrary binary tree. |
 | 124 | ★ | Binary Tree Maximum Path Sum | O(n) / O(h) | Find the maximum path sum in a binary tree (path can start/end at any node). |
 | 129 | ★ | Sum Root to Leaf Numbers |  | Sum all root-to-leaf numbers where each path forms a number (root digit is most significant). |
-| 144 | ★ | Binary Tree Preorder Traversal |  |  |
-| 145 | ★ | Binary Tree Postorder Traversal |  |  |
+| 144 | ★ | Binary Tree Preorder Traversal |  | Return the preorder traversal (root → left → right) of a binary tree. |
+| 145 | ★ | Binary Tree Postorder Traversal |  | Return the postorder traversal (left → right → root) of a binary tree. |
 | 199 | ★ | Binary Tree Right Side View | O(n) / O(n) | Return the values visible from the right side of a binary tree (one per level). |
 | 216 | ★ | Combination Sum III | O(C(9,k)) / O(k) | Find all combinations of k distinct numbers from 1--9 that sum to n. |
 | 222 | ★ | Count Complete Tree Nodes |  | Count nodes in a complete binary tree without visiting all nodes. Faster than O(n). |
@@ -400,7 +400,7 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 235 | ★ | Lowest Common Ancestor of a Binary Search Tree |  | Find the lowest common ancestor of two nodes in a BST. |
 | 236 | ★ | Lowest Common Ancestor of a Binary Tree |  | Find the lowest common ancestor of two nodes in a binary tree (not necessarily a BST). |
 | 241 | ★ | Different Ways to Add Parentheses |  | Given an expression string, compute all possible results from different ways to parenthesize it. |
-| 250 | ★ | Count Univalue Subtrees |  |  |
+| 250 | ★ | Count Univalue Subtrees |  | Count subtrees in which all nodes share the same value. |
 | 255 | ★ | Verify Preorder Sequence in Binary Search Tree |  | Verify whether an array of integers is the correct preorder traversal of a BST. |
 | 257 | ★ | Binary Tree Paths |  | Return all root-to-leaf paths in a binary tree as strings ('1->2->5'). |
 | 267 | ★ | Palindrome Permutation II |  | Return all palindrome permutations of a string. |
@@ -409,8 +409,8 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 282 | ★ | Expression Add Operators |  | Insert operators +, -, * between digits of a string num to reach a target value. Return all expressions. |
 | 285 | ★ | Inorder Successor in BST | O(h) / O(1) | Find the inorder successor of a given node in a BST. |
 | 291 | ★ | Word Pattern II |  | Check if a string s follows a given pattern where pattern chars map to non-overlapping substrings. |
-| 293 | ★ | Flip Game |  |  |
-| 294 | ★ | Flip Game II |  |  |
+| 293 | ★ | Flip Game |  | Given a string of '+' and '-', return all states after flipping one "++" to "--". |
+| 294 | ★ | Flip Game II |  | Determine if the first player can guarantee a win in Flip Game. |
 | 297 | ★ | Serialize and Deserialize Binary Tree |  | Serialize and deserialize a binary tree to/from a string. |
 | 298 | ★ | Binary Tree Longest Consecutive Sequence |  | Find the longest consecutive sequence in a binary tree (parent to child, values increasing by 1). |
 | 301 | ★ | Remove Invalid Parentheses |  | Remove the minimum number of parentheses to make the string valid. Return all results. |
@@ -418,31 +418,31 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 314 | ★ | Binary Tree Vertical Order Traversal |  | Return the binary tree's node values ordered by column, then by row. |
 | 320 | ★ | Generalized Abbreviation |  | Return all possible abbreviations of a word. |
 | 339 | ★ | Nested List Weight Sum |  | Compute the weighted sum of a nested integer list where weight equals depth. |
-| 364 | ★ | Nested List Weight Sum II |  |  |
-| 386 | ★ | Lexicographical Numbers |  |  |
+| 364 | ★ | Nested List Weight Sum II |  | Sum each integer weighted by its inverse depth (deepest integers have weight 1). |
+| 386 | ★ | Lexicographical Numbers |  | Return integers 1..n in lexicographical order. |
 | 404 | ★ | Sum of Left Leaves |  | Find the sum of all left leaves in a binary tree. |
 | 426 | ★ | Convert Binary Search Tree to Sorted Doubly Linked List |  | Convert a BST to a sorted circular doubly linked list in-place. |
-| 429 | ★ | N-ary Tree Level Order Traversal |  |  |
+| 429 | ★ | N-ary Tree Level Order Traversal |  | Return the level order traversal of an N-ary tree. |
 | 437 | ★ | Path Sum III | O(n) / O(n) | Count paths in a binary tree that sum to a given value (path goes downward, any node to any node). |
-| 440 | ★ | K-th Smallest in Lexicographical Order |  |  |
-| 449 | ★ | Serialize and Deserialize BST |  |  |
+| 440 | ★ | K-th Smallest in Lexicographical Order |  | Find the kth smallest integer in 1..n by lexicographical order. |
+| 449 | ★ | Serialize and Deserialize BST |  | Serialize and deserialize a BST compactly. |
 | 450 | ★ | Delete Node in a BST |  | Delete a given key from a BST and return the updated root. |
 | 473 | ★ | Matchsticks to Square |  | Determine if n matchsticks can form exactly 4 equal-length sides of a square. |
 | 488 | ★ | Zuma Game |  | Find the minimum number of marbles to insert in Zuma to clear the board. |
 | 489 | ★ | Robot Room Cleaner |  | Design a robot cleaner: given room-cleaning robot with no map, clean the entire room. |
-| 491 | ★ | Increasing Subsequences |  |  |
+| 491 | ★ | Increasing Subsequences |  | Return all increasing subsequences of length ≥ 2 (input may have duplicates). |
 | 501 | ★ | Find Mode in Binary Search Tree |  | Find the mode(s) in a BST (values that appear most frequently). |
-| 508 | ★ | Most Frequent Subtree Sum |  |  |
-| 510 | ★ | Inorder Successor in BST II |  |  |
+| 508 | ★ | Most Frequent Subtree Sum |  | Find the subtree sum(s) that occur most frequently. |
+| 510 | ★ | Inorder Successor in BST II |  | Find the inorder successor of a node given only a parent pointer (no root). |
 | 513 | ★ | #513 | O(n) / O(n) | Find leftmost value in last row of binary tree. |
-| 515 | ★ | Find Largest Value in Each Tree Row |  |  |
+| 515 | ★ | Find Largest Value in Each Tree Row |  | Return the maximum value found at each level. |
 | 526 | ★ | Beautiful Arrangement |  | Count 'beautiful arrangements': n numbers placed so each divides or is divisible by its position. |
 | 536 | ★ | Construct Binary Tree from String |  | Construct a binary tree from its string representation '4(2(3)(1))(6(5))'. |
 | 538 | ★ | Convert BST to Greater Tree |  | Convert each BST node's value to the sum of all values greater than or equal to it. |
 | 543 | ★ | Diameter of Binary Tree | O(n) / O(h) | Find the diameter of a binary tree (longest path between any two nodes). |
 | 545 | ★ | Boundary of Binary Tree |  | Return the boundary of a binary tree: left boundary + leaves + right boundary (no duplicates). |
 | 549 | ★ | Binary Tree Longest Consecutive Sequence II | O(n) / O(h) | Find the longest consecutive sequence in a binary tree (can go up or down, must be consecutive). |
-| 559 | ★ | Maximum Depth of N-ary Tree |  |  |
+| 559 | ★ | Maximum Depth of N-ary Tree |  | Find the maximum depth of an N-ary tree. |
 | 563 | ★ | Binary Tree Tilt |  | Find the total tilt of a binary tree (sum of leftSum - rightSum for all nodes). |
 | 572 | ★ | Subtree of Another Tree |  | Check if tree t is a subtree of tree s. |
 | 589 | ★ | N-ary Tree Preorder Traversal |  | Return the preorder traversal of an N-ary tree. |
@@ -453,11 +453,11 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 652 | ★ | Find Duplicate Subtrees |  | Find all duplicate subtrees in a binary tree; return root of each. |
 | 653 | ★ | Two Sum IV - Input is a BST |  | Find two numbers in a BST that sum to a given target. |
 | 654 | ★ | Maximum Binary Tree |  | Build the maximum binary tree: root is array max, left from left subarray, right from right. |
-| 662 | ★ | Maximum Width of Binary Tree | O(n) / O(n) |  |
-| 671 | ★ | Second Minimum Node In a Binary Tree |  |  |
+| 662 | ★ | Maximum Width of Binary Tree | O(n) / O(n) | Return the maximum width of any level of a binary tree. Width is defined as the length between the leftmost and rightmost non-null nodes, including all the null nodes in between. |
+| 671 | ★ | Second Minimum Node In a Binary Tree |  | In a tree where each node's value is the min of its children, find the second smallest value overall. |
 | 679 | ★ | 24 Game |  | Check if 4 numbers with any order and any of +,-,*,/ can produce 24. |
 | 687 | ★ | #687 | O(n) / O(h) | Longest univalue path --- edges between nodes of equal value. |
-| 698 | ★ | Partition to K Equal Sum Subsets |  |  |
+| 698 | ★ | Partition to K Equal Sum Subsets |  | Determine if an array can be split into k subsets of equal sum. |
 | 700 | ★ | Search in a Binary Search Tree |  | Search for a value in a BST. |
 | 701 | ★ | Insert into a Binary Search Tree |  | Insert a value into a BST and return the updated root. |
 | 742 | ★ | Closest Leaf in a Binary Tree |  | Find the node in a binary tree closest to the target that is a leaf. |
@@ -467,7 +467,7 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 842 | ★ | Split Array into Fibonacci Sequence |  | Check if a string can be split into a Fibonacci-like sequence. |
 | 863 | ★ | All Nodes Distance K in Binary Tree |  | Find all nodes at distance k from a target node in a binary tree. |
 | 865 | ★ | Smallest Subtree with all the Deepest Nodes |  | Find the smallest subtree containing all the deepest leaves. |
-| 889 | ★ | Construct Binary Tree from Preorder and Postorder Traversal |  |  |
+| 889 | ★ | Construct Binary Tree from Preorder and Postorder Traversal |  | Reconstruct a binary tree from preorder and postorder traversals (any valid tree). |
 | 897 | ★ | Increasing Order Search Tree |  | Transform a BST into an increasing-order search tree (right-skewed). |
 | 919 | ★ | Complete Binary Tree Inserter |  | Design a complete binary tree inserter with O(1) insert. |
 | 932 | ★ | Beautiful Array |  | Construct a beautiful array where no three elements form an arithmetic progression. |
@@ -477,7 +477,7 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 987 | ★ | Vertical Order Traversal of a Binary Tree |  | Return node values grouped by vertical position (column), then by row, then by value. |
 | 988 | ★ | Smallest String Starting From Leaf |  | Find the lexicographically smallest string from root-to-leaf path. |
 | 993 | ★ | Cousins in Binary Tree |  | Check if two nodes in a binary tree are cousins (same depth, different parents). |
-| 998 | ★ | Maximum Binary Tree II |  |  |
+| 998 | ★ | Maximum Binary Tree II |  | Insert a value into a maximum tree built by appending the value to the original array's end. |
 | 1008 | ★ | Construct Binary Search Tree from Preorder Traversal |  | Construct a BST from its preorder traversal. |
 | 1026 | ★ | Maximum Difference Between Node and Ancestor |  | Find the maximum difference between a node and its ancestor in a binary tree. |
 | 1038 | ★ | Binary Search Tree to Greater Sum Tree |  | Convert each BST node to the sum of all nodes with a greater or equal value. |
@@ -486,9 +486,9 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 1110 | ★ | Delete Nodes And Return Forest |  | Delete given nodes from a binary tree and return the roots of the remaining forest. |
 | 1123 | ★ | Lowest Common Ancestor of Deepest Leaves |  | Find the LCA of the deepest leaves in a binary tree. |
 | 1161 | ★ | Maximum Level Sum of a Binary Tree |  | Find the level of a binary tree with the maximum sum of node values. |
-| 1214 | ★ | Two Sum BSTs |  |  |
+| 1214 | ★ | Two Sum BSTs |  | Given two BSTs and a target, decide if a value from each sums to the target. |
 | 1305 | ★ | All Elements in Two Binary Search Trees |  | Return all elements from two BSTs in sorted order. |
-| 1361 | ★ | Validate Binary Tree Nodes |  |  |
+| 1361 | ★ | Validate Binary Tree Nodes |  | Given child arrays, verify the nodes form exactly one valid binary tree. |
 | 1382 | ★ | Balance a Binary Search Tree |  | Convert a BST to a balanced BST. |
 | 1522 | ★ | Diameter of N-Ary Tree |  | Find the diameter of an N-ary tree. |
 | 1644 | ★ | Lowest Common Ancestor of a Binary Tree II |  | Find the LCA of two nodes in a binary tree where nodes may not exist. |
@@ -506,7 +506,7 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 207 | ★ | Course Schedule | O(V+E) / O(V+E) | Determine if all n courses can be finished given prerequisite pairs (detect cycle in directed graph). |
 | 210 | ★ | Course Schedule II | O(V+E) / O(V+E) | Return a valid course order given prerequisites (topological sort). Return [] if impossible. |
 | 261 | ★ | Graph Valid Tree | O((V+E)) / O(V) | Determine if n nodes and given edges form a valid undirected tree. |
-| 269 | ★ | Alien Dictionary | O(V+E) / O(V+E) |  |
+| 269 | ★ | Alien Dictionary | O(V+E) / O(V+E) | Given a sorted list of alien words, determine the order of characters in the alien alphabet. Return the order as a string, or empty string if invalid. |
 | 277 | ★ | Find the Celebrity |  | Find the celebrity in a group of n people: everyone knows them, they know nobody. |
 | 286 | ★ | Walls and Gates | O(mn) / O(mn) | Walls and Gates: fill each empty room (INF) with its distance to the nearest gate (0). |
 | 296 | ★ | Best Meeting Point |  | Find the point minimizing total Manhattan distance to a set of buildings on a grid. |
@@ -516,7 +516,7 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 323 | ★ | Number of Connected Components in an Undirected Graph | O((V+E)) / O(V) | Count connected components in an undirected graph. |
 | 329 | ★ | Longest Increasing Path in a Matrix |  | Find the length of the longest increasing path in a matrix (4-directional movement). |
 | 399 | ★ | Evaluate Division |  | Given equations and ratios, evaluate new queries (transitive division). |
-| 407 | ★ | Trapping Rain Water II |  |  |
+| 407 | ★ | Trapping Rain Water II |  | Given a 2D height map, compute how much water it can trap after raining. |
 | 417 | ★ | Pacific Atlantic Water Flow | O(mn) / O(mn) | Find all cells from which water can flow to both Pacific and Atlantic oceans (4-directional). |
 | 463 | ★ | Island Perimeter |  | Calculate the perimeter of islands in a grid. |
 | 529 | ★ | Minesweeper |  | Simulate the first click in Minesweeper: reveal cells per the game rules. |
@@ -539,14 +539,14 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 851 | ★ | Loud and Rich |  | Find the quietest person among those richer than each person. |
 | 886 | ★ | Possible Bipartition |  | Check if people can be split into two groups with no one in the same group disliking each other. |
 | 909 | ★ | Snakes and Ladders | O(n^2) / O(n^2) | Find the minimum number of dice rolls to reach the last square (snakes and ladders). |
-| 913 | ★ | Cat and Mouse |  |  |
+| 913 | ★ | Cat and Mouse |  | A mouse (start node 1) and cat (start node 2) move on a graph; mouse wins by reaching node 0, cat wins by catching the mouse, else draw. Return 0/1/2 with optimal play. |
 | 934 | ★ | Shortest Bridge |  | Find the shortest bridge between two islands in a binary matrix. |
 | 994 | ★ | Rotting Oranges | O(mn) / O(mn) | Find the minimum time to rot all fresh oranges (multi-source BFS). |
 | 1034 | ★ | Coloring A Border |  | Color cells on the border of an island (connected component) with a given color. |
 | 1091 | ★ | Shortest Path in Binary Matrix | O(mn) / O(mn) | Find the shortest path from top-left to bottom-right in a binary matrix (8-directional). |
 | 1102 | ★ | Path With Maximum Minimum Value |  | Find the path from top-left to bottom-right maximizing the minimum value on the path. |
 | 1136 | ★ | Parallel Courses |  | Find the minimum number of months to complete all courses given prerequisites and durations. |
-| 1162 | ★ | As Far from Land as Possible |  |  |
+| 1162 | ★ | As Far from Land as Possible |  | In a grid of `0` (water) and `1` (land), find the water cell whose distance to the nearest land is maximized; return that distance, or -1. |
 | 1197 | ★ | Minimum Knight Moves |  | Find the minimum knight moves from origin to a target on an infinite board. |
 | 1202 | ★ | Smallest String With Swaps |  | Swap characters at given index pairs to get the lexicographically smallest string. |
 | 1245 | ★ | Tree Diameter |  | Find the diameter of an N-ary tree (longest path between any two nodes). |
@@ -570,7 +570,7 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 252 | ★ | Meeting Rooms | O(n log n) / O(1) | Determine if a person can attend all meetings (no overlapping intervals). |
 | 253 | ★ | Meeting Rooms II | O(n log n) / O(n) | Find the minimum number of conference rooms required to hold all meetings. |
 | 274 | ★ | H-Index |  | Given citation counts, find the largest h such that h papers have citations each. |
-| 358 | ★ | Rearrange String k Distance Apart | O(n log k) / O(k) |  |
+| 358 | ★ | Rearrange String k Distance Apart | O(n log k) / O(k) | Rearrange a string so that the same characters are at least `k` distance apart. Return "" if impossible. |
 | 406 | ★ | Queue Reconstruction by Height |  | Reconstruct a queue of people given (height, k) pairs where k = taller-or-equal people in front. |
 | 435 | ★ | Non-overlapping Intervals | O(n log n) / O(1) | Find the minimum number of intervals to remove so the rest don't overlap. |
 | 452 | ★ | Minimum Number of Arrows to Burst Balloons |  | Find the minimum number of arrows to burst all balloons (each arrow goes through all balloons at that x). |
@@ -583,9 +583,9 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 763 | ★ | Partition Labels |  | Partition a string into as many parts as possible so each letter appears in at most one part. |
 | 881 | ★ | Boats to Save People |  | Find the minimum number of boats to rescue people given weight limit 2 per boat. |
 | 986 | ★ | Interval List Intersections |  | Find all intersections of two lists of intervals. |
-| 1005 | ★ | Maximize Sum Of Array After K Negations |  |  |
+| 1005 | ★ | Maximize Sum Of Array After K Negations |  | Given an array and `k`, perform exactly `k` operations, each negating one element (the same index may be chosen repeatedly), to maximize the array sum. |
 | 1094 | ★ | Car Pooling |  | Determine if a car pool trip is feasible given passenger pick-up and drop-off locations. |
-| 1272 | ★ | Remove Interval |  |  |
+| 1272 | ★ | Remove Interval |  | Given a sorted list of disjoint intervals and an interval `toBeRemoved`, return the set of intervals after removing every point that lies inside `toBeRemoved`. |
 | 1326 | ★ | Minimum Number of Taps to Open to Water a Garden |  | Find the minimum number of taps to open to water the entire garden. |
 | 1353 | ★ | Maximum Number of Events That Can Be Attended |  | Find the maximum number of events you can attend (one per day). |
 | 1488 | ★ | Avoid Flood in The City |  | Schedule drying days to prevent flooding given a list of rains. |
@@ -647,14 +647,14 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 552 | ★ | Student Attendance Record II |  | Count valid attendance records of length n (at most 1 absence, never 3+ consecutive lates). |
 | 576 | ★ | Out of Boundary Paths |  | Count paths from a given cell that leave an m×n grid in exactly maxMove steps. |
 | 583 | ★ | Delete Operation for Two Strings | O(mn) / O(mn) | Find the minimum number of deletions to make two strings equal. |
-| 600 | ★ | Non-negative Integers without Consecutive Ones |  |  |
+| 600 | ★ | Non-negative Integers without Consecutive Ones |  | Count integers in `[0, n]` whose binary representation has no two adjacent 1 bits. |
 | 629 | ★ | K Inverse Pairs Array |  | Count permutations of 1..n with exactly k inverse pairs. |
 | 638 | ★ | Shopping Offers |  | Minimize the cost to purchase items given special-offer bundles. |
-| 639 | ★ | Decode Ways II |  |  |
+| 639 | ★ | Decode Ways II |  | Count decodings of a digit string where `*` is a wildcard for digits 1-9, modulo 1e9+7. |
 | 647 | ★ | Palindromic Substrings | O(n^2) / O(1) | Count all substrings of a string that are palindromes. |
 | 650 | ★ | 2 Keys Keyboard |  | Find minimum steps to get exactly n 'A's on a screen using only Copy All and Paste. |
 | 673 | ★ | Number of Longest Increasing Subsequence |  | Find the number of longest increasing subsequences. |
-| 674 | ★ | Longest Continuous Increasing Subsequence |  |  |
+| 674 | ★ | Longest Continuous Increasing Subsequence |  | Find the length of the longest continuous (contiguous) strictly increasing subarray. |
 | 688 | ★ | Knight Probability in Chessboard |  | Find the probability that a knight stays on an n×n board after exactly k moves. |
 | 714 | ★ | Best Time to Buy and Sell Stock with Transaction Fee | O(n) / O(1) | Find the maximum profit from unlimited transactions with a transaction fee per trade. |
 | 718 | ★ | Maximum Length of Repeated Subarray |  | Find the maximum length of a subarray that appears in both arrays. |
@@ -663,20 +663,20 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 787 | ★ | Cheapest Flights Within K Stops | O(E log E) / O(V+E) | Find the cheapest flight from src to dst with at most k stops. |
 | 873 | ★ | Length of Longest Fibonacci Subsequence |  | Find the length of the longest Fibonacci-like subsequence in a sorted array. |
 | 887 | ★ | Super Egg Drop |  | Find the minimum number of moves to determine the critical floor for egg drops. |
-| 918 | ★ | Maximum Sum Circular Subarray |  |  |
+| 918 | ★ | Maximum Sum Circular Subarray |  | Find the maximum subarray sum where the array is circular (subarray may wrap around). |
 | 931 | ★ | #931 | O(mn) / O(1) | Min sum of a falling path through an n×n matrix. |
 | 935 | ★ | Knight Dialer |  | Count distinct phone numbers of length n that a knight can dial. |
 | 983 | ★ | Minimum Cost For Tickets |  | Find the minimum cost to cover all travel days using 1-, 7-, or 30-day passes. |
 | 1027 | ★ | Longest Arithmetic Subsequence |  | Find the length of the longest arithmetic subsequence in an array. |
 | 1048 | ★ | Longest String Chain |  | Find the longest string chain where each word is a predecessor of the next. |
 | 1049 | ★ | #1049 | O(n) / O(sum) | Smallest possible weight of last remaining stone. |
-| 1137 | ★ | N-th Tribonacci Number |  |  |
+| 1137 | ★ | N-th Tribonacci Number |  | Return the nth Tribonacci number (each term is the sum of the previous three). |
 | 1143 | ★ | Longest Common Subsequence | O(mn) / O(mn) | Find the length of the longest common subsequence of two strings. |
 | 1216 | ★ | Valid Palindrome III |  | Check if a string is a k-palindrome (palindrome after removing at most k chars). |
 | 1218 | ★ | Longest Arithmetic Subsequence of Given Difference |  | Find the longest arithmetic subsequence with a given difference. |
 | 1269 | ★ | Number of Ways to Stay in the Same Place After Some Steps |  | Count the number of ways to stay at position 0 after exactly n steps on an array of length arrLen. |
 | 1312 | ★ | #1312 | O(n^2) / O(n^2) | Min insertions to make string a palindrome. |
-| 1395 | ★ | Count Number of Teams |  |  |
+| 1395 | ★ | Count Number of Teams |  | Count triplets `(i, j, k)` with `i < j < k` whose ratings are strictly increasing or strictly decreasing. |
 | 1567 | ★ | Maximum Length of Subarray With Positive Product |  | Find the maximum length subarray with a positive product. |
 | 1696 | ★ | Jump Game VI |  | Find the maximum score reaching the last index, jumping 1 to k steps. |
 | 1884 | ★ | Egg Drop With 2 Eggs and N Floors |  | Find minimum moves to determine a critical floor using 2 eggs and n floors. |
@@ -692,7 +692,7 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 648 | ★ | Replace Words |  | Given a sentence and a list of roots, replace each word with its root if one exists. |
 | 676 | ★ | Implement Magic Dictionary |  | Design a data structure with addWord and search supporting '.' wildcard. |
 | 720 | ★ | Longest Word in Dictionary |  | Find the longest word in a dictionary that can be built one character at a time. |
-| 1233 | ★ | Remove Sub-Folders from the Filesystem |  |  |
+| 1233 | ★ | Remove Sub-Folders from the Filesystem |  | Given a list of folder paths, remove all sub-folders so only top-level folders remain. `"/a/b"` is a sub-folder of `"/a"`. |
 
 ## Bit Manipulation  (16 problems, 16 templated)
 
@@ -710,7 +710,7 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 338 | ★ | Counting Bits | O(n) / O(n) | Return an array counting the number of 1 bits for each integer from 0 to n. |
 | 342 | ★ | Power of Four | O(1) / O(1) | Determine if a number is a power of four. |
 | 371 | ★ | Sum of Two Integers |  | Add two integers without using + or - operators. |
-| 405 | ★ | Convert a Number to Hexadecimal |  |  |
+| 405 | ★ | Convert a Number to Hexadecimal |  | Given an integer `num`, return its hexadecimal representation as a lowercase string. For negative numbers use two's complement. |
 | 461 | ★ | Hamming Distance |  | Calculate Hamming distance between two integers (positions where bits differ). |
 | 476 | ★ | Number Complement |  | Find the complement of an integer (flip all bits up to the most significant bit). |
 | 957 | ★ | Prison Cells After N Days |  | Find the prison cell configuration after n days of simultaneous updates. |
@@ -723,9 +723,9 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 170 | ★ | Two Sum III - Data structure design |  | Design a Two Sum data structure with add() and find() operations. |
 | 173 | ★ | Binary Search Tree Iterator |  | Implement a Binary Search Tree iterator with hasNext() and next() using O(h) memory. |
 | 244 | ★ | Shortest Word Distance II |  | Design data structure for finding shortest word distance between two words in a list, supporting repeated queries. |
-| 245 | ★ | Shortest Word Distance III |  |  |
-| 251 | ★ | Flatten 2D Vector |  |  |
-| 281 | ★ | Zigzag Iterator |  |  |
+| 245 | ★ | Shortest Word Distance III |  | Given a word list and two words (which may be equal), return the shortest index distance. When `word1 == word2`, find the closest pair of distinct occurrences of that word. |
+| 251 | ★ | Flatten 2D Vector |  | Design an iterator over a 2D vector with `next()` and `hasNext()` that yields all elements in row-major order. |
+| 281 | ★ | Zigzag Iterator |  | Given two lists, design an iterator that returns elements alternating between them; when one is exhausted, continue with the other. |
 | 341 | ★ | Flatten Nested List Iterator |  | Implement an iterator that flattens a nested list of integers. |
 | 346 | ★ | Moving Average from Data Stream |  | Compute the moving average from a stream of integers given a window size. |
 | 348 | ★ | Design Tic-Tac-Toe |  | Design a Tic-Tac-Toe game that detects a winner in O(1) per move. |
@@ -752,7 +752,7 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 9 | ★ | Palindrome Number | O(log n) / O(1) | Determine whether an integer reads the same forward and backward. Negative numbers are never palindromes. |
 | 29 | ★ | Divide Two Integers |  | Divide two integers without using multiplication, division, or mod. Clamp to 32-bit signed range. |
 | 50 | ★ | Pow(x, n) | O(log n) / O(1) | Implement pow(x, n) --- raise x to the power n (n can be negative). |
-| 59 | ★ | Spiral Matrix II |  |  |
+| 59 | ★ | Spiral Matrix II |  | Given `n`, generate an `n x n` matrix filled with the numbers `1` to `n*n` in spiral order. |
 | 66 | ★ | Plus One |  | Increment a large integer represented as an array of digits. |
 | 118 | ★ | Pascal's Triangle |  | Generate Pascal's triangle up to numRows rows. |
 | 119 | ★ | Pascal's Triangle II |  | Return the kth row of Pascal's triangle using O(k) space. |
@@ -760,36 +760,36 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 172 | ★ | Factorial Trailing Zeroes |  | Count trailing zeroes in n! (count factors of 5). |
 | 202 | ★ | Happy Number |  | Determine if a number eventually reaches 1 by repeatedly replacing it with the sum of squares of its digits. |
 | 204 | ★ | Count Primes | O(n log log n) / O(n) | Count prime numbers less than a non-negative integer n. |
-| 223 | ★ | Rectangle Area |  |  |
+| 223 | ★ | Rectangle Area |  | Given the coordinates of two axis-aligned rectangles, return the total area they cover (counting the overlap once). |
 | 233 | ★ | Number of Digit One |  | Count total occurrences of digit 1 in all integers from 1 to n. |
-| 243 | ★ | Shortest Word Distance |  |  |
+| 243 | ★ | Shortest Word Distance |  | Given an array of words and two distinct words, return the shortest distance (in indices) between any occurrence of the two words. |
 | 258 | ★ | Add Digits |  | Repeatedly sum digits until a single digit remains (digital root). |
 | 263 | ★ | Ugly Number |  | Check if a number is an ugly number (prime factors only 2, 3, 5). |
 | 292 | ★ | Nim Game |  | In Nim game, you and opponent alternate removing 1--3 stones; player who takes last stone wins. Can you win? |
 | 319 | ★ | Bulb Switcher |  | n bulbs toggled by n rounds (round i toggles every ith bulb). Count bulbs on after all rounds. |
 | 326 | ★ | Power of Three |  | Check if a number is a power of three. |
-| 357 | ★ | Count Numbers with Unique Digits |  |  |
-| 365 | ★ | Water and Jug Problem |  |  |
-| 367 | ★ | Valid Perfect Square |  |  |
-| 372 | ★ | Super Pow | O(log n) / O(1) |  |
+| 357 | ★ | Count Numbers with Unique Digits |  | Given `n`, count all numbers `x` with `0 <= x < 10^n` that have no repeated digits. |
+| 365 | ★ | Water and Jug Problem |  | Given two jugs of capacities `x` and `y` and a target `target`, determine if you can measure exactly `target` liters using fill/empty/pour operations. |
+| 367 | ★ | Valid Perfect Square |  | Given a positive integer `num`, return whether it is a perfect square, without using any built-in sqrt function. |
+| 372 | ★ | Super Pow | O(log n) / O(1) | Compute `a^b mod 1337` where `b` is given as an array of digits (so `b` may be astronomically large). |
 | 397 | ★ | Integer Replacement |  | Find the minimum steps to reduce a number to 1 (even: n/2, odd: n+1 or n-1). |
 | 398 | ★ | Random Pick Index |  | Pick a random index from those matching a target value (unknown total size). |
-| 400 | ★ | Nth Digit |  |  |
+| 400 | ★ | Nth Digit |  | Given `n`, return the `n`-th digit in the infinite sequence of concatenated positive integers `123456789101112...`. |
 | 412 | ★ | Fizz Buzz |  | Print numbers 1--n, replacing multiples of 3 with 'Fizz', 5 with 'Buzz', both with 'FizzBuzz'. |
-| 441 | ★ | Arranging Coins |  |  |
-| 453 | ★ | Minimum Moves to Equal Array Elements |  |  |
-| 458 | ★ | Poor Pigs |  |  |
+| 441 | ★ | Arranging Coins |  | You have `n` coins to form a staircase where the `k`-th row has exactly `k` coins; return the number of complete rows. |
+| 453 | ★ | Minimum Moves to Equal Array Elements |  | In one move you increment `n-1` elements of the array by 1; return the minimum moves to make all elements equal. |
+| 458 | ★ | Poor Pigs |  | With `buckets` buckets one of which is poisoned, `minutesToDie` for poison to act, and `minutesToTest` total time, return the minimum pigs needed to find the poisoned bucket. |
 | 470 | ★ | Implement Rand10() Using Rand7() |  | Implement rand10() using only rand7(). |
-| 492 | ★ | Construct the Rectangle |  |  |
-| 495 | ★ | Teemo Attacking |  |  |
+| 492 | ★ | Construct the Rectangle |  | Given a target `area`, return the dimensions `[L, W]` with `L >= W`, `L * W == area`, and `L - W` minimized. |
+| 495 | ★ | Teemo Attacking |  | Given sorted attack `timeSeries` and a poison `duration`, return the total time the target is poisoned (overlaps counted once). |
 | 528 | ★ | Random Pick with Weight |  | Randomly pick an index proportional to its weight. |
-| 593 | ★ | Valid Square |  |  |
+| 593 | ★ | Valid Square |  | Given four points, return whether they form a valid square (positive area). |
 | 598 | ★ | Range Addition II |  | Count cells in the intersection of all rectangles defined by range addition operations. |
-| 633 | ★ | Sum of Square Numbers |  |  |
-| 656 | ★ | Coin Path |  |  |
-| 781 | ★ | Rabbits in Forest |  |  |
-| 789 | ★ | Escape The Ghosts |  |  |
-| 792 | ★ | Number of Matching Subsequences |  |  |
+| 633 | ★ | Sum of Square Numbers |  | Given a non-negative integer `c`, decide whether there exist non-negative integers `a, b` with `a*a + b*b == c`. |
+| 656 | ★ | Coin Path |  | Given `coins` (cost per index, `-1` blocked) and a max jump `maxJump`, find the lexicographically smallest cheapest path of indices from index 0 to the last. |
+| 781 | ★ | Rabbits in Forest |  | Each surveyed rabbit reports how many other rabbits share its color; given the `answers`, return the minimum number of rabbits in the forest. |
+| 789 | ★ | Escape The Ghosts |  | Starting at the origin with a `target`, and given `ghosts` positions, you all move simultaneously in Manhattan steps; return whether you can reach the target before any ghost catches you. |
+| 792 | ★ | Number of Matching Subsequences |  | Given a string `s` and an array of `words`, return how many words are subsequences of `s`. |
 | 829 | ★ | Consecutive Numbers Sum |  | Find the number of ways to write n as a sum of consecutive positive integers. |
 | 836 | ★ | Rectangle Overlap |  | Check if two axis-aligned rectangles overlap. |
 | 858 | ★ | Mirror Reflection |  | Given clock hands at h:m, find the minimum angle between them. |
@@ -797,14 +797,14 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 939 | ★ | Minimum Area Rectangle |  | Find the minimum area rectangle from a set of points in an axis-aligned grid. |
 | 963 | ★ | Minimum Area Rectangle II |  | Find the minimum area rectangle aligned to any angle from a set of points. |
 | 1041 | ★ | Robot Bounded In Circle |  | Determine if a robot following instructions stays within a bounded circle. |
-| 1160 | ★ | Find Words That Can Be Formed by Characters |  |  |
-| 1201 | ★ | Ugly Number III | O(log(min)) / O(1) |  |
+| 1160 | ★ | Find Words That Can Be Formed by Characters |  | Given `words` and a string `chars`, return the total length of words that can be formed using letters of `chars` (each letter used at most as often as it appears). |
+| 1201 | ★ | Ugly Number III | O(log(min)) / O(1) | Find the nth positive integer that is divisible by at least one of `a`, `b`, or `c`. |
 | 1304 | ★ | Find N Unique Integers Sum up to Zero |  | Find n unique integers that sum to zero. |
 | 1344 | ★ | Angle Between Hands of a Clock |  | Calculate the angle between clock hands at a given time. |
 | 1583 | ★ | Count Unhappy Friends |  | Count the number of unhappy friends after pairing. |
 | 1588 | ★ | Sum of All Odd Length Subarrays |  | Compute the sum of all odd-length subarray sums. |
 | 1646 | ★ | Get Maximum in Generated Array |  | Generate an array from a given sequence and return the max element. |
-| 1823 | ★ | Find the Winner of the Circular Game |  |  |
+| 1823 | ★ | Find the Winner of the Circular Game |  | `n` friends in a circle eliminate every `k`-th friend repeatedly; return the 1-indexed winner (Josephus problem). |
 | 1969 | ★ | Minimum Non-Zero Product of the Array Elements |  | Find the minimum non-zero product of array elements after swaps. |
 
 ## Concurrency (no dedicated template)  (2 problems, 0 templated)

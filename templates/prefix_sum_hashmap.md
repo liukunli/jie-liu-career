@@ -42,14 +42,14 @@ Read the two map-value modes first: **count** problems store `prefix sum → how
 - Seed `(0, 1)` = the empty prefix has been **seen once** before we start — needed for *counting* (a prefix that itself equals the target counts as one valid subarray).
 - Seed `(0, -1)` = the empty prefix lives at a **virtual index -1** — needed for *length* (length from start = `i - (-1) = i + 1`).
 
-| # | Name | Description | Intuition | Variation |
-|---|---|---|---|---|
-| 560 | Subarray Sum Equals K | Count the number of subarrays whose sum equals k. | A subarray summing to k ends here for every earlier prefix equal to `sum - k`; count those prefixes. | Standard |
-| 325 | Maximum Size Subarray Sum Equals k | Find the length of the longest subarray summing to k. | Same complement as #560, but store the earliest index so `i - p` gives the longest subarray summing to k. | Standard |
-| 974 | Subarray Sums Divisible by K | Count subarrays whose sum is divisible by k. | Two prefixes with the same remainder bracket a subarray divisible by k; count how many share each remainder. | Standard |
-| 523 | Continuous Subarray Sum | Return true if any subarray of length ≥ 2 has sum divisible by k. | Same-remainder pair means a divisible subarray; store the earliest index so the gap `i - p >= 2` proves length ≥ 2. | Standard |
-| 437 | Path Sum III | Count the number of paths in a binary tree that sum to targetSum. Paths can start and end at any node but must go downward. | Apply the #560 prefix-count idea along each root-to-node path; undo the prefix on the way back up so branches stay independent. | Standard |
-| 1 | Two Sum | Given an array and a `target`, return the indices of the two numbers that add up to `target`. | Same "have I seen the complement before?" idea as prefix-sum, but the key is the raw value, so one pass finds the pair. | look up complement, not prefix sum |
+| # | Name | Description | Intuition | Time | Space | Key Implementation |
+|---|---|---|---|---|---|---|
+| 560 | Subarray Sum Equals K | Count the number of subarrays whose sum equals k. | A subarray summing to k ends here for every earlier prefix equal to `sum - k`; count those prefixes. | O(n) | O(n) | Standard |
+| 325 | Maximum Size Subarray Sum Equals k | Find the length of the longest subarray summing to k. | Same complement as #560, but store the earliest index so `i - p` gives the longest subarray summing to k. | O(n) | O(n) | Standard |
+| 974 | Subarray Sums Divisible by K | Count subarrays whose sum is divisible by k. | Two prefixes with the same remainder bracket a subarray divisible by k; count how many share each remainder. | O(n) | O(min(n, k)) | Standard |
+| 523 | Continuous Subarray Sum | Return true if any subarray of length ≥ 2 has sum divisible by k. | Same-remainder pair means a divisible subarray; store the earliest index so the gap `i - p >= 2` proves length ≥ 2. | O(n) | O(min(n, k)) | Standard |
+| 437 | Path Sum III | Count the number of paths in a binary tree that sum to targetSum. Paths can start and end at any node but must go downward. | Apply the #560 prefix-count idea along each root-to-node path; undo the prefix on the way back up so branches stay independent. | O(n) | O(h) (recursion + path-prefix map, h = tree height) | Standard |
+| 1 | Two Sum | Given an array and a `target`, return the indices of the two numbers that add up to `target`. | Same "have I seen the complement before?" idea as prefix-sum, but the key is the raw value, so one pass finds the pair. | O(n) | O(n) | look up complement, not prefix sum |
 
 ---
 
