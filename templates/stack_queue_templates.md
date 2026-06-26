@@ -11,11 +11,11 @@ Four data structures — each with a canonical template and representative probl
 | 20 | Valid Parentheses | Stack | Bracket matching | pop on close bracket | boolean |
 | 155 | Min Stack | Stack + aux stack | Mirror min alongside values | always pop both | int (min) |
 | 394 | Decode String | Two stacks | Push on `[`, expand on `]` | pop on `]` | String |
-| 739 | Daily Temperatures | Mono dec stack | Next greater temp | curr > top | int[] |
-| 496 | Next Greater Element I | Mono dec stack + Map | NGE across two arrays | curr > top | int[] |
-| 84 | Largest Rectangle | Mono inc stack | Next smaller bar → compute width | curr < top | int (area) |
-| 42 | Trapping Rain Water | Mono inc stack | Valley between bars | curr > top | int (water) |
-| 239 | Sliding Window Max | Mono dec deque | Window max at front | pollLast when curr ≥ back | int[] |
+| 739 | Daily Temperatures | Mono dec stack | Next greater temp | current > top | int[] |
+| 496 | Next Greater Element I | Mono dec stack + Map | NGE across two arrays | current > top | int[] |
+| 84 | Largest Rectangle | Mono inc stack | Next smaller bar → compute width | current < top | int (area) |
+| 42 | Trapping Rain Water | Mono inc stack | Valley between bars | current > top | int (water) |
+| 239 | Sliding Window Max | Mono dec deque | Window max at front | pollLast when current ≥ back | int[] |
 | 1046 | Last Stone Weight | Max-heap | Greedily smash top 2 | always poll 2 | int |
 | 347 | Top K Frequent | Min-heap size k | Evict smallest when size > k | size > k → poll | int[] |
 | 295 | Find Median | Max-heap + Min-heap | Lower/upper halves | rebalance after each add | double |
@@ -339,7 +339,7 @@ class Solution {
 
 ```
                     #84 Largest Rectangle       #42 Trapping Rain Water
-Pop when:           h[curr] < h[top]            h[curr] > h[top]
+Pop when:           h[current] < h[top]            h[current] > h[top]
 Stack order:        increasing (bottom→top)      increasing (bottom→top)
 Popped bar role:    height of rectangle          floor of the trapped water valley
 Width from:         (i - stack.peek() - 1)       (i - stack.peek() - 1)
@@ -762,10 +762,10 @@ class Solution {
         for (int i = 0; i < Math.min(nums1.length, k); i++)
             pq.offer(new int[]{i, 0});              // ← VARIATION: seed with (i, 0) for each row
         while (!pq.isEmpty() && result.size() < k) {
-            int[] curr = pq.poll();
-            result.add(Arrays.asList(nums1[curr[0]], nums2[curr[1]]));
-            if (curr[1] + 1 < nums2.length)
-                pq.offer(new int[]{curr[0], curr[1] + 1});  // ← VARIATION: expand j in same row
+            int[] current = pq.poll();
+            result.add(Arrays.asList(nums1[current[0]], nums2[current[1]]));
+            if (current[1] + 1 < nums2.length)
+                pq.offer(new int[]{current[0], current[1] + 1});  // ← VARIATION: expand j in same row
         }
         return result;
     }

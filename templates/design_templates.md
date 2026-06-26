@@ -98,31 +98,31 @@ public class Solution {
 // CacheNode for doubly linked list (named CacheNode to distinguish from ListNode contexts)
 class CacheNode {
     int key, value;
-    CacheNode prev, next;
+    CacheNode previous, next;
     CacheNode(int key, int value) { this.key = key; this.value = value; }
 }
 
 // ── SENTINEL NODES ── head (MRU side) ↔ ... ↔ tail (LRU side)
 CacheNode head = new CacheNode(0, 0), tail = new CacheNode(0, 0);
 // Initialize: head <-> tail
-head.next = tail; tail.prev = head;
+head.next = tail; tail.previous = head;
 
 // ── REMOVE NODE ──
 void remove(CacheNode node) {
-    node.prev.next = node.next;
-    node.next.prev = node.prev;
+    node.previous.next = node.next;
+    node.next.previous = node.previous;
 }
 
 // ── INSERT AFTER HEAD (= mark as MRU) ──
 void insertAfterHead(CacheNode node) {
     node.next = head.next;
-    node.prev = head;
-    head.next.prev = node;
+    node.previous = head;
+    head.next.previous = node;
     head.next = node;
 }
 
-// ── LRU EVICTION ── tail.prev is LRU
-CacheNode lru = tail.prev;
+// ── LRU EVICTION ── tail.previous is LRU
+CacheNode lru = tail.previous;
 remove(lru);
 map.remove(lru.key);
 ```
@@ -165,7 +165,7 @@ class LRUCache {
     public LRUCache(int capacity) {
         this.capacity = capacity;
         head.next = tail;
-        tail.prev = head;
+        tail.previous = head;
     }
 
     public int get(int key) {
@@ -184,7 +184,7 @@ class LRUCache {
             insertAfterHead(node);      // ← update and move to MRU position
         } else {
             if (map.size() == capacity) {
-                CacheNode lru = tail.prev;   // ← LRU is just before tail sentinel
+                CacheNode lru = tail.previous;   // ← LRU is just before tail sentinel
                 remove(lru);
                 map.remove(lru.key);
             }
@@ -195,20 +195,20 @@ class LRUCache {
     }
 
     private void remove(CacheNode node) {
-        node.prev.next = node.next;
-        node.next.prev = node.prev;
+        node.previous.next = node.next;
+        node.next.previous = node.previous;
     }
 
     private void insertAfterHead(CacheNode node) {
         node.next = head.next;
-        node.prev = head;
-        head.next.prev = node;
+        node.previous = head;
+        head.next.previous = node;
         head.next = node;
     }
 
     static class CacheNode {
         int key, value;
-        CacheNode prev, next;
+        CacheNode previous, next;
         CacheNode(int key, int value) { this.key = key; this.value = value; }
     }
 }
@@ -337,7 +337,7 @@ class RandomizedSet {
 ## Key Invariants
 
 ```
-LRU:  head.next = MRU,  tail.prev = LRU
+LRU:  head.next = MRU,  tail.previous = LRU
 LFU:  minFreq always points to the smallest existing frequency bucket
       LinkedHashSet preserves insertion order → iterator().next() = LRU within bucket
 RandomizedSet: list[map[val]] == val at all times (after swap, update the map for the swapped key)

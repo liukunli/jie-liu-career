@@ -159,7 +159,7 @@ class Solution {
         a %= MOD;
         int result = 1;
         for (int digit : b)
-            result = powmod(result, 10) * powmod(a, digit) % MOD;  // ← VARIATION: digit-by-digit, (prev)^10 * a^digit
+            result = powmod(result, 10) * powmod(a, digit) % MOD;  // ← VARIATION: digit-by-digit, (previous)^10 * a^digit
         return result;
     }
     private int powmod(int x, int k) {

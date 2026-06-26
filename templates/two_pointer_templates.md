@@ -80,14 +80,14 @@ class Solution {
 class Solution {
     public List<List<Integer>> threeSum(int[] nums) {
         Arrays.sort(nums);
-        List<List<Integer>> res = new ArrayList<>();
+        List<List<Integer>> result = new ArrayList<>();
         for (int a = 0; a < nums.length - 2; a++) {
             if (a > 0 && nums[a] == nums[a - 1]) continue;   // skip dup a
             int i = a + 1, j = nums.length - 1;
             while (i < j) {
                 int sum = nums[a] + nums[i] + nums[j];
                 if (sum == 0) {
-                    res.add(Arrays.asList(nums[a], nums[i++], nums[j--]));
+                    result.add(Arrays.asList(nums[a], nums[i++], nums[j--]));
                     // dup-skip after a hit — see "Duplicate-skip Cheat Sheet" below
                     while (i < j && nums[i] == nums[i - 1]) i++;  // skip dup i
                     while (i < j && nums[j] == nums[j + 1]) j--;  // skip dup j
@@ -98,7 +98,7 @@ class Solution {
                 }
             }
         }
-        return res;
+        return result;
     }
 }
 ```
@@ -117,7 +117,7 @@ class Solution {
 class Solution {
     public List<List<Integer>> fourSum(int[] nums, int target) {
         Arrays.sort(nums);
-        List<List<Integer>> res = new ArrayList<>();
+        List<List<Integer>> result = new ArrayList<>();
         int n = nums.length;
         for (int a = 0; a < n - 3; a++) {
             if (a > 0 && nums[a] == nums[a - 1]) continue;
@@ -127,7 +127,7 @@ class Solution {
                 while (i < j) {
                     long sum = (long) nums[a] + nums[b] + nums[i] + nums[j];
                     if (sum == target) {
-                        res.add(Arrays.asList(nums[a], nums[b], nums[i++], nums[j--]));
+                        result.add(Arrays.asList(nums[a], nums[b], nums[i++], nums[j--]));
                         // dup-skip after a hit — see "Duplicate-skip Cheat Sheet" below
                         while (i < j && nums[i] == nums[i - 1]) i++;
                         while (i < j && nums[j] == nums[j + 1]) j--;
@@ -139,7 +139,7 @@ class Solution {
                 }
             }
         }
-        return res;
+        return result;
     }
 }
 ```

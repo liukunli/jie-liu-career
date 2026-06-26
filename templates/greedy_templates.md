@@ -11,9 +11,9 @@ Two interval templates plus non-interval greedy patterns.
 | 435 | Non-overlapping Intervals | end | keep earliest-ending non-overlapping | `start >= lastEnd` → keep | int (removed count) |
 | 452 | Min Arrows to Burst Balloons | end | one arrow covers all overlapping | `start > arrowEnd` → new arrow | int (arrows) |
 | 646 | Max Length Pair Chain | end | pick longest non-overlapping chain | `pair[0] > lastEnd` → pick | int (chain length) |
-| 56 | Merge Intervals | start | extend or start fresh | `last.end < curr.start` → new | int[][] |
-| 57 | Insert Interval | (no sort) | 3 phases: before / overlap / after | `curr.end < new.start` or `curr.start > new.end` | int[][] |
-| 253 | Meeting Rooms II | start | reuse room if meeting already ended | `pq.peek() <= curr.start` → reuse | int (rooms) |
+| 56 | Merge Intervals | start | extend or start fresh | `last.end < current.start` → new | int[][] |
+| 57 | Insert Interval | (no sort) | 3 phases: before / overlap / after | `current.end < new.start` or `current.start > new.end` | int[][] |
+| 253 | Meeting Rooms II | start | reuse room if meeting already ended | `pq.peek() <= current.start` → reuse | int (rooms) |
 | 55 | Jump Game | — | track max reachable index | `i > maxReach` → stuck | boolean |
 | 45 | Jump Game II | — | BFS layers: extend window to farthest | `i == currentEnd` → jump | int (jumps) |
 | 763 | Partition Labels | — | track last occurrence of each char | `i == end` → close partition | List<int> |
@@ -205,7 +205,7 @@ class Solution {
                 continue;
             }
             int[] last = result.get(result.size() - 1);
-            if (last[1] < interval[0]) {                         // no overlap (last.end < cur.start)
+            if (last[1] < interval[0]) {                         // no overlap (last.end < current.start)
                 result.add(interval);
             } else {
                 last[1] = Math.max(last[1], interval[1]);        // overlap → extend END
@@ -231,7 +231,7 @@ class Solution {
             }
             int[] last = result.get(result.size() - 1);
             int[] current = intervals[i];
-            if (last[0] > current[1]) {                          // no overlap (last.start > cur.end)
+            if (last[0] > current[1]) {                          // no overlap (last.start > current.end)
                 result.add(current);
             } else {
                 last[0] = Math.min(last[0], current[0]);         // overlap → extend START
@@ -441,7 +441,7 @@ class Solution {
     public boolean canAttendMeetings(int[][] intervals) {
         Arrays.sort(intervals, (a, b) -> a[0] - b[0]);    // ← sort by start time
         for (int i = 1; i < intervals.length; i++)
-            if (intervals[i][0] < intervals[i-1][1]) return false;  // ← VARIATION: start < prev end = overlap
+            if (intervals[i][0] < intervals[i-1][1]) return false;  // ← VARIATION: start < previous end = overlap
         return true;
     }
 }

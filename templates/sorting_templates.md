@@ -267,25 +267,25 @@ class Solution {
     private void quickSelect(int[][] pts, int start, int end, int k) {
         if (end - start <= k) return;
         long pivot = dist(pts[start + (end - start) / 2]);
-        int i = start, cur = start, j = end - 1;
-        while (cur <= j) {
-            long d = dist(pts[cur]);
+        int i = start, current = start, j = end - 1;
+        while (current <= j) {
+            long d = dist(pts[current]);
             if (d < pivot) {
-                swap(pts, cur++, i++);
+                swap(pts, current++, i++);
             } else if (d == pivot) {
-                cur++;
+                current++;
             } else {
-                swap(pts, cur, j--);
+                swap(pts, current, j--);
             }
         }
-        // [start,i) < pivot, [i,cur) == pivot, [cur,end) > pivot
-        int less = i - start, equal = cur - i;
+        // [start,i) < pivot, [i,current) == pivot, [current,end) > pivot
+        int less = i - start, equal = current - i;
         if (k <= less) {
             quickSelect(pts, start, i, k);
         } else if (k <= less + equal) {
-            return;           // enough elements in [start,cur)
+            return;           // enough elements in [start,current)
         } else {
-            quickSelect(pts, cur, end, k - less - equal);
+            quickSelect(pts, current, end, k - less - equal);
         }
     }
     private long dist(int[] p) { return (long) p[0]*p[0] + (long) p[1]*p[1]; }
@@ -319,18 +319,18 @@ class Solution {
         return merge(left, right);
     }
     private ListNode merge(ListNode a, ListNode b) {
-        ListNode dummy = new ListNode(0), cur = dummy;
+        ListNode dummy = new ListNode(0), current = dummy;
         while (a != null && b != null) {
             if (a.val <= b.val) {
-                cur.next = a;
+                current.next = a;
                 a = a.next;
             } else {
-                cur.next = b;
+                current.next = b;
                 b = b.next;
             }
-            cur = cur.next;
+            current = current.next;
         }
-        cur.next = (a != null) ? a : b;
+        current.next = (a != null) ? a : b;
         return dummy.next;
     }
 }
@@ -376,9 +376,9 @@ class Solution {
         indices = new int[n];
         for (int i = 0; i < n; i++) indices[i] = i;
         mergeSort(nums, 0, n, new int[n]);
-        List<Integer> res = new ArrayList<>();
-        for (int r : result) res.add(r);
-        return res;
+        List<Integer> output = new ArrayList<>();
+        for (int r : result) output.add(r);
+        return output;
     }
     private void mergeSort(int[] nums, int start, int end, int[] temp) {
         if (end - start <= 1) return;
@@ -415,15 +415,15 @@ class Solution {
 class Solution {
     public int[][] merge(int[][] intervals) {
         Arrays.sort(intervals, (a, b) -> a[0] - b[0]);
-        List<int[]> res = new ArrayList<>();
+        List<int[]> result = new ArrayList<>();
         for (int[] iv : intervals) {
-            if (res.isEmpty() || res.get(res.size() - 1)[1] < iv[0]) {
-                res.add(iv);
+            if (result.isEmpty() || result.get(result.size() - 1)[1] < iv[0]) {
+                result.add(iv);
             } else {
-                res.get(res.size() - 1)[1] = Math.max(res.get(res.size() - 1)[1], iv[1]);
+                result.get(result.size() - 1)[1] = Math.max(result.get(result.size() - 1)[1], iv[1]);
             }
         }
-        return res.toArray(new int[0][]);
+        return result.toArray(new int[0][]);
     }
 }
 ```

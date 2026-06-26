@@ -138,8 +138,8 @@ dist[src] = 0;
 PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[1] - b[1]);  // min-heap on cost
 pq.offer(new int[]{src, 0});
 while (!pq.isEmpty()) {
-    int[] curr = pq.poll();
-    int node = curr[0], d = curr[1];
+    int[] current = pq.poll();
+    int node = current[0], d = current[1];
     if (d > dist[node]) continue;   // stale entry
     for (int[] nb : graph.get(node)) {
         int next = nb[0], w = nb[1];
@@ -181,8 +181,8 @@ PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[1] - b[1]);
 pq.offer(new int[]{0, 0});
 int total = 0;
 while (!pq.isEmpty()) {
-    int[] curr = pq.poll();
-    int node = curr[0], cost = curr[1];
+    int[] current = pq.poll();
+    int node = current[0], cost = current[1];
     if (inMST[node]) continue;
     inMST[node] = true;
     total += cost;
@@ -230,9 +230,9 @@ class Solution {
             minutes++;
             int size = queue.size();
             for (int i = 0; i < size; i++) {
-                int[] curr = queue.poll();
+                int[] current = queue.poll();
                 for (int d = 0; d < 4; d++) {
-                    int nr = curr[0]+dr[d], nc = curr[1]+dc[d];
+                    int nr = current[0]+dr[d], nc = current[1]+dc[d];
                     if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && grid[nr][nc] == 1) {
                         grid[nr][nc] = 2;
                         queue.offer(new int[]{nr, nc});
@@ -270,12 +270,12 @@ class Solution {
             }
         int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
         while (!queue.isEmpty()) {
-            int[] curr = queue.poll();
+            int[] current = queue.poll();
             for (int d = 0; d < 4; d++) {
-                int nr = curr[0]+dr[d], nc = curr[1]+dc[d];
+                int nr = current[0]+dr[d], nc = current[1]+dc[d];
                 if (nr >= 0 && nr < rows && nc >= 0 && nc < cols
-                        && dist[curr[0]][curr[1]] + 1 < dist[nr][nc]) {
-                    dist[nr][nc] = dist[curr[0]][curr[1]] + 1;
+                        && dist[current[0]][current[1]] + 1 < dist[nr][nc]) {
+                    dist[nr][nc] = dist[current[0]][current[1]] + 1;
                     queue.offer(new int[]{nr, nc});
                 }
             }
@@ -348,9 +348,9 @@ class Solution {
                 }
         int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
         while (!queue.isEmpty()) {
-            int[] curr = queue.poll();
+            int[] current = queue.poll();
             for (int d = 0; d < 4; d++) {
-                int nr = curr[0]+dr[d], nc = curr[1]+dc[d];
+                int nr = current[0]+dr[d], nc = current[1]+dc[d];
                 if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && board[nr][nc] == 'O') {
                     board[nr][nc] = 'S';
                     queue.offer(new int[]{nr, nc});
@@ -401,11 +401,11 @@ class Solution {
     }
     private void bfs(int[][] h, Queue<int[]> queue, boolean[][] visited) {
         while (!queue.isEmpty()) {
-            int[] curr = queue.poll();
+            int[] current = queue.poll();
             for (int d = 0; d < 4; d++) {
-                int nr = curr[0]+dr[d], nc = curr[1]+dc[d];
+                int nr = current[0]+dr[d], nc = current[1]+dc[d];
                 if (nr >= 0 && nr < h.length && nc >= 0 && nc < h[0].length
-                        && !visited[nr][nc] && h[nr][nc] >= h[curr[0]][curr[1]]) {
+                        && !visited[nr][nc] && h[nr][nc] >= h[current[0]][current[1]]) {
                     visited[nr][nc] = true;
                     queue.offer(new int[]{nr, nc});
                 }
@@ -675,8 +675,8 @@ class Solution {
         PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[1] - b[1]);
         pq.offer(new int[]{k, 0});
         while (!pq.isEmpty()) {
-            int[] curr = pq.poll();
-            int node = curr[0], d = curr[1];
+            int[] current = pq.poll();
+            int node = current[0], d = current[1];
             if (d > dist[node]) continue;
             for (int[] nb : graph.get(node)) {
                 int next = nb[0], w = nb[1];
@@ -749,9 +749,9 @@ class Solution {
         PriorityQueue<double[]> pq = new PriorityQueue<>((a, b) -> Double.compare(b[1], a[1])); // max-heap
         pq.offer(new double[]{start, 1.0});
         while (!pq.isEmpty()) {
-            double[] curr = pq.poll();
-            int node = (int) curr[0];
-            double p = curr[1];
+            double[] current = pq.poll();
+            int node = (int) current[0];
+            double p = current[1];
             if (node == end) return p;
             if (p < prob[node]) continue;
             for (double[] nb : graph.get(node)) {
@@ -843,8 +843,8 @@ class Solution {
         pq.offer(new int[]{0, 0});
         int total = 0;
         while (!pq.isEmpty()) {
-            int[] curr = pq.poll();
-            int node = curr[0], cost = curr[1];
+            int[] current = pq.poll();
+            int node = current[0], cost = current[1];
             if (inMST[node]) continue;
             inMST[node] = true;
             total += cost;
@@ -884,8 +884,8 @@ class Solution {
 ## Stale Entry Pattern (Dijkstra)
 
 ```java
-int[] curr = pq.poll();
-int node = curr[0], d = curr[1];
+int[] current = pq.poll();
+int node = current[0], d = current[1];
 if (d > dist[node]) continue;   // ← this node was already relaxed to a better distance
 ```
 
@@ -913,8 +913,8 @@ class Solution {
         pq.offer(new int[]{0, 0, 0});   // [effort, row, col]
         int[][] dirs = {{-1,0},{1,0},{0,-1},{0,1}};
         while (!pq.isEmpty()) {
-            int[] curr = pq.poll();
-            int e = curr[0], r = curr[1], c = curr[2];
+            int[] current = pq.poll();
+            int e = current[0], r = current[1], c = current[2];
             if (r == m-1 && c == n-1) return e;
             if (e > effort[r][c]) continue;             // stale entry
             for (int[] d : dirs) {
@@ -1180,10 +1180,10 @@ class Solution {
         while (!queue.isEmpty()) {
             int size = queue.size();
             for (int s = 0; s < size; s++) {
-                int curr = queue.poll();
-                if (curr == n * n) return moves;
-                for (int k = 1; k <= 6 && curr + k <= n * n; k++) {
-                    int next = curr + k;
+                int current = queue.poll();
+                if (current == n * n) return moves;
+                for (int k = 1; k <= 6 && current + k <= n * n; k++) {
+                    int next = current + k;
                     int[] rc = toCoord(next, n);            // ← VARIATION: number → zigzag coordinate
                     if (board[rc[0]][rc[1]] != -1) next = board[rc[0]][rc[1]];  // snake/ladder
                     if (!visited[next]) { visited[next] = true; queue.offer(next); }

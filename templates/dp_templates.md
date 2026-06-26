@@ -222,9 +222,9 @@ class Solution {
     private int rob(int[] nums, int i, int j) {
         int prev2 = 0, prev1 = 0;
         for (int k = i; k <= j; k++) {
-            int curr = Math.max(prev1, prev2 + nums[k]);
+            int current = Math.max(prev1, prev2 + nums[k]);
             prev2 = prev1;
-            prev1 = curr;
+            prev1 = current;
         }
         return prev1;
     }
