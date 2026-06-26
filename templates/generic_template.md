@@ -67,6 +67,166 @@ if (condition) {
 
 ---
 
+## Common Java API Cheat-Sheet
+
+The APIs used over and over across these templates. Grouped by what you reach for.
+
+### Initialize the core structures
+
+```java
+Map<Integer, Integer> map   = new HashMap<>();      // key → value
+Map<Integer, List<Integer>> adj = new HashMap<>();  // adjacency / buckets
+Set<Integer> set            = new HashSet<>();       // membership
+List<Integer> list          = new ArrayList<>();     // dynamic array
+
+Deque<Integer> stack = new ArrayDeque<>();           // STACK: push / pop / peek
+Deque<Integer> queue = new ArrayDeque<>();           // QUEUE: offer / poll / peek
+                                                     // (ArrayDeque beats java.util.Stack / LinkedList)
+PriorityQueue<Integer> minHeap = new PriorityQueue<>();                       // min-heap (default)
+PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder()); // max-heap
+PriorityQueue<int[]>   pq      = new PriorityQueue<>((a, b) -> a[1] - b[1]);  // by field, min-first
+
+TreeMap<Integer, Integer> tmap = new TreeMap<>();    // sorted keys: floor/ceiling/first/last
+TreeSet<Integer> tset          = new TreeSet<>();    // sorted set: floor/ceiling/higher/lower
+LinkedHashSet<Integer> lset    = new LinkedHashSet<>(); // insertion-ordered set (LFU buckets)
+Random rand                    = new Random();       // rand.nextInt(n) → 0..n-1 (RandomizedSet)
+
+int[]      arr  = new int[n];                        // defaults to 0
+boolean[]  seen = new boolean[n];                    // defaults to false
+int[][]    grid = new int[m][n];                     // 2D, all 0
+int[][]    dirs = {{-1,0},{1,0},{0,-1},{0,1}};       // UP, DOWN, LEFT, RIGHT
+```
+
+### Map / Set / List operations
+
+```java
+// ── Map ──
+map.put(k, v);
+map.getOrDefault(k, 0);                              // safe read with default
+map.merge(k, 1, Integer::sum);                       // ← counting frequency (most common)
+map.computeIfAbsent(k, x -> new ArrayList<>()).add(v); // ← build adjacency / buckets
+map.putIfAbsent(k, v);                               // ← write only first occurrence (keep earliest index)
+map.containsKey(k);  map.remove(k);
+for (Map.Entry<Integer,Integer> e : map.entrySet()) { e.getKey(); e.getValue(); }
+map.keySet();  map.values();
+
+// ── Set ──
+set.add(x);  set.contains(x);  set.remove(x);
+
+// ── List ──
+list.add(x);  list.get(i);  list.set(i, x);
+list.remove(list.size() - 1);                        // ← pop in backtracking
+list.size();  list.isEmpty();  list.addAll(other);
+Collections.sort(list);                              // ascending
+list.sort((a, b) -> b - a);                          // custom / descending
+Collections.reverse(list);                           // ← reverse path after building it backwards
+```
+
+### Stack / Queue / Heap (all via the same two ops)
+
+```java
+// Deque as STACK (LIFO)             // Deque as QUEUE (FIFO)
+stack.push(x);                        queue.offer(x);
+int top = stack.pop();                int head = queue.poll();
+int look = stack.peek();              int look = queue.peek();
+stack.isEmpty();                      queue.isEmpty();
+
+// Deque BOTH ENDS — needed for the MONOTONE DEQUE (sliding-window max/min)
+// and for addFirst-style level building (zigzag BFS).
+deque.offerLast(x);   deque.pollLast();   deque.peekLast();    // back  (push/pop/peek tail)
+deque.offerFirst(x);  deque.pollFirst();  deque.peekFirst();   // front (push/pop/peek head)
+deque.addLast(x);     deque.addFirst(x);                       // same as offer*, throw if capacity-bound
+
+// PriorityQueue (heap)
+pq.offer(x);  int best = pq.poll();  int look = pq.peek();  pq.size();
+pq.remove(x); // ← O(n) removal of an arbitrary element (lazy-deletion alternative in #480)
+```
+
+### Integer / Long limits & overflow-safe idioms
+
+```java
+Integer.MAX_VALUE;   //  2147483647  (2^31 − 1)   — sentinel for "min so far"
+Integer.MIN_VALUE;   // -2147483648  (−2^31)      — sentinel for "max so far"
+Long.MAX_VALUE;      // when sums can overflow int, accumulate in long
+int mid = i + (j - i) / 2;            // ← avoid (i + j) overflow in binary search
+Integer.compare(a, b);                // ← overflow-safe comparator; use instead of (a - b)
+(a, b) -> Integer.compare(a[1], b[1]);// ← safe PriorityQueue/Arrays.sort comparator
+```
+
+### Char ↔ int ↔ String conversions
+
+```java
+ch - 'a';                            // 'a'..'z'  → 0..25   (lowercase bucket index)
+ch - '0';                            // '0'..'9'  → 0..9    (digit value)
+(char) ('a' + i);                    // 0..25 → 'a'..'z'
+num = num * 10 + (ch - '0');         // ← build a number digit by digit
+
+Integer.parseInt("123");             // String → int (throws on bad input)
+Integer.valueOf(123);                // int → Integer (boxed)
+String.valueOf(123);                 // int/char/etc → String
+Character.getNumericValue('7');      // char → 7
+
+// char classification
+Character.isDigit(ch);  Character.isLetter(ch);  Character.isLetterOrDigit(ch);
+Character.isWhitespace(ch);  Character.toLowerCase(ch);  Character.toUpperCase(ch);
+```
+
+### String & StringBuilder
+
+```java
+s.length();  s.charAt(i);  s.substring(i, j);        // [i, j)
+s.toCharArray();  s.split(" ");  s.equals(t);  s.compareTo(t);
+s.indexOf("ab");  s.isEmpty();
+
+StringBuilder sb = new StringBuilder();
+sb.append(x);  sb.reverse();  sb.toString();
+sb.charAt(i);  sb.setCharAt(i, c);  sb.deleteCharAt(i);  sb.length();
+String.join(",", list);                              // list → "a,b,c"
+```
+
+### Arrays utilities
+
+```java
+Arrays.sort(arr);                                    // ascending in place
+Arrays.sort(intervals, (a, b) -> a[0] - b[0]);       // 2D by first field
+Arrays.fill(dp, Integer.MAX_VALUE);                  // seed a dp/dist array
+Arrays.equals(window, need);                         // ← element-wise array compare (anagram check)
+Arrays.copyOf(arr, len);  Arrays.copyOfRange(arr, i, j);
+System.arraycopy(src, srcPos, dst, dstPos, len);     // ← fast block copy (merge step)
+Arrays.asList(1, 2, 3);                              // fixed-size List view
+int sum = Arrays.stream(arr).sum();
+int max = Arrays.stream(arr).max().getAsInt();
+
+// List<Integer> ↔ int[]
+int[] a = list.stream().mapToInt(Integer::intValue).toArray();
+List<Integer> l = Arrays.stream(a).boxed().collect(Collectors.toList());
+```
+
+### Math & bit operations
+
+```java
+Math.max(a, b);  Math.min(a, b);  Math.abs(x);
+Math.pow(a, b);  Math.sqrt(x);  Math.ceil(x);  Math.floor(x);
+
+n & (n - 1);          // clear lowest set bit
+n & (-n);             // isolate lowest set bit
+1 << i;               // bit i set  (use 1L << i for i ≥ 31)
+(n >> i) & 1;         // read bit i
+Integer.bitCount(n);  // # of set bits
+Integer.toBinaryString(n);
+```
+
+### Sorted-structure navigation (TreeMap / TreeSet)
+
+```java
+tmap.firstKey();  tmap.lastKey();
+tmap.floorKey(x);    // largest key ≤ x      tmap.ceilingKey(x);  // smallest key ≥ x
+tmap.lowerKey(x);    // largest key < x      tmap.higherKey(x);   // smallest key > x
+tset.floor(x);  tset.ceiling(x);  tset.lower(x);  tset.higher(x);  tset.first();  tset.last();
+```
+
+---
+
 ## Template Index
 
 | File | Category | Core Pattern |
