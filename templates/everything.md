@@ -12648,14 +12648,14 @@ class Solution {
 # BFS Templates — Tree
 
 Core structure: `Queue<TreeNode> queue = new ArrayDeque<>()`.  
-The only decision: do you need to know **which level** a node is on?
+One template: snapshot the level size, then drain exactly that many nodes per level.
 
 ---
 
-## The Two Templates
+## The Template — Level-Aware BFS
 
 ```java
-// 1. LEVEL-AWARE PROCESSING — snapshot size to make per-level decisions
+// LEVEL-AWARE PROCESSING — snapshot size to make per-level decisions
 // MENTAL MODEL: the queue holds exactly one full level; freeze its size, then drain just that many.
 // WHEN: "level by level", "per row", "rightmost/leftmost in level", "min depth"
 Queue<TreeNode> queue = new ArrayDeque<>();
@@ -12671,20 +12671,9 @@ while (!queue.isEmpty()) {
         if (node.right != null) queue.offer(node.right);
     }
 }
-
-// 2. WITHOUT LEVEL TRACKING — simple node-by-node
-// MENTAL MODEL: just visit every node in BFS order; you don't care which level it's on.
-Queue<TreeNode> queue = new ArrayDeque<>();
-queue.offer(root);
-while (!queue.isEmpty()) {
-    TreeNode node = queue.poll();
-    // process node
-    if (node.left  != null) queue.offer(node.left);
-    if (node.right != null) queue.offer(node.right);
-}
 ```
 
-Almost all tree BFS problems use **Template 1** — you nearly always need `size` to know when a level ends.
+Always snapshot `size` first — it's how you know where each level ends. (If you truly don't need levels, just drop the `size` loop and poll node-by-node.)
 
 ## When to Use — Signal → Pattern
 
@@ -12697,7 +12686,6 @@ Almost all tree BFS problems use **Template 1** — you nearly always need `size
 | "connect next pointers at the same level" | Group 4 — wire nodes within a level |
 | "same depth, different parent" (cousins), per-node metadata | Group 5 — track per-node metadata |
 | "maximum width of a level" (counting null gaps) | Group 6 — position indexing |
-| no level info needed, just visit every node | Template 2 — node-by-node |
 
 ## The One Rule — Snapshot Level Size First
 
