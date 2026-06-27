@@ -909,15 +909,15 @@ class Solution {
     public List<String> topKFrequent(String[] words, int k) {
         Map<String, Integer> count = new HashMap<>();
         for (String w : words) count.merge(w, 1, Integer::sum);
-        PriorityQueue<String> heap = new PriorityQueue<>((a, b) ->
+        PriorityQueue<String> minHeap = new PriorityQueue<>((a, b) ->
             count.get(a).equals(count.get(b)) ? b.compareTo(a)        // ← VARIATION: larger word evicted first
                                               : count.get(a) - count.get(b));
         for (String w : count.keySet()) {
-            heap.offer(w);
-            if (heap.size() > k) heap.poll();
+            minHeap.offer(w);
+            if (minHeap.size() > k) minHeap.poll();
         }
         List<String> result = new ArrayList<>();
-        while (!heap.isEmpty()) result.add(heap.poll());
+        while (!minHeap.isEmpty()) result.add(minHeap.poll());
         Collections.reverse(result);
         return result;
     }

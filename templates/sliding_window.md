@@ -64,7 +64,7 @@ for (int j = 0; j < n; j++) {
 | 424 | Longest Repeating Character Replacement | Replace at most k characters. Find the longest substring with one repeated char. | A window is valid if the non-dominant chars (size − maxFreq) fit within k replacements; otherwise shrink. | O(n) | O(1) | Standard |
 | 209 | Minimum Size Subarray Sum | Find the minimum length subarray with sum ≥ target. | Once the window reaches target, every extra left-trim that stays ≥ target gives a shorter candidate. | O(n) | O(1) | Standard |
 | 76 | Minimum Window Substring | Find the shortest substring of s that contains all characters of t. | Expand until all of t is covered, then shrink as far as you can while still covering it to find the tightest window. | O(n) | O(1) | Standard |
-| 438 | Find All Anagrams in a String | Given strings `s` and `p`, return a list of all start indices of `p`'s anagrams in `s`. (An anagram uses same characters with same frequencies.) | An anagram is a fixed-length window whose letter counts equal p's, so slide width-`p.length()` and compare counts. | O(n) | O(1) | fixed window size |
+| 438 | Find All Anagrams in a String | Given strings `s` and `p`, return a list of all start indices of `p`'s anagrams in `s`. (An anagram uses same characters with same frequencies.) | An anagram is a fixed-length window whose letter counts equal p's, so slide width-`p.length()` and compare counts. | O(n) | O(1) | Standard |
 | 159 | Longest Substring with At Most 2 Distinct Characters | Return the length of the longest substring with at most 2 distinct characters. | Grow the window freely; whenever a third distinct character appears, drop from the left until only 2 remain. | O(n) | O(1) | shrink when >2 distinct |
 | 340 | Longest Substring with At Most K Distinct Characters | Return the length of the longest substring with at most `k` distinct characters. | Same as #159 but the distinct cap is `k`; shrink whenever the map holds more than k distinct characters. | O(n) | O(k) | Parameterized generalization of #159 — replace the hard-coded `2` with `k`. |
 | 1343 | Number of Sub-arrays of Size K and Average Greater than or Equal to Threshold | Return the number of contiguous subarrays of size `k` whose average is greater than or equal to `threshold`. | "Average ≥ threshold" over fixed width k is just "sum ≥ k·threshold"; slide a width-k window and count the hits. | O(n) | O(1) | fixed-size sliding window. To avoid floating-point division, compare `windowSum >= k * threshold`. |
@@ -410,12 +410,13 @@ class Solution {
         List<Integer> result = new ArrayList<>();
         int[] need = new int[26], window = new int[26];
         for (char c : p.toCharArray()) need[c - 'a']++;
-        int i = 0, j = 0;
-        while (j < s.length()) {
-            window[s.charAt(j++) - 'a']++;           // expand right
-            if (j - i == p.length()) {               // ← VARIATION: fixed window size
+        int i = 0;                                       // window start (fixed-window template)
+        for (int j = 0; j < s.length(); j++) {
+            window[s.charAt(j) - 'a']++;                 // add nums[j]
+            if (j - i + 1 == p.length()) {               // window is exactly size p.length()
                 if (Arrays.equals(window, need)) result.add(i);
-                window[s.charAt(i++) - 'a']--;       // shrink left
+                window[s.charAt(i) - 'a']--;             // remove nums[i]
+                i++;
             }
         }
         return result;
@@ -440,7 +441,7 @@ class Solution {
 class Solution {
     public int lengthOfLongestSubstringTwoDistinct(String s) {
         Map<Character, Integer> freq = new HashMap<>();
-        int i = 0, max = 0;
+        int i = 0, result = 0;
         for (int j = 0; j < s.length(); j++) {
             freq.merge(s.charAt(j), 1, Integer::sum);
             while (freq.size() > 2) {                  // ← VARIATION: shrink when >2 distinct
@@ -448,9 +449,9 @@ class Solution {
                 freq.merge(c, -1, Integer::sum);
                 if (freq.get(c) == 0) freq.remove(c);
             }
-            max = Math.max(max, j - i + 1);
+            result = Math.max(result, j - i + 1);
         }
-        return max;
+        return result;
     }
 }
 ```
@@ -470,7 +471,7 @@ class Solution {
 class Solution {
     public int lengthOfLongestSubstringKDistinct(String s, int k) {
         Map<Character, Integer> freq = new HashMap<>();
-        int i = 0, max = 0;
+        int i = 0, result = 0;
         for (int j = 0; j < s.length(); j++) {
             freq.merge(s.charAt(j), 1, Integer::sum);
             while (freq.size() > k) {                  // ← VARIATION: parameterized k distinct
@@ -478,9 +479,9 @@ class Solution {
                 freq.merge(c, -1, Integer::sum);
                 if (freq.get(c) == 0) freq.remove(c);
             }
-            max = Math.max(max, j - i + 1);
+            result = Math.max(result, j - i + 1);
         }
-        return max;
+        return result;
     }
 }
 ```

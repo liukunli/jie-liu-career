@@ -524,30 +524,21 @@ class Solution {
     public int widthOfBinaryTree(TreeNode root) {
         if (root == null) return 0;
         int maxWidth = 0;
-        List<TreeNode> nodes = new ArrayList<>();
-        List<Long> positions = new ArrayList<>();
-        nodes.add(root);
-        positions.add(1L);
-        while (!nodes.isEmpty()) {
-            int size = nodes.size();
-            long start = positions.get(0);
-            maxWidth = (int) Math.max(maxWidth, positions.get(size-1) - start + 1);
-            List<TreeNode> nextNodes = new ArrayList<>();
-            List<Long> nextPositions = new ArrayList<>();
+        Queue<TreeNode> queue = new ArrayDeque<>();        // canonical BFS queue + size snapshot
+        Queue<Long> indices = new ArrayDeque<>();          // heap-style position per node
+        queue.offer(root);
+        indices.offer(0L);
+        while (!queue.isEmpty()) {
+            int size = queue.size();                       // ← snapshot: all nodes at this level
+            long first = indices.peek(), last = 0;
             for (int i = 0; i < size; i++) {
-                TreeNode node = nodes.get(i);
-                long pos = positions.get(i) - start;     // ← VARIATION: normalize to prevent overflow
-                if (node.left != null) {
-                    nextNodes.add(node.left);
-                    nextPositions.add(2 * pos);           // ← VARIATION: left child = 2*pos
-                }
-                if (node.right != null) {
-                    nextNodes.add(node.right);
-                    nextPositions.add(2 * pos + 1);       // ← VARIATION: right child = 2*pos+1
-                }
+                TreeNode node = queue.poll();
+                long pos = indices.poll() - first;         // ← VARIATION: normalize to prevent overflow
+                last = pos;
+                if (node.left  != null) { queue.offer(node.left);  indices.offer(2 * pos);     } // left  = 2*pos
+                if (node.right != null) { queue.offer(node.right); indices.offer(2 * pos + 1); } // right = 2*pos+1
             }
-            nodes = nextNodes;
-            positions = nextPositions;
+            maxWidth = (int) Math.max(maxWidth, last + 1); // width = lastPos - firstPos(0) + 1
         }
         return maxWidth;
     }

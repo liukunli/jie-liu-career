@@ -3584,7 +3584,7 @@ for (int j = 0; j < n; j++) {
 | 424 | Longest Repeating Character Replacement | Replace at most k characters. Find the longest substring with one repeated char. | A window is valid if the non-dominant chars (size − maxFreq) fit within k replacements; otherwise shrink. | O(n) | O(1) | Standard |
 | 209 | Minimum Size Subarray Sum | Find the minimum length subarray with sum ≥ target. | Once the window reaches target, every extra left-trim that stays ≥ target gives a shorter candidate. | O(n) | O(1) | Standard |
 | 76 | Minimum Window Substring | Find the shortest substring of s that contains all characters of t. | Expand until all of t is covered, then shrink as far as you can while still covering it to find the tightest window. | O(n) | O(1) | Standard |
-| 438 | Find All Anagrams in a String | Given strings `s` and `p`, return a list of all start indices of `p`'s anagrams in `s`. (An anagram uses same characters with same frequencies.) | An anagram is a fixed-length window whose letter counts equal p's, so slide width-`p.length()` and compare counts. | O(n) | O(1) | fixed window size |
+| 438 | Find All Anagrams in a String | Given strings `s` and `p`, return a list of all start indices of `p`'s anagrams in `s`. (An anagram uses same characters with same frequencies.) | An anagram is a fixed-length window whose letter counts equal p's, so slide width-`p.length()` and compare counts. | O(n) | O(1) | Standard |
 | 159 | Longest Substring with At Most 2 Distinct Characters | Return the length of the longest substring with at most 2 distinct characters. | Grow the window freely; whenever a third distinct character appears, drop from the left until only 2 remain. | O(n) | O(1) | shrink when >2 distinct |
 | 340 | Longest Substring with At Most K Distinct Characters | Return the length of the longest substring with at most `k` distinct characters. | Same as #159 but the distinct cap is `k`; shrink whenever the map holds more than k distinct characters. | O(n) | O(k) | Parameterized generalization of #159 — replace the hard-coded `2` with `k`. |
 | 1343 | Number of Sub-arrays of Size K and Average Greater than or Equal to Threshold | Return the number of contiguous subarrays of size `k` whose average is greater than or equal to `threshold`. | "Average ≥ threshold" over fixed width k is just "sum ≥ k·threshold"; slide a width-k window and count the hits. | O(n) | O(1) | fixed-size sliding window. To avoid floating-point division, compare `windowSum >= k * threshold`. |
@@ -3930,12 +3930,13 @@ class Solution {
         List<Integer> result = new ArrayList<>();
         int[] need = new int[26], window = new int[26];
         for (char c : p.toCharArray()) need[c - 'a']++;
-        int i = 0, j = 0;
-        while (j < s.length()) {
-            window[s.charAt(j++) - 'a']++;           // expand right
-            if (j - i == p.length()) {               // ← VARIATION: fixed window size
+        int i = 0;                                       // window start (fixed-window template)
+        for (int j = 0; j < s.length(); j++) {
+            window[s.charAt(j) - 'a']++;                 // add nums[j]
+            if (j - i + 1 == p.length()) {               // window is exactly size p.length()
                 if (Arrays.equals(window, need)) result.add(i);
-                window[s.charAt(i++) - 'a']--;       // shrink left
+                window[s.charAt(i) - 'a']--;             // remove nums[i]
+                i++;
             }
         }
         return result;
@@ -3960,7 +3961,7 @@ class Solution {
 class Solution {
     public int lengthOfLongestSubstringTwoDistinct(String s) {
         Map<Character, Integer> freq = new HashMap<>();
-        int i = 0, max = 0;
+        int i = 0, result = 0;
         for (int j = 0; j < s.length(); j++) {
             freq.merge(s.charAt(j), 1, Integer::sum);
             while (freq.size() > 2) {                  // ← VARIATION: shrink when >2 distinct
@@ -3968,9 +3969,9 @@ class Solution {
                 freq.merge(c, -1, Integer::sum);
                 if (freq.get(c) == 0) freq.remove(c);
             }
-            max = Math.max(max, j - i + 1);
+            result = Math.max(result, j - i + 1);
         }
-        return max;
+        return result;
     }
 }
 ```
@@ -3990,7 +3991,7 @@ class Solution {
 class Solution {
     public int lengthOfLongestSubstringKDistinct(String s, int k) {
         Map<Character, Integer> freq = new HashMap<>();
-        int i = 0, max = 0;
+        int i = 0, result = 0;
         for (int j = 0; j < s.length(); j++) {
             freq.merge(s.charAt(j), 1, Integer::sum);
             while (freq.size() > k) {                  // ← VARIATION: parameterized k distinct
@@ -3998,9 +3999,9 @@ class Solution {
                 freq.merge(c, -1, Integer::sum);
                 if (freq.get(c) == 0) freq.remove(c);
             }
-            max = Math.max(max, j - i + 1);
+            result = Math.max(result, j - i + 1);
         }
-        return max;
+        return result;
     }
 }
 ```
@@ -11565,15 +11566,15 @@ class Solution {
     public List<String> topKFrequent(String[] words, int k) {
         Map<String, Integer> count = new HashMap<>();
         for (String w : words) count.merge(w, 1, Integer::sum);
-        PriorityQueue<String> heap = new PriorityQueue<>((a, b) ->
+        PriorityQueue<String> minHeap = new PriorityQueue<>((a, b) ->
             count.get(a).equals(count.get(b)) ? b.compareTo(a)        // ← VARIATION: larger word evicted first
                                               : count.get(a) - count.get(b));
         for (String w : count.keySet()) {
-            heap.offer(w);
-            if (heap.size() > k) heap.poll();
+            minHeap.offer(w);
+            if (minHeap.size() > k) minHeap.poll();
         }
         List<String> result = new ArrayList<>();
-        while (!heap.isEmpty()) result.add(heap.poll());
+        while (!minHeap.isEmpty()) result.add(minHeap.poll());
         Collections.reverse(result);
         return result;
     }
@@ -13192,30 +13193,21 @@ class Solution {
     public int widthOfBinaryTree(TreeNode root) {
         if (root == null) return 0;
         int maxWidth = 0;
-        List<TreeNode> nodes = new ArrayList<>();
-        List<Long> positions = new ArrayList<>();
-        nodes.add(root);
-        positions.add(1L);
-        while (!nodes.isEmpty()) {
-            int size = nodes.size();
-            long start = positions.get(0);
-            maxWidth = (int) Math.max(maxWidth, positions.get(size-1) - start + 1);
-            List<TreeNode> nextNodes = new ArrayList<>();
-            List<Long> nextPositions = new ArrayList<>();
+        Queue<TreeNode> queue = new ArrayDeque<>();        // canonical BFS queue + size snapshot
+        Queue<Long> indices = new ArrayDeque<>();          // heap-style position per node
+        queue.offer(root);
+        indices.offer(0L);
+        while (!queue.isEmpty()) {
+            int size = queue.size();                       // ← snapshot: all nodes at this level
+            long first = indices.peek(), last = 0;
             for (int i = 0; i < size; i++) {
-                TreeNode node = nodes.get(i);
-                long pos = positions.get(i) - start;     // ← VARIATION: normalize to prevent overflow
-                if (node.left != null) {
-                    nextNodes.add(node.left);
-                    nextPositions.add(2 * pos);           // ← VARIATION: left child = 2*pos
-                }
-                if (node.right != null) {
-                    nextNodes.add(node.right);
-                    nextPositions.add(2 * pos + 1);       // ← VARIATION: right child = 2*pos+1
-                }
+                TreeNode node = queue.poll();
+                long pos = indices.poll() - first;         // ← VARIATION: normalize to prevent overflow
+                last = pos;
+                if (node.left  != null) { queue.offer(node.left);  indices.offer(2 * pos);     } // left  = 2*pos
+                if (node.right != null) { queue.offer(node.right); indices.offer(2 * pos + 1); } // right = 2*pos+1
             }
-            nodes = nextNodes;
-            positions = nextPositions;
+            maxWidth = (int) Math.max(maxWidth, last + 1); // width = lastPos - firstPos(0) + 1
         }
         return maxWidth;
     }
@@ -20710,20 +20702,20 @@ class Solution {
 ```java
 class Solution {
     public int[][] insert(int[][] intervals, int[] newInterval) {
-        List<int[]> list = new ArrayList<>();
-        for(int[] interval : intervals) {
-            if(interval[1] < newInterval[0]) {
-                list.add(interval);
+        List<int[]> result = new ArrayList<>();
+        for (int[] interval : intervals) {
+            if (interval[1] < newInterval[0]) {
+                result.add(interval);
             } else if (interval[0] > newInterval[1]) {
-                list.add(newInterval);
+                result.add(newInterval);
                 newInterval = interval;
             } else {
                 newInterval[0] = Math.min(newInterval[0], interval[0]);
                 newInterval[1] = Math.max(newInterval[1], interval[1]);
             }
         }
-        list.add(newInterval);
-        return list.toArray(new int[list.size()][2]);
+        result.add(newInterval);
+        return result.toArray(new int[result.size()][2]);
     }
 }
 ```
