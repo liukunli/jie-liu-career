@@ -103,8 +103,13 @@ int[]      dr   = {1,-1,0,0}, dc = {0,0,1,-1};  // DOWN,UP,RIGHT,LEFT; iterate f
 map.put(k, v);
 map.getOrDefault(k, 0);                              // safe read with default
 map.merge(k, 1, Integer::sum);                       // ← counting frequency (most common)
-map.computeIfAbsent(k, x -> new ArrayList<>()).add(v); // ← build adjacency / buckets
-map.putIfAbsent(k, v);                               // ← write only first occurrence (keep earliest index)
+map.computeIfAbsent(k, x -> new ArrayList<>()).add(v); // ← get-or-create a bucket, then mutate
+map.putIfAbsent(k, v);                               // ← keep FIRST occurrence (e.g. value→earliest index)
+//   putIfAbsent(k, v)        : value is EAGER (built up front); inserts only if k absent;
+//                              RETURNS the OLD value (null if was absent). Use to keep first write.
+//   computeIfAbsent(k, f)    : value is LAZY (f runs only if k absent); inserts & RETURNS the
+//                              current value (existing or just-made) → chain `.add(...)` on it.
+//                              Idiom for adjacency lists / buckets — no allocation when present.
 map.containsKey(k);  map.remove(k);
 for (Map.Entry<Integer,Integer> e : map.entrySet()) { e.getKey(); e.getValue(); e.setValue(v); }
 map.keySet();  map.values();
@@ -220,15 +225,6 @@ n & (-n);             // isolate lowest set bit
 n >> 1;               // ← divide by 2 (drop last bit);  n << 1 = multiply by 2
 Integer.bitCount(n);  // # of set bits
 Integer.toBinaryString(n);
-```
-
-### Sorted-structure navigation (TreeMap / TreeSet)
-
-```java
-tmap.firstKey();  tmap.lastKey();
-tmap.floorKey(x);    // largest key ≤ x      tmap.ceilingKey(x);  // smallest key ≥ x
-tmap.lowerKey(x);    // largest key < x      tmap.higherKey(x);   // smallest key > x
-tset.floor(x);  tset.ceiling(x);  tset.lower(x);  tset.higher(x);  tset.first();  tset.last();
 ```
 
 ### Optimization idioms
@@ -6918,15 +6914,16 @@ Binary search appears in two forms: searching an **array index**, or searching a
 
 **There is one binary search.** Define a monotone `condition(k)` (`false…false TRUE…true`); the loop returns the **first `k` where `condition(k)` is true**. Then look at `i`: if `i == n` no index qualified, otherwise `i` is the boundary — check the value to decide.
 
-**Variables:** `[i, j)` = half-open search range (answer lives in here) · `k` = midpoint · `condition(k)` = monotone test, false…false then TRUE…true; answer is the first `k` it holds
+**Variables:** `[i, j)` = half-open search range · `k` = midpoint · `condition(k)` = monotone test (false…false→TRUE…true) · **answer = `i`**, always in `[0, length]` (`i == length` ⇒ nothing satisfied it).
+**Range:** index search → `[0, length)`. **Answer-space** (searching a value, not an index) → `[min, max + 1)` (half-open, so the largest value `max` is reachable).
 **Pseudocode:**
 ```
-i = 0, j = length        # half-open [i, j)
+i = 0, j = length        # half-open [i, j) ; for answer-space use [min, max+1)
 while range non-empty (i < j):
     k = midpoint of i and j
     if condition(k) is false: answer is to the right, set i = k+1
     else: k might be the answer, set j = k
-# i is the first index satisfying condition (or == length if none)
+# answer = i, always in [0, length]; i == length means nothing satisfied condition
 ```
 ```java
 int i = 0, j = nums.length;       // [i, j)

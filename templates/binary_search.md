@@ -46,15 +46,16 @@ Binary search appears in two forms: searching an **array index**, or searching a
 
 **There is one binary search.** Define a monotone `condition(k)` (`false…false TRUE…true`); the loop returns the **first `k` where `condition(k)` is true**. Then look at `i`: if `i == n` no index qualified, otherwise `i` is the boundary — check the value to decide.
 
-**Variables:** `[i, j)` = half-open search range (answer lives in here) · `k` = midpoint · `condition(k)` = monotone test, false…false then TRUE…true; answer is the first `k` it holds
+**Variables:** `[i, j)` = half-open search range · `k` = midpoint · `condition(k)` = monotone test (false…false→TRUE…true) · **answer = `i`**, always in `[0, length]` (`i == length` ⇒ nothing satisfied it).
+**Range:** index search → `[0, length)`. **Answer-space** (searching a value, not an index) → `[min, max + 1)` (half-open, so the largest value `max` is reachable).
 **Pseudocode:**
 ```
-i = 0, j = length        # half-open [i, j)
+i = 0, j = length        # half-open [i, j) ; for answer-space use [min, max+1)
 while range non-empty (i < j):
     k = midpoint of i and j
     if condition(k) is false: answer is to the right, set i = k+1
     else: k might be the answer, set j = k
-# i is the first index satisfying condition (or == length if none)
+# answer = i, always in [0, length]; i == length means nothing satisfied condition
 ```
 ```java
 int i = 0, j = nums.length;       // [i, j)
