@@ -294,6 +294,19 @@ Two patterns — pick based on whether pointers converge or march together.
 
 ### Pattern 1 — Opposite Two Pointers
 
+**Variables:** `i` = left pointer · `j` = right pointer · scan range `[i, j]` closed
+**Pseudocode:**
+```
+set i to the left end, j to the right end
+while the pointers haven't crossed:
+  if the current pair hits the target:
+    record it, then step both ends inward
+  else if the value is too small:
+    move the left end right to grow it
+  else (too large):
+    move the right end left to shrink it
+```
+
 ```java
 // MENTAL MODEL: two ends close in on the answer; each comparison rules out one whole end of the range.
 // WHY sorted: moving inward only safely eliminates half the space if the array is sorted
@@ -322,6 +335,34 @@ Window = `[i, j]`, size = `j - i + 1`.
 ---
 
 ### The Three Templates
+
+**Variables:** `i` = left edge (inclusive) · `j` = right edge / loop variable (inclusive), window = `[i, j]`, size = `j - i + 1` · `n` = array length · `k` = target window size · `result` = answer (max length, or min length seeded to MAX)
+**Pseudocode:**
+```
+FIXED window of size k:
+    i = 0
+    for j = 0..n-1:
+        add nums[j] to window state
+        if window size (j - i + 1) == k:
+            record the window (it is exactly size k)
+            remove nums[i] from state; i = i + 1
+
+MAX variable window (longest valid):
+    i = 0; result = 0
+    for j = 0..n-1:
+        add nums[j] to state
+        while window violates the constraint:
+            remove nums[i] from state; i = i + 1
+        result = max(result, j - i + 1)   (window is valid here)
+
+MIN variable window (shortest valid):
+    i = 0; result = +infinity
+    for j = 0..n-1:
+        add nums[j] to state
+        while window is valid:
+            result = min(result, j - i + 1)   (record while still valid)
+            remove nums[i] from state; i = i + 1   (then shrink to try smaller)
+```
 
 ```java
 // FIXED window of size k — shrink exactly once when full
@@ -367,6 +408,19 @@ for (int j = 0; j < n; j++) {
 
 Both use a `need[]` array and a `required` counter to avoid scanning the map each step.
 
+**Variables:** `need[c]` = how many more of char `c` the window still needs (positive = still short, zero/negative = surplus) · `required` = total chars still missing; hits 0 when the window covers all of t · `i` = left edge, `j` = right edge
+**Pseudocode:**
+```
+Expanding (add char at j):
+    if need[char] was still positive (> 0): required = required - 1   (filled one more)
+    need[char] = need[char] - 1
+
+Shrinking (remove char at i):
+    if need[char] was already 0 or surplus (>= 0): required = required + 1  (now short one)
+    need[char] = need[char] + 1
+    i = i + 1
+```
+
 ```java
 // Expanding j — add s.charAt(j):
 if (need[s.charAt(j)]-- > 0) required--;   // was needed → satisfied one more
@@ -390,6 +444,19 @@ Store that X in a HashMap for O(1) lookup.
 ---
 
 ### Core Template
+
+**Variables:** `map` = prefixSum→count or index seen so far · `sum` = running prefix sum · `lookup` = the complement prefix we search for · `i` = current scan position
+**Pseudocode:**
+```
+create empty map of prefix → (count or index)
+seed map with prefix 0 (count=1 for counting, index=-1 for length)
+sum = 0
+for each index i:
+    add nums[i] to sum
+    lookup = transform(sum)        // sum-k, sum%k, etc.
+    use map.get(lookup) to update result
+    store sum (or sum%k) into map with count or index i
+```
 
 ```java
 // a subarray is the difference of two prefixes; remember prefixes seen so far and look up the complement.  — WHEN: "subarray sum equals/divisible by k", "longest subarray with sum X" — anything reducible to prefix[r]-prefix[l]
@@ -427,6 +494,15 @@ Binary search appears in two forms: searching an **array index**, or searching a
 
 **There is one binary search.** Define a monotone `condition(k)` (`false…false TRUE…true`); the loop returns the **first `k` where `condition(k)` is true**. Then look at `i`: if `i == n` no index qualified, otherwise `i` is the boundary — check the value to decide.
 
+**Variables:** `[i, j)` = half-open search range (answer lives in here) · `k` = midpoint · `condition(k)` = monotone test, false…false then TRUE…true; answer is the first `k` it holds
+**Pseudocode:**
+```
+i = 0, j = length        # half-open [i, j)
+while range non-empty (i < j):
+    k = midpoint of i and j
+    if condition(k) is false: answer is to the right, set i = k+1
+    else: k might be the answer, set j = k
+```
 ```java
 int i = 0, j = nums.length;       // [i, j)
 // find first k that meets condition(k)
@@ -482,6 +558,24 @@ Inside merge and partition: `i`, `j`, `k` as scan/write pointers (consistent wit
 
 ### Template 1 — Merge Sort
 
+**Variables:** `[start, end)` half-open range being sorted · `mid` = split point · `temp` = scratch buffer · `i` = left scan pointer `[start,mid)` · `j` = right scan pointer `[mid,end)` · `k` = write pointer into temp
+**Pseudocode:**
+```
+mergeSort(nums, start, end):
+    if range has 0 or 1 elements: return        // already sorted
+    mid = midpoint of [start, end)
+    mergeSort left half  [start, mid)
+    mergeSort right half [mid, end)
+    merge the two sorted halves
+
+merge:
+    i = start, j = mid, k = start
+    while either half has elements left:
+        pick smaller front of the two halves (left wins ties → stable)
+        write it to temp[k], advance that half's pointer and k
+    copy temp back into nums[start, end)
+```
+
 ```java
 // split in half until trivially sorted, then merge two sorted halves into one.  — WHEN: need stable sort, sort a linked list, or count cross-pairs (inversions) during the merge.
 // Entry point
@@ -515,6 +609,21 @@ private void merge(int[] nums, int start, int mid, int end, int[] temp) {
 ---
 
 ### Template 2 — Quick Sort (3-way Dutch Flag Partition)
+
+**Variables:** `[start, end)` half-open range · `pivot` = chosen partition value · `i` = boundary of `<pivot` region · `k` = scan/cursor pointer · `j` = boundary of `>pivot` region (from the right)
+**Pseudocode:**
+```
+quickSort(nums, start, end):
+    if range has 0 or 1 elements: return
+    pivot = middle element's value
+    i = start, k = start, j = end-1     // [start,i)<p | [i,k)==p | [k,j] unknown | (j,end)>p
+    while k <= j:
+        if nums[k] < pivot:  swap into < region, advance k and i
+        elif nums[k] == pivot: advance k
+        else:                swap to > region, shrink j (don't advance k)
+    recurse on < region [start, i)
+    recurse on > region [k, end)         // ==pivot middle is final
+```
 
 ```java
 // pick a pivot, partition into <pivot | ==pivot | >pivot, recurse on the two ends only.  — WHEN: in-place sort with O(log n) stack; the ==pivot middle is already in final position.
@@ -554,6 +663,17 @@ private void swap(int[] nums, int i, int j) {
 
 Extends quick sort: after partition, only recurse into the side that contains `target` index.
 
+**Variables:** `[start, end)` half-open range · `target` = 0-indexed position we want settled · `pivot` = partition value · `i` = boundary of `<pivot` region · `k` = scan/cursor pointer · `j` = boundary of `>pivot` region
+**Pseudocode:**
+```
+quickSelect(nums, start, end, target):
+    pivot = middle element's value
+    partition into [start,i)<p | [i,k)==p | [k,end)>p   // same 3-way as quick sort
+    if target < i:        recurse into left  [start, i)
+    elif target < k:      target sits in ==pivot region → return pivot
+    else:                 recurse into right [k, end)
+```
+
 ```java
 // same partition as quick sort, but recurse into only the one side holding target → O(n) avg.  — WHEN: "k-th largest/smallest", "k closest/most frequent" — you need a position, not a full sort.
 // Returns value at 0-indexed position target after sorting
@@ -585,6 +705,18 @@ private int quickSelect(int[] nums, int start, int end, int target) {
 ### Template 4 — Counting Sort
 
 O(n + range). Use when values are bounded integers.
+
+**Variables:** `min`/`max` = value range bounds · `buckets[v-min]` = count of value `v` · `i` = write pointer back into arr · `v` = current value index into buckets
+**Pseudocode:**
+```
+if array empty: return
+find min and max values
+buckets = array sized (max-min+1), all zero
+for each x in arr: increment buckets[x-min]      // tally occurrences
+i = 0
+for v from 0 to last bucket:
+    while bucket v still has count: write (v+min) into arr[i], advance i
+```
 
 ```java
 // tally how many times each value occurs, then emit values in order — no comparisons.  — WHEN: integers in a small bounded range; beats O(n log n) when range = O(n).
@@ -623,6 +755,31 @@ Consistent naming throughout: `sentinel`, `previous`, `current`, `next`, `slow`,
 
 ### All Four Templates
 
+**Variables:** `sentinel` = dummy node before head · `previous` = last kept node · `current` = node under inspection · `next` = saved successor · `slow`/`fast` = 1×/2× walkers · `a`/`b` = the two input lists
+**Pseudocode:**
+```
+make sentinel pointing at head; previous = sentinel, current = head
+while current exists:
+    if current should be deleted: rewire previous.next to skip current
+    else: advance previous to current
+    advance current
+return sentinel.next
+previous = null, current = head
+while current exists:
+    save next = current.next
+    point current backward at previous
+    advance previous to current, current to next
+return previous as new head
+slow = head, fast = head
+while fast and fast.next exist:
+    advance slow one step, fast two steps
+make sentinel; current = sentinel
+while both a and b exist:
+    splice the smaller head onto current; advance that list
+    advance current
+attach whichever list remains
+return sentinel.next
+```
 ```java
 // 1. DELETE / FILTER  — sentinel guards head removal; previous tracks last kept node
 // previous always points at the last node you decided to keep, so re-wiring it skips anything unwanted.  — WHEN: "remove / delete / skip nodes by value or duplicate"
@@ -692,6 +849,32 @@ For sliding window string problems (#3, #76, #567, #424), see `sliding_window.md
 
 ### Core Idioms
 
+**Variables:** `count` = frequency vector (index = char/digit bucket) · `ch - 'a'` = 0–25 bucket index · `ch - '0'` = 0–9 digit value · `num` = number built so far · `builder` = encoded/result string · `buckets` = lists indexed by frequency · `expand(i,j)` = palindrome length from a center
+**Pseudocode:**
+```
+idiom 1 — char count for letters:
+  make count of size 26
+  for each char: count[ch-'a'] += 1
+idiom 2 — char count for digits:
+  make count of size 10
+  for each char: count[ch-'0'] += 1
+idiom 3 — char to integer:
+  num = 0
+  for each char left to right: num = num*10 + (char - '0')
+idiom 4 — anagram hash key (frequency-based):
+  count the 26 letters of s
+  build a string from each letter label followed by its count
+  return it (same key for all anagrams)
+  alternative: sort the chars and use the sorted string as key
+idiom 5 — bucket sort by frequency:
+  count all ASCII chars
+  make buckets indexed by frequency
+  for each char with count>0: add it to buckets[its count]
+  walk buckets from highest frequency down, append each char that many times
+idiom 6 — expand from center:
+  while i in bounds and j in bounds and chars at i and j match: move i left, j right
+  return j - i - 1 (length of palindrome found)
+```
 ```java
 // a lowercase string is a length-26 frequency vector; most string problems are vector ops on it.  — WHEN: "anagram", "char count", "group by letters", "first unique", "sort by frequency".
 // 1. CHAR COUNT — lowercase letters
@@ -761,6 +944,16 @@ Four data structures — each with a canonical template and representative probl
 
 ### All Templates
 
+**Variables:** `stack` = LIFO ArrayDeque (holds indices for monotone variants) · `queue` = monotone deque (front = window answer) · `minPQ`/`maxPQ`/`pq` = priority queue (heap) · `maxHeap` = lower half, `minHeap` = upper half for median
+**Pseudocode:**
+```
+STACK: push/pop/peek all at the front (LIFO)
+MONO-DECREASING (next greater): while current > stack top, pop and record current as its answer; push index
+MONO-INCREASING (next smaller / span): while current < stack top, pop and compute width to new top boundary; push index
+MONO-DEQUE (window max): drop back while smaller than current, push; drop front if out of window; front = window max
+PRIORITY QUEUE: offer/poll/peek the min (or max with reverse comparator)
+TWO HEAPS: push to maxHeap then shift its top to minHeap; rebalance so maxHeap >= minHeap; median from the tops
+```
 ```java
 // 1. STACK (LIFO) — use ArrayDeque, not Stack class
 Deque<Integer> stack = new ArrayDeque<>();
@@ -844,6 +1037,22 @@ One template: snapshot the level size, then drain exactly that many nodes per le
 
 ### The Template — Level-Aware BFS
 
+**Variables:** `queue` = nodes waiting to be processed · `size` = level snapshot (count of nodes in the current level) · `level` = current depth counter · `node` = node polled this step · `i` = index within the level
+**Pseudocode:**
+```
+make an empty queue
+put root in the queue
+level = 0
+while the queue is not empty:
+    size = how many nodes are in the queue right now (one whole level)
+    level = level + 1
+    repeat size times (index i = 0..size-1):
+        node = take the front of the queue
+        process node (level known; i==0 -> first, i==size-1 -> last)
+        if node has a left child, add it to the queue
+        if node has a right child, add it to the queue
+```
+
 ```java
 // LEVEL-AWARE PROCESSING — snapshot size to make per-level decisions
 // the queue holds exactly one full level; freeze its size, then drain just that many.  — WHEN: "level by level", "per row", "rightmost/leftmost in level", "min depth"
@@ -910,6 +1119,17 @@ DFS appears in five forms. The pattern determines naming, return type, and where
 ---
 
 ### All Templates
+
+**Variables:** `node` = current tree node · `accumulated`/`current` = state carried down a path · `answer`/global = best cross-node result · `grid[r][c]` = cell at row `r`, col `c` · `state[node]` = 0 unseen / 1 in-stack / 2 done · `start` = first eligible index · `current` = in-progress candidate · `nums[i]` = element being chosen
+**Pseudocode:**
+```
+if node null: return BASE; left=dfs(left); right=dfs(right); return combine(left,right,node.val)
+if node null: return; accumulated+=node.val; if leaf: record; dfs(left,accumulated); dfs(right,accumulated)
+if node null: return 0; left=max(0,dfs(left)); right=max(0,dfs(right)); answer=max(answer,left+right+node.val); return max(left,right)+node.val
+if out of bounds or not TARGET: return; mark VISITED; recurse into 4 neighbors
+if state==1: cycle; if state==2: safe; mark in-stack; recurse neighbors (cycle? return); mark done
+if base: record copy; for i from start: skip dups; choose nums[i]; recurse(next); undo
+```
 
 ```java
 // 1. PROCESS CHILDREN FIRST, COMBINE AT NODE (post-order)
@@ -1024,6 +1244,15 @@ int[] dc = {0,  0, 1, -1};
 
 ### Core Templates
 
+**Variables:** `queue` = BFS frontier · `visited[]` = seen flags · `level` = current distance ring · `inDegree[]` = remaining prerequisites per node · `order` = topo result · `parent[]`/`rank[]` = union-find forest · `dist[]` = shortest distance · `pq` = min-heap on cost · `color[]` = 2-coloring (-1/0/1)
+**Pseudocode:**
+```
+BFS: mark start visited, enqueue; while queue, snapshot level size, pop each, push unvisited neighbors, increment level
+TOPO: count inDegree per edge, enqueue all zero-inDegree, pop into order and decrement neighbors, enqueue new zeros
+UNION-FIND: init parent[i]=i; find follows parent to root with path compression; union links roots by rank, false if same root
+DIJKSTRA: dist[src]=0, push src; pop closest, skip if stale, relax each neighbor and push improved
+BIPARTITE: color each component start 0, BFS painting neighbors opposite, return false on same-color clash
+```
 ```java
 // 1. BFS — shortest path / level order (track distance by level-size snapshot)
 // explore in rings of equal distance; snapshot the level size so each ring = one step.  — WHEN: "fewest steps", "shortest path", "level order" on an unweighted graph
@@ -1150,6 +1379,35 @@ TEMPLATE 2 — Sort by START time, sweep forward, merge when overlapping
              compare with the last merged result
 ```
 
+**Variables:** `intervals` = list of `[start, end]` · `lastEnd` = end of last kept interval · `result` = merged output · `pq` = min-heap of active end times
+**Pseudocode:**
+```
+TEMPLATE 1 (sort by end, count non-overlapping):
+  sort intervals by END time
+  lastEnd = -infinity
+  for each interval:
+    if interval.start >= lastEnd:   # no overlap
+      lastEnd = interval.end
+      keep it (count++ or add)
+    else:
+      skip it (overlap)
+
+TEMPLATE 2 (sort by start, merge):
+  sort intervals by START time
+  for each interval:
+    if result empty OR last kept end < interval.start:
+      add interval as new
+    else:
+      extend last kept end = max(last end, interval.end)
+
+TEMPLATE 3 (sort by start + min-heap of ends):
+  sort intervals by START time
+  for each interval:
+    if heap nonempty AND earliest end <= interval.start:
+      pop heap            # reuse freed resource
+    push interval.end     # occupy a resource
+  heap size = resources needed
+```
 ```java
 // sort to expose a local greedy choice, then sweep once making the locally-best pick.  — WHEN: intervals + "max non-overlapping / min arrows / merge / min rooms", or jump/partition sweeps.
 // TEMPLATE 1: Sort by end, compare start
@@ -1198,6 +1456,17 @@ Six template families. Every problem maps to one loop skeleton and one dp-state 
 
 ### All Six Templates
 
+**Variables:** `dp[i]` = the answer for the subproblem at index/state `i` (meaning varies per family: ways/cost/length/feasibility ending at or reaching `i`) · `n` = problem size · `target`/`j` = knapsack capacity dimension.
+**Pseudocode:**
+```
+LINEAR 1D:   dp[i] = fixed recipe over dp[i-1], dp[i-2] (Kadane: best ending at i = max(start fresh, extend))
+LOOK-BACK:   for each i, scan all earlier j and extend the best valid dp[j]
+KNAPSACK:    collapse item dimension to 1D; descending j = each item once, ascending j = reusable
+2D SEQUENCE: match consumes both strings (diagonal), mismatch drops one side
+INTERVAL:    solve short ranges first, combine via a split point inside the range
+GRID:        each cell accumulates from cells it could arrive from (up / left)
+STATE MACHINE: name a few states, update each from yesterday's states every step
+```
 ```java
 // 1. LINEAR 1D — each cell depends on a fixed number of previous cells
 // the answer at i is a fixed recipe over the last one or two answers.  — WHEN: "ways/cost to reach step i", "can't pick adjacent"
@@ -1252,6 +1521,27 @@ Want count or min/max?
 
 **Part 2 — Knapsack DP**
 
+**Variables:** `dp[j]` = number of ways to reach sum `j` (count flavor; `dp[0]=1` is the empty selection); `i` = item index, `j` = current capacity/target, `num` = an item's weight/value. Loop *direction* decides reuse: descending j = item used at most once, ascending j = item reusable; target-outer = orderings counted.
+**Pseudocode:**
+```
+0/1 KNAPSACK (each item once):
+    dp[0] = 1
+    for each item i:
+        for j from target DOWN TO nums[i]:     // DESCENDING reads OLD dp (item i not yet used)
+            dp[j] += dp[j - nums[i]]
+
+UNBOUNDED KNAPSACK (item reusable):
+    dp[0] = 1
+    for each item i:
+        for j from nums[i] UP TO target:       // ASCENDING reads NEW dp (item i already used this pass)
+            dp[j] += dp[j - nums[i]]
+
+PERMUTATION COUNT (order matters):
+    dp[0] = 1
+    for j from 1 to target:                     // OUTER = target value
+        for each num in nums:                   // INNER = try every num, so orderings differ
+            if j >= num: dp[j] += dp[j - num]
+```
 ```java
 // ── 0/1 KNAPSACK ── each item at most once
 int[] dp = new int[target + 1];
@@ -1298,6 +1588,19 @@ for (int j = 1; j <= target; j++) {           // OUTER: target
 
 **Part 3 — 2D Sequence DP**
 
+**Variables:** `dp[i][j]` = the answer for the prefixes `s1[0..i)` (first `i` chars) and `s2[0..j)` (first `j` chars); index `0` = empty prefix.
+**Pseudocode:**
+```
+dp = (m+1) x (n+1) table
+initialize dp[0][*] and dp[*][0] from the empty-prefix base cases
+for i from 1 to m:                          // each char of s1
+    for j from 1 to n:                      // each char of s2
+        if s1[i-1] == s2[j-1]:              // current chars match
+            dp[i][j] = dp[i-1][j-1] + 1     // extend the diagonal (both prefixes shrink by 1)
+        else:
+            dp[i][j] = combine(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])  // drop a char from one/both side
+return dp[m][n]
+```
 ```java
 // i indexes string/array 1 (1-indexed), j indexes string/array 2
 int[][] dp = new int[m + 1][n + 1];
@@ -1319,6 +1622,16 @@ for (int i = 1; i <= m; i++) {
 
 **Rule:** `i` goes right-to-left (ensures shorter/inner intervals are computed first). `j` goes left-to-right from `i+1`. When computing `dp[i][j]`, all `dp[i'][j']` with `i' > i` or `j' < j` are already done.
 
+**Variables:** `dp[i][j]` = the answer for the interval `[i, j]` (left endpoint `i`, right endpoint `j`).
+**Pseudocode:**
+```
+dp = n x n table
+for each i: dp[i][i] = base_case            // length-1 intervals
+for i from n-1 down to 0:                    // i RIGHT-TO-LEFT so dp[i+1][*] (inner) is ready
+    for j from i+1 to n-1:                   // j LEFT-TO-RIGHT from i+1 so dp[i][j-1] is ready
+        // safe to read dp[i+1][j], dp[i][j-1], dp[i+1][j-1] (all strictly smaller intervals)
+        dp[i][j] = ...transition over interval [i,j]...
+```
 ```java
 int[][] dp = new int[n][n];
 for (int i = 0; i < n; i++) dp[i][i] = base_case;   // single elements
@@ -1332,6 +1645,16 @@ for (int i = n - 1; i >= 0; i--) {                   // right-to-left
 
 **Alternative (forward `i`, inner `j` descending):** `i` is the right endpoint going left-to-right; `j` is the left endpoint sweeping back from `i-1`. Inner intervals (larger `j`, smaller `i`) are already filled.
 
+**Variables:** `dp[i][j]` = the answer for the interval `[j, i]` (right endpoint `i`, left endpoint `j`).
+**Pseudocode:**
+```
+dp = n x n table
+for each i: dp[i][i] = base_case            // length-1 intervals
+for i from 0 to n-1:                         // i = RIGHT endpoint, FORWARD left-to-right
+    for j from i-1 down to 0:                // j = LEFT endpoint, DESCENDING from i-1 to 0
+        // safe to read dp[i-1][j], dp[i][j+1], dp[i-1][j+1] (all shorter intervals already filled)
+        dp[i][j] = ...transition over interval [j,i]...
+```
 ```java
 int[][] dp = new int[n][n];
 for (int i = 0; i < n; i++) dp[i][i] = base_case;   // single elements
@@ -1345,6 +1668,16 @@ for (int i = 0; i < n; i++) {                        // i = right endpoint, left
 
 **Alternative (triangular fill, column base case):** used when `dp[i][j]` depends only on the previous row/column (e.g. counting problems). Fill row by row with `j` from `0` to `i`.
 
+**Variables:** `dp[i][j]` = the count/answer for the `(i, j)` subproblem, defined only for `j <= i` (lower-triangular).
+**Pseudocode:**
+```
+dp = n x n table
+for each i: dp[i][0] = 1                     // column base case; dp[0][j>0] = 0
+for i from 1 to n-1:                         // fill ROW BY ROW, top to bottom
+    for j from 1 to i:                       // j from 1 up to i (triangular, j <= i)
+        // safe to read dp[i-1][j], dp[i][j-1], dp[i-1][j-1] (prior row / earlier in row)
+        dp[i][j] = ...transition...
+```
 ```java
 int[][] dp = new int[n][n];
 for (int i = 0; i < n; i++) dp[i][0] = 1;   // base: dp[i][0] = 1; dp[0][j] = 0 for j > 0
@@ -1360,6 +1693,24 @@ for (int i = 1; i < n; i++) {
 
 **Part 5 — Grid DP**
 
+**Variables:** `dp[i][j]` = best (path count / cost) to reach cell `(i, j)` moving only right/down; `memo[i][j]` = longest path starting from `(i, j)` for the all-direction DFS variant; `dr`/`dc` = 4-direction deltas.
+**Pseudocode:**
+```
+dr = {1,-1,0,0}; dc = {0,0,1,-1}            // DOWN UP RIGHT LEFT
+
+// Standard grid (only right/down — DAG, no cycle):
+dp = rows x cols table
+initialize first row and first column
+for i from 0 to rows-1:
+    for j from 0 to cols-1:
+        dp[i][j] = grid[i][j] + f(dp[i-1][j], dp[i][j-1])   // combine top & left
+
+// All-direction grid (memoized DFS for increasing/decreasing paths):
+memo = rows x cols table
+for i from 0 to rows-1:
+    for j from 0 to cols-1:
+        dfs(grid, i, j, memo, dr, dc)        // each cell caches its longest path
+```
 ```java
 int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};   // DOWN UP RIGHT LEFT
 
@@ -1406,6 +1757,31 @@ cooldown  = max profit right after selling (can't buy today)
 
 ### Canonical Template
 
+**Variables:** `result` = XOR accumulator (lone survivor) · `n` = number being inspected/edited · `i` = bit position · `count` = set-bit counter · `mask` = 26-bit letter-presence set · masks: `1 << i` selects bit i, `n & (n-1)` clears lowest set bit, `n & (-n)` isolates lowest set bit
+**Pseudocode:**
+```
+XOR CANCEL:
+    result = 0
+    for each num in nums: result = result XOR num   (pairs cancel, lone survives)
+
+BIT OPERATIONS on n at position i:
+    isSet  = bit i of n is 1            -> (n >> i) & 1 == 1
+    set    = turn bit i on             -> n | (1 << i)
+    clear  = turn bit i off            -> n & ~(1 << i)
+    toggle = flip bit i                -> n ^ (1 << i)
+    lowest = isolate lowest set bit    -> n & (-n)
+    isPow2 = n > 0 and clearing lowest set bit gives 0
+
+COUNT SET BITS (Brian Kernighan):
+    count = 0
+    while n != 0: count = count + 1; n = n & (n-1)   (each step removes one set bit)
+
+BITMASK AS SET:
+    mask = 0
+    for each char c in word: mask = mask | (1 << (c - 'a'))
+    two words share no letter when (mask[i] & mask[j]) == 0
+```
+
 ```java
 // bits are a set/counter — XOR cancels duplicates, AND/OR/shift edit individual bits.  — WHEN: "appears once/odd among pairs", "count set bits", "no shared letters", "power of 2/4".
 // ── XOR CANCEL ── pairs cancel; lone element survives
@@ -1438,6 +1814,37 @@ if ((mask[i] & mask[j]) == 0) { /* no shared letter */ }
 ---
 
 ### Variations
+
+**Variables:** `ones`/`twos` = bits seen 1 / 2 times mod 3 · `xor` = `a ^ b` of the two uniques · `diff` = lowest differing bit (`xor & -xor`) · `a`/`b` = the two unique values · `dp[]` = set-bit counts by number · `shift` = bits dropped to reach common prefix · `carry` = AND-derived carry bits
+**Pseudocode:**
+```
+VARIATION 1 (mod-3 state machine, Single Number II):
+    ones = 0; twos = 0
+    for each num: ones = (ones XOR num) AND NOT twos; twos = (twos XOR num) AND NOT ones
+    after loop, ones holds the element appearing once
+
+VARIATION 2 (split XOR into two groups, Single Number III):
+    xor = XOR of all nums                 (= a XOR b)
+    diff = xor AND (-xor)                 (lowest bit where a and b differ)
+    a = 0; for each num: if (num AND diff) != 0: a = a XOR num   (XOR one group)
+    b = xor XOR a                         (the other unique)
+
+VARIATION 3 (DP relation, Counting Bits):
+    dp = array of size n+1
+    for i = 1..n: dp[i] = dp[i >> 1] + (i AND 1)   (drop last bit, add it back)
+
+VARIATION 4 (common prefix, Bitwise AND of Range):
+    shift = 0
+    while left != right: left >>= 1; right >>= 1; shift = shift + 1
+    return left << shift                  (shared high-bit prefix restored)
+
+VARIATION 5 (carry loop, Sum of Two Integers):
+    while b != 0:
+        carry = a AND b                   (positions that carry)
+        a = a XOR b                       (sum without carry)
+        b = carry << 1                    (carry moves one bit left)
+    return a
+```
 
 ```java
 // VARIATION 1: mod-3 state machine (Single Number II)
@@ -1498,6 +1905,23 @@ int add(int a, int b) {
 
 ### Canonical Template — HashMap + Doubly Linked List (LRU)
 
+**Variables:** `map` = key -> CacheNode · `head`/`tail` = sentinels (head side = MRU, tail side = LRU) · `node.previous`/`node.next` = doubly linked neighbors
+**Pseudocode:**
+```
+CacheNode: key, value, previous, next
+init: head <-> tail (head.next = tail; tail.previous = head)
+
+remove(node):
+  node.previous.next = node.next
+  node.next.previous = node.previous
+
+insertAfterHead(node):          # mark as most-recently-used
+  link node between head and head.next
+
+evict LRU:
+  lru = tail.previous           # node just before tail
+  remove(lru); map.remove(lru.key)
+```
 ```java
 // HashMap gives O(1) lookup; the doubly linked list orders by recency so the LRU is always one hop from tail.  — WHEN: "O(1) get/put with eviction by recency or frequency"
 
@@ -1537,6 +1961,17 @@ map.remove(lru.key);
 
 ### Variations
 
+**Variables:** `keyToVal`/`keyToFreq` = key lookups · `freqToKeys` = freq -> ordered keys at that freq · `minFreq` = smallest live frequency · (RandomizedSet) `list` = values array · `map` = val -> index
+**Pseudocode:**
+```
+VARIATION 1 (LFU): maps key->value, key->freq, freq->LinkedHashSet<key>, plus minFreq
+  on access: freq++; move key from freqToKeys[old] to freqToKeys[new]
+  on evict: remove first key (oldest) from freqToKeys[minFreq]
+
+VARIATION 2 (RandomizedSet): ArrayList of values + HashMap val->index
+  remove: swap target with last element, update map, drop last
+  getRandom: list[random index]
+```
 ```java
 // VARIATION 1: LFU — adds a frequency dimension
 // Need: key→value, key→freq, freq→orderedSet<key>, and minFreq
@@ -1558,6 +1993,38 @@ map.remove(lru.key);
 
 ### Canonical Templates
 
+**Variables:** `n` = the number being processed · `digit` = last digit peeled · `x` = base in fast power · `result` = running product/accumulator · `b` = the base for conversion · `composite[]` = sieve marks
+**Pseudocode:**
+```
+DIGIT EXTRACTION:
+  while n is not zero:
+    digit = remainder of n divided by 10
+    drop the last digit of n
+    use digit
+
+FAST POWER (x^n):
+  result starts at 1
+  while exponent n still has bits:
+    if the lowest bit is set, fold the current x into result
+    square x to reach the next power
+    shift n right to consume that bit
+  return result
+
+BASE CONVERSION (number -> digits):
+  while num is positive:
+    append num mod b
+    divide num by b
+  reverse the collected digits
+BASE CONVERSION (digits -> number):
+  value starts at 0
+  for each digit: value = value * b + digit
+
+SIEVE:
+  make a composite[] flag array up to n
+  for i from 2 while i*i < n:
+    if i already marked composite, skip it
+    mark every multiple of i starting at i*i as composite
+```
 ```java
 // MENTAL MODEL: number = sequence of digits in some base; iterate by repeatedly
 //               peeling the last digit (% base) and shifting (/ base).

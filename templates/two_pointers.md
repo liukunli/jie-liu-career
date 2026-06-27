@@ -102,6 +102,19 @@ Two patterns — pick based on whether pointers converge or march together.
 
 ## Pattern 1 — Opposite Two Pointers
 
+**Variables:** `i` = left pointer · `j` = right pointer · scan range `[i, j]` closed
+**Pseudocode:**
+```
+set i to the left end, j to the right end
+while the pointers haven't crossed:
+  if the current pair hits the target:
+    record it, then step both ends inward
+  else if the value is too small:
+    move the left end right to grow it
+  else (too large):
+    move the right end left to shrink it
+```
+
 ```java
 // MENTAL MODEL: two ends close in on the answer; each comparison rules out one whole end of the range.
 // WHY sorted: moving inward only safely eliminates half the space if the array is sorted
@@ -127,6 +140,21 @@ Sort first. `i` and `j` converge inward. Used when the array is sorted and you c
 **Key:** sum too small → move `i` right. sum too large → move `j` left.
 
 **Intuition:** Squeeze from both ends; each comparison tells you which side is wrong, so one move eliminates a whole row/column of pairs.
+
+**Variables:** `i` = left pointer (1-based output `i+1`) · `j` = right pointer · search range `[i, j]` closed
+**Pseudocode:**
+```
+start i at the front, j at the back
+while pointers haven't met:
+  add the two ends
+  if the sum equals target:
+    return their 1-based indices
+  else if the sum is too small:
+    move left end right to increase the sum
+  else:
+    move right end left to decrease the sum
+if nothing found, return sentinel
+```
 
 ```java
 class Solution {
@@ -156,6 +184,28 @@ class Solution {
 **Key:** sort first, fix `a`, run opposite two pointers on `[a+1, n-1]`. Skip duplicates at all three levels.
 
 **Intuition:** Pin one number, then it becomes Two Sum on the rest — turning a triple search into a sweep.
+
+**Variables:** `a` = fixed first index · `i`/`j` = inner left/right pointers over `[a+1, n-1]` closed · `sum` = triplet sum
+**Pseudocode:**
+```
+sort so duplicates group and pointers can converge
+prepare the result list
+for each candidate first element a:
+  skip a if it repeats the previous first element
+  set inner pointers just after a and at the end
+  while inner pointers haven't crossed:
+    compute the triplet sum
+    if it is zero:
+      record the triplet and step both inner ends in
+      
+      skip duplicate left values
+      skip duplicate right values
+    else if too small:
+      move left in
+    else:
+      move right in
+return all triplets
+```
 
 ```java
 class Solution {
@@ -193,6 +243,30 @@ class Solution {
 **Key:** two nested fix loops + same opposite two pointer inner loop. Cast to `long` — sum of 4 ints can overflow.
 
 **Intuition:** Pin two numbers, then the inner search is Two Sum — same idea as 3Sum with one more fixed level.
+
+**Variables:** `a`/`b` = two fixed indices · `i`/`j` = inner left/right over `[b+1, n-1]` closed · `sum` = quadruplet sum (long to avoid overflow)
+**Pseudocode:**
+```
+sort the array
+prepare the result list
+let n be the length
+for each first element a:
+  skip a if it repeats the previous a
+  for each second element b after a:
+    skip b if it repeats the previous b
+    set inner pointers after b and at the end
+    while inner pointers haven't crossed:
+      compute the four-way sum as a long
+      if it equals target:
+        record quadruplet and step both inner ends in
+        skip duplicate left values
+        skip duplicate right values
+      else if too small:
+        move left in
+      else:
+        move right in
+return all quadruplets
+```
 
 ```java
 class Solution {
@@ -235,6 +309,19 @@ class Solution {
 
 **Intuition:** Width shrinks every step, so only a taller boundary can ever help; abandon the shorter wall.
 
+**Variables:** `i` = left wall · `j` = right wall · `max` = best area, width is `j - i`
+**Pseudocode:**
+```
+start walls at both ends, best area zero
+while the walls haven't met:
+  area = shorter wall times the width; keep the best
+  if the left wall is shorter:
+    abandon it, move left in
+  else:
+    abandon the right wall, move right in
+return the best area
+```
+
 ```java
 class Solution {
     public int maxArea(int[] height) {
@@ -262,6 +349,22 @@ class Solution {
 
 **Intuition:** Water level at a cell is set by the shorter side's tallest wall, so always process from the lower side where that max is already known.
 
+**Variables:** `i`/`j` = left/right scanners · `maxI`/`maxJ` = tallest wall seen from each side · `water` = total trapped
+**Pseudocode:**
+```
+start pointers at both ends, water and side-maxes at zero
+while pointers haven't met:
+  if the left side is the shorter wall:
+    update the left max
+    add water trapped above the left cell
+    advance left
+  else:
+    update the right max
+    add water trapped above the right cell
+    advance right
+return total water
+```
+
 ```java
 class Solution {
     public int trap(int[] height) {
@@ -288,6 +391,16 @@ class Solution {
 
 ## Pattern 2 — Same Direction (Write Pointer)
 
+**Variables:** `i` = write position (next free slot) · `j` = read position scanning every element
+**Pseudocode:**
+```
+start the writer at the front
+let the reader scan every element:
+  if this element passes the keep test,
+  copy it to the write slot and advance the writer
+return the new length (writer position)
+```
+
 ```java
 // a fast reader scans everything; a slow writer trails behind and only copies the keepers.  — WHEN: filter/compact an array in place, no extra buffer
 int i = 0;                           // i = write position
@@ -301,6 +414,16 @@ return i;
 `i` marks where the next valid element goes. `j` scans every element. Only write when the element passes the keep condition.
 
 The generalised duplicate-skip pattern for "at most k duplicates":
+
+**Variables:** `i` = write head · `j` = read scanner · `k` = how many duplicates are allowed
+**Pseudocode:**
+```
+start the writer at the front
+scan every element with the reader:
+  keep it if fewer than k written, or it differs from k slots back
+  copy it and advance the writer
+return the new length
+```
 
 ```java
 int i = 0;
@@ -322,6 +445,15 @@ return i;
 
 **Intuition:** The writer only advances on keepers, so it always points at the next free slot for a kept value.
 
+**Variables:** `i` = write position for kept values · `j` = read scanner
+**Pseudocode:**
+```
+start the writer at zero
+scan each element with the reader:
+  if it isn't the value to remove, write it and advance the writer
+return the count of kept elements
+```
+
 ```java
 class Solution {
     public int removeElement(int[] nums, int val) {
@@ -342,6 +474,16 @@ class Solution {
 **Keep condition:** `nums[j] != nums[i-1]` — don't write if same as last written.
 
 **Intuition:** Since the array is sorted, comparing against the last written value is enough to drop every duplicate run.
+
+**Variables:** `i` = write position (also count of uniques) · `j` = read scanner
+**Pseudocode:**
+```
+start the writer at zero
+scan each element:
+  keep it if nothing written yet, or it differs from the last written value
+  write it and advance the writer
+return the unique count
+```
 
 ```java
 class Solution {
@@ -365,6 +507,16 @@ class Solution {
 
 **Intuition:** Looking two slots back lets at most two copies through before the third is rejected.
 
+**Variables:** `i` = write position (also kept count) · `j` = read scanner; compares to value two slots back
+**Pseudocode:**
+```
+start the writer at zero
+scan each element:
+  keep it if fewer than two written, or it differs from two slots back
+  write it and advance the writer
+return the kept count
+```
+
 ```java
 class Solution {
     public int removeDuplicates(int[] nums) {
@@ -387,6 +539,15 @@ class Solution {
 
 **Intuition:** Compact the non-zeros to the front in order, then pad the leftover tail with zeros.
 
+**Variables:** `i` = write position for non-zeros · `j` = read scanner
+**Pseudocode:**
+```
+start the writer at zero
+scan each element:
+  if non-zero, write it to the front and advance the writer
+fill the remaining tail with zeros
+```
+
 ```java
 class Solution {
     public void moveZeroes(int[] nums) {
@@ -407,6 +568,22 @@ class Solution {
 **Key:** Dutch Flag with LO = 0, MID = 1, HI = 2.
 
 **Intuition:** A single scan grows a "small" region from the left and a "large" region from the right, leaving mids in the middle.
+
+**Variables:** `i` = boundary of the 0-region (low) · `k` = current scanner (mid) · `j` = boundary of the 2-region (high)
+**Pseudocode:**
+```
+low boundary at start, scanner at start, high boundary at end
+while the scanner hasn't passed the high boundary:
+  if it's a 0:
+    swap it down to the low region, advance both low and scanner
+  else if it's a 1:
+    leave it, just advance the scanner
+  else (a 2):
+    swap it up to the high region, shrink high (don't advance scanner)
+
+helper: swap two array slots
+
+```
 
 ```java
 class Solution {
@@ -441,6 +618,14 @@ class Solution {
 
 ## Duplicate-skip Cheat Sheet (for Opposite pointers after a hit)
 
+**Variables:** `i`/`j` = opposite pointers after recording a hit; advanced past equal neighbors
+**Pseudocode:**
+```
+after recording a result, step both ends inward
+skip any left values equal to the one just used
+skip any right values equal to the one just used
+```
+
 ```java
 // After recording a result at (i, j):
 i++; j--;
@@ -460,6 +645,18 @@ Always check `i < j` inside the skip loop to avoid crossing.
 **Key:** hash map from value to index; for each element check if `target - x` was seen.
 
 **Intuition:** Trade space for time — remember every value you've passed so the complement is a single lookup.
+
+**Variables:** `seen` = map from value to its index · `i` = current scan index · `need` = complement `target - nums[i]`
+**Pseudocode:**
+```
+create an empty value-to-index map
+for each index i:
+  compute the complement we need
+  if the complement was already seen:
+    return its index paired with i
+  record the current value at i
+return sentinel if no pair
+```
 
 ```java
 class Solution {
@@ -486,6 +683,26 @@ class Solution {
 **Key:** sort, fix one, opposite two pointers; track the closest sum seen.
 
 **Intuition:** Same pin-and-sweep as 3Sum, but instead of matching exactly you keep the running closest.
+
+**Variables:** `a` = fixed first index · `i`/`j` = inner left/right over `[a+1, n-1]` · `best` = closest sum so far · `sum` = current triplet sum
+**Pseudocode:**
+```
+sort the array
+seed best with the first three elements
+for each first element a:
+  set inner pointers after a and at the end
+  while they haven't crossed:
+    compute the triplet sum
+    if it is closer to target than best:
+      update best
+    if it exactly hits target:
+      return it (cannot do better)
+    else if too small:
+      move left in
+    else:
+      move right in
+return the closest sum
+```
 
 ```java
 class Solution {
@@ -522,6 +739,28 @@ class Solution {
 **Key:** find first descending pivot from the right, swap with next larger, reverse the suffix.
 
 **Intuition:** The longest decreasing suffix is already maximal; bump the digit just before it up to the smallest larger value, then reset the suffix to ascending.
+
+**Variables:** `n` = length · `i` = pivot index (first descending from right) · `j` = smallest element larger than pivot in the suffix
+**Pseudocode:**
+```
+let n be the length
+start i one before the last
+walk left while the suffix is non-increasing:
+  step i left
+if a pivot exists:
+  scan from the right for the first element larger than the pivot
+  walk j left while it's not larger:
+    step j left
+  swap pivot with that element
+reverse the suffix after the pivot to make it ascending
+
+helper: reverse a range
+  swap inward until pointers cross
+    
+  
+helper: swap two slots
+  
+```
 
 ```java
 class Solution {
@@ -561,6 +800,21 @@ class Solution {
 
 **Intuition:** Use the array itself as a hash table keyed by value, then scan for the first slot holding the wrong number.
 
+**Variables:** `n` = length · `i` = scan/placement index · home slot of value `v` is index `v-1`
+**Pseudocode:**
+```
+let n be the length
+first pass, place each value at its home slot:
+  while the current value is in [1,n] and not already home:
+    swap it toward its correct slot v-1
+second pass, find the first wrong slot:
+  if slot i doesn't hold i+1, that's the missing positive
+if all slots correct, answer is n+1
+
+helper: swap two slots
+  
+```
+
 ```java
 class Solution {
     public int firstMissingPositive(int[] nums) {
@@ -591,6 +845,29 @@ class Solution {
 **Key:** transpose, then reverse each row.
 
 **Intuition:** Transposing flips across the main diagonal; reversing each row then completes the clockwise turn.
+
+**Variables:** `n` = matrix size · `i`/`j` = transpose row/col · `lo`/`hi` = row-reversal pointers
+**Pseudocode:**
+```
+let n be the matrix size
+transpose: for each row i,
+  for each column j above the diagonal,
+    swap (i,j) with (j,i) to mirror across the diagonal
+    
+    
+    
+  
+  
+for each row, reverse it to finish the clockwise turn:
+  set reversal pointers at both ends
+  while they haven't crossed:
+    swap the two ends
+    
+    
+    
+    step left in
+    step right in
+```
 
 ```java
 class Solution {
@@ -626,6 +903,34 @@ class Solution {
 **Key:** maintain four shrinking boundaries (top, bottom, left, right); walk each edge then close in.
 
 **Intuition:** Peel the matrix like an onion, one boundary layer per loop.
+
+**Variables:** `top`/`bottom`/`left`/`right` = four shrinking layer boundaries · `i`/`j` = walk indices
+**Pseudocode:**
+```
+prepare the output list
+set top/bottom boundaries
+set left/right boundaries
+while the box is still non-empty:
+  walk the top edge left to right
+    
+  
+  shrink the top down
+  walk the right edge top to bottom
+    
+  
+  shrink the right in
+  if a bottom row remains:
+    walk the bottom edge right to left
+      
+    
+    shrink the bottom up
+  if a left column remains:
+    walk the left edge bottom to top
+      
+    
+    shrink the left in
+return the spiral
+```
 
 ```java
 class Solution {
@@ -669,6 +974,42 @@ class Solution {
 **Key:** use first row/column as marker storage; handle their own zero state with two flags.
 
 **Intuition:** Reuse the first row and column as the bookkeeping space so no extra arrays are needed.
+
+**Variables:** `m`/`n` = dims · `firstRow`/`firstCol` = whether first row/col originally had a zero; first row/col reused as markers
+**Pseudocode:**
+```
+read dims
+track whether first row and first col need zeroing
+scan first row for a zero
+  
+    set the first-row flag
+  
+scan first col for a zero
+  
+    set the first-col flag
+  
+for each inner cell, if zero, mark its row/col headers:
+  
+    
+      mark column header
+      mark row header
+    
+  
+for each inner cell, zero it if its header is marked:
+  
+    
+      zero the cell
+    
+  
+if first row was flagged, zero the whole first row
+  
+    
+  
+if first col was flagged, zero the whole first col
+  
+    
+  
+```
 
 ```java
 class Solution {
@@ -724,6 +1065,24 @@ class Solution {
 
 **Intuition:** Each sequence is counted exactly once by starting only at its smallest member.
 
+**Variables:** `set` = all values · `x` = candidate sequence start · `cur`/`len` = current value and run length · `best` = longest run
+**Pseudocode:**
+```
+put every value into a set
+  
+  
+best length zero
+for each value x:
+  only start a run if x has no predecessor:
+    walk forward counting consecutive successors
+    
+      
+      
+    update the best length
+  
+return the best length
+```
+
 ```java
 class Solution {
     public int longestConsecutive(int[] nums) {
@@ -756,6 +1115,37 @@ class Solution {
 **Key:** bucket sort — the max gap is at least ceil((max-min)/(n-1)); compare across adjacent non-empty buckets.
 
 **Intuition:** With buckets sized at the minimum possible gap, the answer never lies inside a bucket, only between bucket boundaries.
+
+**Variables:** `n` = length · `min`/`max` = extremes · `bucketSize`/`bucketCount` = bucket geometry · `bucketMin`/`bucketMax` = per-bucket extremes · `prevMax` = last non-empty bucket's max · `gap` = answer
+**Pseudocode:**
+```
+let n be the length
+if fewer than two elements, gap is 0
+  
+find min and max
+  
+  
+if all equal, gap is 0
+  
+bucket width = at least the average gap
+bucket count covers the whole range
+init each bucket's min/max
+  
+  
+  
+place each value into its bucket, updating bucket min/max
+  
+  
+  
+scan buckets left to right tracking previous max:
+  
+    skip empty buckets
+    
+    gap = max of cross-bucket gaps
+    carry this bucket's max forward
+  
+return the max gap
+```
 
 ```java
 class Solution {
@@ -806,6 +1196,22 @@ class Solution {
 
 **Intuition:** Pairing off different elements cancels them out; the majority element always survives.
 
+**Variables:** `candidate` = current majority guess · `count` = its running vote balance · `x` = scanned value
+**Pseudocode:**
+```
+seed candidate, count zero
+for each value x:
+  if count hit zero, adopt x as the new candidate
+    
+  if x matches the candidate, add a vote
+    
+  else cancel a vote
+    
+    
+  
+return the surviving candidate
+```
+
 ```java
 class Solution {
     public int majorityElement(int[] nums) {
@@ -834,6 +1240,22 @@ class Solution {
 **Key:** reverse whole array, then reverse first k and last n-k.
 
 **Intuition:** Two partial reversals after a full reversal place each block in its rotated position without extra space.
+
+**Variables:** `n` = length · `k` = effective shift `k % n`; reverse helper uses `i`/`j` ends
+**Pseudocode:**
+```
+let n be the length
+reduce k modulo n
+reverse the whole array
+reverse the first k elements
+reverse the remaining tail
+
+helper: reverse a range
+  while ends haven't crossed:
+    swap the two ends
+    step left in
+    step right in
+```
 
 ```java
 class Solution {
@@ -864,6 +1286,17 @@ class Solution {
 
 **Intuition:** A set rejects repeats, so the first failed insert proves a duplicate.
 
+**Variables:** `seen` = set of values seen · `x` = scanned value
+**Pseudocode:**
+```
+create an empty set
+for each value x:
+  if adding it fails (already present):
+    a duplicate exists
+  
+no duplicate found
+```
+
 ```java
 class Solution {
     public boolean containsDuplicate(int[] nums) {
@@ -887,6 +1320,31 @@ class Solution {
 **Key:** bucket by value width (valueDiff+1); only adjacent buckets can satisfy the value constraint.
 
 **Intuition:** Same-bucket means automatically within range; neighbor buckets need an explicit check. Slide a window of size indexDiff.
+
+**Variables:** `buckets` = map from bucket id to value · `width` = `valueDiff+1` · `id` = current value's bucket; window holds last `indexDiff` values
+**Pseudocode:**
+```
+if valueDiff is negative, impossible
+  
+map of bucket id to value
+bucket width is valueDiff+1
+for each index i:
+  compute this value's bucket id
+  if its bucket is occupied, a close pair exists
+    
+  if the lower neighbor bucket is within value range, done
+    
+  if the upper neighbor bucket is within value range, done
+    
+  store this value in its bucket
+  if the window is full, evict the value leaving the window
+    
+  
+no qualifying pair
+
+helper: floor-divide value into a bucket id (handles negatives)
+  
+```
 
 ```java
 class Solution {
@@ -929,6 +1387,43 @@ class Solution {
 **Key:** Boyer-Moore with two candidates (at most two can exceed n/3); verify with a second pass.
 
 **Intuition:** At most two elements can each occur more than a third of the time, so track two running candidates.
+
+**Variables:** `c1`/`c2` = two candidates · `n1`/`n2` = their vote counts · `x` = scanned value
+**Pseudocode:**
+```
+init two candidates and zero counts
+for each value x:
+  if it's candidate one, bump its count
+    
+  else if candidate two, bump its count
+    
+  else if slot one is empty, adopt x there
+    
+    
+  else if slot two is empty, adopt x there
+    
+    
+  else cancel one vote from each
+    
+    
+  
+reset counts for a verification pass
+  
+recount actual occurrences
+  
+    
+    
+    
+    
+  
+collect candidates exceeding n/3
+  
+    
+  
+    
+  
+return the winners
+```
 
 ```java
 class Solution {
@@ -981,6 +1476,21 @@ class Solution {
 
 **Intuition:** Each position's answer is everything to its left times everything to its right.
 
+**Variables:** `n` = length · `result` = output (left products then folded right) · `suffix` = running product to the right
+**Pseudocode:**
+```
+let n be the length
+allocate the output
+seed first prefix product as 1
+for i from 1: result[i] = product of everything to the left
+  
+running right product starts at 1
+for i from the end down: fold in the right product
+  
+  advance the suffix product
+return the result
+```
+
 ```java
 class Solution {
     public int[] productExceptSelf(int[] nums) {
@@ -1009,6 +1519,22 @@ class Solution {
 **Key:** fix one, opposite pointers; when `sum < target`, all pairs between i and j also qualify → add `j-i`.
 
 **Intuition:** Once the largest partner works, every smaller partner does too, so count them in bulk.
+
+**Variables:** `a` = fixed first index · `i`/`j` = inner left/right over `[a+1, n-1]` · `count` = qualifying triplets
+**Pseudocode:**
+```
+sort the array
+count zero
+for each first element a:
+  set inner pointers after a and at the end
+  while they haven't crossed:
+    if the triplet sum is below target:
+      every partner between i and j also qualifies, add j-i
+      move left in
+    else:
+      move right in to shrink the sum
+return the count
+```
 
 ```java
 class Solution {
@@ -1041,6 +1567,15 @@ class Solution {
 
 **Intuition:** A greedy local swap is always safe — it never breaks the pair you already fixed.
 
+**Variables:** `i` = pair index; even `i` expects a rise, odd expects a fall
+**Pseudocode:**
+```
+for each adjacent pair index i:
+  decide whether this position should rise
+  if the actual relation violates the expectation:
+    swap the pair to fix it
+```
+
 ```java
 class Solution {
     public void wiggleSort(int[] nums) {
@@ -1063,6 +1598,41 @@ class Solution {
 **Key:** encode next state in the second bit (e.g. `01 -> 11` for live->live); shift right at the end.
 
 **Intuition:** Pack the new state into a spare bit so neighbor counts still read the old state during the pass.
+
+**Variables:** `m`/`n` = dims · `dr`/`dc` = 8 neighbor offsets · `live` = live neighbor count; bit 1 = old state, bit 2 = new
+**Pseudocode:**
+```
+read dims
+neighbor row offsets
+neighbor col offsets
+for each cell (r,c):
+  
+    count live neighbors using the old (low) bit:
+    
+      
+      
+        
+      
+    if currently alive:
+      survives on 2 or 3 neighbors: set the new-state bit
+        
+          
+        
+      
+    else (dead):
+      becomes alive on exactly 3: set the new-state bit
+        
+          
+        
+      
+  
+second pass: shift each cell to expose the new state
+  
+    
+      
+    
+  
+```
 
 ```java
 class Solution {
@@ -1109,6 +1679,19 @@ class Solution {
 
 **Intuition:** A range sum is the difference of two prefix sums, so each query is O(1) after one build pass.
 
+**Variables:** `prefix` = prefix sums with `prefix[0]=0`; query range `[i, j]` closed
+**Pseudocode:**
+```
+store a prefix-sum array
+constructor builds prefix sums:
+  size one larger than input
+  for each element, prefix[i+1] = prefix[i] + value
+    
+  
+query: range sum is prefix[j+1] - prefix[i]
+  
+```
+
 ```java
 class NumArray {
     private int[] prefix;
@@ -1133,6 +1716,24 @@ class NumArray {
 **Key:** 2D prefix sums with inclusion-exclusion.
 
 **Intuition:** Each region sum combines four corner prefix sums via inclusion-exclusion.
+
+**Variables:** `m`/`n` = dims · `prefix` = 2D prefix sums padded by one; region `[row1,col1]..[row2,col2]` closed
+**Pseudocode:**
+```
+store a 2D prefix array
+constructor builds it:
+  read dims
+  allocate padded prefix grid
+  for each cell, combine top, left, minus overlap, plus value:
+    
+    
+      
+    
+  
+query: inclusion-exclusion of four corners
+  
+    
+```
 
 ```java
 class NumMatrix {
@@ -1163,6 +1764,34 @@ class NumMatrix {
 **Key:** Binary Indexed Tree (Fenwick) — both update and prefix query in O(log n).
 
 **Intuition:** A Fenwick tree stores partial sums over power-of-two ranges so updates and queries each touch only log n nodes.
+
+**Variables:** `tree` = Fenwick array (1-indexed) · `nums` = current values · `n` = size; `i & (-i)` = lowest set bit step
+**Pseudocode:**
+```
+fields: tree, values, size
+constructor:
+  store size
+  allocate value store
+  allocate Fenwick tree
+  seed by updating each index
+    
+  
+update: apply delta up the tree
+  compute delta from old value
+  store the new value
+  climb adding delta at each parent
+    
+  
+range sum: prefix(right+1) - prefix(left)
+  
+prefix helper: walk down summing
+  
+  while index positive:
+    add this node
+    drop the lowest set bit
+  
+  return the sum
+```
 
 ```java
 class NumArray {
@@ -1208,6 +1837,24 @@ class NumArray {
 
 **Intuition:** A zero in A contributes nothing, so skip it entirely instead of doing a full triple loop.
 
+**Variables:** `m`/`k`/`n` = dims · `i`/`p`/`j` = row of A / shared dim / col of B; skip zeros in A
+**Pseudocode:**
+```
+read dims
+allocate the result
+for each row i of A:
+  for each shared index p:
+    if A[i][p] is zero,
+      skip it (contributes nothing)
+    for each col j of B:
+      if B[p][j] is non-zero,
+        accumulate the product
+      
+    
+  
+return the product matrix
+```
+
 ```java
 class Solution {
     public int[][] multiply(int[][] mat1, int[][] mat2) {
@@ -1239,6 +1886,49 @@ class Solution {
 **Key:** merge sort on (value, index) pairs; while merging, count how many right-half elements slot before a left element.
 
 **Intuition:** During a merge, every time a right element is taken before a left one, it is a smaller-to-the-right for that left element.
+
+**Variables:** `counts` = answer per original index · `indices` = index array sorted by value · `i`/`j` = merge pointers · `rightCount` = right-half elements already placed before current left
+**Pseudocode:**
+```
+field: counts per index
+set up:
+  let n be the length
+  allocate counts
+  index array
+  fill with identity indices
+    
+  
+  run merge sort over indices
+  build the result list from counts
+  
+    
+  
+  return it
+merge sort:
+  base case single element
+    
+  
+  midpoint
+  sort left half
+  sort right half
+  merge buffer and counters
+  while both halves have elements:
+    if the right value is smaller:
+      it jumps ahead of remaining left items, bump rightCount
+      take the right index
+    else:
+      credit accumulated rightCount to this left element
+      take the left index
+    
+  drain the left half, crediting rightCount
+    
+    
+  drain the right half
+    
+  
+  copy merged order back
+  
+```
 
 ```java
 class Solution {
@@ -1297,6 +1987,20 @@ class Solution {
 
 **Intuition:** A subarray sums to k exactly when two prefix sums differ by k; keep the earliest index to maximize length.
 
+**Variables:** `firstIndex` = map prefix sum to its earliest index · `sum` = running prefix · `best` = longest length
+**Pseudocode:**
+```
+map of prefix sum to earliest index
+seed sum 0 at index -1
+running sum and best length
+for each index i:
+  add the element to the running sum
+  if some earlier prefix equals sum-k:
+    candidate length is i minus that earliest index
+  record this prefix only if new (keep earliest)
+return the best length
+```
+
 ```java
 class Solution {
     public int maxSubArrayLen(int[] nums, int k) {
@@ -1324,6 +2028,48 @@ class Solution {
 **Key:** prefix sums + merge sort; while merging count prefix pairs whose difference falls in range.
 
 **Intuition:** A range sum is a difference of two prefix sums; merge sort lets you count qualifying pairs across halves efficiently.
+
+**Variables:** `lower`/`upper` = bounds · `prefix` = prefix sums · `low`/`high` = sliding bounds in right half counting valid differences · `i`/`j` = merge pointers
+**Pseudocode:**
+```
+store the bounds
+  
+  
+  build prefix sums (one longer)
+  
+    
+  
+  recurse and count
+merge-count:
+  base case
+    
+  
+  midpoint
+  count from both halves
+  two moving bounds in the right half
+  for each left prefix i:
+    advance low past differences below lower
+      
+    
+    advance high past differences within upper
+      
+    
+    add the count of qualifying right prefixes
+  merge the two sorted halves:
+  
+  while both have elements:
+    
+      take smaller left
+    
+      take smaller right
+    
+  drain left
+    
+  drain right
+    
+  copy back
+  return the count
+```
 
 ```java
 class Solution {
@@ -1384,6 +2130,21 @@ class Solution {
 
 **Intuition:** Maintaining the two smallest ascending values seen so far is enough to detect a third larger one.
 
+**Variables:** `first` = smallest seen · `second` = smallest value that has a smaller predecessor · `x` = scanned value
+**Pseudocode:**
+```
+init first and second to +infinity
+for each value x:
+  if it's a new smallest, update first
+    
+  else if it can be a new second smallest, update second
+    
+  else it beats second, so a triplet exists
+    
+  
+no triplet found
+```
+
 ```java
 class Solution {
     public boolean increasingTriplet(int[] nums) {
@@ -1411,6 +2172,26 @@ class Solution {
 **Key:** put one array in a set; collect elements of the other that are present.
 
 **Intuition:** Set membership turns intersection into linear lookups.
+
+**Variables:** `set` = values of nums1 · `common` = intersection set · `result` = output array · `i` = fill index
+**Pseudocode:**
+```
+put all of nums1 into a set
+  
+  
+collect shared values without repeats
+  
+    
+      
+    
+  
+copy the set into an array
+  
+  
+    
+  
+return it
+```
 
 ```java
 class Solution {
@@ -1445,6 +2226,27 @@ class Solution {
 
 **Intuition:** A frequency map lets each shared occurrence be matched at most once.
 
+**Variables:** `count` = frequency map of nums1 · `result` = matched values · `arr` = output array
+**Pseudocode:**
+```
+count each value of nums1
+  
+  
+for each value in nums2:
+  
+    if its count is still positive:
+      emit it
+      decrement its count
+    
+  
+copy results to an array
+  
+  
+    
+  
+return it
+```
+
 ```java
 class Solution {
     public int[] intersect(int[] nums1, int[] nums2) {
@@ -1478,6 +2280,21 @@ class Solution {
 
 **Intuition:** Mark only the endpoints of each update; a single prefix pass materializes all increments.
 
+**Variables:** `diff` = difference array (one longer) · `running` = prefix accumulator · `result` = materialized array
+**Pseudocode:**
+```
+allocate a difference array
+for each update [start,end,inc]:
+  add inc at start
+  subtract inc just past end
+allocate the result
+running total zero
+prefix-sum the diff into the result:
+  add this slot's delta
+  store the running value
+return the result
+```
+
 ```java
 class Solution {
     public int[] getModifiedArray(int length, int[][] updates) {
@@ -1506,6 +2323,24 @@ class Solution {
 **Key:** Fisher-Yates — for each i swap with a random index in `[i, n)`.
 
 **Intuition:** Choosing each position's element uniformly from the remaining ones yields every permutation with equal probability.
+
+**Variables:** `original` = pristine copy · `arr` = working copy · `rng` = randomness · `i`/`j` = Fisher-Yates swap indices
+**Pseudocode:**
+```
+fields: original, working array, RNG
+constructor: keep a pristine copy and a working copy
+  
+  
+reset: restore from the pristine copy
+  
+  
+shuffle: Fisher-Yates from the back
+  for i from the end down to 1:
+    pick a random j in [0, i]
+    swap positions i and j
+  
+  return the shuffled array
+```
 
 ```java
 class Solution {
@@ -1540,6 +2375,23 @@ class Solution {
 
 **Intuition:** Keep a sorted top-three as you scan, skipping duplicates.
 
+**Variables:** `first`/`second`/`third` = top three distinct maxima (Long so MIN_VALUE works) · `v` = boxed current value
+**Pseudocode:**
+```
+three distinct-max holders, all null
+for each value x:
+  box it
+  skip if it duplicates any current holder
+  if it's a new overall max, cascade the top three down
+    
+  else if it's a new second, cascade second/third
+    
+  else if it's a new third, set third
+    
+  
+return the third if it exists, otherwise the max
+```
+
 ```java
 class Solution {
     public int thirdMax(int[] nums) {
@@ -1570,6 +2422,21 @@ class Solution {
 
 **Intuition:** Each ship has exactly one cell with no ship-neighbor above or to its left, so count those.
 
+**Variables:** `count` = ship count · `r`/`c` = scan cell; count only a ship's top-left cell
+**Pseudocode:**
+```
+count zero
+for each row r:
+  for each col c:
+    if this cell is a ship AND
+      has no ship directly above AND
+      has no ship directly to the left:
+      it's a new ship, count it
+    
+  
+return the count
+```
+
 ```java
 class Solution {
     public int countBattleships(char[][] board) {
@@ -1598,6 +2465,21 @@ class Solution {
 
 **Intuition:** Flip the sign at each value's home index; encountering an already-negative slot means that value repeated.
 
+**Variables:** `result` = duplicates found · `x` = scanned value · `idx` = home index `|x|-1` used as a seen-marker via sign
+**Pseudocode:**
+```
+prepare the result list
+for each value x:
+  compute its home index from absolute value
+  if that slot is already negative:
+    we've seen this value before, record it
+  else:
+    flip the sign to mark it seen
+    
+  
+return the duplicates
+```
+
 ```java
 class Solution {
     public List<Integer> findDuplicates(int[] nums) {
@@ -1624,6 +2506,22 @@ class Solution {
 **Key:** mark index `|x|-1` negative; positive slots correspond to missing numbers.
 
 **Intuition:** Use sign marking; any home index never marked means that number was absent.
+
+**Variables:** `x` = scanned value · `idx` = home index `|x|-1`; unmarked (positive) slots reveal missing numbers · `result` = answer
+**Pseudocode:**
+```
+for each value x:
+  compute its home index
+  if that slot is still positive:
+    mark it negative as present
+  
+prepare the result list
+scan all slots:
+  any still-positive slot means that number is missing
+    
+  
+return the missing numbers
+```
 
 ```java
 class Solution {
@@ -1655,6 +2553,22 @@ class Solution {
 
 **Intuition:** Split four arrays into two pairs so a hash of one pair's sums turns the search into O(n^2) lookups.
 
+**Variables:** `abSum` = map from A+B pair-sum to its frequency · `count` = matching quadruplets
+**Pseudocode:**
+```
+map of A+B sums to counts
+for each a, for each b:
+  
+    tally the sum a+b
+  
+count zero
+for each c, for each d:
+  
+    add how many A+B sums equal -(c+d)
+  
+return the count
+```
+
 ```java
 class Solution {
     public int fourSumCount(int[] a, int[] b, int[] c, int[] d) {
@@ -1684,6 +2598,30 @@ class Solution {
 **Key:** Floyd's tortoise and hare; movement direction must stay consistent and the cycle length must exceed 1.
 
 **Intuition:** Fast/slow pointers detect cycles; reject single-element self-loops and direction flips.
+
+**Variables:** `n` = length · `slow`/`fast` = Floyd tortoise/hare · `forward` = direction of this run; `next()` returns -1 on flip or self-loop
+**Pseudocode:**
+```
+store the length
+  
+  for each start index i:
+    record this run's direction
+    place both pointers at i
+    
+    loop advancing slow once, fast twice:
+      step slow
+      step fast once
+      step fast again if still valid
+      if either invalidated, abandon this start
+      if they meet, a valid cycle exists
+    
+  
+  no valid loop
+next(): given index and direction
+  if the direction flipped here, invalid
+  compute the wrapped target index
+  reject a single-element self-loop
+```
 
 ```java
 class Solution {
@@ -1722,6 +2660,20 @@ class Solution {
 
 **Intuition:** Grow a streak while seeing 1s and reset at each 0.
 
+**Variables:** `best` = longest run of 1s · `cur` = current run length · `x` = scanned value
+**Pseudocode:**
+```
+best and current run zero
+for each value x:
+  if it's a 1:
+    grow the run
+    update the best
+  else:
+    reset the run
+  
+return the best
+```
+
 ```java
 class Solution {
     public int findMaxConsecutiveOnes(int[] nums) {
@@ -1748,6 +2700,38 @@ class Solution {
 **Key:** merge sort; before merging each half, count reverse pairs across the sorted halves.
 
 **Intuition:** Sorted halves let you count `nums[i] > 2*nums[j]` pairs with a linear two-pointer sweep per merge.
+
+**Variables:** `lo`/`hi` = merge-sort range · `mid` = split · `i`/`p` = left/right merge pointers · `j` = counting pointer in the right half · `count` = reverse pairs
+**Pseudocode:**
+```
+count over the whole array
+merge sort:
+  base case
+    
+  
+  midpoint
+  count within both halves
+  counting pointer starts at the right half
+  for each left element i:
+    advance j while left > 2*right
+      
+    
+    add how many right elements qualified
+  merge the halves:
+  
+  while both have elements:
+    
+      take smaller left
+    
+      take smaller right
+    
+  drain left
+    
+  drain right
+    
+  copy back
+  return the count
+```
 
 ```java
 class Solution {
@@ -1798,6 +2782,41 @@ class Solution {
 
 **Intuition:** Cells on the same diagonal share `r+c`; flip the read direction on alternating diagonals to zig-zag.
 
+**Variables:** `m`/`n` = dims · `idx` = output index · `r`/`c` = current cell · `up` = direction (true = up-right)
+**Pseudocode:**
+```
+read dims
+allocate the flat output
+start at top-left, output index zero
+begin going up-right
+while not all cells emitted:
+  emit the current cell
+  if heading up-right:
+    if at the right edge: drop down, flip direction
+      
+      
+    else if at the top edge: step right, flip direction
+      
+      
+    else: move up-right
+      
+      
+    
+  else (going down-left):
+    if at the bottom edge: step right, flip direction
+      
+      
+    else if at the left edge: step down, flip direction
+      
+      
+    else: move down-left
+      
+      
+    
+  
+return the result
+```
+
 ```java
 class Solution {
     public int[] findDiagonalOrder(int[][] mat) {
@@ -1846,6 +2865,26 @@ class Solution {
 
 **Intuition:** A bottleneck is either a machine with too much surplus or a cut that must pass a large net flow.
 
+**Variables:** `total` = sum of dresses · `n` = machines · `avg` = target each · `running` = net flow across the current cut · `diff` = surplus of one machine · `result` = answer
+**Pseudocode:**
+```
+sum all dresses
+  
+  
+let n be the machine count
+if not evenly divisible, impossible
+  
+  
+target per machine
+answer and running flow zero
+for each machine:
+  its surplus over average
+  accumulate net flow across this cut
+  bottleneck is the max of cut flow and single overflow
+  
+return the answer
+```
+
 ```java
 class Solution {
     public int findMinMoves(int[] machines) {
@@ -1879,6 +2918,25 @@ class Solution {
 
 **Intuition:** Two prefix sums with the same remainder mod k bound a subarray sum divisible by k.
 
+**Variables:** `firstIndex` = map remainder mod k to earliest index · `sum` = running prefix · `rem` = normalized remainder
+**Pseudocode:**
+```
+map remainder to earliest index
+seed remainder 0 at index -1
+running sum zero
+for each index i:
+  add the element
+  compute the normalized remainder
+  if this remainder was seen:
+    if at least 2 apart, a valid subarray exists
+      
+    
+  else record this remainder's index
+    
+  
+no valid subarray
+```
+
 ```java
 class Solution {
     public boolean checkSubarraySum(int[] nums, int k) {
@@ -1911,6 +2969,22 @@ class Solution {
 
 **Intuition:** Equal counts means a running balance returns to a value seen before.
 
+**Variables:** `firstIndex` = map running balance to earliest index · `balance` = +1 per 1, -1 per 0 · `best` = longest length
+**Pseudocode:**
+```
+map balance to earliest index
+seed balance 0 at index -1
+balance and best zero
+for each index i:
+  +1 for a 1, -1 for a 0
+  if this balance was seen:
+    candidate length from that earliest index
+  else record this balance's index
+    
+  
+return the best length
+```
+
 ```java
 class Solution {
     public int findMaxLength(int[] nums) {
@@ -1939,6 +3013,24 @@ class Solution {
 **Key:** frequency map; for k==0 count values with freq >= 2, else count distinct values v with v+k present.
 
 **Intuition:** Counting distinct values avoids duplicate pairs; the zero-diff case needs a repeated value.
+
+**Variables:** `count` = frequency map · `result` = unique-pair count · `e` = a (value, freq) entry
+**Pseudocode:**
+```
+count each value
+  
+  
+result zero
+for each distinct value entry:
+  if k is zero:
+    count it once if it appears at least twice
+      
+    
+  else if value+k also exists, count the pair
+    
+  
+return the count
+```
 
 ```java
 class Solution {
@@ -1972,6 +3064,19 @@ class Solution {
 
 **Intuition:** Each earlier prefix equal to `s-k` marks the start of a qualifying subarray ending here.
 
+**Variables:** `count` = map prefix sum to frequency · `sum` = running prefix · `result` = subarray count
+**Pseudocode:**
+```
+map prefix sum to frequency
+seed sum 0 with count 1
+running sum and result zero
+for each value x:
+  extend the running sum
+  add how many earlier prefixes equal sum-k
+  record this prefix
+return the count
+```
+
 ```java
 class Solution {
     public int subarraySum(int[] nums, int k) {
@@ -1998,6 +3103,19 @@ class Solution {
 
 **Intuition:** Both shapes share a linear index, so map between them with division and modulo.
 
+**Variables:** `m`/`n` = source dims · `t` = flat index; source `(t/n, t%n)`, target `(t/c, t%c)`
+**Pseudocode:**
+```
+read source dims
+if the element counts differ, return the original
+  
+  
+allocate the reshaped grid
+for each flat index t:
+  map it from source layout to target layout
+return the reshaped matrix
+```
+
 ```java
 class Solution {
     public int[][] matrixReshape(int[][] mat, int r, int c) {
@@ -2023,6 +3141,21 @@ class Solution {
 **Key:** scan from right tracking min to find left bound; scan from left tracking max to find right bound.
 
 **Intuition:** The window starts where an element exceeds some later minimum and ends where an element falls below some earlier maximum.
+
+**Variables:** `n` = length · `left`/`right` = bounds of the unsorted window (default empty) · `max`/`min` = running extremes
+**Pseudocode:**
+```
+let n be the length
+default to an empty window
+seed max from the left, min from the right
+left-to-right, find the right bound:
+  track the running max
+  any element below it extends the right bound
+right-to-left, find the left bound:
+  track the running min
+  any element above it extends the left bound
+return the window length
+```
 
 ```java
 class Solution {
@@ -2053,6 +3186,20 @@ class Solution {
 
 **Intuition:** A harmonious subsequence uses exactly two adjacent values, so combine each pair's counts.
 
+**Variables:** `count` = frequency map · `best` = longest harmonious length · `e` = a (value, freq) entry
+**Pseudocode:**
+```
+count each value
+  
+  
+best zero
+for each value entry:
+  if the value plus one exists:
+    candidate is the sum of both counts
+  
+return the best
+```
+
 ```java
 class Solution {
     public int findLHS(int[] nums) {
@@ -2080,6 +3227,28 @@ class Solution {
 **Key:** map first list value to index; scan second tracking the minimum index sum.
 
 **Intuition:** Index sum is minimized greedily as you scan; ties are collected together.
+
+**Variables:** `index` = map list1 string to its index · `result` = best matches · `best` = smallest index sum · `j` = list2 index
+**Pseudocode:**
+```
+map each list1 string to its index
+  
+  
+prepare the result list
+best index sum is infinity
+for each list2 index j:
+  if this string is in list1:
+    its index sum
+    if strictly smaller, reset the result to just this
+      
+      
+      
+    else if tied, add it too
+      
+    
+  
+return the best matches
+```
 
 ```java
 class Solution {
@@ -2117,6 +3286,22 @@ class Solution {
 
 **Intuition:** Only the two smaller sides need to beat the largest, so fix the largest and bulk-count valid pairs.
 
+**Variables:** `k` = fixed largest side index · `i`/`j` = left/right over `[0, k-1]` · `count` = valid triangles
+**Pseudocode:**
+```
+sort the sides
+count zero
+for each largest side k from the top:
+  set inner pointers at the start and just below k
+  while they haven't crossed:
+    if the two smaller sides beat the largest:
+      every i between also works, add j-i
+      shrink the larger of the two
+    else:
+      grow the smaller of the two
+return the count
+```
+
 ```java
 class Solution {
     public int triangleNumber(int[] nums) {
@@ -2147,6 +3332,28 @@ class Solution {
 **Key:** for each cell sum valid neighbors (including self) and divide by the count.
 
 **Intuition:** Average over the in-bounds 3×3 window centered on each cell.
+
+**Variables:** `m`/`n` = dims · `dr`/`dc` = 8 neighbor offsets plus self · `sum`/`cnt` = neighborhood total and member count
+**Pseudocode:**
+```
+read dims
+allocate the result
+neighbor row offsets including self
+neighbor col offsets including self
+for each cell (r,c):
+  
+    sum and count zero
+    for each of the 9 offsets:
+      
+      if the neighbor is in bounds:
+        add its value
+        bump the count
+      
+    
+    store the floored average
+  
+return the smoothed grid
+```
 
 ```java
 class Solution {
@@ -2182,6 +3389,45 @@ class Solution {
 **Key:** mark crushable cells (negate), zero them, drop columns; repeat until no change.
 
 **Intuition:** Mark all matches in one pass before clearing so simultaneous crushes are handled, then let candies fall.
+
+**Variables:** `m`/`n` = dims · `changed` = whether any crush happened this round · `r`/`c` = scan cell · `v` = candidate value · `write` = gravity write row
+**Pseudocode:**
+```
+read dims
+loop until a stable round
+  
+  reset the changed flag
+  scan horizontal runs of 3:
+    
+      
+      if three equal positive candies in a row:
+        mark all three negative
+        
+      
+    
+  scan vertical runs of 3:
+    
+      
+      if three equal positive candies in a column:
+        mark all three negative
+        
+      
+    
+  if anything was marked, apply gravity per column:
+    
+      write row starts at the bottom
+      for each row from the bottom up:
+        if it's a surviving candy, drop it to the write row
+          
+        
+      fill the rest of the column with zeros
+        
+        
+      
+    
+  
+return the stable board
+```
 
 ```java
 class Solution {
@@ -2237,6 +3483,21 @@ class Solution {
 
 **Intuition:** Track a running left sum and derive the right sum from the precomputed total.
 
+**Variables:** `total` = full sum · `left` = running left-side sum; right side = `total - left - nums[i]`
+**Pseudocode:**
+```
+sum the whole array
+  
+  
+left sum zero
+for each index i:
+  if left equals total minus left minus current, it's the pivot
+    
+  
+  add the current element to the left sum
+no pivot found
+```
+
 ```java
 class Solution {
     public int pivotIndex(int[] nums) {
@@ -2266,6 +3527,18 @@ class Solution {
 
 **Intuition:** Comparing each cell to its diagonal predecessor verifies all diagonals locally.
 
+**Variables:** `r`/`c` = cell being compared to its up-left neighbor `(r-1, c-1)`
+**Pseudocode:**
+```
+for each row from the second:
+  for each col from the second:
+    if a cell differs from its up-left neighbor:
+      not Toeplitz
+    
+  
+all diagonals consistent
+```
+
 ```java
 class Solution {
     public boolean isToeplitzMatrix(int[][] matrix) {
@@ -2291,6 +3564,18 @@ class Solution {
 
 **Intuition:** When the largest value seen so far equals the index, everything up to here is a self-contained block.
 
+**Variables:** `max` = running max value seen · `chunks` = chunk count; boundary when `max == i`
+**Pseudocode:**
+```
+running max and chunk count zero
+for each index i:
+  update the running max
+  if the max equals the index, close a chunk
+    
+  
+return the chunk count
+```
+
 ```java
 class Solution {
     public int maxChunksToSorted(int[] arr) {
@@ -2315,6 +3600,23 @@ class Solution {
 **Key:** count subarrays with max <= right minus those with max <= left-1.
 
 **Intuition:** "Max in range" equals the difference of two "max at most X" counts, each computed in one pass.
+
+**Variables:** `bound` = upper limit for the helper · `count` = subarray count · `run` = length of the current valid run
+**Pseudocode:**
+```
+answer = (max <= right) minus (max <= left-1)
+helper counting subarrays with max at most bound:
+  count and run zero
+  for each value x:
+    if within bound:
+      extend the run
+    else:
+      reset the run
+    
+    every run of length r adds r new subarrays ending here
+  
+  return the count
+```
 
 ```java
 class Solution {
@@ -2345,6 +3647,25 @@ class Solution {
 **Key:** each cell can rise to `min(rowMax, colMax)`; sum the increases.
 
 **Intuition:** A building is capped by the smaller of its row and column maxima to preserve both silhouettes.
+
+**Variables:** `n` = grid size · `rowMax`/`colMax` = per-row and per-col maxima · `total` = sum of allowed increases
+**Pseudocode:**
+```
+let n be the size
+per-row maxima
+per-col maxima
+compute both maxima in one pass:
+  
+    update this row's max
+    update this col's max
+  
+total zero
+for each cell, raise it to min(rowMax, colMax):
+  
+    add the gained height
+  
+return the total
+```
 
 ```java
 class Solution {
@@ -2379,6 +3700,26 @@ class Solution {
 
 **Intuition:** Ages are bounded, so counting per age-bucket pair collapses the problem to constant-size work.
 
+**Variables:** `count` = per-age population (1..120) · `x`/`y` = requester/target age buckets · `result` = total requests
+**Pseudocode:**
+```
+bucket population by age
+  
+  
+result zero
+for each requester age x:
+  for each target age y:
+    skip if the request rules forbid it
+      
+    
+    add all x-by-y pairs
+    if same age, remove self-requests
+      
+    
+  
+return the request count
+```
+
 ```java
 class Solution {
     public int numFriendRequests(int[] ages) {
@@ -2412,6 +3753,38 @@ class Solution {
 **Key:** compute net force at each cell — R pushes right (+, decaying), L pushes left (-, decaying); sign decides final state.
 
 **Intuition:** Each cell's outcome is the balance of forces from the nearest pushers on either side.
+
+**Variables:** `n` = length · `force` = net force per cell (+ right, - left) · `f` = decaying push strength
+**Pseudocode:**
+```
+let n be the length
+net force per cell
+push strength zero
+left-to-right pass for rightward forces:
+  read the cell
+  R starts a full-strength rightward push
+    
+  L kills any rightward push
+    
+  a gap decays the push toward zero
+    
+  
+  add the rightward force
+reset strength
+right-to-left pass for leftward forces:
+  read the cell
+  L starts a full-strength leftward push
+    
+  R kills any leftward push
+    
+  a gap decays it
+    
+  
+  subtract the leftward force
+build the result from each cell's net force:
+  positive -> R, negative -> L, zero -> upright
+return the string
+```
 
 ```java
 class Solution {
@@ -2461,6 +3834,22 @@ class Solution {
 
 **Intuition:** Scan to a peak by rising, then descend; the span counts only when both directions occurred.
 
+**Variables:** `n` = length · `best` = longest mountain · `i` = scan index · `start` = foot of the climb · `peak` = top of the climb
+**Pseudocode:**
+```
+length, best, scan index zero
+scan the array:
+  remember the foot of a potential mountain
+  climb while strictly rising
+  if there was an up-slope:
+    remember the peak
+    descend while strictly falling
+    if there was a down-slope too, it's a mountain; update best
+  
+  if nothing was consumed, force progress
+return the best length
+```
+
 ```java
 class Solution {
     public int longestMountain(int[] arr) {
@@ -2490,6 +3879,19 @@ class Solution {
 
 **Intuition:** A single pass noting direction changes detects non-monotonicity.
 
+**Variables:** `inc`/`dec` = whether any increase / decrease occurred · `i` = scan index
+**Pseudocode:**
+```
+increase-seen and decrease-seen flags false
+for each adjacent pair:
+  if it rises, note an increase
+    
+  else if it falls, note a decrease
+    
+  
+monotonic unless both directions appeared
+```
+
 ```java
 class Solution {
     public boolean isMonotonic(int[] nums) {
@@ -2515,6 +3917,33 @@ class Solution {
 **Key:** merge sort with a reusable buffer.
 
 **Intuition:** Recursively split, sort halves, and merge — stable O(n log n) without library sort.
+
+**Variables:** `lo`/`hi` = sort range · `mid` = split · `buf` = shared merge buffer · `i`/`j` = half pointers · `k` = buffer write index
+**Pseudocode:**
+```
+sort over the whole array with a shared buffer
+  
+merge sort:
+  base case single element
+    
+  
+  midpoint
+  sort the left half
+  sort the right half
+  set the two half pointers and the buffer index
+  while both halves have elements:
+    take the smaller front element:
+      take from the left
+    
+      take from the right
+    
+  drain the left half
+    
+  drain the right half
+    
+  copy the merged run back
+  
+```
 
 ```java
 class Solution {
@@ -2558,6 +3987,20 @@ class Solution {
 
 **Intuition:** Two prefixes with the same remainder mod k bound a divisible subarray; count pairs per remainder.
 
+**Variables:** `count` = remainder-frequency array · `sum` = running prefix · `rem` = normalized remainder · `result` = subarray count
+**Pseudocode:**
+```
+remainder counts, seed remainder 0 with count 1
+  
+running sum and result zero
+for each value x:
+  extend the running sum
+  compute the normalized remainder
+  add how many earlier prefixes share this remainder
+  record this remainder
+return the count
+```
+
 ```java
 class Solution {
     public int subarraysDivByK(int[] nums, int k) {
@@ -2584,6 +4027,23 @@ class Solution {
 **Key:** opposite pointers; the larger absolute value is at one of the two ends — write from the back.
 
 **Intuition:** The biggest squares sit at the extremes, so fill the result from the largest slot inward.
+
+**Variables:** `n` = length · `result` = output · `i`/`j` = left/right pointers · `k` = write index filling from the back
+**Pseudocode:**
+```
+let n be the length
+allocate the output
+pointers at both ends, write index at the back
+while pointers haven't crossed:
+  square both ends
+  if the left square is larger:
+    write it at the back
+    advance left
+  else:
+    write the right square at the back
+    retreat right
+return the result
+```
 
 ```java
 class Solution {
@@ -2615,6 +4075,28 @@ class Solution {
 **Key:** total must be divisible by 3; sweep accumulating, counting completed `total/3` parts.
 
 **Intuition:** Greedily close off a part each time the running sum hits one-third; succeed if at least three parts form.
+
+**Variables:** `total` = full sum · `target` = `total/3` · `running` = current part sum · `parts` = completed parts
+**Pseudocode:**
+```
+sum the whole array
+  
+  
+if not divisible by 3, impossible
+  
+  
+target, running sum, parts count
+for each index i:
+  extend the running sum
+  if it reaches one-third:
+    close a part and reset the running sum
+    
+    if two parts are closed with elements left, success
+      
+    
+  
+otherwise fail
+```
 
 ```java
 class Solution {
@@ -2651,6 +4133,30 @@ class Solution {
 **Key:** fix a pair of rows, collapse columns to a 1D array, then apply prefix-sum hashmap (#560) per column.
 
 **Intuition:** Reduce 2D to 1D by fixing the top and bottom rows, then count target-sum subarrays.
+
+**Variables:** `m`/`n` = dims · `prefix` = column-prefix sums (rows padded) · `top`/`bottom` = fixed row band · `count` = map collapsed-sum to frequency · `sum` = running 1D prefix · `result` = answer
+**Pseudocode:**
+```
+read dims
+column-prefix sums, padded by a top row
+build them:
+  
+    prefix[r+1][c] = prefix above plus this cell
+  
+result zero
+for each top row:
+  for each bottom row below it:
+    fresh prefix-sum map seeded with 0->1
+    
+    running 1D sum zero
+    sweep columns:
+      add this column's band sum
+      add earlier prefixes equal to sum-target
+      record this prefix
+    
+  
+return the count
+```
 
 ```java
 class Solution {
@@ -2690,6 +4196,21 @@ class Solution {
 
 **Intuition:** Range increments become two endpoint marks resolved by one prefix pass.
 
+**Variables:** `diff` = difference array (one longer) · `running` = prefix accumulator · `result` = per-flight totals
+**Pseudocode:**
+```
+allocate a difference array
+for each booking [first,last,seats]:
+  add seats at first (0-based)
+  subtract seats just past last
+allocate the result
+running total zero
+prefix-sum into the result:
+  add this slot's delta
+  store the running total
+return the result
+```
+
 ```java
 class Solution {
     public int[] corpFlightBookings(int[][] bookings, int n) {
@@ -2718,6 +4239,27 @@ class Solution {
 **Key:** three pointers; advance the smallest; record when all three match.
 
 **Intuition:** Like merging — advance whichever pointer lags so all three meet at shared values.
+
+**Variables:** `i`/`j`/`k` = independent pointers into the three sorted arrays · `result` = common values
+**Pseudocode:**
+```
+prepare the result list
+all three pointers at the start
+while all three are in range:
+  if all three values match:
+    record it and advance all three
+    
+    
+    
+  else if arr1's value is the smallest, advance it
+    
+  else if arr2's value is the smallest, advance it
+    
+  else advance arr3
+    
+  
+return the common values
+```
 
 ```java
 class Solution {
@@ -2752,6 +4294,30 @@ class Solution {
 **Key:** tally row/col/diagonal sums with +1 for A and -1 for B; |sum| == 3 wins.
 
 **Intuition:** Signed counts per line reveal a win the moment any line reaches +3 or -3.
+
+**Variables:** `rows`/`cols` = signed per-line sums · `diag`/`anti` = main/anti diagonal sums · `t` = move index · `sign` = +1 for A, -1 for B
+**Pseudocode:**
+```
+row sums
+column sums
+diagonal sums zero
+for each move t:
+  +1 on even (A), -1 on odd (B)
+  read its row and col
+  add to that row
+  add to that col
+  if on the main diagonal, add to it
+    
+  
+  if on the anti-diagonal, add to it
+    
+  
+  if any line reaches +-3:
+    
+    the current player won
+  
+full board is a draw, otherwise pending
+```
 
 ```java
 class Solution {
@@ -2790,6 +4356,21 @@ class Solution {
 
 **Intuition:** From the bottom-left, sorted order lets each step rule out a whole row or column of negatives.
 
+**Variables:** `m`/`n` = dims · `r`/`c` = staircase position starting bottom-left · `count` = negatives found
+**Pseudocode:**
+```
+read dims
+start at bottom-left, count zero
+while in the grid:
+  if the cell is negative:
+    everything to the right in this row is negative too
+    move up a row
+  else:
+    move right
+  
+return the count
+```
+
 ```java
 class Solution {
     public int countNegatives(int[][] grid) {
@@ -2817,6 +4398,30 @@ class Solution {
 **Key:** group cells by `r+c`; within a diagonal, larger row comes first (bottom-left start).
 
 **Intuition:** Cells on a diagonal share `r+c`; emitting rows in descending order gives the bottom-left-up direction.
+
+**Variables:** `diagonals` = map `r+c` to its cell list · `total` = element count · `maxKey` = largest diagonal key · `idx` = output write index
+**Pseudocode:**
+```
+map diagonal key to its values
+total and max key zero
+scan every cell:
+  
+    diagonal key is r+c
+    append the cell to that diagonal
+    track the largest key
+    bump the total
+  
+allocate the flat output
+output index zero
+for each diagonal key in order:
+  fetch its list
+  skip if empty
+    
+  emit it bottom-up (reversed) for the right direction
+    
+  
+return the result
+```
 
 ```java
 class Solution {
@@ -2857,6 +4462,23 @@ class Solution {
 
 **Intuition:** Any permutation is reachable through reversals, so only element counts matter.
 
+**Variables:** `count` = per-value frequency difference (1001 buckets) · `x` = scanned value
+**Pseudocode:**
+```
+frequency-difference buckets
+add each target value
+  
+  
+subtract each arr value
+  
+  
+if any bucket is non-zero, the multisets differ
+  
+    
+  
+they match
+```
+
 ```java
 class Solution {
     public boolean canBeEqual(int[] target, int[] arr) {
@@ -2887,6 +4509,14 @@ class Solution {
 
 **Intuition:** Each running sum is the prior running sum plus the current value.
 
+**Variables:** `i` = scan index; each element absorbs the previous running sum
+**Pseudocode:**
+```
+from the second element on:
+  add the previous running sum into this slot
+return the array (now prefix sums)
+```
+
 ```java
 class Solution {
     public int[] runningSum(int[] nums) {
@@ -2907,6 +4537,27 @@ class Solution {
 **Key:** sort; opposite pointers — if `nums[i]+nums[j] <= target`, all subsets of `(i,j]` with i included count → `2^(j-i)`.
 
 **Intuition:** After sorting, fixing the minimum lets every subset of the elements up to the max be chosen freely.
+
+**Variables:** `MOD` = 1e9+7 · `n` = length · `pow` = precomputed powers of two · `i`/`j` = left/right pointers · `result` = subsequence count
+**Pseudocode:**
+```
+modulus and length
+sort so min/max are the pointer ends
+precompute powers of two:
+  
+  
+    
+  
+pointers at both ends, result zero
+while they haven't crossed:
+  if min plus max fits the target:
+    every subset between adds 2^(j-i)
+    advance the left (min)
+  else:
+    retreat the right (max)
+  
+return the count
+```
 
 ```java
 class Solution {
@@ -2943,6 +4594,21 @@ class Solution {
 
 **Intuition:** Count occurrences, then sum only the singletons.
 
+**Variables:** `count` = per-value frequency (1..100) · `x` = scanned value · `v` = value being summed · `sum` = total of singletons
+**Pseudocode:**
+```
+frequency buckets
+count each value
+  
+  
+sum zero
+for each possible value v:
+  if it occurred exactly once, add it
+    
+  
+return the sum
+```
+
 ```java
 class Solution {
     public int sumOfUnique(int[] nums) {
@@ -2970,6 +4636,24 @@ class Solution {
 **Key:** scan right-to-left tracking max height; a building qualifies if taller than all seen so far.
 
 **Intuition:** Sweeping from the ocean side, only record buildings that exceed every taller one already passed.
+
+**Variables:** `result` = qualifying indices (collected back-to-front) · `max` = tallest building seen from the right · `arr` = final output
+**Pseudocode:**
+```
+prepare the result list
+max height seen zero
+scan from the right (ocean) side:
+  if this building beats everything to its right:
+    record it
+    raise the max
+  
+copy to an array in increasing-index order
+  
+  
+    
+  
+return it
+```
 
 ```java
 class Solution {
@@ -3000,6 +4684,32 @@ class Solution {
 **Key:** two pointers over the runs; multiply values, take the min remaining length, decrement, merge equal adjacent products.
 
 **Intuition:** March through both run lists together, consuming the shorter overlap and coalescing equal results.
+
+**Variables:** `result` = output runs · `i`/`j` = run pointers into the two encodings · `product` = value of the overlap · `len` = overlap length · `last` = last result run
+**Pseudocode:**
+```
+prepare the result list
+both run pointers at the start
+while both have runs left:
+  product of the two current run values
+  overlap length = the shorter remaining run
+  if it matches the previous result run's value:
+    extend that run
+    
+    
+  else:
+    start a new run
+  
+  consume the overlap from both runs
+  
+  if the first run is used up, advance it
+    
+  
+  if the second run is used up, advance it
+    
+  
+return the merged runs
+```
 
 ```java
 class Solution {
@@ -3039,6 +4749,18 @@ class Solution {
 
 **Intuition:** Pairing extremes balances the sums, keeping the largest pair as small as possible.
 
+**Variables:** `i`/`j` = left/right pointers after sorting · `max` = largest pair sum
+**Pseudocode:**
+```
+sort the array
+pointers at both ends, max zero
+while they haven't crossed:
+  pair the extremes and track the largest sum
+  advance left
+  retreat right
+return the max pair sum
+```
+
 ```java
 class Solution {
     public int minPairSum(int[] nums) {
@@ -3063,6 +4785,22 @@ class Solution {
 **Key:** difference array over the small value domain (1..50); prefix-sum to test coverage.
 
 **Intuition:** Mark interval starts and ends, then a prefix sweep shows which points are covered.
+
+**Variables:** `diff` = difference array over values 1..50 · `running` = coverage at the current point · `i` = value being checked
+**Pseudocode:**
+```
+difference array over the value domain
+for each interval:
+  +1 at its start
+  -1 just past its end
+running coverage zero
+sweep values 1..50:
+  accumulate coverage
+  if a queried value has zero coverage, fail
+    
+  
+all queried values covered
+```
 
 ```java
 class Solution {
@@ -3094,6 +4832,21 @@ class Solution {
 
 **Intuition:** Whole cycles repeat, so only the remainder after a full round determines the failing student.
 
+**Variables:** `total` = chalk per full cycle · `k` = remaining chalk after whole cycles · `i` = student index
+**Pseudocode:**
+```
+sum chalk over one full round
+  
+  
+reduce k by whole cycles
+walk students in order:
+  if this student can't be served, they run out
+    
+  
+  subtract their consumption
+wrap to the first student
+```
+
 ```java
 class Solution {
     public int chalkReplacer(int[] chalk, int k) {
@@ -3123,6 +4876,16 @@ class Solution {
 
 **Intuition:** Each output is a double lookup into the permutation.
 
+**Variables:** `result` = output · `i` = scan index; each slot is a double lookup
+**Pseudocode:**
+```
+allocate the result
+for each index i:
+  result[i] = the value at nums[nums[i]]
+  
+return the result
+```
+
 ```java
 class Solution {
     public int[] buildArray(int[] nums) {
@@ -3144,6 +4907,18 @@ class Solution {
 **Key:** allocate 2n and copy nums into both halves.
 
 **Intuition:** Copy each element into position `i` and `i+n`.
+
+**Variables:** `n` = length · `result` = doubled output · `i` = scan index; copy into slots `i` and `i+n`
+**Pseudocode:**
+```
+let n be the length
+allocate an array of double length
+for each index i:
+  copy into the first half
+  copy into the second half
+  
+return the concatenation
+```
 
 ```java
 class Solution {

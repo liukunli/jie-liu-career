@@ -104,6 +104,15 @@ int[] dc = {0,  0, 1, -1};
 
 ## Core Templates
 
+**Variables:** `queue` = BFS frontier · `visited[]` = seen flags · `level` = current distance ring · `inDegree[]` = remaining prerequisites per node · `order` = topo result · `parent[]`/`rank[]` = union-find forest · `dist[]` = shortest distance · `pq` = min-heap on cost · `color[]` = 2-coloring (-1/0/1)
+**Pseudocode:**
+```
+BFS: mark start visited, enqueue; while queue, snapshot level size, pop each, push unvisited neighbors, increment level
+TOPO: count inDegree per edge, enqueue all zero-inDegree, pop into order and decrement neighbors, enqueue new zeros
+UNION-FIND: init parent[i]=i; find follows parent to root with path compression; union links roots by rank, false if same root
+DIJKSTRA: dist[src]=0, push src; pop closest, skip if stale, relax each neighbor and push improved
+BIPARTITE: color each component start 0, BFS painting neighbors opposite, return false on same-color clash
+```
 ```java
 // 1. BFS — shortest path / level order (track distance by level-size snapshot)
 // explore in rings of equal distance; snapshot the level size so each ring = one step.  — WHEN: "fewest steps", "shortest path", "level order" on an unweighted graph
@@ -221,6 +230,15 @@ Multi-source:   seed queue with ALL starting nodes at once → BFS fans out from
 **Description:** Grid of `0` (empty), `1` (fresh), `2` (rotten). Each minute rotten oranges infect adjacent fresh ones. Return minutes until no fresh remain, or -1.  
 **Algorithm:** Multi-source BFS — seed queue with all rotten cells simultaneously.
 
+**Variables:** `queue` = cells rotting this round · `fresh` = count of fresh oranges left · `dr`/`dc` = 4-direction offsets · `minutes` = elapsed time
+**Pseudocode:**
+```
+scan grid: enqueue every rotten cell, count fresh
+while queue not empty and fresh remain:
+    advance one minute, snapshot level size
+    for each rotten cell, rot fresh 4-neighbors, enqueue them, decrement fresh
+return minutes if no fresh left else -1
+```
 ```java
 class Solution {
     public int orangesRotting(int[][] grid) {
@@ -262,6 +280,13 @@ class Solution {
 **Description:** For each cell, return the distance to the nearest `0`.  
 **Algorithm:** Multi-source BFS from all `0` cells simultaneously. Initialize `dist[r][c] = MAX` for `1` cells.
 
+**Variables:** `dist[][]` = distance to nearest 0 · `queue` = BFS frontier of 0-cells · `dr`/`dc` = 4-direction offsets
+**Pseudocode:**
+```
+seed queue with all 0-cells (dist 0); set every 1-cell dist to MAX
+while queue: pop cell, for each neighbor if dist+1 improves it, update and enqueue
+return dist
+```
 ```java
 class Solution {
     public int[][] updateMatrix(int[][] mat) {
@@ -301,6 +326,16 @@ class Solution {
 **Description:** Minimum number of transformations from `beginWord` to `endWord`, changing one letter at a time. Each intermediate word must be in `wordList`.  
 **Algorithm:** BFS on word states. Remove words from set when visited to prevent re-visiting.
 
+**Variables:** `wordSet` = remaining usable words (doubles as visited) · `queue` = words at current BFS level · `steps` = transformations so far · `word` = char array being mutated
+**Pseudocode:**
+```
+load wordList into set; if endWord absent return 0
+enqueue beginWord, remove it from set, steps=1
+while queue: for each word at this level, try every position×26 letters
+    if mutated word equals endWord return steps+1
+    if in set, remove it and enqueue
+increment steps each level; return 0 if exhausted
+```
 ```java
 class Solution {
     public int ladderLength(String beginWord, String endWord, List<String> wordList) {
@@ -343,6 +378,13 @@ class Solution {
 **Description:** Flip all `'O'` regions not connected to the border to `'X'`.  
 **Algorithm:** Multi-source BFS from all border `'O'` cells. Mark reachable as safe (`'S'`), then flip all remaining `'O'` to `'X'` and restore `'S'` to `'O'`.
 
+**Variables:** `queue` = border-connected O-cells · `'S'` = temporary safe marker · `dr`/`dc` = 4-direction offsets
+**Pseudocode:**
+```
+enqueue every border 'O', mark it 'S'
+BFS outward marking all connected 'O' as 'S'
+final sweep: 'S' becomes 'O' (safe), everything else 'O' becomes 'X'
+```
 ```java
 class Solution {
     public void solve(char[][] board) {
@@ -380,6 +422,13 @@ class Solution {
 **Description:** Return all cells from which water can flow to both the Pacific (top/left border) and Atlantic (bottom/right border).  
 **Algorithm:** Two separate multi-source BFS — one from each ocean's border cells, moving **uphill** (water flows down, so reachable cells going up = cells that drain down to ocean). Answer = intersection of both reachable sets.
 
+**Variables:** `pac[][]`/`atl[][]` = cells that can reach each ocean · `pacQ`/`atlQ` = BFS queues seeded from each ocean's border · `result` = cells reaching both
+**Pseudocode:**
+```
+seed pacQ+pac with top/left border, atlQ+atl with bottom/right border
+BFS each ocean uphill: move to neighbor only if its height >= current (water could flow down to here)
+collect every cell marked in both pac and atl
+```
 ```java
 class Solution {
     int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
@@ -434,6 +483,14 @@ class Solution {
 
 **Description:** Can you finish all courses given prerequisites? Detect if there is a directed cycle.
 
+**Variables:** `graph` = prereq → dependent edges · `inDegree[]` = unmet prerequisites per course · `queue` = courses ready to take · `processed` = courses taken
+**Pseudocode:**
+```
+build graph edge p[1]→p[0], counting inDegree[p[0]]
+enqueue every course with inDegree 0
+pop, increment processed, decrement neighbors' inDegree, enqueue new zeros
+return processed == numCourses (all taken → no cycle)
+```
 ```java
 class Solution {
     public boolean canFinish(int numCourses, int[][] prerequisites) {
@@ -465,6 +522,14 @@ class Solution {
 
 **Description:** Return a valid order to take all courses. Return `[]` if impossible.
 
+**Variables:** `graph` = prereq → dependent edges · `inDegree[]` = unmet prerequisites · `queue` = ready courses · `order[]` = taking sequence · `idx` = fill position
+**Pseudocode:**
+```
+build graph + inDegree (same as #207)
+enqueue all inDegree-0 courses
+pop into order[idx++], relax neighbors, enqueue new zeros
+return order if idx == numCourses else empty array (cycle)
+```
 ```java
 class Solution {
     public int[] findOrder(int numCourses, int[][] prerequisites) {
@@ -499,6 +564,14 @@ class Solution {
 **Algorithm:** Iteratively trim leaves (degree-1 nodes) until ≤ 2 nodes remain — same as topo sort but on undirected tree.  
 **Intuition:** the best root sits at the center of the longest path; peeling leaves layer by layer converges there.
 
+**Variables:** `graph` = adjacency sets · `queue` = current leaves (degree 1) · `remaining` = nodes not yet trimmed
+**Pseudocode:**
+```
+if n==1 return [0]
+build undirected adjacency sets; enqueue all degree-1 leaves
+while remaining > 2: subtract this leaf layer, for each leaf remove it from its neighbor; if neighbor now degree 1 enqueue it
+return nodes left in queue (1 or 2 centers)
+```
 ```java
 class Solution {
     public List<Integer> findMinHeightTrees(int n, int[][] edges) {
@@ -542,6 +615,13 @@ Difference:         just count                      also record node into order[
 
 **Template (always the same three methods):**
 
+**Variables:** `parent[]` = each node's parent (root represents its set) · `rank[]` = tree-height hint for balanced merging · `x`/`y` = nodes to relate · `px`/`py` = their roots
+**Pseudocode:**
+```
+init: every node is its own parent (n singleton sets)
+find(x): walk to root, compress path so each node points straight at root
+union(x,y): find both roots; if equal return false (already joined); else attach smaller-rank root under larger, bump rank on tie
+```
 ```java
 int[] parent, rank;
 
@@ -571,6 +651,13 @@ boolean union(int x, int y) {               // returns false if already connecte
 **Description:** Count the number of connected components (provinces) in an undirected graph given as an adjacency matrix.  
 **Intuition:** start with `n` separate sets; every successful merge drops the count by one.
 
+**Variables:** `parent[]`/`rank[]` = union-find forest · `components` = current province count
+**Pseudocode:**
+```
+init each city its own set, components = n
+for every connected pair (i,j): if union succeeds, components--
+return components
+```
 ```java
 class Solution {
     int[] parent, rank;
@@ -605,6 +692,13 @@ class Solution {
 **Key:** try to union each edge in order. The first edge where both nodes already share a root is the redundant one.  
 **Intuition:** if both endpoints are already in the same set, this edge closes a cycle — it's the redundant one.
 
+**Variables:** `parent[]`/`rank[]` = union-find forest · `edge` = current candidate edge
+**Pseudocode:**
+```
+init each node its own set (1..n)
+for each edge in order: try to union its endpoints
+    if union returns false (same root), this edge closes a cycle → return it
+```
 ```java
 class Solution {
     int[] parent, rank;
@@ -637,6 +731,14 @@ class Solution {
 **Key:** need at least `n-1` edges for `n` nodes. Count extra edges (cycles); count components. Answer = `components - 1` if enough extras exist.  
 **Intuition:** each redundant cable can be moved to bridge one gap, so `components - 1` moves suffice if you have enough spare cables.
 
+**Variables:** `parent[]`/`rank[]` = union-find forest · `components` = connected groups remaining
+**Pseudocode:**
+```
+if fewer than n-1 cables, return -1 (impossible)
+init each computer its own set, components = n
+for each cable: if union succeeds, components--
+return components - 1 (moves needed to bridge gaps)
+```
 ```java
 class Solution {
     int[] parent, rank;
@@ -671,6 +773,14 @@ class Solution {
 **Algorithm:** Dijkstra from source `k`. Answer = max of all shortest distances.  
 **Intuition:** every node is reached by its shortest delay; the network is "done" when the slowest of those arrives.
 
+**Variables:** `graph` = weighted adjacency (neighbor, time) · `dist[]` = shortest delay to each node · `pq` = min-heap on delay · `maxDist` = slowest arrival
+**Pseudocode:**
+```
+build weighted graph; dist[k]=0, push (k,0)
+pop closest node; skip if its entry is stale
+relax each neighbor, push improved distances
+after settling, take max over all dist; return -1 if any unreachable
+```
 ```java
 class Solution {
     public int networkDelayTime(int[][] times, int n, int k) {
@@ -713,6 +823,15 @@ class Solution {
 **Algorithm:** Bellman-Ford with exactly `k+1` relaxation rounds. Use a copy `temp[]` each round to prevent using the same edge twice in one round.  
 **Intuition:** each round lets paths grow by one more edge, so `k+1` rounds caps the path at `k` stops.
 
+**Variables:** `dist[]` = cheapest price found so far · `temp[]` = snapshot per round (prevents using same round's edges twice) · `round` = edges allowed
+**Pseudocode:**
+```
+dist[src]=0, rest MAX
+repeat k+1 rounds (k stops = k+1 edges):
+    copy dist into temp; for each flight u→v, relax temp[v] from dist[u]+w
+    swap dist = temp
+return dist[dst] or -1 if unreachable
+```
 ```java
 class Solution {
     public int findCheapestPrice(int n, int[][] flights, int src, int dst, int k) {
@@ -742,6 +861,14 @@ class Solution {
 **Algorithm:** Dijkstra with **max-heap** (maximize probability instead of minimize distance). Multiply probabilities instead of adding weights.  
 **Intuition:** probabilities in [0,1] only shrink when multiplied, so the "closest" (highest-probability) node settles first — Dijkstra still applies.
 
+**Variables:** `graph` = weighted adjacency (neighbor, prob) · `prob[]` = best probability to each node · `pq` = max-heap on probability
+**Pseudocode:**
+```
+build undirected weighted graph; prob[start]=1, push (start,1)
+pop highest-probability node; if it's end, return its probability
+skip stale entries; for each neighbor multiply probabilities, push if improved
+return 0 if end never reached
+```
 ```java
 class Solution {
     public double maxProbability(int n, int[][] edges, double[] succProb, int start, int end) {
@@ -788,6 +915,14 @@ class Solution {
 **Key:** run BFS from every unvisited node (graph may be disconnected).  
 **Intuition:** paint each neighbor the opposite color; a clash means an odd-length cycle, which can't be 2-colored.
 
+**Variables:** `color[]` = -1 unvisited / 0 / 1 · `queue` = BFS frontier · `start` = component seed
+**Pseudocode:**
+```
+color all -1
+for each uncolored start: color 0, BFS
+    for each neighbor: if uncolored paint opposite and enqueue; if same color as node return false
+return true
+```
 ```java
 class Solution {
     public boolean isBipartite(int[][] graph) {
@@ -828,6 +963,15 @@ class Solution {
 **Key:** `minEdge[i]` tracks the cheapest known edge from any tree node to node `i`. Update lazily via priority queue; skip nodes already in MST.  
 **Intuition:** grow one tree, always swallowing the cheapest edge that reaches a node not yet in it.
 
+**Variables:** `inMST[]` = node already in tree · `minEdge[]` = cheapest known edge to each node · `pq` = min-heap on edge cost · `total` = accumulated MST weight
+**Pseudocode:**
+```
+minEdge[0]=0, push (0,0)
+pop cheapest (node,cost); skip if already in MST
+add node to MST, total += cost
+for every node not in MST: compute Manhattan dist; if cheaper than minEdge, update and push
+return total
+```
 ```java
 class Solution {
     public int minCostConnectPoints(int[][] points) {
@@ -896,6 +1040,14 @@ It replaces a `visited[]` array — simpler and correct because a better distanc
 
 **Variation:** Modified Dijkstra. Instead of summing edge weights, the "cost" of a path is the maximum edge cost. Priority queue ordered by effort; `effort[r][c]` = minimum over all paths of their max-abs-diff.
 
+**Variables:** `effort[][]` = min possible max-step to each cell · `pq` = min-heap on effort, holds {effort,row,col} · `dr`/`dc` = 4-direction offsets
+**Pseudocode:**
+```
+effort[0][0]=0, push (0,0,0)
+pop smallest-effort cell; if it's destination return its effort; skip stale
+for each neighbor: newEffort = max(current effort, |height diff|)   ← max, not sum
+    if newEffort improves neighbor, update and push
+```
 ```java
 class Solution {
     public int minimumEffortPath(int[][] heights) {
@@ -936,6 +1088,15 @@ class Solution {
 
 **Variation:** Build a directed graph of character ordering. Compare each adjacent pair of words to find the first differing character → that gives an edge. Then topological sort. Return empty if there's a cycle or if shorter word is a prefix of longer word in wrong order.
 
+**Variables:** `graph` = char → chars that follow it · `inDegree` = unmet predecessors per char · `queue` = chars ready to place · `result` = ordering built
+**Pseudocode:**
+```
+register every char with empty edges and inDegree 0
+for each adjacent word pair: if prefix-violation (w1 longer but starts with w2) return ""
+    else find first differing char → edge w1c→w2c, bump inDegree once
+enqueue all inDegree-0 chars; topo-pop into result, relax neighbors
+return result if it covers all chars else "" (cycle)
+```
 ```java
 class Solution {
     public String alienOrder(String[] words) {
@@ -984,6 +1145,14 @@ class Solution {
 
 **Variation:** A valid tree has exactly `n-1` edges. Use Union Find to detect cycles. If any edge connects two nodes already in the same component → cycle → not a tree.
 
+**Variables:** `parent[]`/`rank[]` = union-find forest · `edge` = current edge
+**Pseudocode:**
+```
+a tree needs exactly n-1 edges; if not, return false
+init each node its own set
+for each edge: union endpoints; if union fails (same root → cycle) return false
+return true (n-1 edges + no cycle = connected tree)
+```
 ```java
 class Solution {
     int[] parent, rank;
@@ -1019,6 +1188,13 @@ class Solution {
 
 **Algorithm:** Union Find. Start with `n` components. Each successful union (merging two previously separate components) decrements the count by 1.
 
+**Variables:** `parent[]`/`rank[]` = union-find forest · `components` = component count
+**Pseudocode:**
+```
+init each node its own set, components = n
+for each edge: if union merges two distinct sets, components--
+return components
+```
 ```java
 class Solution {
     int[] parent, rank;
@@ -1051,6 +1227,14 @@ class Solution {
 ## #286 Walls and Gates
 **Description:** Each cell is a gate (0), wall (-1), or empty (INF = 2147483647). Fill each empty room with distance to its nearest gate.
 **Variation:** multi-source BFS — seed the queue with every gate at distance 0, then expand outward simultaneously.
+
+**Variables:** `queue` = gate-rooted BFS frontier · `dr`/`dc` = 4-direction offsets · `rooms[][]` = distances written in place
+**Pseudocode:**
+```
+enqueue all gate cells (value 0)
+BFS: pop cell, for each empty (still MAX) neighbor set it to current+1 and enqueue
+distances fill outward, each room getting its nearest gate's distance
+```
 ```java
 class Solution {
     public void wallsAndGates(int[][] rooms) {
@@ -1080,6 +1264,15 @@ class Solution {
 ## #721 Accounts Merge
 **Description:** Each account has a name and a list of emails. Merge accounts that share any email. Return merged accounts with emails sorted.
 **Variation:** Union Find over emails. Assign each unique email an integer id, union all emails within the same account, then group emails by their root.
+
+**Variables:** `emailToId` = email → integer id · `emailToName` = email → owner · `parent[]` = union-find over email ids · `groups` = root id → its emails
+**Pseudocode:**
+```
+assign each unique email an id; record its owner name
+init union-find; within each account union first email's id with every other email's id
+group all emails by their root id
+per group: sort emails, prepend the owner name, add to result
+```
 ```java
 class Solution {
     private int[] parent;
@@ -1122,6 +1315,14 @@ class Solution {
 ## #827 Making A Large Island
 **Description:** In a binary grid you may change at most one 0 to 1. Return the size of the largest island possible.
 **Variation:** two passes. First DFS-color each island with a unique id (starting at 2) and record its size. Then for every 0, sum the sizes of distinct neighboring islands + 1.
+
+**Variables:** `id` = next island label (starts 2) · `size` = island id → cell count · `seen` = distinct island ids around a 0-cell · `total` = candidate island size if this 0 flips
+**Pseudocode:**
+```
+pass 1: DFS each '1' island, paint it a unique id, record its size
+pass 2: for each '0', look at 4 neighbors, sum sizes of distinct neighboring islands + 1
+track the running max over island sizes and all flip candidates
+```
 ```java
 class Solution {
     private int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
@@ -1162,6 +1363,15 @@ class Solution {
 ## #909 Snakes and Ladders
 **Description:** On an n×n board numbered in boustrophedon (zigzag) order, find the minimum dice moves (1-6) from square 1 to square n². Ladders/snakes teleport you.
 **Variation:** BFS over square numbers. Convert a square number to (row, col) accounting for the zigzag layout.
+
+**Variables:** `visited[]` = squares already reached · `queue` = BFS frontier of square numbers · `moves` = dice rolls so far · `rc` = zigzag coordinate of a square
+**Pseudocode:**
+```
+BFS from square 1; each level = one dice move
+for each square, try rolls 1..6 → candidate square
+    convert to (row,col) via zigzag; if snake/ladder, jump to its destination
+    if destination is n², return moves; enqueue if unvisited
+```
 ```java
 class Solution {
     public int snakesAndLadders(int[][] board) {
@@ -1201,6 +1411,15 @@ class Solution {
 ## #1091 Shortest Path in Binary Matrix
 **Description:** In an n×n binary grid, find the length of the shortest clear path (cells of 0) from top-left to bottom-right, moving in 8 directions.
 **Variation:** standard BFS but with 8-directional movement (includes diagonals).
+
+**Variables:** `dr`/`dc` = 8-direction offsets (incl. diagonals) · `queue` = BFS frontier · `path` = cells on current shortest path
+**Pseudocode:**
+```
+if start or end blocked, return -1
+BFS from (0,0), path length starts at 1, marking visited by setting grid to 1
+each level: pop cell, if it's bottom-right return path; push all clear 8-neighbors
+increment path per level; return -1 if unreachable
+```
 ```java
 class Solution {
     public int shortestPathBinaryMatrix(int[][] grid) {
@@ -1241,6 +1460,13 @@ class Solution {
 **Intuition:** BFS level-by-level builds a parent (predecessor) map of which words lead to which; once `endWord` is reached, DFS backtracks through parents to reconstruct every shortest path.  
 **Algorithm:** BFS recording all predecessors per word; stop expanding once `endWord` found at a level; then DFS from `endWord` back to `beginWord`.
 
+**Variables:** `wordSet` = usable words · `parents` = word → predecessor words on shortest paths · `level`/`next` = current and next BFS frontier sets · `found` = endWord reached · `path` = path being reconstructed
+**Pseudocode:**
+```
+BFS level by level: remove this level's words from set, mutate each word position×26
+    for each in-set candidate, record it as child with parent edge; if endWord, mark found
+once found, DFS backtrack from endWord through parents to beginWord, collecting every path
+```
 ```java
 class Solution {
     public List<List<String>> findLadders(String beginWord, String endWord, List<String> wordList) {
@@ -1304,6 +1530,15 @@ class Solution {
 **Intuition:** Use a map from original node to its clone to avoid re-cloning and to wire neighbors correctly; BFS the graph, creating clones on first sight.  
 **Algorithm:** BFS with a `Map<Node, Node>` of original→clone; for each node, attach cloned neighbors.
 
+**Variables:** `clones` = original node → its clone (doubles as visited) · `queue` = BFS frontier of originals
+**Pseudocode:**
+```
+if null return null; create clone of start, map it, enqueue start
+BFS: pop original; for each neighbor
+    if not yet cloned, create its clone, map it, enqueue
+    wire current's clone to neighbor's clone
+return clone of start
+```
 ```java
 /*
 // Definition for a Node.
@@ -1346,6 +1581,13 @@ class Solution {
 **Intuition:** A single linear scan narrows to one candidate (if `candidate` knows `i`, the candidate can't be the celebrity, so `i` becomes the new candidate); a second pass verifies.  
 **Algorithm:** Two passes — find candidate, then validate both directions.
 
+**Variables:** `candidate` = current celebrity guess · `i` = person being compared
+**Pseudocode:**
+```
+pass 1: candidate=0; for each i, if candidate knows i then candidate=i (old one disqualified)
+pass 2: verify candidate — must know nobody and be known by everyone; else return -1
+return candidate
+```
 ```java
 /* The knows API is defined in the parent class Relation.
       boolean knows(int a, int b); */
@@ -1375,6 +1617,13 @@ public class Solution extends Relation {
 **Intuition:** Manhattan distance separates into independent x and y components; the optimal coordinate on each axis is the median of the occupied coordinates.  
 **Algorithm:** Collect row and column indices (rows in sorted order, columns sorted), take the median on each axis, sum absolute distances.
 
+**Variables:** `rowList`/`colList` = occupied row/col coordinates · `medianRow`/`medianCol` = median on each axis · `total` = summed Manhattan distance
+**Pseudocode:**
+```
+collect home rows (outer loop → already sorted) and home cols
+sort colList; pick median of each list (minimizes sum of |coord - p|)
+sum |row - medianRow| over rows plus |col - medianCol| over cols
+```
 ```java
 class Solution {
     public int minTotalDistance(int[][] grid) {
@@ -1407,6 +1656,15 @@ class Solution {
 **Description:** Land cells are added one at a time to a water grid; after each addition return the current number of islands.  
 **Variation:** Online Union-Find — when a cell becomes land, union it with any already-land 4-neighbors; track component count.
 
+**Variables:** `parent[]` = union-find (-1 = still water) · `rank[]` = balancing · `count` = current island count · `id`/`nid` = flattened cell indices · `result` = count after each addition
+**Pseudocode:**
+```
+parent all -1 (water); count=0
+for each added position: if already land, record count and continue
+    make it its own set, count++
+    for each land 4-neighbor: if union merges, count--
+    append count to result
+```
 ```java
 class Solution {
     int[] parent, rank;
@@ -1456,6 +1714,14 @@ class Solution {
 **Intuition:** BFS from each building, accumulating distances into every reachable empty cell and counting how many buildings reach it; the answer is the minimum total among cells reachable by all buildings.  
 **Algorithm:** Multi-pass BFS — one BFS per building; track `total[][]` distance sum and `reach[][]` count.
 
+**Variables:** `total[][]` = summed distance from all buildings to each empty cell · `reach[][]` = how many buildings reach a cell · `buildings` = building count · `queue`/`visited` = per-building BFS
+**Pseudocode:**
+```
+for each building: BFS level by level over empty cells
+    add the level distance into total[cell], increment reach[cell]
+after all buildings: among empty cells reachable by every building, return the smallest total
+return -1 if none reachable by all
+```
 ```java
 class Solution {
     public int shortestDistance(int[][] grid) {
@@ -1513,6 +1779,14 @@ class Solution {
 **Intuition:** Treat variables as nodes and ratios as weighted directed edges; the answer to a query is the product of edge weights along any path from numerator to denominator.  
 **Algorithm:** Build weighted graph, then DFS each query multiplying weights along the path.
 
+**Variables:** `graph` = variable → (neighbor → ratio) · `visited` = DFS guard · `product` = accumulated ratio along path · `result[]` = answers per query
+**Pseudocode:**
+```
+build graph: a→b = value, b→a = 1/value
+for each query (src,dst): if either var unknown, answer -1
+    else DFS from src multiplying edge ratios; on reaching dst return product
+DFS returns -1 if no path
+```
 ```java
 class Solution {
     public double[] calcEquation(List<List<String>> equations, double[] values, List<List<String>> queries) {
@@ -1555,6 +1829,14 @@ class Solution {
 **Description:** Given a 2D height map, compute how much water it can trap after raining.  
 **Variation:** Dijkstra-style BFS from the border inward using a min-heap of boundary heights; water level at a cell is the highest of the minimum boundary it must pass — pop the lowest wall first.
 
+**Variables:** `pq` = min-heap of boundary cells {r,c,height} · `visited[][]` = settled cells · `level` = current lowest wall height · `water` = trapped total
+**Pseudocode:**
+```
+push all border cells (their own heights), mark visited
+pop the lowest wall; its height is current water level
+for each unvisited neighbor: if lower than level, trap (level - height) water
+    push neighbor with max(level, its height) as its effective wall, mark visited
+```
 ```java
 class Solution {
     public int trapRainWater(int[][] heightMap) {
@@ -1597,6 +1879,14 @@ class Solution {
 **Intuition:** Each land cell contributes 4 sides, minus 2 for every shared edge with an adjacent land cell (counted once per pair).  
 **Algorithm:** Count land cells ×4, subtract 2 for each adjacent land pair.
 
+**Variables:** `perimeter` = running perimeter total
+**Pseudocode:**
+```
+for each land cell: add 4
+    if its top neighbor is land, subtract 2 (shared edge, counts once per pair)
+    if its left neighbor is land, subtract 2
+return perimeter
+```
 ```java
 class Solution {
     public int islandPerimeter(int[][] grid) {
@@ -1624,6 +1914,14 @@ class Solution {
 **Description:** Reveal a cell on a Minesweeper board. `'M'` mine, `'E'` unrevealed empty, `'B'` revealed blank, digit = adjacent mine count.  
 **Variation:** BFS/DFS flood fill with 8 directions; if the clicked cell is a mine, mark `'X'`; otherwise count adjacent mines, and only recurse when count is 0.
 
+**Variables:** `cr`/`cc` = clicked cell · `dr`/`dc` = 8-direction offsets · `queue`/`visited` = flood fill · `mines` = adjacent mine count
+**Pseudocode:**
+```
+if clicked cell is a mine, mark 'X' and stop
+BFS from click: for each cell count adjacent mines
+    if mines > 0, label it with the digit (stop spreading)
+    else mark 'B' and enqueue all unrevealed empty 8-neighbors
+```
 ```java
 class Solution {
     public char[][] updateBoard(char[][] board, int[] click) {
@@ -1673,6 +1971,14 @@ class Solution {
 **Description:** Count islands that are distinct by shape (translations are the same, rotations are not).  
 **Variation:** DFS recording the path signature (the direction taken at each step plus a backtrack marker); two islands with identical signatures have the same shape.
 
+**Variables:** `shapes` = set of distinct path signatures · `builder` = signature being built · `dir` = direction char entering a cell
+**Pseudocode:**
+```
+for each unvisited land cell: DFS the island, sinking cells and appending the move direction
+    append a backtrack marker 'b' after exploring (disambiguates otherwise-equal shapes)
+add the signature string to a set
+return number of distinct signatures
+```
 ```java
 class Solution {
     public int numDistinctIslands(int[][] grid) {
@@ -1710,6 +2016,13 @@ class Solution {
 **Description:** Starting at `(sr, sc)`, change all connected same-color pixels to `color`.  
 **Algorithm:** BFS/DFS flood fill from the start cell over 4 directions; guard against re-filling when the new color equals the original.
 
+**Variables:** `original` = start cell's old color · `queue` = BFS frontier · `dr`/`dc` = 4-direction offsets
+**Pseudocode:**
+```
+record start color; if it already equals target, return unchanged (avoid infinite loop)
+recolor start, enqueue it
+BFS: pop cell, for each neighbor matching original color, recolor and enqueue
+```
 ```java
 class Solution {
     public int[][] floodFill(int[][] image, int sr, int sc, int color) {
@@ -1744,6 +2057,15 @@ class Solution {
 **Description:** A 4-wheel lock starts at `"0000"`; each move turns one wheel ±1. Find minimum moves to reach `target`, avoiding `deadends`.  
 **Variation:** BFS over the 4-digit state space; each state has 8 neighbors (each wheel up or down). Treat deadends as visited.
 
+**Variables:** `dead` = deadend states (blocked) · `visited` = reached states · `queue` = BFS frontier of lock states · `turns` = moves so far
+**Pseudocode:**
+```
+if "0000" is a deadend, return -1; if target is "0000", return 0
+BFS from "0000": each level = one turn
+for each state, for each of 4 wheels turn ±1 → 8 neighbors
+    if neighbor == target return turns; else if not dead and unvisited, enqueue
+return -1 if exhausted
+```
 ```java
 class Solution {
     public int openLock(String[] deadends, String target) {
@@ -1784,6 +2106,14 @@ class Solution {
 **Description:** At time `t` you can stand on any cell with elevation ≤ `t`. Find the least time to swim from `(0,0)` to `(n-1,n-1)`.  
 **Variation:** Modified Dijkstra — minimize the maximum elevation along the path (not the sum). Min-heap ordered by current max elevation.
 
+**Variables:** `pq` = min-heap on max-elevation-so-far {maxElev,r,c} · `visited[][]` = settled cells · `time` = current path's max elevation
+**Pseudocode:**
+```
+push (grid[0][0],0,0), mark visited
+pop cell with smallest max-elevation; if it's destination return that elevation
+for each unvisited neighbor: push max(current, neighbor height)   ← max, not sum
+mark visited on push (Dijkstra settle)
+```
 ```java
 class Solution {
     public int swimInWater(int[][] grid) {
@@ -1818,6 +2148,14 @@ class Solution {
 **Intuition:** Since it is a DAG with no cycles, plain DFS backtracking enumerates every path; no visited set is needed.  
 **Algorithm:** DFS from `0`, appending nodes to a path, recording the path when reaching `n-1`.
 
+**Variables:** `result` = all source-to-target paths · `path` = current path being extended
+**Pseudocode:**
+```
+start DFS at node 0 with path=[0]
+if node == n-1, snapshot path into result
+else for each neighbor: append, recurse, backtrack (remove last)
+no visited set needed — it's a DAG
+```
 ```java
 class Solution {
     public List<List<Integer>> allPathsSourceTarget(int[][] graph) {
@@ -1849,6 +2187,14 @@ class Solution {
 **Description:** A node is safe if every path from it eventually reaches a terminal node (no outgoing edges). Return all safe nodes sorted.  
 **Variation:** Topological sort on the reversed graph (Kahn's) — start from terminal nodes (out-degree 0); a node becomes safe once all its outgoing edges lead to safe nodes.
 
+**Variables:** `reverse` = reversed adjacency · `outDegree[]` = remaining outgoing edges per node · `queue` = newly-safe nodes · `safe[]` = node safety flags
+**Pseudocode:**
+```
+build reversed graph; outDegree[i] = original out-degree
+enqueue all terminal nodes (outDegree 0)
+pop node, mark safe; for each predecessor, decrement its outDegree; enqueue when it hits 0
+return sorted list of safe nodes
+```
 ```java
 class Solution {
     public List<Integer> eventualSafeNodes(int[][] graph) {
@@ -1885,6 +2231,15 @@ class Solution {
 **Description:** `routes[i]` is the stops served by bus `i`. Find the minimum number of buses to travel from `source` to `target`.  
 **Variation:** BFS where the "nodes" are buses (routes); build stop→routes index, then BFS route-to-route through shared stops, counting buses taken.
 
+**Variables:** `stopToRoutes` = stop → routes serving it · `queue` = stops to explore · `visitedStops`/`visitedRoutes[]` = dedup · `buses` = routes boarded so far
+**Pseudocode:**
+```
+if source==target return 0; index each stop to the routes serving it
+BFS from source stop; each level = boarding one more bus
+for each stop, for each unvisited route serving it: mark route used
+    scan that route's stops; if target found return buses; enqueue new stops
+return -1 if unreachable
+```
 ```java
 class Solution {
     public int numBusesToDestination(int[][] routes, int source, int target) {
@@ -1929,6 +2284,14 @@ class Solution {
 **Description:** Find the length of the shortest path in an undirected graph that visits every node (may revisit nodes/edges).  
 **Variation:** BFS over states `(node, visitedMask)` where `mask` is a bitmask of visited nodes; the goal is any state with all bits set. Start BFS from every node simultaneously.
 
+**Variables:** `allVisited` = full bitmask (1<<n)-1 · `queue` = states {node, mask} · `visited[node][mask]` = state seen · `steps` = path length
+**Pseudocode:**
+```
+seed queue with every node, its mask = bit for that node
+BFS by level: for each state, if mask == all bits set return steps
+    for each neighbor: nextMask = mask | bit(neighbor); enqueue if state unseen
+increment steps each level
+```
 ```java
 class Solution {
     public int shortestPathLength(int[][] graph) {
@@ -1970,6 +2333,14 @@ class Solution {
 **Description:** `richer[i] = [a, b]` means `a` is richer than `b`; `quiet[i]` is the quietness of person `i`. For each person find the quietest person among everyone at least as rich (themselves included).  
 **Variation:** Topological sort (Kahn's) on the richer→poorer graph; propagate the quietest-known answer from richer people down to poorer ones in topo order.
 
+**Variables:** `graph` = richer → poorer edges · `inDegree[]` = richer-people count per node · `result[]` = quietest known person at least as rich · `queue` = ready nodes
+**Pseudocode:**
+```
+build richer→poorer edges; result[i]=i initially
+enqueue richest people (inDegree 0)
+topo-pop node; for each poorer neighbor, if node's answer is quieter, propagate it down
+decrement neighbor inDegree, enqueue when 0
+```
 ```java
 class Solution {
     public int[] loudAndRich(int[][] richer, int[] quiet) {
@@ -2007,6 +2378,14 @@ class Solution {
 **Description:** Given `dislikes` pairs, split `n` people into two groups so disliking people are never in the same group.  
 **Algorithm:** Bipartite 2-coloring via BFS over the dislike graph; a same-color conflict means impossible.
 
+**Variables:** `graph` = dislike adjacency · `color[]` = -1/0/1 group · `queue` = BFS frontier · `start` = component seed (1..n)
+**Pseudocode:**
+```
+build undirected dislike graph
+for each uncolored person: color 0, BFS
+    paint each neighbor the opposite color; if a neighbor already shares this color, return false
+return true if no conflicts
+```
 ```java
 class Solution {
     public boolean possibleBipartition(int n, int[][] dislikes) {
@@ -2048,6 +2427,16 @@ class Solution {
 **Description:** A mouse (start node 1) and cat (start node 2) move on a graph; mouse wins by reaching node 0, cat wins by catching the mouse, else draw. Return 0/1/2 with optimal play.  
 **Variation:** Game-theory BFS over states `(mouse, cat, turn)`; start from known terminal states and propagate results backward (retrograde analysis) by counting undecided moves.
 
+**Variables:** `result[m][c][turn]` = outcome (DRAW/MOUSE/CAT) of a state · `degree[m][c][turn]` = undecided moves left from a state · `queue` = decided states to propagate · `winner` = a state's resolved winner
+**Pseudocode:**
+```
+precompute each state's move count (cat cannot enter hole 0)
+seed terminals: mouse at hole 0 → MOUSE wins; cat==mouse → CAT wins
+BFS backward: for each parent of a decided state
+    if mover can force its own win, mark and enqueue it
+    else decrement parent's degree; when 0 (all moves lose), it takes opponent's winner
+return result[1][2][0] (mouse start, cat start, mouse to move)
+```
 ```java
 class Solution {
     public int catMouseGame(int[][] graph) {
@@ -2116,6 +2505,14 @@ class Solution {
 **Description:** A grid has exactly two islands of `1`s. Find the minimum number of `0`s to flip to connect them.  
 **Variation:** DFS to mark the first island (seeding a BFS queue with its cells), then multi-source BFS expanding outward until reaching the second island; BFS levels = bridge length.
 
+**Variables:** `queue` = first island's cells, then BFS frontier · `found` = first island located · `steps` = water cells flipped (bridge length) · `dr`/`dc` = 4-direction offsets
+**Pseudocode:**
+```
+find first '1', DFS-mark its whole island as 2, seeding queue with those cells
+multi-source BFS outward, each level = one bridge step
+    if a neighbor is '1' (second island) return steps
+    if water '0', flip to 2 and enqueue
+```
 ```java
 class Solution {
     public int shortestBridge(int[][] grid) {
@@ -2169,6 +2566,14 @@ class Solution {
 **Description:** Color the border cells of the connected component containing `(row, col)` with `color`. A border cell touches the grid edge or a cell of a different original color.  
 **Variation:** BFS over same-color connected cells; mark a cell as a border when it has fewer than 4 same-component neighbors, recolor borders after traversal.
 
+**Variables:** `original` = component's source color · `visited[][]` = BFS seen · `borders` = collected border cells · `sameNeighbors` = matching 4-neighbor count
+**Pseudocode:**
+```
+BFS the connected same-color component from (row,col)
+for each cell, count same-color 4-neighbors; enqueue unvisited matching ones
+if fewer than 4 same-color neighbors, it touches edge/different color → it's a border cell
+after BFS, recolor every collected border cell
+```
 ```java
 class Solution {
     public int[][] colorBorder(int[][] grid, int row, int col, int color) {
@@ -2209,6 +2614,14 @@ class Solution {
 **Description:** Find a path from top-left to bottom-right maximizing the minimum cell value along the path (4-directional).  
 **Variation:** Modified Dijkstra with a max-heap — the path "score" is the minimum cell value seen; greedily expand the highest-scoring frontier first.
 
+**Variables:** `pq` = max-heap on min-value-so-far {score,r,c} · `visited[][]` = settled cells · `score` = minimum cell value along the path
+**Pseudocode:**
+```
+push (grid[0][0],0,0), mark visited
+pop cell with largest min-so-far; if it's destination return that score
+for each unvisited neighbor: push min(score, neighbor value)   ← min, not sum
+mark visited on push
+```
 ```java
 class Solution {
     public int maximumMinimumPath(int[][] grid) {
@@ -2242,6 +2655,14 @@ class Solution {
 **Description:** Courses 1..n with prerequisite `relations`; in each semester take all courses whose prerequisites are done. Return minimum semesters, or -1 if impossible.  
 **Variation:** Topological sort (Kahn's) processed level-by-level — each BFS level is one semester; if not all courses are processed, a cycle exists.
 
+**Variables:** `graph` = prereq → dependent · `inDegree[]` = unmet prerequisites · `queue` = courses ready this semester · `semesters`/`studied` = counters
+**Pseudocode:**
+```
+build graph + inDegree; enqueue all inDegree-0 courses
+while queue: one level = one semester, semesters++
+    pop each course (studied++), relax neighbors, enqueue new zeros
+return semesters if studied == n else -1 (cycle)
+```
 ```java
 class Solution {
     public int minimumSemesters(int n, int[][] relations) {
@@ -2279,6 +2700,14 @@ class Solution {
 **Description:** In a grid of `0` (water) and `1` (land), find the water cell whose distance to the nearest land is maximized; return that distance, or -1.  
 **Variation:** Multi-source BFS seeded with all land cells; the last BFS level expanded gives the maximum distance.
 
+**Variables:** `queue` = land-rooted BFS frontier · `distance` = current BFS level · `dr`/`dc` = 4-direction offsets
+**Pseudocode:**
+```
+enqueue all land cells; if all-land or all-water, return -1
+BFS by level, distance++ each level
+    expand into water cells, marking them as 1 (visited) and enqueueing
+the last level reached gives the farthest water cell's distance
+```
 ```java
 class Solution {
     public int maxDistance(int[][] grid) {
@@ -2318,6 +2747,14 @@ class Solution {
 **Description:** On an infinite chessboard, find the minimum knight moves from `(0,0)` to `(x, y)`.  
 **Variation:** BFS over knight moves (8 jump offsets); exploit symmetry by working in the first quadrant to bound the visited set.
 
+**Variables:** `dr`/`dc` = 8 knight-jump offsets · `queue` = BFS frontier · `visited` = "r,c" strings seen · `moves` = jumps so far
+**Pseudocode:**
+```
+fold target to first quadrant via abs(x), abs(y) (symmetry)
+BFS from (0,0); each level = one knight move
+    if current cell is target return moves
+    push each unvisited jump that stays near the first quadrant (>= -2)
+```
 ```java
 class Solution {
     public int minKnightMoves(int x, int y) {
@@ -2356,6 +2793,14 @@ class Solution {
 **Description:** Given index `pairs` that may be swapped any number of times, return the lexicographically smallest string achievable.  
 **Variation:** Union-Find groups swappable indices into connected components; within each component, sort the characters and place them back in ascending index order.
 
+**Variables:** `parent[]`/`rank[]` = union-find over indices · `groups` = root → indices in that component · `result` = output char array
+**Pseudocode:**
+```
+union every swappable index pair
+group indices by their root
+per group: collect its chars, sort them, write back in ascending index order
+return rebuilt string
+```
 ```java
 class Solution {
     int[] parent, rank;
@@ -2398,6 +2843,13 @@ class Solution {
 **Description:** Given the edges of an undirected tree, return its diameter (the number of edges on the longest path between any two nodes).  
 **Variation:** Two BFS passes — BFS from any node finds the farthest node `u`; a second BFS from `u` gives the diameter as the maximum distance.
 
+**Variables:** `graph` = tree adjacency · `first`/`second` = {farthest node, distance} from each BFS · `farthest`/`distance` = tracked during a BFS
+**Pseudocode:**
+```
+build adjacency (n = edges+1)
+BFS from node 0 → farthest node u
+BFS from u → its distance is the diameter
+```
 ```java
 class Solution {
     public int treeDiameter(int[][] edges) {
@@ -2445,6 +2897,15 @@ class Solution {
 **Description:** Find the shortest path from `(0,0)` to `(m-1,n-1)` in a grid where you may eliminate at most `k` obstacles (`1`s).  
 **Variation:** BFS over states `(row, col, remainingK)`; the visited set tracks the best remaining eliminations per cell so a cell can be revisited with more budget.
 
+**Variables:** `bestK[][]` = best remaining eliminations seen at each cell · `queue` = states {r,c,remainingK} · `steps` = path length · `nextRem` = budget after stepping
+**Pseudocode:**
+```
+if k can cover a straight Manhattan path, return that length
+BFS from (0,0,k), bestK[0][0]=k; each level = one step
+    if at destination return steps
+    for each neighbor: nextRem = rem - cell(0/1)
+    only enqueue if nextRem beats bestK there (revisit with more budget)
+```
 ```java
 class Solution {
     public int shortestPath(int[][] grid, int k) {
@@ -2488,6 +2949,14 @@ class Solution {
 **Description:** Return true if the grid contains a cycle of length ≥ 4 made of the same character.  
 **Variation:** Union-Find over grid cells — for each cell union it with its up and left same-character neighbors; if a union finds them already connected, a cycle exists.
 
+**Variables:** `parent[]`/`rank[]` = union-find over flattened cells · `id` = current cell index
+**Pseudocode:**
+```
+init each cell its own set
+scan cells: union with up neighbor and left neighbor when same character
+    if either union finds them already connected → a cycle exists, return true
+return false if no cycle
+```
 ```java
 class Solution {
     int[] parent, rank;
@@ -2529,6 +2998,14 @@ class Solution {
 **Description:** Given all adjacent pairs of an array (in any order), reconstruct the original array.  
 **Variation:** Build an adjacency graph; the two endpoints have a single neighbor. Start from an endpoint and walk the path, avoiding the previous node.
 
+**Variables:** `graph` = value → its adjacent values · `start` = an endpoint (single neighbor) · `result[]` = reconstructed array
+**Pseudocode:**
+```
+build adjacency from each pair (both directions)
+find an endpoint: a value with exactly one neighbor → result[0]
+result[1] = its only neighbor
+walk forward: each next value is the neighbor that isn't the previous one
+```
 ```java
 class Solution {
     public int[] restoreArray(int[][] adjacentPairs) {

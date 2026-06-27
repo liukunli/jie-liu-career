@@ -58,6 +58,36 @@ Consistent naming throughout: `sentinel`, `previous`, `current`, `next`, `slow`,
 
 ## All Four Templates
 
+**Variables:** `sentinel` = dummy node before head · `previous` = last kept node · `current` = node under inspection · `next` = saved successor · `slow`/`fast` = 1×/2× walkers · `a`/`b` = the two input lists
+**Pseudocode:**
+```
+# 1. DELETE / FILTER
+make sentinel pointing at head; previous = sentinel, current = head
+while current exists:
+    if current should be deleted: rewire previous.next to skip current
+    else: advance previous to current
+    advance current
+return sentinel.next
+# 2. REVERSAL
+previous = null, current = head
+while current exists:
+    save next = current.next
+    point current backward at previous
+    advance previous to current, current to next
+return previous as new head
+# 3. FAST / SLOW
+slow = head, fast = head
+while fast and fast.next exist:
+    advance slow one step, fast two steps
+# slow is at middle (or slow == fast means cycle)
+# 4. MERGE
+make sentinel; current = sentinel
+while both a and b exist:
+    splice the smaller head onto current; advance that list
+    advance current
+attach whichever list remains
+return sentinel.next
+```
 ```java
 // 1. DELETE / FILTER  — sentinel guards head removal; previous tracks last kept node
 // previous always points at the last node you decided to keep, so re-wiring it skips anything unwanted.  — WHEN: "remove / delete / skip nodes by value or duplicate"
@@ -123,6 +153,16 @@ return sentinel.next;
 **Description:** Remove all nodes whose value equals `val`.  
 **Delete condition:** `current.val == val`
 
+**Variables:** `sentinel` = dummy before head · `previous` = last kept node · `current` = node under inspection · `val` = value to remove
+**Pseudocode:**
+```
+make sentinel pointing at head; previous = sentinel, current = head
+while current exists:
+    if current.val == val: rewire previous.next to skip current
+    else: advance previous to current
+    advance current
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode removeElements(ListNode head, int val) {
@@ -149,6 +189,16 @@ class Solution {
 **Description:** Keep exactly one copy of each value. List is sorted.  
 **Delete condition:** `previous != sentinel && previous.val == current.val`
 
+**Variables:** `sentinel` = dummy before head · `previous` = last kept node · `current` = node under inspection
+**Pseudocode:**
+```
+make sentinel pointing at head; previous = sentinel, current = head
+while current exists:
+    if previous is a real node with same value as current: skip current (drop the duplicate)
+    else: advance previous to current
+    advance current
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode deleteDuplicates(ListNode head) {
@@ -175,6 +225,18 @@ class Solution {
 **Description:** Remove ALL nodes that have duplicate values — only distinct-valued nodes remain.  
 **Key difference from #83:** when a duplicate run is detected, skip the entire run (including the first occurrence). Inner `while` advances `current` past the whole run; `previous.next` is rewired to skip all of them.
 
+**Variables:** `sentinel` = dummy before head · `previous` = last kept node · `current` = node under inspection · `dupVal` = value of the run being removed
+**Pseudocode:**
+```
+make sentinel pointing at head; previous = sentinel, current = head
+while current exists:
+    if current starts a duplicate run (current.val == next.val):
+        record dupVal; advance current past every node equal to dupVal
+        rewire previous.next to skip the whole run
+    else:
+        advance previous to current; advance current
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode deleteDuplicates(ListNode head) {
@@ -204,6 +266,16 @@ class Solution {
 **Description:** Remove the nth node from the end. Return the head.  
 **Key:** `fast` starts n+1 steps ahead of `slow` (both from sentinel). When `fast == null`, `slow` is just before the target node.
 
+**Variables:** `sentinel` = dummy before head · `fast` = lead pointer · `slow` = trailing pointer (lands just before target) · `n` = offset from the end
+**Pseudocode:**
+```
+make sentinel pointing at head; fast = sentinel, slow = sentinel
+move fast forward n+1 steps
+while fast exists: advance slow and fast together
+# slow now sits just before the node to delete
+rewire slow.next to skip the target
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode removeNthFromEnd(ListNode head, int n) {
@@ -229,6 +301,16 @@ class Solution {
 
 **Intuition:** flip each node's arrow to point at the node you just came from; `previous` is the reversed list built so far.
 
+**Variables:** `previous` = reversed list built so far · `current` = node being re-wired · `next` = saved successor
+**Pseudocode:**
+```
+previous = null, current = head
+while current exists:
+    save next = current.next
+    point current backward at previous
+    advance previous to current, current to next
+return previous as new head
+```
 ```java
 class Solution {
     public ListNode reverseList(ListNode head) {
@@ -251,6 +333,18 @@ class Solution {
 **Description:** Reverse only the nodes from position `left` to `right` (1-indexed).  
 **Key:** walk `previous` to the node just before `left`. Then insert-at-front `(right - left)` times — each time take `current.next`, unlink it, and attach it right after `previous`.
 
+**Variables:** `sentinel` = dummy before head · `previous` = node just before the reversal region · `current` = first node of the region (stays put, drifts to the tail) · `next` = node being moved to the front · `left`/`right` = 1-indexed bounds
+**Pseudocode:**
+```
+make sentinel pointing at head; previous = sentinel
+walk previous forward left-1 steps (to node before position left)
+current = previous.next
+repeat right-left times:
+    next = current.next               # node just after current
+    unlink next from current
+    splice next in right after previous (front of reversed region)
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode reverseBetween(ListNode head, int left, int right) {
@@ -277,6 +371,20 @@ class Solution {
 **Description:** Reverse every consecutive group of k nodes. Leave remaining nodes (< k) as-is.  
 **Key:** `groupPrev` is the tail of the already-processed part. Find the kth node ahead; if it exists, reverse the group using the same insert-at-front technique as #92.
 
+**Variables:** `sentinel` = dummy before head · `groupPrev` = tail of the processed part (node before current group) · `kth` = kth node ahead (end of current group) · `groupNext` = node after the group · `previous`/`current`/`next` = reversal pointers · `tmp` = old group head (becomes new tail)
+**Pseudocode:**
+```
+make sentinel pointing at head; groupPrev = sentinel
+loop:
+    kth = node k steps past groupPrev; if none, stop (leftover < k stays as-is)
+    groupNext = kth.next
+    reverse the k nodes between groupPrev.next and groupNext (insert-at-front style)
+    tmp = old first node of group (now its tail)
+    link groupPrev.next to kth (new head of reversed group)
+    advance groupPrev to tmp
+return sentinel.next
+# getKth: walk k steps from node, return where you land (or null)
+```
 ```java
 class Solution {
     public ListNode reverseKGroup(ListNode head, int k) {
@@ -318,6 +426,14 @@ When `slow == fast` after the start, a cycle is detected.
 
 **Description:** Return the middle node. For even length, return the second middle.
 
+**Variables:** `slow` = 1×-speed pointer (lands on middle) · `fast` = 2×-speed pointer
+**Pseudocode:**
+```
+slow = head, fast = head
+while fast and fast.next exist:
+    advance slow one step, fast two steps
+return slow as the middle
+```
 ```java
 class Solution {
     public ListNode middleNode(ListNode head) {
@@ -337,6 +453,15 @@ class Solution {
 
 **Description:** Return true if the list contains a cycle.
 
+**Variables:** `slow` = 1×-speed pointer · `fast` = 2×-speed pointer
+**Pseudocode:**
+```
+slow = head, fast = head
+while fast and fast.next exist:
+    advance slow one step, fast two steps
+    if slow == fast: a cycle exists, return true
+return false (fast reached the end)
+```
 ```java
 class Solution {
     public boolean hasCycle(ListNode head) {
@@ -360,6 +485,18 @@ class Solution {
 
 **Intuition:** the distance from head to the cycle entry equals the distance from the meeting point to the entry, so two 1-step walkers from those spots collide exactly at the entry.
 
+**Variables:** `slow` = 1×-speed pointer (reset to head after meeting) · `fast` = 2×-speed pointer
+**Pseudocode:**
+```
+slow = head, fast = head
+while fast and fast.next exist:
+    advance slow one step, fast two steps
+    if slow == fast:                 # meeting point inside the cycle
+        reset slow to head
+        advance slow and fast one step each until they meet
+        return that node as the cycle entry
+return null (no cycle)
+```
 ```java
 class Solution {
     public ListNode detectCycle(ListNode head) {
@@ -393,6 +530,16 @@ class Solution {
 
 **Intuition:** like a zipper — always splice on whichever current head is smaller, then advance that list.
 
+**Variables:** `sentinel` = dummy result head · `current` = write pointer (tail of merged list) · `list1`/`list2` = remaining heads of the two inputs
+**Pseudocode:**
+```
+make sentinel; current = sentinel
+while both lists exist:
+    splice the smaller of list1/list2 onto current; advance that list
+    advance current
+attach whichever list still has nodes
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode mergeTwoLists(ListNode list1, ListNode list2) {
@@ -421,6 +568,16 @@ class Solution {
 **Description:** Merge k sorted linked lists into one sorted list.  
 **Key:** min-heap of size ≤ k. Always extract the smallest current head; push its next node back.
 
+**Variables:** `sentinel` = dummy result head · `current` = write pointer · `pq` = min-heap of current list heads keyed by value
+**Pseudocode:**
+```
+make sentinel; current = sentinel
+push every non-null list head into a min-heap
+while heap not empty:
+    pop the smallest node; append it to current; advance current
+    if that node has a next, push the next onto the heap
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode mergeKLists(ListNode[] lists) {
@@ -449,6 +606,22 @@ Problems that chain multiple patterns together.
 **Description:** Reorder list as L0 → Ln → L1 → Ln-1 → L2 → ...  
 **Steps:** (1) find middle with slow/fast, (2) reverse second half, (3) merge the two halves.
 
+**Variables:** `slow`/`fast` = middle-finding pointers · `second` = head of the second half · `previous`/`current`/`next` = reversal pointers · `first` = walker over first half · `nextFirst`/`nextSecond` = saved successors during the zip
+**Pseudocode:**
+```
+# Step 1: find middle (fast starts one ahead so first half >= second)
+slow = head, fast = head.next
+advance slow 1× and fast 2× until fast reaches the end
+# Step 2: cut and reverse the second half
+second = slow.next; cut list at slow
+reverse second into previous
+# Step 3: zip first half and reversed second half alternately
+first = head, second = previous
+while second exists:
+    save nextFirst, nextSecond
+    splice second right after first
+    advance first to nextFirst, second to nextSecond
+```
 ```java
 class Solution {
     public void reorderList(ListNode head) {
@@ -488,6 +661,17 @@ class Solution {
 
 **Description:** Group all odd-indexed nodes first, then even-indexed nodes. Preserve relative order within each group. (Indexing is 1-based.)
 
+**Variables:** `odd` = tail of the odd-index chain · `even` = tail of the even-index chain · `evenHead` = saved head of the even chain (to splice on at the end)
+**Pseudocode:**
+```
+if list empty: return null
+odd = head, even = head.next, evenHead = even
+while even and even.next exist:
+    link odd to the node after even; advance odd
+    link even to the node after odd; advance even
+attach evenHead after the odd tail
+return head
+```
 ```java
 class Solution {
     public ListNode oddEvenList(ListNode head) {
@@ -519,6 +703,13 @@ class Solution {
 
 **SENTINEL:** dummy node before head so head removal needs no special-casing; use it whenever the head itself might be removed/replaced.
 
+**Variables:** `sentinel` = dummy node placed before head; `sentinel.next` always tracks the real head
+**Pseudocode:**
+```
+make sentinel; point sentinel.next at head
+do the operations (head may get removed or replaced)
+return sentinel.next as the true head
+```
 ```java
 // Always use sentinel when the head itself might be removed or replaced:
 ListNode sentinel = new ListNode(0);
@@ -544,6 +735,18 @@ previous advances?:     only when keeping            only when not a dup
 
 **Algorithm:** Use sentinel + carry variable. Traverse both lists simultaneously; at each step compute `sum = l1.val + l2.val + carry`. Create a new node with `sum % 10`, carry `sum / 10` forward. Continue while either list has nodes or carry is non-zero.
 
+**Variables:** `sentinel` = dummy result head · `current` = write pointer · `carry` = carry-over digit · `sum` = per-step total · `l1`/`l2` = remaining input heads (reverse order)
+**Pseudocode:**
+```
+make sentinel; current = sentinel, carry = 0
+while l1 or l2 has nodes, or carry is non-zero:
+    sum = carry
+    add l1's digit if present and advance l1
+    add l2's digit if present and advance l2
+    carry = sum / 10
+    append a new node with digit sum % 10; advance current
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode addTwoNumbers(ListNode l1, ListNode l2) {
@@ -572,6 +775,15 @@ class Solution {
 
 **Algorithm:** Fill from the END backwards using three pointers `i` (end of nums1 values), `j` (end of nums2), `k` (end of merged array). This avoids overwriting unprocessed elements in nums1.
 
+**Variables:** `i` = index of last real value in nums1 · `j` = index of last value in nums2 · `k` = write index at the very end of nums1
+**Pseudocode:**
+```
+i = m-1, j = n-1, k = m+n-1
+while both i and j are in range:
+    write the larger of nums1[i]/nums2[j] into nums1[k]; step that source back; step k back
+copy any remaining nums2 values into the front of nums1
+# leftover nums1 values are already in place
+```
 ```java
 class Solution {
     public void merge(int[] nums1, int m, int[] nums2, int n) {
@@ -592,6 +804,20 @@ class Solution {
 
 **Algorithm:** Composite — (1) fast/slow to find middle, (2) reverse the second half in-place, (3) compare both halves. Variation: combines three separate patterns.
 
+**Variables:** `slow`/`fast` = middle-finding pointers · `previous`/`current`/`next` = reversal pointers · `i`/`j` = comparison walkers over the two halves
+**Pseudocode:**
+```
+# Step 1: find middle
+advance slow 1× and fast 2× until fast reaches the end
+# Step 2: reverse from slow onward into previous
+reverse the second half
+# Step 3: compare halves
+i = head, j = previous
+while j exists:
+    if values differ: return false
+    advance i and j
+return true
+```
 ```java
 class Solution {
     public boolean isPalindrome(ListNode head) {
@@ -630,6 +856,15 @@ class Solution {
 
 **Algorithm:** Two pointers `a` and `b` start at `headA` and `headB`. When either reaches the end, redirect it to the other list's head. After at most `m + n` steps they meet at the intersection (or both become null for no intersection). This works because both pointers travel the same total distance.
 
+**Variables:** `a` = walker starting at headA (jumps to headB on null) · `b` = walker starting at headB (jumps to headA on null)
+**Pseudocode:**
+```
+a = headA, b = headB
+while a != b:
+    advance a; if it fell off the end, redirect it to headB
+    advance b; if it fell off the end, redirect it to headA
+return a   # the intersection node, or null if none
+```
 ```java
 class Solution {
     public ListNode getIntersectionNode(ListNode headA, ListNode headB) {
@@ -656,6 +891,18 @@ class Solution {
 
 **Algorithm:** Loop while there are at least two nodes ahead of `previous`. Name them `first` and `second`. Splice so order becomes `second → first`, reconnect `first.next` to whatever followed `second`, then move `previous` to `first` (now the tail of the swapped pair).
 
+**Variables:** `sentinel` = dummy before head · `previous` = node before the current pair · `first`/`second` = the two nodes being swapped
+**Pseudocode:**
+```
+make sentinel pointing at head; previous = sentinel
+while two nodes exist after previous:
+    first = previous.next, second = first.next
+    point first past the pair (to second.next)
+    point second at first
+    link previous to second (new pair head)
+    advance previous to first (tail of swapped pair)
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode swapPairs(ListNode head) {
@@ -686,6 +933,19 @@ class Solution {
 
 **Algorithm:** Measure length and find the tail. Connect tail to head to form a cycle. The new tail sits `length - (k % length)` steps from the head; the node after it is the new head. Break the cycle there.
 
+**Variables:** `length` = node count · `tail` = last node · `k` = rotation amount (reduced mod length) · `stepsToNewTail` = distance from head to new tail · `current` = walker to the new tail · `newHead` = node after new tail
+**Pseudocode:**
+```
+if list empty/single or k==0: return head
+walk to tail while counting length
+k = k mod length; if k==0 return head (no-op rotation)
+close the list into a ring (tail.next = head)
+stepsToNewTail = length - k
+walk current to the new tail
+newHead = current.next
+break the ring (current.next = null)
+return newHead
+```
 ```java
 class Solution {
     public ListNode rotateRight(ListNode head, int k) {
@@ -726,6 +986,17 @@ class Solution {
 
 **Algorithm:** Walk `current` over the list, appending each node to the `less` tail or `greater` tail by comparing with `x`. Terminate the `greater` chain, then connect the `less` tail to the head of the `greater` chain.
 
+**Variables:** `lessSentinel`/`greaterSentinel` = dummy heads of the two chains · `less`/`greater` = tails of each chain · `current` = walker over input · `x` = partition value
+**Pseudocode:**
+```
+make two sentinels (less chain, greater-or-equal chain); less = lessSentinel, greater = greaterSentinel
+for each node current:
+    if current.val < x: append to less tail
+    else: append to greater tail
+terminate the greater chain (greater.next = null)
+splice less tail to the start of the greater chain
+return lessSentinel.next
+```
 ```java
 class Solution {
     public ListNode partition(ListNode head, int x) {
@@ -761,6 +1032,17 @@ class Solution {
 
 **Algorithm:** Use fast/slow to find the middle of the current range `[head, tail)`. The middle becomes the root. Recurse on `[head, middle)` for the left child and `[middle.next, tail)` for the right child. The half-open range avoids cutting the list and keeps recursion clean.
 
+**Variables:** `head` = start of current range · `tail` = exclusive end of range · `slow`/`fast` = middle-finding pointers within `[head, tail)` · `root` = subtree root built from the middle
+**Pseudocode:**
+```
+build(head, tail):
+    if head == tail: return null (empty range)
+    find middle of [head, tail) with slow 1× / fast 2× (fast stops at tail)
+    root = node from slow's value
+    root.left  = build(head, slow)        # left half before middle
+    root.right = build(slow.next, tail)    # right half after middle
+    return root
+```
 ```java
 class Solution {
     public TreeNode sortedListToBST(ListNode head) {
@@ -794,6 +1076,15 @@ class Solution {
 
 **Algorithm:** Pass 1: insert `clone` right after each `current`. Pass 2: set `current.next.random = current.random.next` (guarding null). Pass 3: detach the cloned chain and restore the original list.
 
+**Variables:** `current` = walker over the list · `clone` = freshly made copy node · `sentinel`/`copy` = dummy + write pointer for extracting the cloned chain
+**Pseudocode:**
+```
+if list empty: return null
+Pass 1: for each current, insert a fresh clone right after it (interleave)
+Pass 2: for each original current, set clone.random = current.random's clone (current.random.next), guarding null
+Pass 3: walk again, detaching clones into their own list and restoring original next pointers
+return head of the cloned list (sentinel.next)
+```
 ```java
 class Solution {
     public Node copyRandomList(Node head) {
@@ -842,6 +1133,21 @@ class Solution {
 
 **Algorithm:** Use fast/slow (with `fast = head.next` so the left half is never empty) to split the list in two. Recursively sort each half, then merge them with the standard sentinel-based merge.
 
+**Variables:** `slow`/`fast` = splitting pointers (fast starts one ahead) · `second` = head of the right half · `left`/`right` = sorted halves · merge's `sentinel`/`current` = dummy + write pointer · `a`/`b` = merge inputs
+**Pseudocode:**
+```
+sortList(head):
+    if 0 or 1 node: return head
+    find middle with slow 1× and fast 2× (fast = head.next)
+    second = slow.next; cut list into two halves
+    left = sortList(head); right = sortList(second)
+    return merge(left, right)
+merge(a, b):
+    make sentinel; current = sentinel
+    while both exist: splice smaller head onto current; advance
+    attach the leftover list
+    return sentinel.next
+```
 ```java
 class Solution {
     public ListNode sortList(ListNode head) {
@@ -889,6 +1195,12 @@ class Solution {
 
 **Algorithm:** Overwrite `node.val` with `node.next.val`, then bypass `node.next` by setting `node.next = node.next.next`.
 
+**Variables:** `node` = the node to delete (only reference given; not the tail)
+**Pseudocode:**
+```
+copy the successor's value into node
+unlink the successor (node.next = node.next.next)
+```
 ```java
 class Solution {
     public void deleteNode(ListNode node) {
@@ -909,6 +1221,19 @@ class Solution {
 
 **Algorithm:** Reverse the list. Walk it adding `carry` (starting at 1); each node becomes `(val + carry) % 10`, carry becomes `(val + carry) / 10`. If carry remains after the last node, append a new node. Reverse back to big-endian.
 
+**Variables:** `reversed` = list reversed to least-significant-first · `carry` = carry digit (seeded with 1 = the +1) · `current` = walker · `last` = last visited node (for appending overflow) · `sum` = per-node total
+**Pseudocode:**
+```
+reverse the list (now least-significant first)
+carry = 1
+walk current while carry remains:
+    sum = current.val + carry
+    current.val = sum % 10; carry = sum / 10
+    remember current as last; advance current
+if carry left over: append a new node holding it after last
+reverse back to big-endian and return
+# reverse helper: standard previous/current/next reversal
+```
 ```java
 class Solution {
     public ListNode plusOne(ListNode head) {
@@ -951,6 +1276,20 @@ class Solution {
 
 **Algorithm:** Walk `current` with a stack. When `current` has a child, push `current.next` (if non-null) for later, link `current` to the child, clear the child pointer, and fix `previous`/`next` doubly-linked wiring. When `current.next` is null but the stack is non-empty, pop and reattach.
 
+**Variables:** `stack` = deferred continuations (original `next` pointers) · `current` = walker · `resumed` = continuation popped when a branch ends
+**Pseudocode:**
+```
+if head null: return null
+stack empty; current = head
+while current exists:
+    if current has a child:
+        push current.next (if any) to resume later
+        splice the child in as current.next, fix prev pointer, clear child
+    if current.next is null and stack not empty:
+        pop a deferred continuation and reattach it (fix prev)
+    advance current
+return head
+```
 ```java
 class Solution {
     public Node flatten(Node head) {
@@ -991,6 +1330,17 @@ class Solution {
 
 **Algorithm:** Push every digit of each list onto its own stack. Pop both stacks while either is non-empty or a carry remains, summing with carry. Prepend each new digit node to the front of the result so order is correct without a final reversal.
 
+**Variables:** `stack1`/`stack2` = digit stacks (top = least significant) · `result` = result head built by prepending · `carry` = carry digit · `sum` = per-step total
+**Pseudocode:**
+```
+push all digits of l1 onto stack1, all of l2 onto stack2
+result = null, carry = 0
+while either stack non-empty or carry remains:
+    sum = carry + popped digit of each non-empty stack
+    carry = sum / 10
+    prepend a new node holding sum % 10 to result
+return result
+```
 ```java
 class Solution {
     public ListNode addTwoNumbers(ListNode l1, ListNode l2) {
@@ -1033,6 +1383,19 @@ class Solution {
 
 **Algorithm:** If the list is empty, create a self-referential node. Otherwise scan `previous`/`current` around the ring. Insert when `previous.val <= val <= current.val`, or at the wrap point `previous.val > current.val` when `val` is `>= max` or `<= min`. If a full loop completes with no fit (all equal), insert anywhere.
 
+**Variables:** `node` = new node to insert · `previous`/`current` = adjacent nodes scanned around the ring · `insertVal` = value to insert
+**Pseudocode:**
+```
+make node from insertVal
+if list empty: make it self-referential and return it
+previous = head, current = head.next
+loop around the ring:
+    if previous.val <= insertVal <= current.val: stop (normal slot)
+    if at wrap point (previous.val > current.val) and insertVal is >= max or <= min: stop
+    advance previous/current; if back to head (all equal): stop
+splice node between previous and current
+return head
+```
 ```java
 class Solution {
     public Node insert(Node head, int insertVal) {
@@ -1074,6 +1437,19 @@ class Solution {
 
 **Algorithm:** Compute the length, then `baseSize = n / k` and `remainder = n % k`. For each of the `k` parts, the size is `baseSize + (i < remainder ? 1 : 0)`. Advance that many nodes, then sever the link to start the next part.
 
+**Variables:** `length` = node count · `baseSize` = floor(length/k) per part · `remainder` = length mod k (extra nodes for early parts) · `result` = array of part heads · `current` = walker · `partSize` = size of the current part
+**Pseudocode:**
+```
+count length of list
+baseSize = length / k; remainder = length % k
+current = head
+for i in 0..k-1:
+    record current as result[i] (head of this part)
+    partSize = baseSize + (1 if i < remainder else 0)
+    walk current to the last node of this part
+    if current exists: save next, sever this part, move to next
+return result
+```
 ```java
 class Solution {
     public ListNode[] splitListToParts(ListNode head, int k) {
@@ -1113,6 +1489,16 @@ class Solution {
 
 **Algorithm:** First pass: compute prefix sums over a sentinel-prefixed list, storing the last node seen for each prefix sum in a map (later occurrences overwrite earlier ones). Second pass: for each prefix sum, jump directly to the last node holding that same sum, skipping the zero-sum span.
 
+**Variables:** `sentinel` = dummy before head · `lastSeen` = map prefix-sum → last node with that sum · `prefix` = running prefix sum · `current` = walker
+**Pseudocode:**
+```
+make sentinel pointing at head
+Pass 1: walk from sentinel, accumulate prefix sum, store lastSeen[prefix] = current (overwrite)
+Pass 2: reset prefix; walk from sentinel:
+    accumulate prefix
+    rewire current.next to lastSeen[prefix].next (skip any zero-sum span)
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode removeZeroSumSublists(ListNode head) {
@@ -1145,6 +1531,14 @@ class Solution {
 
 **Algorithm:** If the node is null, return. Otherwise recurse on `head.getNext()` first, then call `head.printValue()`. Values print from tail to head as the stack unwinds.
 
+**Variables:** `head` = current node in the recursion (uses only getNext / printValue)
+**Pseudocode:**
+```
+printReverse(head):
+    if head is null: return
+    printReverse(head.getNext())   # recurse to the end first
+    head.printValue()              # print on the way back up
+```
 ```java
 class Solution {
     public void printLinkedListInReverse(ImmutableListNode head) {

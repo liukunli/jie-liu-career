@@ -46,6 +46,16 @@ Binary search appears in two forms: searching an **array index**, or searching a
 
 **There is one binary search.** Define a monotone `condition(k)` (`false…false TRUE…true`); the loop returns the **first `k` where `condition(k)` is true**. Then look at `i`: if `i == n` no index qualified, otherwise `i` is the boundary — check the value to decide.
 
+**Variables:** `[i, j)` = half-open search range (answer lives in here) · `k` = midpoint · `condition(k)` = monotone test, false…false then TRUE…true; answer is the first `k` it holds
+**Pseudocode:**
+```
+i = 0, j = length        # half-open [i, j)
+while range non-empty (i < j):
+    k = midpoint of i and j
+    if condition(k) is false: answer is to the right, set i = k+1
+    else: k might be the answer, set j = k
+# i is the first index satisfying condition (or == length if none)
+```
 ```java
 int i = 0, j = nums.length;       // [i, j)
 // find first k that meets condition(k)
@@ -115,6 +125,18 @@ while (i < j) {
 
 **Solution 1 — lowerBound (look at `i`):**
 
+**Variables:** `[i, j)` = half-open range over indices · `k` = midpoint · `condition(k)` = `nums[k] >= target` (first slot at-or-past target) · `target` = value sought
+**Pseudocode:**
+```
+i = 0, j = n
+while i < j:
+    k = midpoint
+    if nums[k] < target: condition false, go right (i = k+1)
+    else: condition true, k might be it (j = k)
+# i = first index with nums[i] >= target
+if i == n or nums[i] != target: return -1
+return i
+```
 ```java
 class Solution {
     public int search(int[] nums, int target) {
@@ -136,6 +158,18 @@ class Solution {
 
 **Solution 2 — upperBound (look at `i - 1`):**
 
+**Variables:** `[i, j)` = half-open range over indices · `k` = midpoint · `condition(k)` = `nums[k] > target` (first slot strictly past target) · answer candidate is `i - 1`
+**Pseudocode:**
+```
+i = 0, j = n
+while i < j:
+    k = midpoint
+    if nums[k] <= target: condition false, go right (i = k+1)
+    else: condition true, k might be it (j = k)
+# i = first index with nums[i] > target, so target (if present) is at i-1
+if i == 0 or nums[i-1] != target: return -1
+return i - 1
+```
 ```java
 class Solution {
     public int search(int[] nums, int target) {
@@ -172,6 +206,15 @@ class Solution {
 
 **Intuition:** Find the boundary where "< target" flips to "≥ target" (first position), and the next boundary just past target.
 
+**Variables:** `[i, j)` = half-open range in each helper · `k` = midpoint · `lo` = lowerBound result (first `>= target`) · lowerBound `condition(k)` = `nums[k] >= target`; upperBound `condition(k)` = `nums[k] > target`
+**Pseudocode:**
+```
+lo = lowerBound(target)                 # first index >= target
+if lo == n or nums[lo] != target: return {-1, -1}   # absent
+return {lo, upperBound(target) - 1}     # last = (first > target) - 1
+lowerBound: [i, j) loop, go right while nums[k] < target, return i
+upperBound: same loop, go right while nums[k] <= target, return i
+```
 ```java
 class Solution {
     public int[] searchRange(int[] nums, int target) {
@@ -228,6 +271,16 @@ So a single `lo == n || nums[lo] != target` test handles all three "absent" buck
 
 **Intuition:** The insert position is the first index whose value is ≥ target — exactly `lowerBound`.
 
+**Variables:** `[i, j)` = half-open range over indices · `k` = midpoint · `condition(k)` = `arr[k] >= target` (first slot at-or-past target) · answer = `i`
+**Pseudocode:**
+```
+i = 0, j = n
+while i < j:
+    k = midpoint
+    if arr[k] < target: condition false, go right (i = k+1)
+    else: condition true, k might be it (j = k)
+return i        # the insert position (lowerBound)
+```
 ```java
 class Solution {
     public int searchInsert(int[] arr, int target) {
@@ -256,6 +309,25 @@ class Solution {
 
 **Intuition:** First locate the rotation point with a boundary search, then the array splits into one sorted segment that must contain target — run a plain `lowerBound` there.
 
+**Variables:** `[i, j)` = half-open range (reused for both searches) · `k` = midpoint · `pivot` = index of the minimum (rotation point); search-1 `condition(k)` = `nums[k] <= nums[n-1]` (k in the low run) · `lo`/`hi` = bounds of the sorted segment holding target; search-2 `condition(k)` = `nums[k] >= target`
+**Pseudocode:**
+```
+# 1) find pivot (index of minimum) over [0, n-1)
+while i < j:
+    k = midpoint
+    if nums[k] > nums[n-1]: still in high run, go right (i = k+1)
+    else: k might be the pivot (j = k)
+pivot = i
+# 2) pick the sorted segment that can contain target
+if pivot==0 or target <= nums[n-1]: segment = [pivot, n)   # right part
+else: segment = [0, pivot)                                  # left part
+# lowerBound target within that segment
+while i < j:
+    k = midpoint
+    if nums[k] < target: go right (i = k+1)
+    else: j = k
+return (nums[i] == target) ? i : -1
+```
 ```java
 class Solution {
     public int search(int[] nums, int target) {
@@ -304,6 +376,16 @@ Both loops are the standard `[i, j)` template; the only post-step is the same `i
 
 **Intuition:** Always walk uphill — an upward slope guarantees a peak to the right, so the slope direction is the "condition".
 
+**Variables:** `[i, j)` = half-open range with `j = n-1` (loop reads `arr[k+1]`) · `k` = midpoint · `condition(k)` = `arr[k] >= arr[k+1]` (slope down → peak at k or left)
+**Pseudocode:**
+```
+i = 0, j = n-1            # j = n-1 because we read arr[k+1]
+while i < j:
+    k = midpoint
+    if arr[k] < arr[k+1]: slope up, condition false, go right (i = k+1)
+    else: slope down, k might be a peak (j = k)
+return i        # a peak index
+```
 ```java
 class Solution {
     public int findPeakElement(int[] arr) {
@@ -351,6 +433,17 @@ Search on the **answer value** itself, not an array index. All use half-open `[i
 
 **Intuition:** Feasibility is monotonic in speed (faster always works), so binary search the speed axis for the smallest that finishes in time.
 
+**Variables:** `[i, j)` = half-open range over candidate speeds · `k` = midpoint speed · `condition(k)` = `canFinish(speed=k)` (hours <= h); MINIMIZE → answer = `i`
+**Pseudocode:**
+```
+i = 1, j = max(piles)        # search the speed axis
+while i < j:
+    k = midpoint
+    if not canFinish(k): too slow, condition false, go right (i = k+1)
+    else: k might be the answer (j = k)
+return i        # smallest feasible speed
+# canFinish(speed): sum of ceil(pile/speed) hours, true if <= h
+```
 ```java
 class Solution {
     public int minEatingSpeed(int[] piles, int h) {
@@ -384,6 +477,17 @@ class Solution {
 
 **Intuition:** Bigger capacity is always feasible, so binary search capacity for the smallest that ships within the day budget.
 
+**Variables:** `[i, j)` = half-open range over capacities · `k` = midpoint capacity · `condition(k)` = `canShip(capacity=k)` (days needed <= days); MINIMIZE → answer = `i`
+**Pseudocode:**
+```
+i = max(weights), j = sum(weights)        # smallest fits heaviest; largest ships all in one day
+while i < j:
+    k = midpoint
+    if not canShip(k): too small, condition false, go right (i = k+1)
+    else: k might be the answer (j = k)
+return i        # smallest feasible capacity
+# canShip(cap): greedily fill days, count days, true if <= days
+```
 ```java
 class Solution {
     public int shipWithinDays(int[] weights, int days) {
@@ -421,6 +525,17 @@ class Solution {
 
 **Intuition:** A larger allowed max-sum needs fewer parts, so binary search that cap for the smallest splittable into ≤ m parts.
 
+**Variables:** `[i, j)` = half-open range over max-sum caps · `k` = midpoint cap · `condition(k)` = `canSplit` into <= m parts with cap k; MINIMIZE → answer = `i`
+**Pseudocode:**
+```
+i = max(nums), j = sum(nums)        # cap must hold biggest element; whole array is one part at most
+while i < j:
+    k = midpoint
+    if not canSplit(k): cap too small, condition false, go right (i = k+1)
+    else: k might be the answer (j = k)
+return i        # smallest feasible cap
+# canSplit(cap): greedily form parts not exceeding cap, true if parts <= m
+```
 ```java
 class Solution {
     public int splitArray(int[] nums, int m) {
@@ -458,6 +573,17 @@ class Solution {
 
 **Intuition:** A bigger divisor shrinks the sum, so the condition flips false→true; binary search for the smallest divisor that fits the threshold.
 
+**Variables:** `[i, j)` = half-open range over divisors · `k` = midpoint divisor · `condition(k)` = `divSum(k) <= threshold`; MINIMIZE → answer = `i`
+**Pseudocode:**
+```
+i = 1, j = max(nums)        # bigger divisor shrinks the ceil-sum
+while i < j:
+    k = midpoint
+    if divSum(k) > threshold: divisor too small, condition false, go right (i = k+1)
+    else: k might be the answer (j = k)
+return i        # smallest feasible divisor
+# divSum(d): sum of ceil(num/d) over all nums
+```
 ```java
 class Solution {
     public int smallestDivisor(int[] nums, int threshold) {
@@ -491,6 +617,17 @@ class Solution {
 
 **Intuition:** A larger target-minimum yields fewer pieces, so feasibility flips true→false. MAXIMIZE = search the FIRST INFEASIBLE minimum and step back one: `condition(k) = !canDivide(k)` (pieces `< k+1`), false…false TRUE…true. Half-open `[lo, hi+1)`, return `i - 1` — no ceiling mid needed.
 
+**Variables:** `[i, j)` = half-open range over candidate minimum-sweetness values · `m` = midpoint candidate · `condition(m)` = `!canDivide` into k+1 pieces each `>= m` (first INFEASIBLE); MAXIMIZE → answer = `i - 1`
+**Pseudocode:**
+```
+i = min(s), j = sum(s)/(k+1) + 1        # half-open [lo, hi+1)
+while i < j:
+    m = midpoint
+    if canDivide(m): feasible, condition false, go right (i = m+1)
+    else: infeasible, m might be the boundary (j = m)
+return i - 1        # last feasible minimum
+# canDivide(minSweet): greedily count pieces each summing >= minSweet, true if count >= k+1
+```
 ```java
 class Solution {
     public int maximizeSweetness(int[] s, int k) {
@@ -548,6 +685,21 @@ so the `i+1 == j` infinite-loop trap of `i = k` simply never arises.
 
 **Intuition:** Pick a split of the smaller array; the rest of the split is forced. Shrink the partition until the left half's max ≤ the right half's min, then the median falls out of the boundary values.
 
+**Variables:** `[i, j)` = half-open range over cuts `k` in the smaller array · `k` = cut in nums1 · `cut2 = half - k` = forced cut in nums2 · `left1`/`right1`/`left2`/`right2` = boundary values around the two cuts · `condition(k)` = `left2 <= right1` (cut k is a valid partition)
+**Pseudocode:**
+```
+ensure nums1 is the smaller array (else recurse swapped)
+half = (m+n+1)/2
+i = max(0, half-n), j = min(m, half) + 1        # cuts keeping cut2 in [0, n]
+while i < j:
+    k = midpoint; cut2 = half - k
+    right1 = nums1[k] (or +inf), left2 = nums2[cut2-1] (or -inf)
+    if left2 > right1: condition false, go right (i = k+1)
+    else: valid partition, k might be it (j = k)
+# i is the valid cut; read left1/right1/left2/right2 around both cuts
+if total length odd: return max(left1, left2)
+else: return (max(left1,left2) + min(right1,right2)) / 2
+```
 ```java
 class Solution {
     public double findMedianSortedArrays(int[] nums1, int[] nums2) {
@@ -598,6 +750,17 @@ class Solution {
 
 **Intuition:** Feasibility `k*k <= x` is true…true then false as k grows. MAXIMIZE = find the FIRST INFEASIBLE k with `condition(k) = k*k > x` (false…false TRUE…true), over `[1, x+1)`, and return `i - 1` — the largest k still feasible. No ceiling mid needed.
 
+**Variables:** `[i, j)` = half-open range over candidate roots · `k` = midpoint candidate · `condition(k)` = `k*k > x` (first INFEASIBLE); MAXIMIZE → answer = `i - 1`
+**Pseudocode:**
+```
+if x < 2: return x
+i = 1, j = x + 1        # half-open [1, x+1)
+while i < j:
+    k = midpoint
+    if k*k <= x: feasible, condition false, go right (i = k+1)
+    else: infeasible, k might be the boundary (j = k)
+return i - 1        # largest k with k*k <= x
+```
 ```java
 class Solution {
     public int mySqrt(int x) {
@@ -628,6 +791,18 @@ class Solution {
 
 **Intuition:** The layout means the whole matrix reads as a single sorted sequence; map a flat index to `(row, col)` and run a standard `[i, j)` lowerBound, then verify the landed value.
 
+**Variables:** `[i, j)` = half-open range over flat indices `0..m*n` · `k` = midpoint flat index, mapped to `matrix[k/n][k%n]` · `condition(k)` = `value >= target` · `target` = value sought
+**Pseudocode:**
+```
+i = 0, j = m*n        # treat matrix as one flat sorted array
+while i < j:
+    k = midpoint
+    value = matrix[k/n][k%n]        # flatten index to 2D
+    if value < target: condition false, go right (i = k+1)
+    else: k might be it (j = k)
+# i is lowerBound; verify the landed cell
+return i < m*n and matrix[i/n][i%n] == target
+```
 ```java
 class Solution {
     public boolean searchMatrix(int[][] matrix, int target) {
@@ -659,6 +834,20 @@ class Solution {
 
 **Intuition:** Duplicates can make both ends equal to the midpoint so neither half looks sorted; in that ambiguous case shrink both bounds by one and retry.
 
+**Variables:** `[i, j)` = half-open range (last in-range element is `arr[j-1]`) · `k` = midpoint · branching search (no single monotone condition because duplicates break monotonicity)
+**Pseudocode:**
+```
+i = 0, j = n        # last element is arr[j-1]
+while i < j:
+    k = midpoint
+    if arr[k] == target: return true
+    if arr[i] == arr[k] == arr[j-1]: ambiguous duplicates, shrink both ends (i++, j--)
+    elif left half sorted (arr[i] <= arr[k]):
+        if target in [arr[i], arr[k]): go left (j = k) else go right (i = k+1)
+    else:   # right half sorted
+        if target in (arr[k], arr[j-1]]: go right (i = k+1) else go left (j = k)
+return false
+```
 ```java
 class Solution {
     public boolean search(int[] arr, int target) {
@@ -702,6 +891,16 @@ class Solution {
 
 **Intuition:** The minimum is the single point where the order breaks; if `arr[k] > arr[j]` the break is to the right, otherwise the min is at k or left.
 
+**Variables:** `[i, j]` = closed range (compares to the running right end `arr[j]`) · `k` = midpoint · `condition(k)` = `arr[k] <= arr[j]` (min is at k or to its left)
+**Pseudocode:**
+```
+i = 0, j = n-1        # compare midpoint to the right end
+while i < j:
+    k = midpoint
+    if arr[k] > arr[j]: break is to the right, condition false, go right (i = k+1)
+    else: min at k or left, k might be it (j = k)
+return arr[i]        # the minimum
+```
 ```java
 class Solution {
     public int findMin(int[] arr) {
@@ -730,6 +929,17 @@ class Solution {
 
 **Intuition:** From the top-right, moving left strictly decreases and moving down strictly increases, so each comparison eliminates a full row or column.
 
+**Variables:** `row` = current row (starts at 0) · `col` = current column (starts at last) · staircase walk from the top-right corner · `target` = value sought
+**Pseudocode:**
+```
+start at top-right corner (row=0, col=last)
+while inside the matrix:
+    value = matrix[row][col]
+    if value == target: return true
+    elif value > target: move left (col--)   # current column too big
+    else: move down (row++)                    # current row too small
+return false
+```
 ```java
 class Solution {
     public boolean searchMatrix(int[][] matrix, int target) {
@@ -759,6 +969,16 @@ class Solution {
 
 **Intuition:** Versions are good...good then bad...bad once corrupted; this is the classic first-true boundary search.
 
+**Variables:** `[i, j]` = closed range over versions `1..n` · `k` = midpoint version · `condition(k)` = `isBadVersion(k)` (good…good then bad…bad)
+**Pseudocode:**
+```
+i = 1, j = n
+while i < j:
+    k = midpoint
+    if not isBadVersion(k): still good, condition false, go right (i = k+1)
+    else: k might be the first bad (j = k)
+return i        # first bad version
+```
 ```java
 /* The isBadVersion API is defined in the parent class VersionControl.
    boolean isBadVersion(int version); */
@@ -789,6 +1009,16 @@ public class Solution extends VersionControl {
 
 **Intuition:** `guess(k)` returns `-1` when the pick is lower than `k`, `1` when higher, `0` on a hit. So `guess(k) <= 0` is false…false TRUE…true as `k` grows, and the first true `k` is the answer.
 
+**Variables:** `[i, j)` = half-open range over candidates `1..n` · `k` = midpoint guess · `condition(k)` = `guess(k) <= 0` (k is the pick or pick is lower)
+**Pseudocode:**
+```
+i = 1, j = n + 1
+while i < j:
+    k = midpoint
+    if guess(k) > 0: pick is higher, condition false, go right (i = k+1)
+    else: k is the pick or pick is lower (j = k)
+return i        # the picked number
+```
 ```java
 /* The guess API is defined in the parent class GuessGame.
    int guess(int num);  returns -1 (pick is lower), 1 (pick is higher), or 0 (hit). */
@@ -819,6 +1049,19 @@ public class Solution extends GuessGame {
 
 **Intuition:** Each house needs the closest heater; the required radius is the largest of those closest distances. Find each house's nearest heater by binary search.
 
+**Variables:** `[i, j)` = half-open range over heater indices (per house) · `k` = midpoint · `condition(k)` = `heaters[k] >= house` (lowerBound) · `distance` = closest heater distance for this house · `result` = max over all houses
+**Pseudocode:**
+```
+sort heaters; result = 0
+for each house:
+    lowerBound first heater >= house over [0, n):
+        if heaters[k] < house: go right (i = k+1) else j = k
+    distance = +inf
+    if i < n: distance = heaters[i] - house        # heater to the right
+    if i > 0: distance = min(distance, house - heaters[i-1])   # also check left neighbor
+    result = max(result, distance)
+return result        # the required radius
+```
 ```java
 class Solution {
     public int findRadius(int[] houses, int[] heaters) {
@@ -860,6 +1103,16 @@ class Solution {
 
 **Intuition:** Before the unique element each pair starts at an even index; after it, the parity shifts. Force the midpoint even and check whether its partner matches to pick a half.
 
+**Variables:** `[i, j]` = closed range on even indices · `k` = midpoint forced even · `condition(k)` = `arr[k] != arr[k+1]` (single is at k or to its left)
+**Pseudocode:**
+```
+i = 0, j = n-1
+while i < j:
+    k = midpoint; if k is odd, drop to k-1 (force even)
+    if arr[k] == arr[k+1]: pair intact, single is to the right (i = k+2)
+    else: pair broken, single at k or left (j = k)
+return arr[i]        # the single element
+```
 ```java
 class Solution {
     public int singleNonDuplicate(int[] arr) {
@@ -891,6 +1144,16 @@ class Solution {
 
 **Intuition:** The answer is a contiguous window of size k; search for its start by comparing the distances of the two window edges to x and sliding toward the closer side.
 
+**Variables:** `[i, j]` = closed range over window-start indices `0..n-k` · `mid` = candidate window start · `condition(mid)` = `x - arr[mid] <= arr[mid+k] - x` (left edge at mid is closer than the right edge)
+**Pseudocode:**
+```
+i = 0, j = n-k        # window start range
+while i < j:
+    mid = midpoint
+    if x - arr[mid] > arr[mid+k] - x: right edge closer, shift window right (i = mid+1)
+    else: left edge closer, mid might be the start (j = mid)
+collect arr[i .. i+k-1] as the answer window
+```
 ```java
 class Solution {
     public List<Integer> findClosestElements(int[] arr, int k, int x) {
@@ -923,6 +1186,18 @@ class Solution {
 
 **Intuition:** The count of pairs with distance ≤ d is monotonic in d, so binary search the distance axis; count pairs ≤ d with a sliding window over the sorted array.
 
+**Variables:** `[i, j]` = closed range over candidate distances · `mid` = candidate distance · `condition(mid)` = `countPairs(dist <= mid) >= k`; MINIMIZE → answer = `i`
+**Pseudocode:**
+```
+sort nums
+i = 0, j = max - min        # search the distance axis
+while i < j:
+    mid = midpoint
+    if countPairs(mid) < k: too few pairs, condition false, go right (i = mid+1)
+    else: mid might be the answer (j = mid)
+return i        # smallest distance with >= k pairs
+# countPairs(maxDist): sliding window over sorted nums, sum (right - left) per right
+```
 ```java
 class Solution {
     public int smallestDistancePair(int[] nums, int k) {
@@ -962,6 +1237,16 @@ class Solution {
 
 **Intuition:** An upward slope means the peak is strictly to the right; a downward slope means the peak is here or to the left.
 
+**Variables:** `[i, j]` = closed range with `j = n-1` (loop reads `arr[k+1]`) · `k` = midpoint · `condition(k)` = `arr[k] >= arr[k+1]` (slope down → peak at k or left)
+**Pseudocode:**
+```
+i = 0, j = n-1            # j = n-1 because we read arr[k+1]
+while i < j:
+    k = midpoint
+    if arr[k] < arr[k+1]: slope up, condition false, go right (i = k+1)
+    else: slope down, k might be the peak (j = k)
+return i        # peak index
+```
 ```java
 class Solution {
     public int peakIndexInMountainArray(int[] arr) {
@@ -990,6 +1275,17 @@ class Solution {
 
 **Intuition:** Missing count at each index increases monotonically, so binary search for the first index whose missing count is ≥ k, then offset from the previous element.
 
+**Variables:** `[i, j]` = closed range over indices · `mid` = midpoint · `condition(mid)` = `missingCount(mid) >= k` where `missingCount(idx) = nums[idx] - nums[0] - idx`
+**Pseudocode:**
+```
+i = 0, j = n-1
+while i < j:
+    mid = midpoint
+    if missingCount(mid) < k: too few missing, condition false, go right (i = mid+1)
+    else: mid might be it (j = mid)
+if even nums[n-1] has < k missing: answer lies beyond the array, offset from last element
+else: offset the kth missing from nums[i-1] using its missing count
+```
 ```java
 class Solution {
     public int missingElement(int[] nums, int k) {
@@ -1025,6 +1321,15 @@ class Solution {
 
 **Intuition:** Each row is sorted 0...0 1...1; starting top-right, move left on a 1 (column might be even further left) and down on a 0, tracking the leftmost 1 seen.
 
+**Variables:** `row` = current row (starts at 0) · `col` = current column (starts at last) · `result` = leftmost column with a 1 seen so far (start -1) · staircase walk from the top-right corner
+**Pseudocode:**
+```
+start at top-right corner (row=0, col=last); result = -1
+while inside the matrix:
+    if cell is 1: record col as result; move left (col--)   # maybe further left
+    else: move down (row++)                                  # no 1 in this row at/after col
+return result
+```
 ```java
 /* interface BinaryMatrix {
        public int get(int row, int col);
@@ -1059,6 +1364,18 @@ class Solution {
 
 **Intuition:** Waiting more days only adds bloomed flowers, so feasibility is monotonic; binary search the day axis and greedily count adjacent runs of bloomed flowers.
 
+**Variables:** `[i, j]` = closed range over day counts · `k2` = midpoint day · `condition(k2)` = `canMake(day=k2)` yields >= m bouquets; MINIMIZE → answer = `i`
+**Pseudocode:**
+```
+if m*k > number of flowers: impossible, return -1
+i = min(bloomDay), j = max(bloomDay)        # search the day axis
+while i < j:
+    k2 = midpoint
+    if not canMake(k2): not enough days, condition false, go right (i = k2+1)
+    else: k2 might be the answer (j = k2)
+return i        # smallest feasible day count
+# canMake(day): count adjacent runs of k bloomed flowers, true if bouquets >= m
+```
 ```java
 class Solution {
     public int minDays(int[] bloomDay, int m, int k) {
@@ -1107,6 +1424,16 @@ class Solution {
 
 **Intuition:** At each index the number of missing positives so far is `arr[k] - (k+1)`; binary search the first index whose missing count is ≥ k, then offset.
 
+**Variables:** `[i, j)` = half-open range over indices · `mid` = midpoint · `condition(mid)` = `arr[mid] - (mid+1) >= k` (missing count reaches k) · answer = `i + k`
+**Pseudocode:**
+```
+i = 0, j = n
+while i < j:
+    mid = midpoint
+    if arr[mid] - (mid+1) < k: too few missing, condition false, go right (i = mid+1)
+    else: mid might be it (j = mid)
+return i + k        # i missing-free slots, then the kth missing
+```
 ```java
 class Solution {
     public int findKthPositive(int[] arr, int k) {
@@ -1135,6 +1462,20 @@ class Solution {
 
 **Intuition:** Total cost is the sum of absolute differences; one swap can only help where the closest available nums1 value beats the current difference. Find that closest value by binary search and track the best gain.
 
+**Variables:** `sorted` = sorted copy of nums1 · `total` = sum of |nums1[p]-nums2[p]| · `maxGain` = best reduction from one swap · `[i, j)` = half-open range (per element) · `k` = midpoint · `condition(k)` = `sorted[k] >= target` (lowerBound for `target = nums2[p]`)
+**Pseudocode:**
+```
+sorted = sorted copy of nums1; total = 0; maxGain = 0
+for each p:
+    diff = |nums1[p] - nums2[p]|; total += diff; target = nums2[p]
+    lowerBound first sorted value >= target over [0, n):
+        if sorted[k] < target: go right (i = k+1) else j = k
+    best = diff
+    if i < n: best = min(best, |sorted[i] - target|)        # value at/above target
+    if i > 0: best = min(best, |sorted[i-1] - target|)      # also check left neighbor
+    maxGain = max(maxGain, diff - best)
+return (total - maxGain) mod 1e9+7
+```
 ```java
 class Solution {
     public int minAbsoluteSumDiff(int[] nums1, int[] nums2) {
@@ -1182,6 +1523,18 @@ class Solution {
 
 **Intuition:** Longer pieces produce fewer ribbons, so feasibility flips true→false as length grows. Search the first INFEASIBLE length (`condition(k) = countRibbons(k) < k`, false…false TRUE…true) and step back one; that is the largest feasible length. If no length is feasible the loop lands on `lo`, giving `i - 1 = 0`.
 
+**Variables:** `[i, j)` = half-open range over candidate lengths `[1, max+1)` · `mid` = candidate length · `condition(mid)` = `countRibbons(mid) < k` (first INFEASIBLE length); MAXIMIZE → answer = `i - 1`
+**Pseudocode:**
+```
+max = longest ribbon
+i = 1, j = max + 1        # half-open [1, max+1)
+while i < j:
+    mid = midpoint
+    if countRibbons(mid) >= k: feasible, condition false, go right (i = mid+1)
+    else: infeasible, mid might be the boundary (j = mid)
+return i - 1        # last feasible length (0 if none)
+# countRibbons(length): sum of (ribbon / length) over all ribbons
+```
 ```java
 class Solution {
     public int maxLength(int[] ribbons, int k) {

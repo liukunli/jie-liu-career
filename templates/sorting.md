@@ -24,6 +24,24 @@ Inside merge and partition: `i`, `j`, `k` as scan/write pointers (consistent wit
 
 ## Template 1 — Merge Sort
 
+**Variables:** `[start, end)` half-open range being sorted · `mid` = split point · `temp` = scratch buffer · `i` = left scan pointer `[start,mid)` · `j` = right scan pointer `[mid,end)` · `k` = write pointer into temp
+**Pseudocode:**
+```
+mergeSort(nums, start, end):
+    if range has 0 or 1 elements: return        // already sorted
+    mid = midpoint of [start, end)
+    mergeSort left half  [start, mid)
+    mergeSort right half [mid, end)
+    merge the two sorted halves
+
+merge:
+    i = start, j = mid, k = start
+    while either half has elements left:
+        pick smaller front of the two halves (left wins ties → stable)
+        write it to temp[k], advance that half's pointer and k
+    copy temp back into nums[start, end)
+```
+
 ```java
 // split in half until trivially sorted, then merge two sorted halves into one.  — WHEN: need stable sort, sort a linked list, or count cross-pairs (inversions) during the merge.
 // Entry point
@@ -57,6 +75,21 @@ private void merge(int[] nums, int start, int mid, int end, int[] temp) {
 ---
 
 ## Template 2 — Quick Sort (3-way Dutch Flag Partition)
+
+**Variables:** `[start, end)` half-open range · `pivot` = chosen partition value · `i` = boundary of `<pivot` region · `k` = scan/cursor pointer · `j` = boundary of `>pivot` region (from the right)
+**Pseudocode:**
+```
+quickSort(nums, start, end):
+    if range has 0 or 1 elements: return
+    pivot = middle element's value
+    i = start, k = start, j = end-1     // [start,i)<p | [i,k)==p | [k,j] unknown | (j,end)>p
+    while k <= j:
+        if nums[k] < pivot:  swap into < region, advance k and i
+        elif nums[k] == pivot: advance k
+        else:                swap to > region, shrink j (don't advance k)
+    recurse on < region [start, i)
+    recurse on > region [k, end)         // ==pivot middle is final
+```
 
 ```java
 // pick a pivot, partition into <pivot | ==pivot | >pivot, recurse on the two ends only.  — WHEN: in-place sort with O(log n) stack; the ==pivot middle is already in final position.
@@ -96,6 +129,17 @@ private void swap(int[] nums, int i, int j) {
 
 Extends quick sort: after partition, only recurse into the side that contains `target` index.
 
+**Variables:** `[start, end)` half-open range · `target` = 0-indexed position we want settled · `pivot` = partition value · `i` = boundary of `<pivot` region · `k` = scan/cursor pointer · `j` = boundary of `>pivot` region
+**Pseudocode:**
+```
+quickSelect(nums, start, end, target):
+    pivot = middle element's value
+    partition into [start,i)<p | [i,k)==p | [k,end)>p   // same 3-way as quick sort
+    if target < i:        recurse into left  [start, i)
+    elif target < k:      target sits in ==pivot region → return pivot
+    else:                 recurse into right [k, end)
+```
+
 ```java
 // same partition as quick sort, but recurse into only the one side holding target → O(n) avg.  — WHEN: "k-th largest/smallest", "k closest/most frequent" — you need a position, not a full sort.
 // Returns value at 0-indexed position target after sorting
@@ -128,6 +172,18 @@ private int quickSelect(int[] nums, int start, int end, int target) {
 
 O(n + range). Use when values are bounded integers.
 
+**Variables:** `min`/`max` = value range bounds · `buckets[v-min]` = count of value `v` · `i` = write pointer back into arr · `v` = current value index into buckets
+**Pseudocode:**
+```
+if array empty: return
+find min and max values
+buckets = array sized (max-min+1), all zero
+for each x in arr: increment buckets[x-min]      // tally occurrences
+i = 0
+for v from 0 to last bucket:
+    while bucket v still has count: write (v+min) into arr[i], advance i
+```
+
 ```java
 // tally how many times each value occurs, then emit values in order — no comparisons.  — WHEN: integers in a small bounded range; beats O(n log n) when range = O(n).
 public void countingSort(int[] arr) {
@@ -148,6 +204,17 @@ public void countingSort(int[] arr) {
 
 **Description:** Sort an integer array. No built-in sort allowed.  
 **Intuition:** Divide and conquer — either split-then-merge (merge sort) or partition-then-recurse (quick sort); both reach O(n log n).
+
+**Variables:** `[start, end)` half-open range · `mid` = split point · `temp` = merge scratch buffer · `pivot` = quick-sort partition value · `i`/`j`/`k` = scan and write pointers
+**Pseudocode:**
+```
+Merge Sort version:
+    mergeSort [0, n): split at mid, sort both halves, merge them
+    merge: walk i over left, j over right, write smaller into temp[k], copy temp back
+Quick Sort version:
+    quickSort [0, n): pick middle pivot, 3-way partition <p | ==p | >p
+    recurse on the < region [start,i) and the > region [k,end)
+```
 
 ```java
 // Merge Sort version
@@ -213,6 +280,17 @@ class Solution {
 **Intuition:** Quick select partitions around a pivot and only recurses into the side containing the target rank, so it averages O(n) instead of fully sorting.  
 **Key:** k-th largest = `(n - k)`-th smallest (0-indexed). Quick select, recurse one side only.
 
+**Variables:** `target` = `n-k` (0-indexed position of k-th largest) · `[start, end)` range · `pivot` = partition value · `i`/`k` = `<`/`==` region boundaries · `j` = `>` boundary
+**Pseudocode:**
+```
+target = n - k                       // k-th largest is (n-k)-th smallest
+quickSelect [0, n) for target:
+    pick middle pivot, 3-way partition <p | ==p | >p
+    if target < i:   recurse left  [start, i)
+    elif target < k: return pivot   // target lands in ==pivot region
+    else:            recurse right [k, end)
+```
+
 ```java
 class Solution {
     public int findKthLargest(int[] nums, int k) {
@@ -252,6 +330,20 @@ class Solution {
 **Description:** Return the k closest points to origin (0,0). Any order.  
 **Intuition:** Same quick select, but partition on squared distance — once the first k slots are filled with the closest points, their internal order doesn't matter.  
 **Key:** same quick select template; comparator = squared distance (avoid sqrt). After select, first k entries in `[0, k)` are the answer.
+
+**Variables:** `k` = how many closest points wanted · `[start, end)` range · `pivot` = squared distance of pivot point · `i`/`current` = `<`/`==` region boundaries · `j` = `>` boundary · `less`/`equal` = sizes of `<`/`==` regions
+**Pseudocode:**
+```
+quickSelect partitions points so the closest k land in [0, k):
+    if range size <= k: already done, return
+    pivot = squared distance of middle point
+    3-way partition by squared distance: <p | ==p | >p
+    less = size of < region, equal = size of == region
+    if k <= less:          recurse into < region
+    elif k <= less+equal:  first k already in place, return
+    else:                  recurse into > region for remaining (k-less-equal)
+answer = first k points
+```
 
 ```java
 class Solution {
@@ -299,6 +391,20 @@ class Solution {
 **Intuition:** Merge sort fits linked lists — there's no random access for quick sort, but splitting at the middle and merging two sorted lists needs only pointer rewiring.  
 **Key:** same merge sort structure — slow/fast pointers to find mid, split, sort halves, merge.
 
+**Variables:** `head` = list start · `slow`/`fast` = pointers to locate the middle (fast moves 2x) · `mid` = head of second half · `left`/`right` = sorted halves · `dummy`/`current` = builder for the merged list
+**Pseudocode:**
+```
+sortList(head):
+    if 0 or 1 nodes: return head
+    advance slow by 1 and fast by 2 to find middle
+    mid = slow.next; cut the list at slow (slow.next = null)
+    left = sortList(first half), right = sortList(second half)
+    return merge(left, right)
+merge(a, b):
+    walk both lists, append smaller node to current, advance
+    attach whatever remains; return dummy.next
+```
+
 ```java
 class Solution {
     public ListNode sortList(ListNode head) {
@@ -340,6 +446,15 @@ class Solution {
 **Intuition:** Order two numbers by which concatenation is bigger (`b+a` vs `a+b`) — this pairwise rule sorts the whole list into the largest possible string.  
 **Key:** custom comparator — between `a` and `b`, prefer whichever concatenation `a+b` vs `b+a` is lexicographically larger.
 
+**Variables:** `strs` = numbers as strings · `a`/`b` = two strings being compared · comparator key = compare `b+a` vs `a+b`
+**Pseudocode:**
+```
+convert every number to a string
+sort strings by: a before b if (b+a) < (a+b)   // bigger concatenation comes first
+if the largest string is "0": return "0"        // all zeros case
+join all strings together and return
+```
+
 ```java
 class Solution {
     public String largestNumber(int[] nums) {
@@ -360,6 +475,18 @@ class Solution {
 **Description:** For each element, count how many elements to its right are smaller.  
 **Intuition:** During a merge, whenever a left-half element is placed, every right-half element already emitted is both smaller and to its right — so the merge counts the smaller-after-self pairs for free.  
 **Key:** same merge sort template but track original indices. When element from left side is placed, `j - mid` elements from the right side that have already been placed are all smaller and to its right.
+
+**Variables:** `result[orig]` = smaller-after-self count per original index · `indices` = positions sorted by value (sort indices, not values) · `[start, end)` range · `mid` = split · `i`/`j` = left/right scan over indices · `k` = write pointer into temp
+**Pseudocode:**
+```
+indices = [0,1,...,n-1]
+mergeSort over indices, comparing by nums[indices[..]]:
+    merge: when placing a left element (nums[indices[i]] <= nums[indices[j]]):
+        result[indices[i]] += (j - mid)   // right elements already emitted are smaller & to the right
+    else place the right element
+    copy merged indices back
+collect result into a list
+```
 
 ```java
 class Solution {
@@ -405,6 +532,18 @@ class Solution {
 **Description:** Merge all overlapping intervals. Return array of non-overlapping intervals.  
 **Intuition:** After sorting by start, overlaps can only be with the most recent interval, so one scan either extends its end or appends a new one.  
 **Key:** sort by start time; greedily extend the last interval's end when overlap found.
+
+**Variables:** `intervals` sorted by start · `result` = list of merged intervals · `iv` = current interval · last interval's `[1]` = end being extended
+**Pseudocode:**
+```
+sort intervals by start value
+for each interval iv:
+    if result empty OR last result's end < iv.start:  // no overlap
+        append iv as a new interval
+    else:                                              // overlap
+        extend last result's end to max(last end, iv.end)
+return result as array
+```
 
 ```java
 class Solution {
@@ -462,6 +601,16 @@ quickSort(nums, start, end)   →  sorts [start, end)
 
 **Variation:** Fill from the END backwards using three pointers `i` (end of nums1 valid data), `j` (end of nums2), `k` (end of merged result). This avoids the need to shift elements.
 
+**Variables:** `i` = last valid index of nums1 (m-1) · `j` = last index of nums2 (n-1) · `k` = write position at the very end of nums1 (m+n-1)
+**Pseudocode:**
+```
+i = m-1, j = n-1, k = m+n-1           // fill from the back
+while both halves have elements:
+    write the larger of nums1[i], nums2[j] into nums1[k], move that pointer and k back
+copy any remaining nums2 elements into the front of nums1
+// remaining nums1 elements are already in place
+```
+
 ```java
 class Solution {
     public void merge(int[] nums1, int m, int[] nums2, int n) {
@@ -481,6 +630,21 @@ class Solution {
 **Description:** Given an integer array, count the number of range sums `sum(i,j)` that lie within `[lower, upper]` (inclusive).
 
 **Variation:** Build prefix sum array. Then use modified merge sort — during the merge phase, for each element in the left half, use two sliding pointers `j` and `k` into the right half to count valid prefix sums (those where `arr[k] - arr[i]` falls in range). This gives O(n log n) vs O(n²) brute force.
+
+**Variables:** `prefix` = prefix sum array (length n+1) · `[start, end)` half-open range over prefix · `mid` = split · `i` = left-half element (a range's start prefix) · `j`/`k` = sliding lower/upper bounds into the right half · `count` = valid range sums
+**Pseudocode:**
+```
+build prefix sums; a range sum = prefix[hi] - prefix[lo]
+mergeCount [0, n+1):
+    if 0 or 1 elements: return 0
+    count = mergeCount(left) + mergeCount(right)
+    for each left element i:
+        advance j while prefix[j]-prefix[i] < lower    // first index in range
+        advance k while prefix[k]-prefix[i] <= upper   // first index past range
+        count += k - j                                 // right elements in [lower,upper]
+    sort the two halves (merge phase) so parent sees sorted data
+    return count
+```
 
 ```java
 class Solution {
@@ -517,6 +681,22 @@ class Solution {
 ## #164 Maximum Gap
 **Description:** Given an unsorted array, return the maximum difference between successive elements in its sorted form. Must run in linear time.
 **Variation:** bucket sort by pigeonhole principle. With n elements, the max gap is at least `ceil((max-min)/(n-1))`. Place elements into buckets of that size; the max gap spans between one bucket's max and the next non-empty bucket's min.
+
+**Variables:** `min`/`max` = value range · `bucketSize` = floor gap `(max-min)/(n-1)` · `bucketCount` = number of buckets · `bucketMin[b]`/`bucketMax[b]` = extremes within bucket b · `b` = bucket index · `previousMax` = max of last non-empty bucket · `maxGap` = answer
+**Pseudocode:**
+```
+if fewer than 2 elements: return 0
+find min and max; if equal return 0
+bucketSize = max(1, (max-min)/(n-1))     // gap can't be smaller than this
+create bucketCount buckets, track each bucket's min and max
+for each num: drop into bucket (num-min)/bucketSize, update that bucket's min/max
+previousMax = min, maxGap = 0
+for each bucket b in order:
+    skip empty buckets
+    maxGap = max(maxGap, bucketMin[b] - previousMax)   // gap straddles bucket boundary
+    previousMax = bucketMax[b]
+return maxGap
+```
 ```java
 class Solution {
     public int maximumGap(int[] nums) {

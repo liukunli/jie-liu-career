@@ -71,6 +71,16 @@ Four data structures — each with a canonical template and representative probl
 
 ## All Templates
 
+**Variables:** `stack` = LIFO ArrayDeque (holds indices for monotone variants) · `queue` = monotone deque (front = window answer) · `minPQ`/`maxPQ`/`pq` = priority queue (heap) · `maxHeap` = lower half, `minHeap` = upper half for median
+**Pseudocode:**
+```
+STACK: push/pop/peek all at the front (LIFO)
+MONO-DECREASING (next greater): while current > stack top, pop and record current as its answer; push index
+MONO-INCREASING (next smaller / span): while current < stack top, pop and compute width to new top boundary; push index
+MONO-DEQUE (window max): drop back while smaller than current, push; drop front if out of window; front = window max
+PRIORITY QUEUE: offer/poll/peek the min (or max with reverse comparator)
+TWO HEAPS: push to maxHeap then shift its top to minHeap; rebalance so maxHeap >= minHeap; median from the tops
+```
 ```java
 // 1. STACK (LIFO) — use ArrayDeque, not Stack class
 Deque<Integer> stack = new ArrayDeque<>();
@@ -153,6 +163,13 @@ double findMedian() {
 
 **Intuition:** the most recent unmatched open bracket is the only one a closing bracket can legally match — that is exactly LIFO.
 
+**Variables:** `stack` = expected closing brackets (LIFO) · `c` = current character
+**Pseudocode:**
+```
+for each char: if it's an opener, push the matching closer
+else (a closer): if stack empty or popped top != this char, return false
+valid iff stack ends empty
+```
 ```java
 class Solution {
     public boolean isValid(String s) {
@@ -176,6 +193,13 @@ class Solution {
 **Description:** Design a stack that supports push, pop, top, and `getMin()` in O(1).  
 **Key:** auxiliary `minStack` mirrors the main stack — each level stores the current running minimum.
 
+**Variables:** `stack` = the values · `minStack` = running minimum at each level
+**Pseudocode:**
+```
+push: push value; push min(current minStack top, value) onto minStack
+pop: pop both stacks together
+top: stack top; getMin: minStack top
+```
 ```java
 class MinStack {
     Deque<Integer> stack    = new ArrayDeque<>();
@@ -199,6 +223,15 @@ class MinStack {
 **Description:** Decode a string like `"3[a2[bc]]"` → `"abcbcabcbc"`.  
 **Key:** two stacks — one for repeat counts, one for the string built before each `[`. On `]`, pop both and repeat.
 
+**Variables:** `countStack` = repeat counts · `strStack` = strings built before each `[` · `current` = string being built now · `k` = number being parsed
+**Pseudocode:**
+```
+digit: build multi-digit k
+'[': push k and current, reset both
+']': pop count and parent string; append current count times to parent; current = parent
+letter: append to current
+return current at end
+```
 ```java
 class Solution {
     public String decodeString(String s) {
@@ -251,6 +284,14 @@ Both store INDICES (not values) so you can compute distances and widths.
 
 **Intuition:** a colder day just waits on the stack until the first warmer day arrives and resolves it.
 
+**Variables:** `stack` = indices of days awaiting a warmer day (temps decreasing) · `result[]` = days-to-warmer per day · `idx` = popped day
+**Pseudocode:**
+```
+for each day i: while stack top is colder than today
+    pop that day; its answer = i - that index (distance to warmer)
+push i
+days left on stack keep 0 (no warmer day)
+```
 ```java
 class Solution {
     public int[] dailyTemperatures(int[] temperatures) {
@@ -277,6 +318,12 @@ class Solution {
 **Description:** For each element in `nums1` (a subset of `nums2`), find the first greater element to its right in `nums2`. Return -1 if none.  
 **Key:** precompute NGE for all elements in `nums2` using a monotone stack + HashMap. Then look up each `nums1` element.
 
+**Variables:** `nextGreater` = value → its next greater · `stack` = values awaiting a greater one (decreasing) · `result[]` = answers for nums1
+**Pseudocode:**
+```
+scan nums2: while stack top < current, pop and map it to current as its next greater; push current
+for each nums1 element, look up its next greater (default -1)
+```
 ```java
 class Solution {
     public int[] nextGreaterElement(int[] nums1, int[] nums2) {
@@ -306,6 +353,14 @@ class Solution {
 
 **Intuition:** a bar can only stretch sideways until it hits a shorter bar; the stack remembers each bar's left limit so the right limit (current shorter bar) closes the rectangle.
 
+**Variables:** `h[]` = heights padded with 0 sentinels · `stack` = indices, heights increasing · `left` = left boundary · `width` = bars spanned · `maxArea` = best area
+**Pseudocode:**
+```
+pad with 0 at both ends to flush the stack
+for each bar i: while stack top is taller than h[i]
+    pop it as the rectangle height; width = i - newLeftBoundary - 1; update maxArea
+push i
+```
 ```java
 class Solution {
     public int largestRectangleArea(int[] heights) {
@@ -338,6 +393,14 @@ class Solution {
 
 **Intuition:** water sits in a dip between a left wall and a right wall, and its depth is set by whichever wall is shorter.
 
+**Variables:** `stack` = indices, heights increasing · `bottom` = valley floor (popped bar) · `left` = left wall index · `h`/`w` = water depth and width · `water` = total
+**Pseudocode:**
+```
+for each bar i: while stack top is shorter than h[i]
+    pop it as the valley floor; if stack now empty, no left wall, break
+    depth = min(left wall, current bar) - floor; width = i - left - 1; add depth*width
+push i
+```
 ```java
 class Solution {
     public int trap(int[] height) {
@@ -382,6 +445,13 @@ Area/water:         height × width               min(left_wall, right_wall) × 
 
 **Intuition:** any element smaller than a newer element can never be the window max again, so discard it; the front always holds the current best.
 
+**Variables:** `queue` = indices, values decreasing front→back (front = max) · `result[]` = window maxima
+**Pseudocode:**
+```
+for each i: drop back indices whose value <= nums[i] (they can't be max), then offer i
+if front index fell out of window (< i-k+1), drop it
+once i covers a full window, record nums[front] as that window's max
+```
 ```java
 class Solution {
     public int[] maxSlidingWindow(int[] nums, int k) {
@@ -412,6 +482,13 @@ class Solution {
 **Description:** Smash the two heaviest stones repeatedly. Return the last remaining weight (or 0).  
 **Template:** max-heap — always poll the two largest.
 
+**Variables:** `pq` = max-heap of stone weights · `a`/`b` = two heaviest stones
+**Pseudocode:**
+```
+heap all stones (max-heap)
+while at least two: poll two heaviest a,b; if unequal, offer a-b back
+return last stone or 0 if empty
+```
 ```java
 class Solution {
     public int lastStoneWeight(int[] stones) {
@@ -434,6 +511,13 @@ class Solution {
 **Description:** Return the k most frequent elements.  
 **Template:** min-heap of size k — evict the least frequent when size exceeds k. What remains = top k.
 
+**Variables:** `freq` = element → count · `pq` = min-heap on frequency, capped at k
+**Pseudocode:**
+```
+count frequencies
+for each (value,count): offer to heap; if heap exceeds k, poll (evict least frequent)
+the k entries left are the most frequent
+```
 ```java
 class Solution {
     public int[] topKFrequent(int[] nums, int k) {
@@ -459,6 +543,12 @@ class Solution {
 
 **Intuition:** keep the smaller half and larger half balanced; the median always lives right at the boundary, on the tops of the two heaps.
 
+**Variables:** `maxHeap` = lower half (top = its largest) · `minHeap` = upper half (top = its smallest)
+**Pseudocode:**
+```
+addNum: push to maxHeap, move its top to minHeap; if maxHeap smaller, move minHeap's top back
+findMedian: if maxHeap bigger, its top; else average of the two tops
+```
 ```java
 class MedianFinder {
     PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder()); // lower half
@@ -486,6 +576,14 @@ class MedianFinder {
 **Description:** Before each project you must have enough capital. Start with capital `w`. Pick at most `k` projects to maximize final capital.  
 **Template:** sort by required capital + max-heap of profits. At each step, unlock all affordable projects (move them into the heap), then greedily pick the most profitable.
 
+**Variables:** `projects` = (capital, profit) sorted by capital · `pq` = max-heap of affordable profits · `w` = current capital · `idx` = next project to unlock
+**Pseudocode:**
+```
+sort projects by required capital
+repeat k times: move every project affordable with current w into the profit max-heap
+    if heap empty, stop; else take the most profitable, add its profit to w
+return w
+```
 ```java
 class Solution {
     public int findMaximizedCapital(int k, int w, int[] profits, int[] capital) {
@@ -513,6 +611,13 @@ class Solution {
 **Description:** Rearrange characters so no two adjacent characters are the same. Return `""` if impossible.  
 **Template:** max-heap of (char, count) — at each step, pick the two most frequent chars and append them alternately.
 
+**Variables:** `count[]` = per-letter frequency · `pq` = max-heap of (char, count) · `builder` = result · `a`/`b` = two most frequent letters
+**Pseudocode:**
+```
+count letters; push each into a max-heap by count
+while two remain: pop top two, append both, decrement counts, re-push if still positive
+if one remains: impossible if its count > 1, else append it
+```
 ```java
 class Solution {
     public String reorganizeString(String s) {
@@ -601,6 +706,13 @@ queue.offerLast(x);   queue.pollLast();   queue.peekLast();
 
 **Variation:** Monotone decreasing stack. Iterate through the array TWICE (indices 0 to 2n-1, using `i % n`). Only push index `i` onto the stack during the first pass (`i < n`) to avoid duplicates.
 
+**Variables:** `stack` = indices awaiting a greater value (decreasing) · `result[]` = next greater per element (default -1)
+**Pseudocode:**
+```
+loop i from 0 to 2n-1, using nums[i % n] for circular wraparound
+    while stack top < current, pop and set its answer to current
+    push i only on the first pass (i < n) to avoid duplicate indices
+```
 ```java
 class Solution {
     public int[] nextGreaterElements(int[] nums) {
@@ -627,6 +739,13 @@ class Solution {
 
 **Variation:** For each row, compute cumulative histogram heights (1s stack vertically). Then apply the Largest Rectangle in Histogram algorithm (#84) on each row's histogram.
 
+**Variables:** `heights[]` = running column heights of consecutive 1s · `maxArea` = best rectangle · `stack` = indices for the #84 sub-routine
+**Pseudocode:**
+```
+for each row: update heights[j] = +1 if '1' else reset to 0
+run Largest-Rectangle-in-Histogram (#84) on that row's heights
+track the overall max area
+```
 ```java
 class Solution {
     public int maximalRectangle(char[][] matrix) {
@@ -669,6 +788,15 @@ class Solution {
 
 **Variation:** When encountering `(`, push current (result, sign) onto stack and reset. When encountering `)`, combine current result with the saved result and sign from the stack.
 
+**Variables:** `stack` = saved (result, sign) before each `(` · `result` = running total · `number` = digits being parsed · `sign` = +1/-1
+**Pseudocode:**
+```
+digit: build number
+'+'/'-': fold sign*number into result, reset number, set sign
+'(': push result then sign, reset result=0 sign=1
+')': fold current number in, then multiply by saved sign and add saved result (both popped)
+return result + sign*number
+```
 ```java
 class Solution {
     public int calculate(String s) {
@@ -705,6 +833,16 @@ class Solution {
 
 **Variation:** Process operator BEFORE the current number. Push positive/negative numbers for `+`/`-`. For `*`/`/`, immediately multiply/divide the top of the stack. Sum the stack at the end.
 
+**Variables:** `stack` = pending terms to sum · `number` = digits parsed · `sign` = previous operator (default '+')
+**Pseudocode:**
+```
+build number from digits
+at each operator (or end), apply the PREVIOUS operator:
+    '+' push number, '-' push -number
+    '*'/'/' pop top and push top·number or top/number (precedence applied now)
+update sign, reset number
+return sum of the stack
+```
 ```java
 class Solution {
     public int calculate(String s) {
@@ -736,6 +874,14 @@ class Solution {
 
 **Variation:** Binary search on the VALUE range [matrix[0][0], matrix[n-1][n-1]]. For a given `mid`, count elements ≤ mid by scanning from the bottom-left corner: if `matrix[row][col] <= mid`, all `row+1` elements in this column (0..row) are ≤ mid.
 
+**Variables:** `i`/`j` = binary-search value bounds · `mid` = candidate value · `count` = elements <= mid · `row`/`col` = staircase scan position
+**Pseudocode:**
+```
+binary search on value range [min, max]:
+    count elements <= mid by walking from bottom-left: if cell <= mid add row+1 and step right, else step up
+    if count >= k shrink high to mid, else low = mid+1
+converge to the kth smallest value
+```
 ```java
 class Solution {
     public int kthSmallest(int[][] matrix, int k) {
@@ -776,6 +922,14 @@ class Solution {
 
 **Variation:** Seed min-heap with `(nums1[i], nums2[0])` for i = 0..min(k, n1.length)-1. On each pop, if `j+1 < nums2.length`, push `(nums1[i], nums2[j+1])`. This expands row-by-row in the implicit pair matrix.
 
+**Variables:** `pq` = min-heap of pair indices [i,j] ordered by sum · `result` = k smallest pairs
+**Pseudocode:**
+```
+seed heap with (i,0) for each i up to min(k, len1) — the smallest pair in each row
+pop smallest-sum pair, add to result
+push (i, j+1) — the next pair in the same row — if it exists
+stop after k pops
+```
 ```java
 class Solution {
     public List<List<Integer>> kSmallestPairs(int[] nums1, int[] nums2, int k) {
@@ -806,6 +960,13 @@ class Solution {
 
 **Variation:** Greedy formula. Find the most frequent task (maxFreq). It creates `maxFreq - 1` "frames" of `n + 1` slots, plus `maxCount` (count of tasks with maxFreq) slots. The answer is `max(tasks.length, (maxFreq - 1) * (n + 1) + maxCount)`.
 
+**Variables:** `count[]` = per-task frequency · `maxFreq` = highest frequency · `maxCount` = number of tasks tied at maxFreq
+**Pseudocode:**
+```
+count task frequencies; find maxFreq and how many tasks share it (maxCount)
+slots = (maxFreq-1)*(n+1) + maxCount  (frames sized by cooldown plus the trailing peak group)
+answer = max(total tasks, slots)  (no idle if tasks dense enough)
+```
 ```java
 class Solution {
     public int leastInterval(char[] tasks, int n) {
@@ -826,6 +987,15 @@ class Solution {
 ## #358 Rearrange String k Distance Apart
 **Description:** Rearrange a string so that the same characters are at least `k` distance apart. Return "" if impossible.
 **Variation:** greedy with a max-heap by frequency plus a cooldown queue of size k that holds recently used characters until they're eligible again.
+
+**Variables:** `count` = char → frequency · `maxHeap` = chars by remaining count · `cooldown` = queue of size k holding recently placed chars · `builder` = result
+**Pseudocode:**
+```
+count chars; push all into max-heap by count
+loop: pop most frequent, append it, decrement, put it on cooldown
+once cooldown has k entries, release the oldest back to the heap if still positive
+valid iff result length equals s length, else ""
+```
 ```java
 class Solution {
     public String rearrangeString(String s, int k) {
@@ -857,6 +1027,15 @@ class Solution {
 ## #480 Sliding Window Median
 **Description:** Return the median of every window of size k as it slides across the array.
 **Variation:** two heaps (maxHeap = lower half, minHeap = upper half) with lazy deletion — defer removing elements that left the window, tracking balance with counts.
+
+**Variables:** `maxHeap` = lower half · `minHeap` = upper half · `out` = element leaving the window · `result[]` = medians
+**Pseudocode:**
+```
+for each i: insert nums[i] into the correct half
+if window full, remove the element that left (nums[i-k]) from its half
+rebalance so |sizes| differ by at most 1, maxHeap never smaller
+once a full window exists, median = maxHeap top (odd k) or average of tops (even)
+```
 ```java
 class Solution {
     public double[] medianSlidingWindow(int[] nums, int k) {
@@ -895,6 +1074,14 @@ class Solution {
 ## #692 Top K Frequent Words
 **Description:** Return the k most frequent words. Sort by frequency descending; ties broken by lexicographic order.
 **Variation:** min-heap of size k ordered so the "smallest" (lowest freq, or same freq with lexicographically larger word) sits on top for eviction.
+
+**Variables:** `count` = word → frequency · `minHeap` = size-k heap; top = least frequent (ties: lexicographically larger) · `result` = top k words
+**Pseudocode:**
+```
+count word frequencies
+for each word: offer to heap; if size > k poll (evict the "smallest" by the comparator)
+drain heap into list (ascending), then reverse to get descending order
+```
 ```java
 class Solution {
     public List<String> topKFrequent(String[] words, int k) {
@@ -921,6 +1108,16 @@ class Solution {
 ## #772 Basic Calculator III
 **Description:** Evaluate an arithmetic expression with `+`, `-`, `*`, `/`, and parentheses.
 **Variation:** combines #224 (parentheses via recursion) and #227 (operator precedence: apply `*`/`/` immediately, defer `+`/`-`).
+
+**Variables:** `i` = shared global parse cursor · `stack` = pending terms for this frame · `num` = digits parsed · `op` = previous operator
+**Pseudocode:**
+```
+eval scans from cursor i: digits build num
+'(' recurse to get the parenthesized value into num
+on operator or end: apply previous op (+/- push, * / fold into stack top)
+')' breaks out, returning this frame's value
+return sum of the stack
+```
 ```java
 class Solution {
     private int i;
@@ -960,6 +1157,14 @@ class Solution {
 
 **Intuition:** push indices onto a stack; the bottom of the stack is always the index just before the current valid run, so the gap to it gives the run length.
 
+**Variables:** `stack` = indices; bottom = base just before the current valid run (seeded with -1) · `result` = longest run
+**Pseudocode:**
+```
+push sentinel -1
+'(': push its index
+')': pop; if stack now empty, push this index as a new base
+    else update result with i - new stack top (current valid run length)
+```
 ```java
 class Solution {
     public int longestValidParentheses(String s) {
@@ -992,6 +1197,13 @@ class Solution {
 
 **Intuition:** split on `/` and treat directories as a stack — `..` pops the last directory, `.` and empty tokens are ignored.
 
+**Variables:** `stack` = directory names in order · `part` = current path token · `builder` = rebuilt path
+**Pseudocode:**
+```
+split path on '/'
+for each token: skip empty and '.'; on '..' pop if non-empty; else push directory name
+join stack from bottom to top with '/'; return "/" if empty
+```
 ```java
 class Solution {
     public String simplifyPath(String path) {
@@ -1025,6 +1237,13 @@ class Solution {
 
 **Intuition:** push operands; on an operator pop the two most recent operands, apply, and push the result back — exactly LIFO.
 
+**Variables:** `stack` = operands · `a`/`b` = the two popped operands (a first, b second)
+**Pseudocode:**
+```
+for each token: if operator, pop b then a, apply a op b, push result
+else push the parsed integer
+final stack top is the answer
+```
 ```java
 class Solution {
     public int evalRPN(String[] tokens) {
@@ -1060,6 +1279,12 @@ class Solution {
 
 **Intuition:** a min-heap of size k keeps the k largest seen so far; its top is the kth largest.
 
+**Variables:** `minHeap` = the k largest seen; top = smallest of them (= kth largest)
+**Pseudocode:**
+```
+for each num: offer to heap; if size > k poll (evict smallest)
+heap top is the kth largest
+```
 ```java
 class Solution {
     public int findKthLargest(int[] nums, int k) {
@@ -1082,6 +1307,13 @@ class Solution {
 
 **Intuition:** sweep left to right over building edges; a max-heap of active heights tracks the tallest standing building, and a key point is emitted whenever that maximum changes.
 
+**Variables:** `events` = (x, ±height): negative = start, positive = end · `maxHeap` = active building heights (incl. ground 0) · `prevMax` = last emitted height
+**Pseudocode:**
+```
+make start/end events; sort by x, ties: starts before ends, taller-start first, shorter-end first
+sweep events: start adds its height, end removes its height
+if the heap's current max changed, emit (x, newMax) as a key point
+```
 ```java
 class Solution {
     public List<List<Integer>> getSkyline(int[][] buildings) {
@@ -1122,6 +1354,12 @@ class Solution {
 
 **Intuition:** after each push, rotate the queue so the newest element sits at the front — then `poll`/`peek` behave like stack `pop`/`top`.
 
+**Variables:** `queue` = single FIFO queue holding stack contents, newest rotated to front
+**Pseudocode:**
+```
+push: enqueue x, then rotate (dequeue+enqueue) size-1 times so x reaches the front
+pop/top: poll/peek the front (now the most recently pushed)
+```
 ```java
 class MyStack {
     Queue<Integer> queue = new ArrayDeque<>();
@@ -1147,6 +1385,13 @@ class MyStack {
 
 **Intuition:** one stack receives pushes, the other serves pops; moving elements over reverses their order, restoring FIFO. Amortized O(1) per element.
 
+**Variables:** `inStack` = receives pushes · `outStack` = serves pops (reversed order)
+**Pseudocode:**
+```
+push: push onto inStack
+peek/pop: if outStack empty, drain inStack into outStack (reversing order) so oldest is on top
+then peek/pop outStack
+```
 ```java
 class MyQueue {
     Deque<Integer> inStack  = new ArrayDeque<>();    // ← VARIATION: two stacks emulate FIFO
@@ -1176,6 +1421,15 @@ class MyQueue {
 
 **Intuition:** monotone increasing stack of letters — pop a larger letter when a smaller one arrives, but only if the popped letter appears again later (so we can re-add it).
 
+**Variables:** `lastIndex[]` = last position of each letter · `inStack[]` = letter currently in stack · `stack` = result letters increasing
+**Pseudocode:**
+```
+record last index of each letter
+for each char: skip if already in stack
+    while stack top > char AND that top recurs later, pop it (mark not in stack)
+    push char, mark in stack
+read stack bottom-to-top for the answer
+```
 ```java
 class Solution {
     public String removeDuplicateLetters(String s) {
@@ -1209,6 +1463,14 @@ class Solution {
 
 **Intuition:** monotone increasing stack of digits — whenever a smaller digit arrives, pop larger preceding digits (each pop is one removal) so high places hold the smallest digits.
 
+**Variables:** `stack` = kept digits increasing · `k` = removals remaining · `builder` = result
+**Pseudocode:**
+```
+for each digit: while k>0 and stack top > digit, pop (one removal each), k--
+push digit
+if k still > 0, drop k digits from the top
+strip leading zeros; return "0" if empty
+```
 ```java
 class Solution {
     public String removeKdigits(String num, int k) {
@@ -1242,6 +1504,15 @@ class Solution {
 
 **Variation:** scan right to left with a monotone decreasing stack; pop to track the largest value that is still smaller than some element to its right (the "2"). If a later element is below that "2", a 132 pattern exists.
 
+**Variables:** `stack` = candidate "3" values (decreasing) · `two` = best "2" so far (largest value below some "3")
+**Pseudocode:**
+```
+scan right to left:
+    if current < two, we found the "1" → pattern exists, return true
+    while stack top < current, pop it into two (a valid "2" with this current as "3")
+    push current
+return false
+```
 ```java
 class Solution {
     public boolean find132pattern(int[] nums) {
@@ -1268,6 +1539,13 @@ class Solution {
 
 **Intuition:** a max-heap of (score, index) pops athletes in descending score order, so each pop assigns the next rank back to its original position.
 
+**Variables:** `maxHeap` = (score, original index) by score desc · `rank` = current rank counter · `result[]` = rank string per athlete
+**Pseudocode:**
+```
+push every (score, index) into a max-heap
+pop highest scores in order, assigning rank 1/2/3 → medals, then numeric rank
+write each result back at the athlete's original index
+```
 ```java
 class Solution {
     public String[] findRelativeRanks(int[] score) {
@@ -1303,6 +1581,13 @@ class Solution {
 
 **Intuition:** a call stack mirrors execution; when a new call starts, the currently running function pauses (accumulate its slice), and when a call ends, the resumed parent restarts its clock.
 
+**Variables:** `stack` = ids of currently running functions · `prevTime` = timestamp of last event · `result[]` = exclusive time per function
+**Pseudocode:**
+```
+for each log (id, start/end, time):
+    start: charge caller (stack top) for time - prevTime, push id, prevTime = time
+    end: charge top for time - prevTime + 1 (inclusive), pop it, prevTime = time + 1
+```
 ```java
 class Solution {
     public int[] exclusiveTime(int n, List<String> logs) {
@@ -1336,6 +1621,15 @@ class Solution {
 
 **Variation:** track a range `[low, high]` of possible open-paren counts; `*` widens the range (could be `(`, `)`, or empty). Valid iff the range can return to 0 and never goes negative.
 
+**Variables:** `low` = min possible open count · `high` = max possible open count
+**Pseudocode:**
+```
+'(': low++, high++
+')': low--, high--
+'*': low-- (as ')'), high++ (as '(')
+if high < 0, too many ')' → false; clamp low at 0
+valid iff low can reach 0 at the end
+```
 ```java
 class Solution {
     public boolean checkValidString(String s) {
@@ -1365,6 +1659,12 @@ class Solution {
 
 **Intuition:** a min-heap capped at size k always holds the k largest seen; its top is the running kth largest.
 
+**Variables:** `minHeap` = the k largest seen so far · `k` = target rank
+**Pseudocode:**
+```
+constructor: add each initial num
+add(val): offer val; if size > k poll smallest; return heap top (kth largest so far)
+```
 ```java
 class KthLargest {
     private PriorityQueue<Integer> minHeap = new PriorityQueue<>();
@@ -1391,6 +1691,13 @@ class KthLargest {
 
 **Variation:** mirror an auxiliary `maxStack` (like #155). `popMax` pops down to the max into a temp buffer, removes it, then pushes the buffer back — re-establishing both stacks.
 
+**Variables:** `stack` = values · `maxStack` = running max per level · `buffer` = temp holder during popMax
+**Pseudocode:**
+```
+push: push value, push max(maxStack top, value)
+pop/top/peekMax: operate on the stack tops
+popMax: pop values above the max into a buffer, drop the max, then push the buffer back (rebuilds maxStack)
+```
 ```java
 class MaxStack {
     Deque<Integer> stack    = new ArrayDeque<>();
@@ -1423,6 +1730,14 @@ class MaxStack {
 
 **Intuition:** a stack holds surviving asteroids; a left-moving asteroid only collides with a right-moving one on top, resolving collisions repeatedly until it survives, explodes, or the stack clears.
 
+**Variables:** `stack` = surviving asteroids · `a` = incoming asteroid · `alive` = whether a survives
+**Pseudocode:**
+```
+for each asteroid a: while a moves left and stack top moves right (collision)
+    smaller top explodes (pop, continue); equal: both explode (pop, a dies); larger: a dies
+if a survived all collisions, push it
+return stack contents in order
+```
 ```java
 class Solution {
     public int[] asteroidCollision(int[] asteroids) {
@@ -1457,6 +1772,13 @@ class Solution {
 
 **Intuition:** flatten all intervals, sort by start, then sweep tracking the furthest end seen so far; any gap between that end and the next start is common free time.
 
+**Variables:** `all` = every interval flattened · `prevEnd` = furthest end seen so far · `result` = common free gaps
+**Pseudocode:**
+```
+flatten all employees' intervals, sort by start
+sweep: if next interval starts after prevEnd, the gap (prevEnd, start) is free time
+extend prevEnd to max(prevEnd, this end)
+```
 ```java
 /*
 // Definition for an Interval.
@@ -1494,6 +1816,13 @@ class Solution {
 
 **Intuition:** build each string with a stack where `#` pops the last character, then compare the resulting stacks.
 
+**Variables:** `stack` = chars after applying backspaces · `builder` = final processed string
+**Pseudocode:**
+```
+build(s): for each char, '#' pops last char if any, else push char
+materialize the stack into a string
+return build(s) equals build(t)
+```
 ```java
 class Solution {
     public boolean backspaceCompare(String s, String t) {
@@ -1524,6 +1853,14 @@ class Solution {
 
 **Variation:** stack holds the accumulated score at each depth; push 0 on `(`, and on `)` collapse the inner score (`max(2*inner, 1)`) into the parent frame.
 
+**Variables:** `stack` = accumulated score per depth frame · `inner` = score of the frame just closed · `add` = its contribution to parent
+**Pseudocode:**
+```
+push 0 as the outer frame
+'(': push a fresh 0 frame
+')': pop inner; add = 1 if inner==0 else 2*inner; fold into parent (pop+push parent+add)
+final stack top is the total score
+```
 ```java
 class Solution {
     public int scoreOfParentheses(String s) {
@@ -1552,6 +1889,14 @@ class Solution {
 
 **Variation:** monotone increasing deque over prefix sums — pop from the front when a window qualifies, and from the back when a newer prefix is smaller (dominating older larger ones).
 
+**Variables:** `prefix[]` = prefix sums · `queue` = indices, prefix increasing front→back · `result` = shortest qualifying length
+**Pseudocode:**
+```
+build prefix sums
+for each i: while prefix[i] - prefix[front] >= k, window qualifies → update result, pop front
+while prefix[back] >= prefix[i], pop back (newer smaller prefix dominates)
+offer i; return result or -1
+```
 ```java
 class Solution {
     public int shortestSubarray(int[] nums, int k) {
@@ -1583,6 +1928,14 @@ class Solution {
 
 **Variation:** monotone increasing stack — for each element as the minimum, count subarrays via distance to the previous strictly-smaller and next smaller-or-equal element, then weight by the value.
 
+**Variables:** `stack` = indices, values increasing · `mid` = element being counted as minimum · `left`/`i` = its strictly-smaller boundary and current right boundary · `count` = subarrays where mid is the min
+**Pseudocode:**
+```
+walk with a sentinel min at the end to flush the stack
+when current < stack top, pop mid (it's the min of a span)
+    left = new stack top; count = (mid - left) * (i - mid) subarrays; add count * arr[mid]
+accumulate mod 1e9+7
+```
 ```java
 class Solution {
     public int sumSubarrayMins(int[] arr) {
@@ -1614,6 +1967,13 @@ class Solution {
 
 **Intuition:** track open parentheses as a counter (stack of size); each unmatched `)` needs an added `(`, and leftover `(` each need a `)`.
 
+**Variables:** `open` = unmatched '(' count (stack height) · `additions` = insertions needed
+**Pseudocode:**
+```
+'(': open++
+')': if open>0 match it (open--), else needs an added '(' (additions++)
+answer = additions + open (each leftover '(' needs a ')')
+```
 ```java
 class Solution {
     public int minAddToMakeValid(String s) {
@@ -1644,6 +2004,13 @@ class Solution {
 
 **Intuition:** simulate — push each value, then greedily pop whenever the stack top matches the next expected popped value. If everything pops, the sequence is valid.
 
+**Variables:** `stack` = simulated stack · `j` = index into popped (next expected pop)
+**Pseudocode:**
+```
+for each pushed value: push it
+    while stack top equals popped[j], pop and advance j
+sequence is valid iff the stack ends empty
+```
 ```java
 class Solution {
     public boolean validateStackSequences(int[] pushed, int[] popped) {
@@ -1670,6 +2037,13 @@ class Solution {
 
 **Intuition:** a max-heap of size k keyed on squared distance keeps the k closest seen; evict the farthest whenever the heap overflows.
 
+**Variables:** `maxHeap` = up to k points by squared distance; top = farthest · `result[][]` = k closest points
+**Pseudocode:**
+```
+for each point: offer to max-heap keyed on squared distance
+    if size > k poll (evict the farthest)
+the k points left are the closest; drain into result
+```
 ```java
 class Solution {
     public int[][] kClosest(int[][] points, int k) {
@@ -1695,6 +2069,12 @@ class Solution {
 
 **Intuition:** keep a min-heap of size 5 per student so only their five highest scores remain, then average those.
 
+**Variables:** `map` = student id → min-heap of top-5 scores (TreeMap keeps ids sorted) · `result[][]` = (id, average)
+**Pseudocode:**
+```
+for each (id, score): push into that student's min-heap; if size > 5 poll (drop lowest)
+per student (in id order): sum the five scores, average = sum/5
+```
 ```java
 class Solution {
     public int[][] highFive(int[][] items) {
@@ -1728,6 +2108,14 @@ class Solution {
 
 **Variation:** stack of builders — push current builder on `(`; on `)` reverse the inner builder and append it to the parent frame.
 
+**Variables:** `stack` = parent builders per depth · `current` = builder for the current frame
+**Pseudocode:**
+```
+'(': push current as parent, start a fresh builder
+')': reverse current, append it to the parent (popped), make parent the current
+letter: append to current
+return current at end
+```
 ```java
 class Solution {
     public String reverseParentheses(String s) {
@@ -1759,6 +2147,13 @@ class Solution {
 
 **Variation:** stack of (char, count) pairs — increment the top's count on a repeat, and pop the frame once its count reaches k.
 
+**Variables:** `stack` = [charCode, runLength] frames · `builder` = result
+**Pseudocode:**
+```
+for each char: if it equals stack top's char, increment its count; if count hits k, pop the frame
+else push a new frame (char, 1)
+rebuild the string by repeating each frame's char its count times
+```
 ```java
 class Solution {
     public String removeDuplicates(String s, int k) {
@@ -1791,6 +2186,14 @@ class Solution {
 
 **Variation:** stack stores indices of unmatched `(`; a `)` with no match is marked for removal, and any `(` left on the stack at the end is also removed.
 
+**Variables:** `chars` = mutable string · `stack` = indices of unmatched '(' · `'*'` = removal marker · `builder` = result
+**Pseudocode:**
+```
+'(': push its index
+')': if stack non-empty pop (matched), else mark this ')' for removal
+after scan, mark every unmatched '(' left on the stack
+build the result skipping marked characters
+```
 ```java
 class Solution {
     public String minRemoveToMakeValid(String s) {
@@ -1826,6 +2229,13 @@ class Solution {
 
 **Variation:** max-heap of size k keyed on (soldier count, row index) so the strongest qualifying row sits on top for eviction; the remaining k are the weakest.
 
+**Variables:** `maxHeap` = up to k rows by (soldiers, index); top = strongest · `soldiers` = count per row · `result[]` = weakest k row indices
+**Pseudocode:**
+```
+for each row: count soldiers; offer (count, index) to max-heap
+    if size > k poll (evict strongest)
+the k rows left are weakest; drain into result in reverse (weakest first)
+```
 ```java
 class Solution {
     public int[] kWeakestRows(int[][] mat, int k) {
@@ -1854,6 +2264,14 @@ class Solution {
 
 **Variation:** counter-style stack tracking open `(`; each `(` demands two `)`. Handle `)` carefully since they come in pairs, inserting a `)` when only one is available.
 
+**Variables:** `open` = unmatched '(' each needing two ')' · `insertions` = chars added · `i` = scan cursor
+**Pseudocode:**
+```
+'(': open++, advance one
+')': if the next char is also ')', consume both (advance two); else insert one ')' and advance one
+    then if open>0 match it (open--), else insert a missing '('
+answer = insertions + open*2 (each leftover '(' needs '))')
+```
 ```java
 class Solution {
     public int minInsertions(String s) {
@@ -1892,6 +2310,13 @@ class Solution {
 
 **Intuition:** the stack depth equals the current nesting level; track a running counter for `(`/`)` and record its peak.
 
+**Variables:** `depth` = current nesting level (virtual stack height) · `result` = peak depth
+**Pseudocode:**
+```
+'(': depth++, update result with the new peak
+')': depth--
+return result
+```
 ```java
 class Solution {
     public int maxDepth(String s) {
@@ -1919,6 +2344,14 @@ class Solution {
 
 **Variation:** max-heap keyed on the marginal gain from adding one student to a class; greedily assign each extra student where it helps most, then push the updated gain back.
 
+**Variables:** `maxHeap` = (pass, total, marginal gain) per class, ordered by gain · `gain()` = ratio improvement from one more passing student
+**Pseudocode:**
+```
+push each class with its current marginal gain
+for each extra student: pop the class with the highest gain
+    add one passing student (pass+1, total+1), recompute its gain, push back
+finally average pass/total across all classes
+```
 ```java
 class Solution {
     public double maxAverageRatio(int[][] classes, int extraStudents) {
@@ -1953,6 +2386,14 @@ class Solution {
 
 **Variation:** monotone decreasing stack scanned right to left; pop shorter people (each is visible) until a taller one blocks the view — that taller person is visible too.
 
+**Variables:** `stack` = heights to the right, decreasing bottom→top · `result[]` = visible count per person
+**Pseudocode:**
+```
+scan right to left:
+    while stack top is shorter than current, pop (each shorter is visible), result[i]++
+    if a taller blocker remains, it's also visible, result[i]++
+    push current height
+```
 ```java
 class Solution {
     public int[] canSeePersonsCount(int[] heights) {
@@ -1981,6 +2422,12 @@ class Solution {
 
 **Variation:** min-heap of size k comparing the numeric strings by length first, then lexicographically (so big-integer values compare correctly without overflow).
 
+**Variables:** `minHeap` = size-k heap comparing strings by length then lexicographically (numeric order for big ints)
+**Pseudocode:**
+```
+for each number string: offer to heap; if size > k poll (evict smallest)
+the heap top is the kth largest (longer string = larger; same length compares lexically)
+```
 ```java
 class Solution {
     public String kthLargestNumber(String[] nums, int k) {

@@ -72,6 +72,38 @@
 
 ## Canonical Templates
 
+**Variables:** `n` = the number being processed · `digit` = last digit peeled · `x` = base in fast power · `result` = running product/accumulator · `b` = the base for conversion · `composite[]` = sieve marks
+**Pseudocode:**
+```
+DIGIT EXTRACTION:
+  while n is not zero:
+    digit = remainder of n divided by 10
+    drop the last digit of n
+    use digit
+
+FAST POWER (x^n):
+  result starts at 1
+  while exponent n still has bits:
+    if the lowest bit is set, fold the current x into result
+    square x to reach the next power
+    shift n right to consume that bit
+  return result
+
+BASE CONVERSION (number -> digits):
+  while num is positive:
+    append num mod b
+    divide num by b
+  reverse the collected digits
+BASE CONVERSION (digits -> number):
+  value starts at 0
+  for each digit: value = value * b + digit
+
+SIEVE:
+  make a composite[] flag array up to n
+  for i from 2 while i*i < n:
+    if i already marked composite, skip it
+    mark every multiple of i starting at i*i as composite
+```
 ```java
 // MENTAL MODEL: number = sequence of digits in some base; iterate by repeatedly
 //               peeling the last digit (% base) and shifting (/ base).
@@ -130,6 +162,17 @@ for (int i = 2; i * i < n; i++) {
 **Intuition:** Peel the last digit with `%10` and push it onto a growing `result` with `*10`. The only hazard is overflow, so check capacity *before* the push.  
 **Variation:** Overflow guard — before `result = result*10 + digit`, verify `result` is not past `Integer.MAX_VALUE/10` (or below `MIN_VALUE/10`).
 
+**Variables:** `x` = remaining digits to consume · `result` = reversed number built so far · `digit` = last digit of `x`
+**Pseudocode:**
+```
+result starts at 0
+while x still has digits:
+  digit = last digit of x
+  drop the last digit of x
+  if pushing one more digit would overflow, return 0
+  push digit onto result (result*10 + digit)
+return result
+```
 ```java
 class Solution {
     public int reverse(int x) {
@@ -154,6 +197,16 @@ class Solution {
 **Intuition:** No need to reverse the whole number — build up the reversed second half until it meets or passes the shrinking first half. At the meeting point the two halves should match.  
 **Variation:** Half reverse — loop while `x > reversed`; the middle digit (odd-length case) is dropped via `reversed / 10`.
 
+**Variables:** `x` = shrinking first half · `reversed` = growing reversed second half
+**Pseudocode:**
+```
+if x is negative, or ends in 0 but isn't 0, it can't be a palindrome
+reversed starts at 0
+while x is still larger than reversed:
+  push x's last digit onto reversed
+  drop x's last digit
+return true if x equals reversed (even length) or equals reversed with its last digit dropped (odd length)
+```
 ```java
 class Solution {
     public boolean isPalindrome(int x) {
@@ -179,6 +232,18 @@ class Solution {
 **Intuition:** Squaring the base doubles the exponent reach, so each bit of `n` decides whether the current power of `x` joins the product — O(log n) multiplications instead of O(n).  
 **Variation:** Handle negative exponent by inverting `x` and negating `N` (use `long` so `-Integer.MIN_VALUE` doesn't overflow); multiply into `result` only when the current exponent bit is set.
 
+**Variables:** `x` = base, squared each step · `N` = exponent as a long · `result` = accumulated product
+**Pseudocode:**
+```
+copy n into a long N
+if N is negative: invert x and make N positive
+result starts at 1
+while N still has bits:
+  if the lowest bit of N is set, fold current x into result
+  square x for the next bit
+  shift N right to drop that bit
+return result
+```
 ```java
 class Solution {
     public double myPow(double x, int n) {
@@ -204,6 +269,16 @@ class Solution {
 **Intuition:** Exponents add when powers multiply, and reading `b` digit by digit means `a^b = (a^(b/10))^10 * a^(b%10)`. Fold left across the digits, applying the modulus at every step to keep numbers small.  
 **Variation:** Digit-by-digit modular exponentiation — at each new digit `d`, raise the running result to the 10th power and multiply by `a^d`, all mod 1337.
 
+**Variables:** `a` = base reduced mod 1337 · `b[]` = exponent digits · `result` = running answer mod 1337 · `digit` = current exponent digit
+**Pseudocode:**
+```
+reduce a modulo 1337
+result starts at 1
+for each digit of b left to right:
+  raise result to the 10th power, then multiply by a^digit, all mod 1337
+return result
+helper powmod(x, k): multiply x into an accumulator k times, taking mod each step
+```
 ```java
 class Solution {
     private static final int MOD = 1337;
@@ -234,6 +309,15 @@ class Solution {
 **Intuition:** It's base-26, but Excel has no zero digit — columns start at A=1, so the system is 1-indexed (a "bijective base 26"). Decrement before each digit to shift into the standard 0..25 range.  
 **Variation:** 1-indexed — do `columnNumber--` before extracting each digit so that `% 26` yields 0..25 mapping cleanly onto 'A'..'Z'.
 
+**Variables:** `columnNumber` = remaining column value · `builder` = title letters collected in reverse
+**Pseudocode:**
+```
+while columnNumber is positive:
+  decrement columnNumber to shift from 1-indexed to 0-indexed
+  take columnNumber mod 26 and append the matching letter 'A'..'Z'
+  divide columnNumber by 26
+reverse the collected letters and return as string
+```
 ```java
 class Solution {
     public String convertToTitle(int columnNumber) {
@@ -257,6 +341,14 @@ class Solution {
 **Intuition:** Horner's rule for base-26, but each letter contributes `c-'A'+1` (A=1, not 0) because the system is 1-indexed.  
 **Variation:** 1-indexed letters — `(c - 'A' + 1)` so 'A' maps to 1 rather than 0.
 
+**Variables:** `result` = accumulated column number · `c` = current letter
+**Pseudocode:**
+```
+result starts at 0
+for each letter c left to right:
+  result = result * 26 + (value of c, with 'A'=1 .. 'Z'=26)
+return result
+```
 ```java
 class Solution {
     public int titleToNumber(String columnTitle) {
@@ -279,6 +371,18 @@ class Solution {
 **Intuition:** Grade-school addition from the rightmost digit, tracking a carry — identical to adding two linked-list numbers (#2), but the base is 2 and the operands are strings.  
 **Variation:** Char arithmetic per column — `(a.charAt(i)-'0') + (b.charAt(j)-'0') + carry`; emit `sum % 2` and carry `sum / 2`.
 
+**Variables:** `i`, `j` = right-to-left cursors in `a` and `b` · `carry` = carry into the next column · `sum` = column total · `builder` = result bits in reverse
+**Pseudocode:**
+```
+start i and j at the last chars of a and b, carry at 0
+while either string has digits left or a carry remains:
+  sum = carry
+  if a still has a digit, add it and step i left
+  if b still has a digit, add it and step j left
+  append sum mod 2 as the output bit
+  carry = sum divided by 2
+reverse the collected bits and return as string
+```
 ```java
 class Solution {
     public String addBinary(String a, String b) {
@@ -307,6 +411,18 @@ class Solution {
 **Intuition:** Instead of testing each number for primality, cross out every multiple of each prime once. When you reach an unmarked `i`, it's prime; its multiples below `i*i` were already crossed out by smaller primes, so start marking at `i*i`.  
 **Variation:** Start marking at `i*i` — multiples `k*i` with `k < i` were already handled by the smaller factor `k`.
 
+**Variables:** `composite[]` = marks for non-prime numbers · `count` = primes found so far · `i` = candidate prime · `j` = multiple being crossed out
+**Pseudocode:**
+```
+if n is below 2, there are no primes
+make a composite[] flag array sized n
+count starts at 0
+for i from 2 up to n:
+  if i is already marked composite, skip it
+  i is prime, so count it
+  cross out every multiple of i starting at i*i
+return count
+```
 ```java
 class Solution {
     public int countPrimes(int n) {
@@ -335,6 +451,19 @@ class Solution {
 **Intuition:** The count of valid numbers ≤ `x` is monotonic in `x`, so binary-search the smallest `x` whose count reaches `n`. Counting "≤ mid divisible by a, b, or c" is a classic inclusion-exclusion over the three sets, subtracting pairwise LCM overlaps and adding back the triple LCM.  
 **Variation:** Inclusion-exclusion — `count = mid/a + mid/b + mid/c - mid/ab - mid/bc - mid/ac + mid/abc` using LCMs to avoid double counting.
 
+**Variables:** `lo`, `hi` = binary-search bounds on the answer · `mid` = candidate value · `ab/bc/ac/abc` = pairwise and triple LCMs · `count` = how many valid numbers are ≤ mid
+**Pseudocode:**
+```
+set search range lo=1, hi=2e9
+precompute the pairwise LCMs ab, bc, ac and the triple LCM abc
+while lo is below hi:
+  mid = midpoint of lo and hi
+  count = (mid/a + mid/b + mid/c) minus the pairwise overlaps plus the triple overlap
+  if count is below n, the answer is higher: lo = mid + 1
+  else mid might be the answer: hi = mid
+return lo
+helpers gcd and lcm (divide before multiply to avoid overflow)
+```
 ```java
 class Solution {
     public int nthUglyNumber(int n, int a, int b, int c) {
@@ -401,6 +530,19 @@ x / gcd(x,y) * y     // LCM without overflow (divide first)
 **Intuition:** Repeated subtraction is too slow, so subtract the largest doubling of the divisor that still fits — this is long division in binary. Work in negatives so `Integer.MIN_VALUE` cannot overflow.  
 **Variation:** Exponential search of the divisor — double `divisor` and the matching quotient bit until it would exceed the remaining dividend.
 
+**Variables:** `negative` = sign of the result · `a` = remaining dividend (abs, long) · `b` = divisor (abs, long) · `temp` = doubled divisor · `multiple` = quotient bits for that doubling · `result` = quotient
+**Pseudocode:**
+```
+handle the single overflow case (MIN_VALUE / -1) by returning MAX_VALUE
+record whether the result is negative (signs differ)
+take absolute values of dividend and divisor in long
+result starts at 0
+while remaining dividend a is at least b:
+  start temp at b and multiple at 1
+  double temp (and multiple) while temp doubled still fits in a
+  subtract temp from a and add multiple to result
+return result with the recorded sign
+```
 ```java
 class Solution {
     public int divide(int dividend, int divisor) {
@@ -433,6 +575,17 @@ class Solution {
 **Intuition:** Walk the four borders inward, shrinking the boundary after completing each side, filling a running counter.  
 **Variation:** Layer boundaries — maintain `top/bottom/left/right` and fill right, down, left, up in turn.
 
+**Variables:** `result` = the matrix being filled · `top/bottom/left/right` = current layer boundaries · `value` = running counter 1..n*n
+**Pseudocode:**
+```
+allocate an n x n matrix; boundaries top=0, bottom=n-1, left=0, right=n-1; value=1
+while the boundaries haven't crossed:
+  fill the top row left to right, then move top down
+  fill the right column top to bottom, then move right in
+  fill the bottom row right to left, then move bottom up
+  fill the left column bottom to top, then move left in
+return the matrix
+```
 ```java
 class Solution {
     public int[][] generateMatrix(int n) {
@@ -470,6 +623,14 @@ class Solution {
 **Intuition:** Add one from the rightmost digit; a digit below 9 absorbs the carry and we're done, otherwise it becomes 0 and the carry propagates. If every digit was 9 we need one extra leading digit.  
 **Variation:** Early return — the moment a digit is incremented without rolling over, return; only an all-9 array needs a longer result.
 
+**Variables:** `digits[]` = the number's digits · `i` = position being incremented · `result[]` = longer array for the all-nines case
+**Pseudocode:**
+```
+walk digits from the rightmost:
+  if this digit is below 9, increment it and return the array
+  otherwise set it to 0 and carry on to the next digit
+if every digit was 9, make an array one longer with a leading 1 (rest already 0)
+```
 ```java
 class Solution {
     public int[] plusOne(int[] digits) {
@@ -496,6 +657,18 @@ class Solution {
 **Intuition:** Each interior entry is the sum of the two entries above it; the edges are always 1.  
 **Variation:** Row-by-row build — `row[j] = previous[j-1] + previous[j]`.
 
+**Variables:** `result` = all rows built so far · `row` = the current row · `i` = row index · `j` = position within the row
+**Pseudocode:**
+```
+result starts empty
+for each row index i:
+  start a new row
+  for each position j in this row:
+    if at an edge (j is 0 or j equals i), the entry is 1
+    otherwise sum the two entries above it from the previous row
+  add the row to result
+return result
+```
 ```java
 class Solution {
     public List<List<Integer>> generate(int numRows) {
@@ -525,6 +698,15 @@ class Solution {
 **Intuition:** Update a single row in place; iterating right-to-left lets each entry read its left neighbor before that neighbor is overwritten.  
 **Variation:** In-place reverse update — `row[j] += row[j-1]` scanning from the right.
 
+**Variables:** `row[]` = the single row updated in place · `i` = which row we're building up to · `j` = position being updated
+**Pseudocode:**
+```
+make a row of (rowIndex+1) ones
+for each row level i from 2 up to rowIndex:
+  scan positions j from right to left (so the left neighbor is still old):
+    add the left neighbor into row[j]
+return the row
+```
 ```java
 class Solution {
     public List<Integer> getRow(int rowIndex) {
@@ -549,6 +731,20 @@ class Solution {
 **Intuition:** Fix one point as the anchor; every other point defines a slope from it, and collinear points share that slope. Count the most common slope per anchor, using a reduced integer fraction as the key to avoid floating-point error.  
 **Variation:** Slope histogram per anchor — key on `(dy/g, dx/g)` reduced by gcd, with sign normalization.
 
+**Variables:** `n` = point count · `result` = best collinear count · `i` = anchor point · `j` = other point · `dx`,`dy` = vector from anchor · `g` = gcd for reducing the slope · `slopes` = slope-key → count map
+**Pseudocode:**
+```
+if there are 2 or fewer points, they are all collinear
+result starts at 1
+for each anchor point i:
+  start a fresh slopes map
+  for every other point j:
+    compute the vector (dx,dy) from i to j
+    reduce it by its gcd, then normalize its sign for a canonical key
+    bump that slope's count; update result with that count plus the anchor itself
+return result
+helper gcd
+```
 ```java
 class Solution {
     public int maxPoints(int[][] points) {
@@ -594,6 +790,15 @@ class Solution {
 **Intuition:** A trailing zero comes from a factor of 10 = 2*5, and factors of 2 are far more plentiful than factors of 5, so just count the factors of 5. Multiples of 25 contribute an extra 5, of 125 another, and so on.  
 **Variation:** Count factors of 5 — sum `n/5 + n/25 + n/125 + ...` via `n /= 5`.
 
+**Variables:** `n` = shrinking value divided by 5 each step · `result` = total factors of 5
+**Pseudocode:**
+```
+result starts at 0
+while n is positive:
+  divide n by 5 (counts multiples of the next power of 5)
+  add the new n to result
+return result
+```
 ```java
 class Solution {
     public int trailingZeroes(int n) {
@@ -616,6 +821,17 @@ class Solution {
 **Intuition:** The sequence either hits 1 or enters a cycle, so this is cycle detection — use Floyd's slow/fast pointers over the "sum of digit squares" transformation.  
 **Variation:** Floyd cycle detection on a number transform — `slow = f(slow)`, `fast = f(f(fast))`.
 
+**Variables:** `slow` = pointer advancing one transform step · `fast` = pointer advancing two steps · `digit` = a digit inside the helper
+**Pseudocode:**
+```
+start slow and fast both at n
+repeat:
+  advance slow by one square-of-digits step
+  advance fast by two square-of-digits steps
+until slow and fast meet
+return whether the meeting value is 1 (happy) or a cycle (not)
+helper squareSum(n): sum the squares of n's digits
+```
 ```java
 class Solution {
     public boolean isHappy(int n) {
@@ -647,6 +863,15 @@ class Solution {
 **Intuition:** Total area is the sum of both areas minus the overlap; the overlap is itself a rectangle whose width and height are the intersections of the projections onto each axis (zero if they don't intersect).  
 **Variation:** Inclusion-exclusion of areas — overlap width = `min(rights) - max(lefts)` clamped at 0.
 
+**Variables:** `areaA`,`areaB` = each rectangle's area · `overlapWidth`,`overlapHeight` = sides of the intersection (clamped ≥0) · `overlap` = intersection area
+**Pseudocode:**
+```
+compute area of rectangle A and area of rectangle B
+overlap width = (min of right edges) minus (max of left edges), clamped at 0
+overlap height = (min of top edges) minus (max of bottom edges), clamped at 0
+overlap area = width times height
+return areaA + areaB - overlap
+```
 ```java
 class Solution {
     public int computeArea(int ax1, int ay1, int ax2, int ay2, int bx1, int by1, int bx2, int by2) {
@@ -669,6 +894,17 @@ class Solution {
 **Intuition:** Count contributions of the digit 1 at each place value separately. For a given place, the count depends on the higher digits, the current digit, and the lower digits, which split cleanly into full cycles plus a partial cycle.  
 **Variation:** Per-place digit counting — for each power-of-ten place, `count += high*place + adjust(cur, low, place)`.
 
+**Variables:** `place` = current digit position (1,10,100,...) · `high` = digits above the current place · `cur` = digit at the current place · `low` = digits below it · `result` = total 1s counted
+**Pseudocode:**
+```
+result starts at 0
+for each decimal place (1, 10, 100, ... up to n):
+  split n into high digits, the current digit cur, and low digits
+  if cur is 0: this place contributes high * place ones
+  if cur is 1: it contributes high*place plus the low digits plus 1
+  if cur is 2 or more: it contributes (high+1) * place
+return result
+```
 ```java
 class Solution {
     public int countDigitOne(int n) {
@@ -699,6 +935,16 @@ class Solution {
 **Intuition:** A single pass tracking the most recent index of each target word suffices; whenever both have been seen, the gap between the two latest positions is a candidate minimum.  
 **Variation:** Two latest-index trackers — update `result` whenever both indices are valid.
 
+**Variables:** `index1`,`index2` = most recent positions of word1 and word2 · `result` = smallest gap found · `i` = scan position
+**Pseudocode:**
+```
+index1 and index2 start at -1 (unseen); result starts at +infinity
+scan the array left to right:
+  if the current word is word1, record its index in index1
+  else if it is word2, record its index in index2
+  if both have been seen, update result with the gap between the two indices
+return result
+```
 ```java
 class Solution {
     public int shortestDistance(String[] wordsDict, String word1, String word2) {
@@ -727,6 +973,12 @@ class Solution {
 **Intuition:** The digital root has a closed form derived from numbers being congruent to their digit sum modulo 9: the answer is `0` for 0, otherwise `1 + (n-1) % 9`.  
 **Variation:** Digital root formula — no loop, just `1 + (num - 1) % 9`.
 
+**Variables:** `num` = the input number
+**Pseudocode:**
+```
+if num is 0, the digital root is 0
+otherwise return 1 + (num - 1) mod 9
+```
 ```java
 class Solution {
     public int addDigits(int num) {
@@ -747,6 +999,14 @@ class Solution {
 **Intuition:** Divide out all factors of 2, 3, and 5; what remains is 1 exactly when no other prime factor exists. Non-positive numbers are never ugly.  
 **Variation:** Factor stripping — repeatedly divide by each of 2, 3, 5 and check the remainder is 1.
 
+**Variables:** `n` = value being stripped of factors · `factor` = each allowed prime (2, 3, 5)
+**Pseudocode:**
+```
+if n is non-positive, it is not ugly
+for each allowed prime factor in {2, 3, 5}:
+  while n divides evenly by it, divide it out
+return whether what remains is exactly 1
+```
 ```java
 class Solution {
     public boolean isUgly(int n) {
@@ -772,6 +1032,11 @@ class Solution {
 **Intuition:** If `n` is a multiple of 4 you always lose, because whatever you take (1-3) the opponent can complete a group of four, keeping `n` a multiple of 4 on your turn until 0.  
 **Variation:** Multiple-of-four loss — win exactly when `n % 4 != 0`.
 
+**Variables:** `n` = number of stones
+**Pseudocode:**
+```
+return whether n is not a multiple of 4 (those are the only losing positions)
+```
 ```java
 class Solution {
     public boolean canWinNim(int n) {
@@ -789,6 +1054,11 @@ class Solution {
 **Intuition:** Bulb `k` is toggled once per divisor of `k`, ending on only if it has an odd number of divisors — which happens exactly for perfect squares. The count of perfect squares up to `n` is `floor(sqrt(n))`.  
 **Variation:** Perfect-square count — answer is `(int) sqrt(n)`.
 
+**Variables:** `n` = number of bulbs/rounds
+**Pseudocode:**
+```
+return the integer part of the square root of n (count of perfect squares up to n)
+```
 ```java
 class Solution {
     public int bulbSwitch(int n) {
@@ -806,6 +1076,11 @@ class Solution {
 **Intuition:** Within the 32-bit range the largest power of three is `3^19 = 1162261467`; any power of three must divide it exactly, so a single divisibility test works.  
 **Variation:** Max-power divisibility — `n > 0 && 1162261467 % n == 0`.
 
+**Variables:** `n` = the candidate number
+**Pseudocode:**
+```
+return true if n is positive and divides 1162261467 (the largest 32-bit power of 3) exactly
+```
 ```java
 class Solution {
     public boolean isPowerOfThree(int n) {
@@ -823,6 +1098,18 @@ class Solution {
 **Intuition:** Count by length: the first digit has 9 choices (1-9), the next 9 (any but the first), then 8, 7, ..., multiplying as digits are added. Sum these counts across lengths 1 to n, plus the single number 0.  
 **Variation:** Permutation counting per length — `9 * 9 * 8 * ... ` accumulated.
 
+**Variables:** `result` = running total count · `uniqueOfLength` = count of unique-digit numbers of the current length · `availableDigits` = remaining digit choices · `i` = current length
+**Pseudocode:**
+```
+if n is 0, the only number is 0, so return 1
+result starts at 10 (the 10 single-digit numbers including 0)
+track uniqueOfLength=9 and availableDigits=9
+for each length i from 2 up to n while choices remain:
+  multiply uniqueOfLength by the remaining available digits
+  decrement availableDigits
+  add uniqueOfLength to result
+return result
+```
 ```java
 class Solution {
     public int countNumbersWithUniqueDigits(int n) {
@@ -851,6 +1138,14 @@ class Solution {
 **Intuition:** Any amount measurable is a non-negative integer combination of `x` and `y`, which by Bezout's identity is exactly the multiples of `gcd(x, y)`. So the target must be reachable in total capacity and divisible by the gcd.  
 **Variation:** Bezout / gcd test — `target % gcd(x, y) == 0` with `target <= x + y`.
 
+**Variables:** `x`,`y` = jug capacities · `target` = amount to measure
+**Pseudocode:**
+```
+if target exceeds the combined capacity x + y, it is impossible
+if target is 0, it is trivially achievable
+otherwise return whether target is divisible by gcd(x, y) (Bezout's identity)
+helper gcd
+```
 ```java
 class Solution {
     public boolean canMeasureWater(int x, int y, int target) {
@@ -877,6 +1172,18 @@ class Solution {
 **Intuition:** The square root lies in `[1, num]` and squaring is monotonic, so binary search the candidate root and compare its square (in `long` to avoid overflow) against `num`.  
 **Variation:** Binary search on the root — midpoint `k = i + (j-i)/2`, compare `k*k` to `num`.
 
+**Variables:** `i`,`j` = search bounds on the root · `k` = candidate root · `square` = k*k in long
+**Pseudocode:**
+```
+search the root in [1, num]
+while i is at most j:
+  k = midpoint of i and j
+  square = k*k (in long to avoid overflow)
+  if square equals num, it's a perfect square
+  if square is too small, search higher: i = k + 1
+  else search lower: j = k - 1
+return false
+```
 ```java
 class Solution {
     public boolean isPerfectSquare(int num) {
@@ -906,6 +1213,17 @@ class Solution {
 **Intuition:** Halving is always best when possible. For odd `n`, choosing `+1` vs `-1` should expose more trailing zeros to halve next; `n == 3` is the special case where `-1` is better.  
 **Variation:** Greedy on the last two bits — for odd `n != 3`, add 1 when `(n & 2) != 0` else subtract 1.
 
+**Variables:** `value` = current number (long to avoid +1 overflow) · `result` = step count
+**Pseudocode:**
+```
+copy n into a long value; result starts at 0
+while value isn't 1:
+  if value is even, halve it
+  else if value is 3 or its second-lowest bit is 0, subtract 1
+  else add 1 (to create more trailing zeros)
+  count the step
+return result
+```
 ```java
 class Solution {
     public int integerReplacement(int n) {
@@ -935,6 +1253,17 @@ class Solution {
 **Intuition:** Reservoir sampling lets us pick uniformly in one pass without storing all matching indices: the `k`-th matching element replaces the current pick with probability `1/k`.  
 **Variation:** Reservoir sampling of size 1 — keep the index with probability `1/count` as matches stream by.
 
+**Variables:** `nums` = stored array · `random` = RNG · `result` = chosen index · `count` = matches seen so far · `i` = scan position
+**Pseudocode:**
+```
+constructor: store the array
+pick(target):
+  result=-1, count=0
+  scan the array:
+    when nums[i] equals target, increment count
+    keep this index as result with probability 1/count
+  return result
+```
 ```java
 class Solution {
     private int[] nums;
@@ -966,6 +1295,17 @@ class Solution {
 **Intuition:** Numbers group by digit-length: there are `9*10^(d-1)` numbers with `d` digits, contributing `d * 9 * 10^(d-1)` digits. Subtract whole groups to find the length, locate the exact number, then index into it.  
 **Variation:** Length-bucket walk — subtract `count * digitLength` until `n` falls inside the current bucket.
 
+**Variables:** `digitLength` = number of digits in the current bucket · `count` = how many numbers have that length · `start` = first number of that length · `number` = number holding the target digit · `indexInNumber` = position within that number
+**Pseudocode:**
+```
+start with 1-digit numbers: digitLength=1, count=9, start=1
+while n is past the current bucket's digit total:
+  subtract this bucket's digits (digitLength*count) from n
+  move to the next bucket: longer length, ten times as many numbers, new start
+locate the exact number = start + (n-1)/digitLength
+find the digit index within it = (n-1) mod digitLength
+return that digit character as an int
+```
 ```java
 class Solution {
     public int findNthDigit(int n) {
@@ -992,6 +1332,18 @@ class Solution {
 **Intuition:** Build each entry by concatenating "Fizz" and/or "Buzz" based on divisibility; if neither applies, use the number's string.  
 **Variation:** Concatenate divisibility tags — append "Fizz" on `%3`, "Buzz" on `%5`.
 
+**Variables:** `result` = output strings · `i` = current number · `builder` = entry being assembled
+**Pseudocode:**
+```
+result starts empty
+for i from 1 to n:
+  start an empty builder
+  if i is divisible by 3, append "Fizz"
+  if i is divisible by 5, append "Buzz"
+  if builder is still empty, append the number itself
+  add builder's text to result
+return result
+```
 ```java
 class Solution {
     public List<String> fizzBuzz(int n) {
@@ -1023,6 +1375,18 @@ class Solution {
 **Intuition:** After `k` complete rows you've used `k(k+1)/2` coins, so the answer is the largest `k` with `k(k+1)/2 <= n`. Binary search this `k` (or solve the quadratic).  
 **Variation:** Binary search on rows — compare triangular number `k(k+1)/2` against `n` using `long`.
 
+**Variables:** `i`,`j` = search bounds on the row count · `k` = candidate row count · `used` = coins used by k full rows
+**Pseudocode:**
+```
+search the row count in [1, n]
+while i is at most j:
+  k = midpoint of i and j
+  used = k*(k+1)/2 (in long)
+  if used equals n, k is exact
+  if used is too small, search higher: i = k + 1
+  else search lower: j = k - 1
+return j (the largest k whose triangular number fits)
+```
 ```java
 class Solution {
     public int arrangeCoins(int n) {
@@ -1052,6 +1416,12 @@ class Solution {
 **Intuition:** Incrementing all but one is equivalent (for the purpose of equalizing) to decrementing a single element by 1. So the answer is the total amount each element exceeds the minimum: `sum - n * min`.  
 **Variation:** Relative-decrement reframing — total moves = `sum(nums) - n * min(nums)`.
 
+**Variables:** `min` = smallest element · `sum` = total of all elements · `num` = current element
+**Pseudocode:**
+```
+track the minimum element and the sum of all elements in one pass
+return sum minus (count of elements times the minimum)
+```
 ```java
 class Solution {
     public int minMoves(int[] nums) {
@@ -1075,6 +1445,16 @@ class Solution {
 **Intuition:** Each pig can be tested `t = minutesToTest / minutesToDie` times, so it has `t + 1` distinguishable states (died after round 1..t, or survived). With `p` pigs we cover `(t+1)^p` buckets, so we need the smallest `p` with `(t+1)^p >= buckets`.  
 **Variation:** Base-(tests+1) counting — `p = ceil(log_{t+1}(buckets))`.
 
+**Variables:** `statesPerPig` = distinguishable outcomes per pig (rounds + survive) · `result` = pigs needed · `reach` = buckets coverable so far
+**Pseudocode:**
+```
+statesPerPig = (minutesToTest / minutesToDie) + 1
+result=0, reach=1
+while reach is still below buckets:
+  multiply reach by statesPerPig (one more pig)
+  increment result
+return result
+```
 ```java
 class Solution {
     public int poorPigs(int buckets, int minutesToDie, int minutesToTest) {
@@ -1099,6 +1479,15 @@ class Solution {
 **Intuition:** Two calls form a uniform value in [1,49]; reject anything above 40 and map the remaining 40 outcomes evenly onto [1,10]. Rejection keeps the distribution exactly uniform.  
 **Variation:** Rejection sampling on a 7x7 grid — accept index `< 40`, return `index % 10 + 1`.
 
+**Variables:** `row`,`col` = two rand7 results · `index` = combined value in [1,49]
+**Pseudocode:**
+```
+loop forever:
+  take two rand7 calls as row and col
+  combine them into index in [1,49]
+  if index is at most 40, map it onto [1,10] via (index-1) mod 10 + 1 and return
+  otherwise reject and retry
+```
 ```java
 class Solution extends SolBase {
     public int rand10() {
@@ -1123,6 +1512,13 @@ class Solution extends SolBase {
 **Intuition:** The most square-like factor pair minimizes the difference, so start `W` at `floor(sqrt(area))` and walk down until it divides `area`.  
 **Variation:** Search down from sqrt — first divisor `W <= sqrt(area)` gives the closest pair.
 
+**Variables:** `width` = candidate shorter side, starting at floor(sqrt(area))
+**Pseudocode:**
+```
+start width at the integer square root of area
+while width does not divide area evenly, decrement it
+return [area/width, width] (longer side first)
+```
 ```java
 class Solution {
     public int[] constructRectangle(int area) {
@@ -1144,6 +1540,16 @@ class Solution {
 **Intuition:** Each attack would add `duration`, but if the next attack comes before the current poison ends, only the gap between attacks counts. Sum the capped gaps and add a full duration for the last attack.  
 **Variation:** Capped gaps — add `min(gap, duration)` between consecutive attacks.
 
+**Variables:** `timeSeries[]` = sorted attack times · `duration` = poison length · `result` = total poisoned time · `i` = current attack
+**Pseudocode:**
+```
+if there are no attacks, return 0
+result starts at 0
+for each consecutive pair of attacks:
+  add the smaller of (the gap between them) and (duration) to result
+add one full duration for the last attack
+return result
+```
 ```java
 class Solution {
     public int findPoisonedDuration(int[] timeSeries, int duration) {
@@ -1168,6 +1574,17 @@ class Solution {
 **Intuition:** Build prefix sums so the cumulative weights partition `[1, total]` into intervals; draw a random target in that range and binary-search the first prefix sum reaching it.  
 **Variation:** Prefix-sum + binary search — find leftmost prefix `>= target`.
 
+**Variables:** `prefix[]` = cumulative weight sums · `total` = sum of all weights · `target` = random draw in [1,total] · `i`,`j` = binary-search bounds · `k` = midpoint
+**Pseudocode:**
+```
+constructor: build prefix sums of the weights; record the total
+pickIndex():
+  draw a random target in [1, total]
+  binary-search for the leftmost prefix sum that is at least target:
+    if prefix[k] is below target, move left bound past k
+    else keep k as a candidate by setting right bound to k
+  return that index
+```
 ```java
 class Solution {
     private int[] prefix;
@@ -1207,6 +1624,16 @@ class Solution {
 **Intuition:** Among the six pairwise squared distances of a square there are exactly two distinct values: four equal sides and two equal (larger) diagonals, with the diagonal twice the side. Use squared distances to stay in integers.  
 **Variation:** Two-distinct-distance check — collect six squared distances; require exactly two values, the smaller nonzero, the larger double it.
 
+**Variables:** `distances[]` = the six pairwise squared distances, sorted
+**Pseudocode:**
+```
+compute all six pairwise squared distances and sort them
+if the smallest is 0, points coincide -> not a square
+require the four smallest are equal (the sides)
+require the two largest are equal (the diagonals)
+require a diagonal squared equals twice a side squared
+helper dist(a,b): squared Euclidean distance
+```
 ```java
 class Solution {
     public boolean validSquare(int[] p1, int[] p2, int[] p3, int[] p4) {
@@ -1238,6 +1665,13 @@ class Solution {
 **Intuition:** Every operation always covers cell (0,0), so the maximum value sits in the intersection of all operation rectangles — its area is the product of the smallest row bound and smallest column bound.  
 **Variation:** Intersection area of all ops — `min(all a) * min(all b)`.
 
+**Variables:** `minRow`,`minCol` = smallest row/column bounds across all ops · `op` = current operation
+**Pseudocode:**
+```
+start minRow at m and minCol at n
+for each operation, shrink minRow and minCol to its row and column bounds
+return minRow * minCol (area of the common intersection)
+```
 ```java
 class Solution {
     public int maxCount(int m, int n, int[][] ops) {
@@ -1260,6 +1694,17 @@ class Solution {
 **Intuition:** Squeeze two pointers from `0` and `floor(sqrt(c))`: if the squared sum is too small move the low pointer up, too large move the high pointer down.  
 **Variation:** Two pointers on squares — `a` from 0 up, `b` from sqrt(c) down.
 
+**Variables:** `a` = low pointer starting at 0 · `b` = high pointer starting at floor(sqrt(c)) · `sum` = a*a + b*b
+**Pseudocode:**
+```
+a starts at 0, b starts at floor(sqrt(c))
+while a is at most b:
+  sum = a*a + b*b
+  if sum equals c, success
+  if sum is too small, move a up
+  else move b down
+return false
+```
 ```java
 class Solution {
     public boolean judgeSquareSum(int c) {
@@ -1288,6 +1733,20 @@ class Solution {
 **Intuition:** Work backwards with DP: the best cost from index `i` is its cost plus the cheapest reachable next index within `maxJump`. Filling from the right and preferring the smaller next index yields the lexicographically smallest path on ties.  
 **Variation:** Backward DP with path reconstruction — `cost[i] = coins[i] + min over j in (i, i+maxJump]`, tie-break to smaller `j`.
 
+**Variables:** `n` = number of indices · `cost[]` = cheapest cost from each index to the end · `next[]` = best next index from each · `i` = current index · `j` = reachable next index · `candidate` = trial cost
+**Pseudocode:**
+```
+initialize cost[] to infinity and next[] to -1
+seed the last index's cost if it isn't blocked
+fill indices from right to left:
+  skip blocked indices
+  for each reachable index j within maxJump that has a finite cost:
+    candidate = cost[j] + coins[i]
+    if candidate beats cost[i], record it and set next[i]=j (smaller j seen first wins ties)
+if start is unreachable, return empty
+otherwise follow next[] from index 0, collecting 1-indexed positions
+return the path
+```
 ```java
 class Solution {
     public List<Integer> cheapestJump(int[] coins, int maxJump) {
@@ -1335,6 +1794,17 @@ class Solution {
 **Intuition:** Rabbits answering `k` form groups of size `k+1`. For each answer value, every full group of `k+1` such replies fills one color group; partial groups still require a whole `k+1` block.  
 **Variation:** Group-rounding by answer — for count `c` of answer `k`, add `ceil(c/(k+1)) * (k+1)`.
 
+**Variables:** `counts` = map of answer value → how many rabbits gave it · `groupSize` = answer+1 · `count` = rabbits with that answer · `groups` = color groups needed · `result` = total rabbits
+**Pseudocode:**
+```
+tally how many rabbits gave each answer
+result starts at 0
+for each answer value with count c:
+  groupSize = answer + 1
+  groups = ceil(c / groupSize)
+  add groups * groupSize to result
+return result
+```
 ```java
 class Solution {
     public int numRabbits(int[] answers) {
@@ -1363,6 +1833,14 @@ class Solution {
 **Intuition:** You win iff you reach the target strictly before every ghost. Since all move optimally with Manhattan distance, compare your distance from origin to each ghost's distance to the target; if no ghost is at least as close, you escape.  
 **Variation:** Manhattan-distance race — you win when your distance to target < every ghost's distance to target.
 
+**Variables:** `myDist` = your Manhattan distance to target · `ghostDist` = a ghost's Manhattan distance to target
+**Pseudocode:**
+```
+compute your Manhattan distance from origin to target
+for each ghost:
+  if its Manhattan distance to target is no greater than yours, it can intercept -> return false
+return true
+```
 ```java
 class Solution {
     public boolean escapeGhosts(int[][] ghosts, int[] target) {
@@ -1387,6 +1865,19 @@ class Solution {
 **Intuition:** Rather than scan `s` per word, bucket words by their next-needed character. Sweep `s` once; each character releases its waiting words, advancing them to their next character bucket, and any word that runs out of characters is a match.  
 **Variation:** Waiting lists per next-char — advance words bucketed by the character they currently need as `s` streams.
 
+**Variables:** `waiting[26]` = lists of [wordIndex, positionInWord] keyed by next-needed char · `result` = matched words · `current` = words released by the current char · `wordIndex`,`pos` = a waiting word's identity and next position
+**Pseudocode:**
+```
+create 26 empty waiting lists
+place each word in the bucket of its first character (at position 0)
+result starts at 0
+for each character c of s:
+  take and clear the bucket waiting on c
+  for each waiting word, advance its position by one:
+    if it has reached the end of its word, count it as a match
+    else re-bucket it under the next character it needs
+return result
+```
 ```java
 class Solution {
     public int numMatchingSubseq(String s, String[] words) {
@@ -1424,6 +1915,15 @@ class Solution {
 **Intuition:** A run of `k` consecutive integers starting at `a` sums to `k*a + k(k-1)/2`, so `n - k(k-1)/2` must be positive and divisible by `k`. Try each `k` while the triangular offset stays below `n`.  
 **Variation:** Count valid run-lengths — for each `k`, valid iff `(n - k(k-1)/2) % k == 0` and positive.
 
+**Variables:** `result` = count of valid run lengths · `k` = candidate run length · `remainder` = n minus the triangular offset
+**Pseudocode:**
+```
+result starts at 0
+for each run length k while the triangular offset k*(k-1)/2 stays below n:
+  remainder = n - k*(k-1)/2
+  if remainder divides evenly by k, this run length works -> count it
+return result
+```
 ```java
 class Solution {
     public int consecutiveNumbersSum(int n) {
@@ -1448,6 +1948,12 @@ class Solution {
 **Intuition:** Two rectangles overlap iff their projections on both axes overlap; equivalently, neither is entirely to one side of the other on either axis.  
 **Variation:** Separating-axis on both projections — overlap iff `x` ranges and `y` ranges each intersect.
 
+**Variables:** `rec1`,`rec2` = rectangles as [x1,y1,x2,y2]
+**Pseudocode:**
+```
+return true only if the x-ranges overlap (rec1 left < rec2 right and rec2 left < rec1 right)
+and the y-ranges overlap (rec1 bottom < rec2 top and rec2 bottom < rec1 top)
+```
 ```java
 class Solution {
     public boolean isRectangleOverlap(int[] rec1, int[] rec2) {
@@ -1466,6 +1972,16 @@ class Solution {
 **Intuition:** Unfold the reflections so the beam travels straight; it hits a corner after going up a multiple of `p` that is also a multiple of `q`, i.e. `lcm(p,q)`. The parities of how many room-widths and room-heights that represents determine the receptor.  
 **Variation:** Parity of `lcm/p` and `lcm/q` — reduce `p,q` by gcd, then the receptor follows from which is odd/even.
 
+**Variables:** `g` = gcd(p,q) · `rows` = parity of p/g · `cols` = parity of q/g
+**Pseudocode:**
+```
+g = gcd(p, q)
+rows = parity of (p/g); cols = parity of (q/g)
+if both are odd, the beam hits receptor 1
+if rows is odd and cols even, it hits receptor 0
+otherwise it hits receptor 2
+helper gcd
+```
 ```java
 class Solution {
     public int mirrorReflection(int p, int q) {
@@ -1495,6 +2011,15 @@ class Solution {
 **Intuition:** Two numbers are digit-permutations iff they have the same multiset of digits. So compute a digit-count signature of `n` and compare it against the signatures of all powers of 2 within the 32-bit range.  
 **Variation:** Digit-count signature match — compare sorted-digit fingerprint against each power of 2.
 
+**Variables:** `target` = digit-count signature of n · `power` = each power of 2 within int range · `sig` = signature built in the helper
+**Pseudocode:**
+```
+compute target = digit-count signature of n
+for each power of 2 (1, 2, 4, ... while it stays positive):
+  if its digit-count signature equals target, return true
+return false
+helper signature(n): for each digit, add 10^digit to encode digit counts
+```
 ```java
 class Solution {
     public boolean reorderedPowerOf2(int n) {
@@ -1526,6 +2051,17 @@ class Solution {
 **Intuition:** A rectangle is fixed by its diagonal corners; for each pair of points with different x and y, the other two corners are determined, so check whether both exist in a point set.  
 **Variation:** Diagonal-pair lookup — for each pair, test if the complementary corners are present in a hash set.
 
+**Variables:** `seen` = set of encoded point coordinates · `result` = smallest area found · `i`,`j` = the two diagonal corner points · `area` = area of the rectangle they define
+**Pseudocode:**
+```
+encode every point into a hash set
+result starts at infinity
+for each pair of points (i, j):
+  if they differ in both x and y (valid diagonal):
+    if the other two corners both exist in the set:
+      compute the rectangle's area and keep the minimum
+return result, or 0 if none was found
+```
 ```java
 class Solution {
     public int minAreaRect(int[][] points) {
@@ -1559,6 +2095,18 @@ class Solution {
 **Intuition:** A rectangle's diagonals share the same midpoint and the same length. Group point pairs by `(midpoint, diagonal length)`; any two pairs in a group are the two diagonals of a rectangle, whose sides come from the corner vectors.  
 **Variation:** Group diagonals by midpoint+length — within a group, combine pairs and compute area via vectors.
 
+**Variables:** `groups` = map from (2*midpoint, squared length) → list of point-pairs · `cx`,`cy` = doubled midpoint · `len` = squared diagonal length · `result` = smallest area · `p1`,`p2`,`p3` = corners forming two sides
+**Pseudocode:**
+```
+for each pair of points (i, j):
+  key it by their doubled midpoint and squared distance
+  add the pair to that group
+result starts at infinity
+for each group, take every two pairs (they are the two diagonals of a rectangle):
+  pick three corners, measure the two adjacent side lengths
+  update result with their product (the area)
+return result, or 0 if none found
+```
 ```java
 class Solution {
     public double minAreaFreeRect(int[][] points) {
@@ -1599,6 +2147,15 @@ class Solution {
 **Intuition:** After one pass, the robot is bounded iff it returns to the origin, or it no longer faces north — a non-north heading guarantees the net displacement rotates and cancels over at most four cycles.  
 **Variation:** One-cycle check — bounded iff back at origin OR final direction != initial north.
 
+**Variables:** `x`,`y` = position after one pass · `dir` = facing (0=N,1=E,2=S,3=W) · `moves` = direction vectors · `c` = current instruction
+**Pseudocode:**
+```
+start at origin facing north (dir 0); set up the four direction vectors
+for each instruction:
+  'L' turns left (dir-1 mod 4), 'R' turns right (dir+1 mod 4)
+  'G' steps forward along the current direction
+robot is bounded if it returned to the origin, or it is no longer facing north
+```
 ```java
 class Solution {
     public boolean isRobotBounded(String instructions) {
@@ -1628,6 +2185,16 @@ class Solution {
 **Intuition:** Count available letters once; a word is formable iff its own letter counts never exceed the available counts. Sum lengths of formable words.  
 **Variation:** Frequency containment — compare per-word letter counts against the `chars` budget.
 
+**Variables:** `budget[26]` = available letter counts from chars · `need[26]` = a word's letter counts · `formable` = whether the word fits the budget · `result` = total length of formable words
+**Pseudocode:**
+```
+tally the available letter counts from chars into budget
+result starts at 0
+for each word:
+  tally its own letters into need; if any exceeds budget, mark it not formable and stop early
+  if it is formable, add its length to result
+return result
+```
 ```java
 class Solution {
     public int countCharacters(String[] words, String chars) {
@@ -1664,6 +2231,15 @@ class Solution {
 **Intuition:** Pair each positive `i` with its negation `-i`; that cancels to zero, and add a lone 0 if `n` is odd.  
 **Variation:** Symmetric pairs — emit `i` and `-i`, plus a central 0 for odd `n`.
 
+**Variables:** `result[]` = output array · `index` = next slot to fill · `i` = pair magnitude
+**Pseudocode:**
+```
+allocate the result array; index starts at 0
+for i from 1 to n/2:
+  write i, then write -i (a canceling pair)
+if n is odd, fill the last slot with 0
+return result
+```
 ```java
 class Solution {
     public int[] sumZero(int n) {
@@ -1690,6 +2266,14 @@ class Solution {
 **Intuition:** The minute hand moves 6 degrees per minute; the hour hand moves 30 degrees per hour plus 0.5 degree per minute. The answer is the absolute difference, folded to at most 180.  
 **Variation:** Per-hand angular position — minute = `6*m`, hour = `30*(h%12) + 0.5*m`, take `min(diff, 360-diff)`.
 
+**Variables:** `minuteAngle` = minute hand position in degrees · `hourAngle` = hour hand position in degrees · `diff` = absolute difference
+**Pseudocode:**
+```
+minuteAngle = 6 degrees per minute
+hourAngle = 30 degrees per hour plus 0.5 degree per minute
+diff = absolute difference of the two
+return the smaller of diff and 360 - diff
+```
 ```java
 class Solution {
     public double angleClock(int hour, int minutes) {
@@ -1710,6 +2294,18 @@ class Solution {
 **Intuition:** Precompute each friend's preference rank for every other friend. A friend `x` (paired with `y`) is unhappy if some `u` ranks higher than `y` for `x`, and `u` ranks `x` higher than `u`'s own partner. Compare ranks pairwise.  
 **Variation:** Rank-matrix mutual-preference scan — `x` unhappy if exists `u` with `rank[x][u] < rank[x][y]` and `rank[u][x] < rank[u][partner[u]]`.
 
+**Variables:** `rank[x][f]` = how x ranks friend f (lower = more preferred) · `partner[]` = each friend's assigned partner · `x` = friend examined · `y` = x's partner · `u` = a potential better match · `result` = unhappy count
+**Pseudocode:**
+```
+build a rank matrix: rank[i][f] = position of f in i's preference list
+build the partner array from the pairs
+result starts at 0
+for each friend x with partner y:
+  for each other friend u that x prefers over y:
+    if u also prefers x over u's own partner, x is unhappy -> stop scanning
+  if x was found unhappy, count it
+return result
+```
 ```java
 class Solution {
     public int unhappyFriends(int n, int[][] preferences, int[][] pairs) {
@@ -1753,6 +2349,16 @@ class Solution {
 **Intuition:** Instead of enumerating subarrays, count how many odd-length subarrays include each index. With `i+1` choices for the left boundary and `n-i` for the right, the number of odd-length ones is computed in closed form, weighting each element.  
 **Variation:** Per-element contribution — element `i` appears in `ceil(((i+1)*(n-i))/2)` odd-length subarrays.
 
+**Variables:** `n` = array length · `totalSubarrays` = all subarrays through index i · `oddCount` = how many of them have odd length · `result` = weighted sum
+**Pseudocode:**
+```
+result starts at 0
+for each index i:
+  totalSubarrays = (i+1) * (n-i)  (left choices times right choices)
+  oddCount = ceil(totalSubarrays / 2)
+  add oddCount * arr[i] to result
+return result
+```
 ```java
 class Solution {
     public int sumOddLengthSubarrays(int[] arr) {
@@ -1776,6 +2382,17 @@ class Solution {
 **Intuition:** Generate the array directly from the recurrence, tracking the running maximum. Handle the tiny base cases for `n < 2`.  
 **Variation:** Direct recurrence fill — even index copies, odd index sums the two halves.
 
+**Variables:** `nums[]` = generated array · `result` = running maximum · `i` = current index
+**Pseudocode:**
+```
+if n is 0, the array is just [0], so return 0
+allocate nums sized n+1; set nums[1]=1; result starts at 1
+for i from 2 to n:
+  if i is even, nums[i] = nums[i/2]
+  else nums[i] = nums[i/2] + nums[i/2 + 1]
+  update result with nums[i]
+return result
+```
 ```java
 class Solution {
     public int getMaximumGenerated(int n) {
@@ -1807,6 +2424,14 @@ class Solution {
 **Intuition:** The Josephus recurrence builds the survivor's position from a circle of size 1 upward: the winner in a circle of `i` is `(winner_{i-1} + k) % i`. Convert the final 0-indexed answer to 1-indexed.  
 **Variation:** Josephus recurrence — `winner = (winner + k) % i` for `i = 2..n`.
 
+**Variables:** `winner` = 0-indexed survivor position for the current circle size · `i` = circle size being grown
+**Pseudocode:**
+```
+winner starts at 0 (survivor of a circle of size 1)
+for circle size i from 2 up to n:
+  winner = (winner + k) mod i  (Josephus recurrence)
+return winner + 1 (convert to 1-indexed)
+```
 ```java
 class Solution {
     public int findTheWinner(int n, int k) {
@@ -1828,6 +2453,14 @@ class Solution {
 **Intuition:** Pair the largest value `2^p - 1` (kept whole) with the rest: each other pair can be made `(2^p - 2)` and `1`, so the product is `(2^p - 1) * (2^p - 2)^(2^(p-1) - 1)` — compute with modular fast power, but the base of the exponent must use the true (non-reduced) count.  
 **Variation:** Pairing + modular fast power — `(max) * pow(max-1, half-1) mod M`.
 
+**Variables:** `max` = 2^p - 1 (largest value, kept whole) · `exponent` = 2^(p-1) - 1 (number of (max-1) factors) · `result` = product mod M · `base`,`exp` = working values in fast power
+**Pseudocode:**
+```
+max = 2^p - 1; exponent = 2^(p-1) - 1
+result = max * pow(max-1, exponent) all taken mod M
+return result
+helper powmod(base, exp): exponentiation by squaring under MOD
+```
 ```java
 class Solution {
     private static final int MOD = 1_000_000_007;

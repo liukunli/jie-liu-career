@@ -394,6 +394,19 @@ Two patterns — pick based on whether pointers converge or march together.
 
 ## Pattern 1 — Opposite Two Pointers
 
+**Variables:** `i` = left pointer · `j` = right pointer · scan range `[i, j]` closed
+**Pseudocode:**
+```
+set i to the left end, j to the right end
+while the pointers haven't crossed:
+  if the current pair hits the target:
+    record it, then step both ends inward
+  else if the value is too small:
+    move the left end right to grow it
+  else (too large):
+    move the right end left to shrink it
+```
+
 ```java
 // MENTAL MODEL: two ends close in on the answer; each comparison rules out one whole end of the range.
 // WHY sorted: moving inward only safely eliminates half the space if the array is sorted
@@ -419,6 +432,21 @@ Sort first. `i` and `j` converge inward. Used when the array is sorted and you c
 **Key:** sum too small → move `i` right. sum too large → move `j` left.
 
 **Intuition:** Squeeze from both ends; each comparison tells you which side is wrong, so one move eliminates a whole row/column of pairs.
+
+**Variables:** `i` = left pointer (1-based output `i+1`) · `j` = right pointer · search range `[i, j]` closed
+**Pseudocode:**
+```
+start i at the front, j at the back
+while pointers haven't met:
+  add the two ends
+  if the sum equals target:
+    return their 1-based indices
+  else if the sum is too small:
+    move left end right to increase the sum
+  else:
+    move right end left to decrease the sum
+if nothing found, return sentinel
+```
 
 ```java
 class Solution {
@@ -448,6 +476,28 @@ class Solution {
 **Key:** sort first, fix `a`, run opposite two pointers on `[a+1, n-1]`. Skip duplicates at all three levels.
 
 **Intuition:** Pin one number, then it becomes Two Sum on the rest — turning a triple search into a sweep.
+
+**Variables:** `a` = fixed first index · `i`/`j` = inner left/right pointers over `[a+1, n-1]` closed · `sum` = triplet sum
+**Pseudocode:**
+```
+sort so duplicates group and pointers can converge
+prepare the result list
+for each candidate first element a:
+  skip a if it repeats the previous first element
+  set inner pointers just after a and at the end
+  while inner pointers haven't crossed:
+    compute the triplet sum
+    if it is zero:
+      record the triplet and step both inner ends in
+      
+      skip duplicate left values
+      skip duplicate right values
+    else if too small:
+      move left in
+    else:
+      move right in
+return all triplets
+```
 
 ```java
 class Solution {
@@ -485,6 +535,30 @@ class Solution {
 **Key:** two nested fix loops + same opposite two pointer inner loop. Cast to `long` — sum of 4 ints can overflow.
 
 **Intuition:** Pin two numbers, then the inner search is Two Sum — same idea as 3Sum with one more fixed level.
+
+**Variables:** `a`/`b` = two fixed indices · `i`/`j` = inner left/right over `[b+1, n-1]` closed · `sum` = quadruplet sum (long to avoid overflow)
+**Pseudocode:**
+```
+sort the array
+prepare the result list
+let n be the length
+for each first element a:
+  skip a if it repeats the previous a
+  for each second element b after a:
+    skip b if it repeats the previous b
+    set inner pointers after b and at the end
+    while inner pointers haven't crossed:
+      compute the four-way sum as a long
+      if it equals target:
+        record quadruplet and step both inner ends in
+        skip duplicate left values
+        skip duplicate right values
+      else if too small:
+        move left in
+      else:
+        move right in
+return all quadruplets
+```
 
 ```java
 class Solution {
@@ -527,6 +601,19 @@ class Solution {
 
 **Intuition:** Width shrinks every step, so only a taller boundary can ever help; abandon the shorter wall.
 
+**Variables:** `i` = left wall · `j` = right wall · `max` = best area, width is `j - i`
+**Pseudocode:**
+```
+start walls at both ends, best area zero
+while the walls haven't met:
+  area = shorter wall times the width; keep the best
+  if the left wall is shorter:
+    abandon it, move left in
+  else:
+    abandon the right wall, move right in
+return the best area
+```
+
 ```java
 class Solution {
     public int maxArea(int[] height) {
@@ -554,6 +641,22 @@ class Solution {
 
 **Intuition:** Water level at a cell is set by the shorter side's tallest wall, so always process from the lower side where that max is already known.
 
+**Variables:** `i`/`j` = left/right scanners · `maxI`/`maxJ` = tallest wall seen from each side · `water` = total trapped
+**Pseudocode:**
+```
+start pointers at both ends, water and side-maxes at zero
+while pointers haven't met:
+  if the left side is the shorter wall:
+    update the left max
+    add water trapped above the left cell
+    advance left
+  else:
+    update the right max
+    add water trapped above the right cell
+    advance right
+return total water
+```
+
 ```java
 class Solution {
     public int trap(int[] height) {
@@ -580,6 +683,16 @@ class Solution {
 
 ## Pattern 2 — Same Direction (Write Pointer)
 
+**Variables:** `i` = write position (next free slot) · `j` = read position scanning every element
+**Pseudocode:**
+```
+start the writer at the front
+let the reader scan every element:
+  if this element passes the keep test,
+  copy it to the write slot and advance the writer
+return the new length (writer position)
+```
+
 ```java
 // a fast reader scans everything; a slow writer trails behind and only copies the keepers.  — WHEN: filter/compact an array in place, no extra buffer
 int i = 0;                           // i = write position
@@ -593,6 +706,16 @@ return i;
 `i` marks where the next valid element goes. `j` scans every element. Only write when the element passes the keep condition.
 
 The generalised duplicate-skip pattern for "at most k duplicates":
+
+**Variables:** `i` = write head · `j` = read scanner · `k` = how many duplicates are allowed
+**Pseudocode:**
+```
+start the writer at the front
+scan every element with the reader:
+  keep it if fewer than k written, or it differs from k slots back
+  copy it and advance the writer
+return the new length
+```
 
 ```java
 int i = 0;
@@ -614,6 +737,15 @@ return i;
 
 **Intuition:** The writer only advances on keepers, so it always points at the next free slot for a kept value.
 
+**Variables:** `i` = write position for kept values · `j` = read scanner
+**Pseudocode:**
+```
+start the writer at zero
+scan each element with the reader:
+  if it isn't the value to remove, write it and advance the writer
+return the count of kept elements
+```
+
 ```java
 class Solution {
     public int removeElement(int[] nums, int val) {
@@ -634,6 +766,16 @@ class Solution {
 **Keep condition:** `nums[j] != nums[i-1]` — don't write if same as last written.
 
 **Intuition:** Since the array is sorted, comparing against the last written value is enough to drop every duplicate run.
+
+**Variables:** `i` = write position (also count of uniques) · `j` = read scanner
+**Pseudocode:**
+```
+start the writer at zero
+scan each element:
+  keep it if nothing written yet, or it differs from the last written value
+  write it and advance the writer
+return the unique count
+```
 
 ```java
 class Solution {
@@ -657,6 +799,16 @@ class Solution {
 
 **Intuition:** Looking two slots back lets at most two copies through before the third is rejected.
 
+**Variables:** `i` = write position (also kept count) · `j` = read scanner; compares to value two slots back
+**Pseudocode:**
+```
+start the writer at zero
+scan each element:
+  keep it if fewer than two written, or it differs from two slots back
+  write it and advance the writer
+return the kept count
+```
+
 ```java
 class Solution {
     public int removeDuplicates(int[] nums) {
@@ -679,6 +831,15 @@ class Solution {
 
 **Intuition:** Compact the non-zeros to the front in order, then pad the leftover tail with zeros.
 
+**Variables:** `i` = write position for non-zeros · `j` = read scanner
+**Pseudocode:**
+```
+start the writer at zero
+scan each element:
+  if non-zero, write it to the front and advance the writer
+fill the remaining tail with zeros
+```
+
 ```java
 class Solution {
     public void moveZeroes(int[] nums) {
@@ -699,6 +860,22 @@ class Solution {
 **Key:** Dutch Flag with LO = 0, MID = 1, HI = 2.
 
 **Intuition:** A single scan grows a "small" region from the left and a "large" region from the right, leaving mids in the middle.
+
+**Variables:** `i` = boundary of the 0-region (low) · `k` = current scanner (mid) · `j` = boundary of the 2-region (high)
+**Pseudocode:**
+```
+low boundary at start, scanner at start, high boundary at end
+while the scanner hasn't passed the high boundary:
+  if it's a 0:
+    swap it down to the low region, advance both low and scanner
+  else if it's a 1:
+    leave it, just advance the scanner
+  else (a 2):
+    swap it up to the high region, shrink high (don't advance scanner)
+
+helper: swap two array slots
+
+```
 
 ```java
 class Solution {
@@ -733,6 +910,14 @@ class Solution {
 
 ## Duplicate-skip Cheat Sheet (for Opposite pointers after a hit)
 
+**Variables:** `i`/`j` = opposite pointers after recording a hit; advanced past equal neighbors
+**Pseudocode:**
+```
+after recording a result, step both ends inward
+skip any left values equal to the one just used
+skip any right values equal to the one just used
+```
+
 ```java
 // After recording a result at (i, j):
 i++; j--;
@@ -752,6 +937,18 @@ Always check `i < j` inside the skip loop to avoid crossing.
 **Key:** hash map from value to index; for each element check if `target - x` was seen.
 
 **Intuition:** Trade space for time — remember every value you've passed so the complement is a single lookup.
+
+**Variables:** `seen` = map from value to its index · `i` = current scan index · `need` = complement `target - nums[i]`
+**Pseudocode:**
+```
+create an empty value-to-index map
+for each index i:
+  compute the complement we need
+  if the complement was already seen:
+    return its index paired with i
+  record the current value at i
+return sentinel if no pair
+```
 
 ```java
 class Solution {
@@ -778,6 +975,26 @@ class Solution {
 **Key:** sort, fix one, opposite two pointers; track the closest sum seen.
 
 **Intuition:** Same pin-and-sweep as 3Sum, but instead of matching exactly you keep the running closest.
+
+**Variables:** `a` = fixed first index · `i`/`j` = inner left/right over `[a+1, n-1]` · `best` = closest sum so far · `sum` = current triplet sum
+**Pseudocode:**
+```
+sort the array
+seed best with the first three elements
+for each first element a:
+  set inner pointers after a and at the end
+  while they haven't crossed:
+    compute the triplet sum
+    if it is closer to target than best:
+      update best
+    if it exactly hits target:
+      return it (cannot do better)
+    else if too small:
+      move left in
+    else:
+      move right in
+return the closest sum
+```
 
 ```java
 class Solution {
@@ -814,6 +1031,28 @@ class Solution {
 **Key:** find first descending pivot from the right, swap with next larger, reverse the suffix.
 
 **Intuition:** The longest decreasing suffix is already maximal; bump the digit just before it up to the smallest larger value, then reset the suffix to ascending.
+
+**Variables:** `n` = length · `i` = pivot index (first descending from right) · `j` = smallest element larger than pivot in the suffix
+**Pseudocode:**
+```
+let n be the length
+start i one before the last
+walk left while the suffix is non-increasing:
+  step i left
+if a pivot exists:
+  scan from the right for the first element larger than the pivot
+  walk j left while it's not larger:
+    step j left
+  swap pivot with that element
+reverse the suffix after the pivot to make it ascending
+
+helper: reverse a range
+  swap inward until pointers cross
+    
+  
+helper: swap two slots
+  
+```
 
 ```java
 class Solution {
@@ -853,6 +1092,21 @@ class Solution {
 
 **Intuition:** Use the array itself as a hash table keyed by value, then scan for the first slot holding the wrong number.
 
+**Variables:** `n` = length · `i` = scan/placement index · home slot of value `v` is index `v-1`
+**Pseudocode:**
+```
+let n be the length
+first pass, place each value at its home slot:
+  while the current value is in [1,n] and not already home:
+    swap it toward its correct slot v-1
+second pass, find the first wrong slot:
+  if slot i doesn't hold i+1, that's the missing positive
+if all slots correct, answer is n+1
+
+helper: swap two slots
+  
+```
+
 ```java
 class Solution {
     public int firstMissingPositive(int[] nums) {
@@ -883,6 +1137,29 @@ class Solution {
 **Key:** transpose, then reverse each row.
 
 **Intuition:** Transposing flips across the main diagonal; reversing each row then completes the clockwise turn.
+
+**Variables:** `n` = matrix size · `i`/`j` = transpose row/col · `lo`/`hi` = row-reversal pointers
+**Pseudocode:**
+```
+let n be the matrix size
+transpose: for each row i,
+  for each column j above the diagonal,
+    swap (i,j) with (j,i) to mirror across the diagonal
+    
+    
+    
+  
+  
+for each row, reverse it to finish the clockwise turn:
+  set reversal pointers at both ends
+  while they haven't crossed:
+    swap the two ends
+    
+    
+    
+    step left in
+    step right in
+```
 
 ```java
 class Solution {
@@ -918,6 +1195,34 @@ class Solution {
 **Key:** maintain four shrinking boundaries (top, bottom, left, right); walk each edge then close in.
 
 **Intuition:** Peel the matrix like an onion, one boundary layer per loop.
+
+**Variables:** `top`/`bottom`/`left`/`right` = four shrinking layer boundaries · `i`/`j` = walk indices
+**Pseudocode:**
+```
+prepare the output list
+set top/bottom boundaries
+set left/right boundaries
+while the box is still non-empty:
+  walk the top edge left to right
+    
+  
+  shrink the top down
+  walk the right edge top to bottom
+    
+  
+  shrink the right in
+  if a bottom row remains:
+    walk the bottom edge right to left
+      
+    
+    shrink the bottom up
+  if a left column remains:
+    walk the left edge bottom to top
+      
+    
+    shrink the left in
+return the spiral
+```
 
 ```java
 class Solution {
@@ -961,6 +1266,42 @@ class Solution {
 **Key:** use first row/column as marker storage; handle their own zero state with two flags.
 
 **Intuition:** Reuse the first row and column as the bookkeeping space so no extra arrays are needed.
+
+**Variables:** `m`/`n` = dims · `firstRow`/`firstCol` = whether first row/col originally had a zero; first row/col reused as markers
+**Pseudocode:**
+```
+read dims
+track whether first row and first col need zeroing
+scan first row for a zero
+  
+    set the first-row flag
+  
+scan first col for a zero
+  
+    set the first-col flag
+  
+for each inner cell, if zero, mark its row/col headers:
+  
+    
+      mark column header
+      mark row header
+    
+  
+for each inner cell, zero it if its header is marked:
+  
+    
+      zero the cell
+    
+  
+if first row was flagged, zero the whole first row
+  
+    
+  
+if first col was flagged, zero the whole first col
+  
+    
+  
+```
 
 ```java
 class Solution {
@@ -1016,6 +1357,24 @@ class Solution {
 
 **Intuition:** Each sequence is counted exactly once by starting only at its smallest member.
 
+**Variables:** `set` = all values · `x` = candidate sequence start · `cur`/`len` = current value and run length · `best` = longest run
+**Pseudocode:**
+```
+put every value into a set
+  
+  
+best length zero
+for each value x:
+  only start a run if x has no predecessor:
+    walk forward counting consecutive successors
+    
+      
+      
+    update the best length
+  
+return the best length
+```
+
 ```java
 class Solution {
     public int longestConsecutive(int[] nums) {
@@ -1048,6 +1407,37 @@ class Solution {
 **Key:** bucket sort — the max gap is at least ceil((max-min)/(n-1)); compare across adjacent non-empty buckets.
 
 **Intuition:** With buckets sized at the minimum possible gap, the answer never lies inside a bucket, only between bucket boundaries.
+
+**Variables:** `n` = length · `min`/`max` = extremes · `bucketSize`/`bucketCount` = bucket geometry · `bucketMin`/`bucketMax` = per-bucket extremes · `prevMax` = last non-empty bucket's max · `gap` = answer
+**Pseudocode:**
+```
+let n be the length
+if fewer than two elements, gap is 0
+  
+find min and max
+  
+  
+if all equal, gap is 0
+  
+bucket width = at least the average gap
+bucket count covers the whole range
+init each bucket's min/max
+  
+  
+  
+place each value into its bucket, updating bucket min/max
+  
+  
+  
+scan buckets left to right tracking previous max:
+  
+    skip empty buckets
+    
+    gap = max of cross-bucket gaps
+    carry this bucket's max forward
+  
+return the max gap
+```
 
 ```java
 class Solution {
@@ -1098,6 +1488,22 @@ class Solution {
 
 **Intuition:** Pairing off different elements cancels them out; the majority element always survives.
 
+**Variables:** `candidate` = current majority guess · `count` = its running vote balance · `x` = scanned value
+**Pseudocode:**
+```
+seed candidate, count zero
+for each value x:
+  if count hit zero, adopt x as the new candidate
+    
+  if x matches the candidate, add a vote
+    
+  else cancel a vote
+    
+    
+  
+return the surviving candidate
+```
+
 ```java
 class Solution {
     public int majorityElement(int[] nums) {
@@ -1126,6 +1532,22 @@ class Solution {
 **Key:** reverse whole array, then reverse first k and last n-k.
 
 **Intuition:** Two partial reversals after a full reversal place each block in its rotated position without extra space.
+
+**Variables:** `n` = length · `k` = effective shift `k % n`; reverse helper uses `i`/`j` ends
+**Pseudocode:**
+```
+let n be the length
+reduce k modulo n
+reverse the whole array
+reverse the first k elements
+reverse the remaining tail
+
+helper: reverse a range
+  while ends haven't crossed:
+    swap the two ends
+    step left in
+    step right in
+```
 
 ```java
 class Solution {
@@ -1156,6 +1578,17 @@ class Solution {
 
 **Intuition:** A set rejects repeats, so the first failed insert proves a duplicate.
 
+**Variables:** `seen` = set of values seen · `x` = scanned value
+**Pseudocode:**
+```
+create an empty set
+for each value x:
+  if adding it fails (already present):
+    a duplicate exists
+  
+no duplicate found
+```
+
 ```java
 class Solution {
     public boolean containsDuplicate(int[] nums) {
@@ -1179,6 +1612,31 @@ class Solution {
 **Key:** bucket by value width (valueDiff+1); only adjacent buckets can satisfy the value constraint.
 
 **Intuition:** Same-bucket means automatically within range; neighbor buckets need an explicit check. Slide a window of size indexDiff.
+
+**Variables:** `buckets` = map from bucket id to value · `width` = `valueDiff+1` · `id` = current value's bucket; window holds last `indexDiff` values
+**Pseudocode:**
+```
+if valueDiff is negative, impossible
+  
+map of bucket id to value
+bucket width is valueDiff+1
+for each index i:
+  compute this value's bucket id
+  if its bucket is occupied, a close pair exists
+    
+  if the lower neighbor bucket is within value range, done
+    
+  if the upper neighbor bucket is within value range, done
+    
+  store this value in its bucket
+  if the window is full, evict the value leaving the window
+    
+  
+no qualifying pair
+
+helper: floor-divide value into a bucket id (handles negatives)
+  
+```
 
 ```java
 class Solution {
@@ -1221,6 +1679,43 @@ class Solution {
 **Key:** Boyer-Moore with two candidates (at most two can exceed n/3); verify with a second pass.
 
 **Intuition:** At most two elements can each occur more than a third of the time, so track two running candidates.
+
+**Variables:** `c1`/`c2` = two candidates · `n1`/`n2` = their vote counts · `x` = scanned value
+**Pseudocode:**
+```
+init two candidates and zero counts
+for each value x:
+  if it's candidate one, bump its count
+    
+  else if candidate two, bump its count
+    
+  else if slot one is empty, adopt x there
+    
+    
+  else if slot two is empty, adopt x there
+    
+    
+  else cancel one vote from each
+    
+    
+  
+reset counts for a verification pass
+  
+recount actual occurrences
+  
+    
+    
+    
+    
+  
+collect candidates exceeding n/3
+  
+    
+  
+    
+  
+return the winners
+```
 
 ```java
 class Solution {
@@ -1273,6 +1768,21 @@ class Solution {
 
 **Intuition:** Each position's answer is everything to its left times everything to its right.
 
+**Variables:** `n` = length · `result` = output (left products then folded right) · `suffix` = running product to the right
+**Pseudocode:**
+```
+let n be the length
+allocate the output
+seed first prefix product as 1
+for i from 1: result[i] = product of everything to the left
+  
+running right product starts at 1
+for i from the end down: fold in the right product
+  
+  advance the suffix product
+return the result
+```
+
 ```java
 class Solution {
     public int[] productExceptSelf(int[] nums) {
@@ -1301,6 +1811,22 @@ class Solution {
 **Key:** fix one, opposite pointers; when `sum < target`, all pairs between i and j also qualify → add `j-i`.
 
 **Intuition:** Once the largest partner works, every smaller partner does too, so count them in bulk.
+
+**Variables:** `a` = fixed first index · `i`/`j` = inner left/right over `[a+1, n-1]` · `count` = qualifying triplets
+**Pseudocode:**
+```
+sort the array
+count zero
+for each first element a:
+  set inner pointers after a and at the end
+  while they haven't crossed:
+    if the triplet sum is below target:
+      every partner between i and j also qualifies, add j-i
+      move left in
+    else:
+      move right in to shrink the sum
+return the count
+```
 
 ```java
 class Solution {
@@ -1333,6 +1859,15 @@ class Solution {
 
 **Intuition:** A greedy local swap is always safe — it never breaks the pair you already fixed.
 
+**Variables:** `i` = pair index; even `i` expects a rise, odd expects a fall
+**Pseudocode:**
+```
+for each adjacent pair index i:
+  decide whether this position should rise
+  if the actual relation violates the expectation:
+    swap the pair to fix it
+```
+
 ```java
 class Solution {
     public void wiggleSort(int[] nums) {
@@ -1355,6 +1890,41 @@ class Solution {
 **Key:** encode next state in the second bit (e.g. `01 -> 11` for live->live); shift right at the end.
 
 **Intuition:** Pack the new state into a spare bit so neighbor counts still read the old state during the pass.
+
+**Variables:** `m`/`n` = dims · `dr`/`dc` = 8 neighbor offsets · `live` = live neighbor count; bit 1 = old state, bit 2 = new
+**Pseudocode:**
+```
+read dims
+neighbor row offsets
+neighbor col offsets
+for each cell (r,c):
+  
+    count live neighbors using the old (low) bit:
+    
+      
+      
+        
+      
+    if currently alive:
+      survives on 2 or 3 neighbors: set the new-state bit
+        
+          
+        
+      
+    else (dead):
+      becomes alive on exactly 3: set the new-state bit
+        
+          
+        
+      
+  
+second pass: shift each cell to expose the new state
+  
+    
+      
+    
+  
+```
 
 ```java
 class Solution {
@@ -1401,6 +1971,19 @@ class Solution {
 
 **Intuition:** A range sum is the difference of two prefix sums, so each query is O(1) after one build pass.
 
+**Variables:** `prefix` = prefix sums with `prefix[0]=0`; query range `[i, j]` closed
+**Pseudocode:**
+```
+store a prefix-sum array
+constructor builds prefix sums:
+  size one larger than input
+  for each element, prefix[i+1] = prefix[i] + value
+    
+  
+query: range sum is prefix[j+1] - prefix[i]
+  
+```
+
 ```java
 class NumArray {
     private int[] prefix;
@@ -1425,6 +2008,24 @@ class NumArray {
 **Key:** 2D prefix sums with inclusion-exclusion.
 
 **Intuition:** Each region sum combines four corner prefix sums via inclusion-exclusion.
+
+**Variables:** `m`/`n` = dims · `prefix` = 2D prefix sums padded by one; region `[row1,col1]..[row2,col2]` closed
+**Pseudocode:**
+```
+store a 2D prefix array
+constructor builds it:
+  read dims
+  allocate padded prefix grid
+  for each cell, combine top, left, minus overlap, plus value:
+    
+    
+      
+    
+  
+query: inclusion-exclusion of four corners
+  
+    
+```
 
 ```java
 class NumMatrix {
@@ -1455,6 +2056,34 @@ class NumMatrix {
 **Key:** Binary Indexed Tree (Fenwick) — both update and prefix query in O(log n).
 
 **Intuition:** A Fenwick tree stores partial sums over power-of-two ranges so updates and queries each touch only log n nodes.
+
+**Variables:** `tree` = Fenwick array (1-indexed) · `nums` = current values · `n` = size; `i & (-i)` = lowest set bit step
+**Pseudocode:**
+```
+fields: tree, values, size
+constructor:
+  store size
+  allocate value store
+  allocate Fenwick tree
+  seed by updating each index
+    
+  
+update: apply delta up the tree
+  compute delta from old value
+  store the new value
+  climb adding delta at each parent
+    
+  
+range sum: prefix(right+1) - prefix(left)
+  
+prefix helper: walk down summing
+  
+  while index positive:
+    add this node
+    drop the lowest set bit
+  
+  return the sum
+```
 
 ```java
 class NumArray {
@@ -1500,6 +2129,24 @@ class NumArray {
 
 **Intuition:** A zero in A contributes nothing, so skip it entirely instead of doing a full triple loop.
 
+**Variables:** `m`/`k`/`n` = dims · `i`/`p`/`j` = row of A / shared dim / col of B; skip zeros in A
+**Pseudocode:**
+```
+read dims
+allocate the result
+for each row i of A:
+  for each shared index p:
+    if A[i][p] is zero,
+      skip it (contributes nothing)
+    for each col j of B:
+      if B[p][j] is non-zero,
+        accumulate the product
+      
+    
+  
+return the product matrix
+```
+
 ```java
 class Solution {
     public int[][] multiply(int[][] mat1, int[][] mat2) {
@@ -1531,6 +2178,49 @@ class Solution {
 **Key:** merge sort on (value, index) pairs; while merging, count how many right-half elements slot before a left element.
 
 **Intuition:** During a merge, every time a right element is taken before a left one, it is a smaller-to-the-right for that left element.
+
+**Variables:** `counts` = answer per original index · `indices` = index array sorted by value · `i`/`j` = merge pointers · `rightCount` = right-half elements already placed before current left
+**Pseudocode:**
+```
+field: counts per index
+set up:
+  let n be the length
+  allocate counts
+  index array
+  fill with identity indices
+    
+  
+  run merge sort over indices
+  build the result list from counts
+  
+    
+  
+  return it
+merge sort:
+  base case single element
+    
+  
+  midpoint
+  sort left half
+  sort right half
+  merge buffer and counters
+  while both halves have elements:
+    if the right value is smaller:
+      it jumps ahead of remaining left items, bump rightCount
+      take the right index
+    else:
+      credit accumulated rightCount to this left element
+      take the left index
+    
+  drain the left half, crediting rightCount
+    
+    
+  drain the right half
+    
+  
+  copy merged order back
+  
+```
 
 ```java
 class Solution {
@@ -1589,6 +2279,20 @@ class Solution {
 
 **Intuition:** A subarray sums to k exactly when two prefix sums differ by k; keep the earliest index to maximize length.
 
+**Variables:** `firstIndex` = map prefix sum to its earliest index · `sum` = running prefix · `best` = longest length
+**Pseudocode:**
+```
+map of prefix sum to earliest index
+seed sum 0 at index -1
+running sum and best length
+for each index i:
+  add the element to the running sum
+  if some earlier prefix equals sum-k:
+    candidate length is i minus that earliest index
+  record this prefix only if new (keep earliest)
+return the best length
+```
+
 ```java
 class Solution {
     public int maxSubArrayLen(int[] nums, int k) {
@@ -1616,6 +2320,48 @@ class Solution {
 **Key:** prefix sums + merge sort; while merging count prefix pairs whose difference falls in range.
 
 **Intuition:** A range sum is a difference of two prefix sums; merge sort lets you count qualifying pairs across halves efficiently.
+
+**Variables:** `lower`/`upper` = bounds · `prefix` = prefix sums · `low`/`high` = sliding bounds in right half counting valid differences · `i`/`j` = merge pointers
+**Pseudocode:**
+```
+store the bounds
+  
+  
+  build prefix sums (one longer)
+  
+    
+  
+  recurse and count
+merge-count:
+  base case
+    
+  
+  midpoint
+  count from both halves
+  two moving bounds in the right half
+  for each left prefix i:
+    advance low past differences below lower
+      
+    
+    advance high past differences within upper
+      
+    
+    add the count of qualifying right prefixes
+  merge the two sorted halves:
+  
+  while both have elements:
+    
+      take smaller left
+    
+      take smaller right
+    
+  drain left
+    
+  drain right
+    
+  copy back
+  return the count
+```
 
 ```java
 class Solution {
@@ -1676,6 +2422,21 @@ class Solution {
 
 **Intuition:** Maintaining the two smallest ascending values seen so far is enough to detect a third larger one.
 
+**Variables:** `first` = smallest seen · `second` = smallest value that has a smaller predecessor · `x` = scanned value
+**Pseudocode:**
+```
+init first and second to +infinity
+for each value x:
+  if it's a new smallest, update first
+    
+  else if it can be a new second smallest, update second
+    
+  else it beats second, so a triplet exists
+    
+  
+no triplet found
+```
+
 ```java
 class Solution {
     public boolean increasingTriplet(int[] nums) {
@@ -1703,6 +2464,26 @@ class Solution {
 **Key:** put one array in a set; collect elements of the other that are present.
 
 **Intuition:** Set membership turns intersection into linear lookups.
+
+**Variables:** `set` = values of nums1 · `common` = intersection set · `result` = output array · `i` = fill index
+**Pseudocode:**
+```
+put all of nums1 into a set
+  
+  
+collect shared values without repeats
+  
+    
+      
+    
+  
+copy the set into an array
+  
+  
+    
+  
+return it
+```
 
 ```java
 class Solution {
@@ -1737,6 +2518,27 @@ class Solution {
 
 **Intuition:** A frequency map lets each shared occurrence be matched at most once.
 
+**Variables:** `count` = frequency map of nums1 · `result` = matched values · `arr` = output array
+**Pseudocode:**
+```
+count each value of nums1
+  
+  
+for each value in nums2:
+  
+    if its count is still positive:
+      emit it
+      decrement its count
+    
+  
+copy results to an array
+  
+  
+    
+  
+return it
+```
+
 ```java
 class Solution {
     public int[] intersect(int[] nums1, int[] nums2) {
@@ -1770,6 +2572,21 @@ class Solution {
 
 **Intuition:** Mark only the endpoints of each update; a single prefix pass materializes all increments.
 
+**Variables:** `diff` = difference array (one longer) · `running` = prefix accumulator · `result` = materialized array
+**Pseudocode:**
+```
+allocate a difference array
+for each update [start,end,inc]:
+  add inc at start
+  subtract inc just past end
+allocate the result
+running total zero
+prefix-sum the diff into the result:
+  add this slot's delta
+  store the running value
+return the result
+```
+
 ```java
 class Solution {
     public int[] getModifiedArray(int length, int[][] updates) {
@@ -1798,6 +2615,24 @@ class Solution {
 **Key:** Fisher-Yates — for each i swap with a random index in `[i, n)`.
 
 **Intuition:** Choosing each position's element uniformly from the remaining ones yields every permutation with equal probability.
+
+**Variables:** `original` = pristine copy · `arr` = working copy · `rng` = randomness · `i`/`j` = Fisher-Yates swap indices
+**Pseudocode:**
+```
+fields: original, working array, RNG
+constructor: keep a pristine copy and a working copy
+  
+  
+reset: restore from the pristine copy
+  
+  
+shuffle: Fisher-Yates from the back
+  for i from the end down to 1:
+    pick a random j in [0, i]
+    swap positions i and j
+  
+  return the shuffled array
+```
 
 ```java
 class Solution {
@@ -1832,6 +2667,23 @@ class Solution {
 
 **Intuition:** Keep a sorted top-three as you scan, skipping duplicates.
 
+**Variables:** `first`/`second`/`third` = top three distinct maxima (Long so MIN_VALUE works) · `v` = boxed current value
+**Pseudocode:**
+```
+three distinct-max holders, all null
+for each value x:
+  box it
+  skip if it duplicates any current holder
+  if it's a new overall max, cascade the top three down
+    
+  else if it's a new second, cascade second/third
+    
+  else if it's a new third, set third
+    
+  
+return the third if it exists, otherwise the max
+```
+
 ```java
 class Solution {
     public int thirdMax(int[] nums) {
@@ -1862,6 +2714,21 @@ class Solution {
 
 **Intuition:** Each ship has exactly one cell with no ship-neighbor above or to its left, so count those.
 
+**Variables:** `count` = ship count · `r`/`c` = scan cell; count only a ship's top-left cell
+**Pseudocode:**
+```
+count zero
+for each row r:
+  for each col c:
+    if this cell is a ship AND
+      has no ship directly above AND
+      has no ship directly to the left:
+      it's a new ship, count it
+    
+  
+return the count
+```
+
 ```java
 class Solution {
     public int countBattleships(char[][] board) {
@@ -1890,6 +2757,21 @@ class Solution {
 
 **Intuition:** Flip the sign at each value's home index; encountering an already-negative slot means that value repeated.
 
+**Variables:** `result` = duplicates found · `x` = scanned value · `idx` = home index `|x|-1` used as a seen-marker via sign
+**Pseudocode:**
+```
+prepare the result list
+for each value x:
+  compute its home index from absolute value
+  if that slot is already negative:
+    we've seen this value before, record it
+  else:
+    flip the sign to mark it seen
+    
+  
+return the duplicates
+```
+
 ```java
 class Solution {
     public List<Integer> findDuplicates(int[] nums) {
@@ -1916,6 +2798,22 @@ class Solution {
 **Key:** mark index `|x|-1` negative; positive slots correspond to missing numbers.
 
 **Intuition:** Use sign marking; any home index never marked means that number was absent.
+
+**Variables:** `x` = scanned value · `idx` = home index `|x|-1`; unmarked (positive) slots reveal missing numbers · `result` = answer
+**Pseudocode:**
+```
+for each value x:
+  compute its home index
+  if that slot is still positive:
+    mark it negative as present
+  
+prepare the result list
+scan all slots:
+  any still-positive slot means that number is missing
+    
+  
+return the missing numbers
+```
 
 ```java
 class Solution {
@@ -1947,6 +2845,22 @@ class Solution {
 
 **Intuition:** Split four arrays into two pairs so a hash of one pair's sums turns the search into O(n^2) lookups.
 
+**Variables:** `abSum` = map from A+B pair-sum to its frequency · `count` = matching quadruplets
+**Pseudocode:**
+```
+map of A+B sums to counts
+for each a, for each b:
+  
+    tally the sum a+b
+  
+count zero
+for each c, for each d:
+  
+    add how many A+B sums equal -(c+d)
+  
+return the count
+```
+
 ```java
 class Solution {
     public int fourSumCount(int[] a, int[] b, int[] c, int[] d) {
@@ -1976,6 +2890,30 @@ class Solution {
 **Key:** Floyd's tortoise and hare; movement direction must stay consistent and the cycle length must exceed 1.
 
 **Intuition:** Fast/slow pointers detect cycles; reject single-element self-loops and direction flips.
+
+**Variables:** `n` = length · `slow`/`fast` = Floyd tortoise/hare · `forward` = direction of this run; `next()` returns -1 on flip or self-loop
+**Pseudocode:**
+```
+store the length
+  
+  for each start index i:
+    record this run's direction
+    place both pointers at i
+    
+    loop advancing slow once, fast twice:
+      step slow
+      step fast once
+      step fast again if still valid
+      if either invalidated, abandon this start
+      if they meet, a valid cycle exists
+    
+  
+  no valid loop
+next(): given index and direction
+  if the direction flipped here, invalid
+  compute the wrapped target index
+  reject a single-element self-loop
+```
 
 ```java
 class Solution {
@@ -2014,6 +2952,20 @@ class Solution {
 
 **Intuition:** Grow a streak while seeing 1s and reset at each 0.
 
+**Variables:** `best` = longest run of 1s · `cur` = current run length · `x` = scanned value
+**Pseudocode:**
+```
+best and current run zero
+for each value x:
+  if it's a 1:
+    grow the run
+    update the best
+  else:
+    reset the run
+  
+return the best
+```
+
 ```java
 class Solution {
     public int findMaxConsecutiveOnes(int[] nums) {
@@ -2040,6 +2992,38 @@ class Solution {
 **Key:** merge sort; before merging each half, count reverse pairs across the sorted halves.
 
 **Intuition:** Sorted halves let you count `nums[i] > 2*nums[j]` pairs with a linear two-pointer sweep per merge.
+
+**Variables:** `lo`/`hi` = merge-sort range · `mid` = split · `i`/`p` = left/right merge pointers · `j` = counting pointer in the right half · `count` = reverse pairs
+**Pseudocode:**
+```
+count over the whole array
+merge sort:
+  base case
+    
+  
+  midpoint
+  count within both halves
+  counting pointer starts at the right half
+  for each left element i:
+    advance j while left > 2*right
+      
+    
+    add how many right elements qualified
+  merge the halves:
+  
+  while both have elements:
+    
+      take smaller left
+    
+      take smaller right
+    
+  drain left
+    
+  drain right
+    
+  copy back
+  return the count
+```
 
 ```java
 class Solution {
@@ -2090,6 +3074,41 @@ class Solution {
 
 **Intuition:** Cells on the same diagonal share `r+c`; flip the read direction on alternating diagonals to zig-zag.
 
+**Variables:** `m`/`n` = dims · `idx` = output index · `r`/`c` = current cell · `up` = direction (true = up-right)
+**Pseudocode:**
+```
+read dims
+allocate the flat output
+start at top-left, output index zero
+begin going up-right
+while not all cells emitted:
+  emit the current cell
+  if heading up-right:
+    if at the right edge: drop down, flip direction
+      
+      
+    else if at the top edge: step right, flip direction
+      
+      
+    else: move up-right
+      
+      
+    
+  else (going down-left):
+    if at the bottom edge: step right, flip direction
+      
+      
+    else if at the left edge: step down, flip direction
+      
+      
+    else: move down-left
+      
+      
+    
+  
+return the result
+```
+
 ```java
 class Solution {
     public int[] findDiagonalOrder(int[][] mat) {
@@ -2138,6 +3157,26 @@ class Solution {
 
 **Intuition:** A bottleneck is either a machine with too much surplus or a cut that must pass a large net flow.
 
+**Variables:** `total` = sum of dresses · `n` = machines · `avg` = target each · `running` = net flow across the current cut · `diff` = surplus of one machine · `result` = answer
+**Pseudocode:**
+```
+sum all dresses
+  
+  
+let n be the machine count
+if not evenly divisible, impossible
+  
+  
+target per machine
+answer and running flow zero
+for each machine:
+  its surplus over average
+  accumulate net flow across this cut
+  bottleneck is the max of cut flow and single overflow
+  
+return the answer
+```
+
 ```java
 class Solution {
     public int findMinMoves(int[] machines) {
@@ -2171,6 +3210,25 @@ class Solution {
 
 **Intuition:** Two prefix sums with the same remainder mod k bound a subarray sum divisible by k.
 
+**Variables:** `firstIndex` = map remainder mod k to earliest index · `sum` = running prefix · `rem` = normalized remainder
+**Pseudocode:**
+```
+map remainder to earliest index
+seed remainder 0 at index -1
+running sum zero
+for each index i:
+  add the element
+  compute the normalized remainder
+  if this remainder was seen:
+    if at least 2 apart, a valid subarray exists
+      
+    
+  else record this remainder's index
+    
+  
+no valid subarray
+```
+
 ```java
 class Solution {
     public boolean checkSubarraySum(int[] nums, int k) {
@@ -2203,6 +3261,22 @@ class Solution {
 
 **Intuition:** Equal counts means a running balance returns to a value seen before.
 
+**Variables:** `firstIndex` = map running balance to earliest index · `balance` = +1 per 1, -1 per 0 · `best` = longest length
+**Pseudocode:**
+```
+map balance to earliest index
+seed balance 0 at index -1
+balance and best zero
+for each index i:
+  +1 for a 1, -1 for a 0
+  if this balance was seen:
+    candidate length from that earliest index
+  else record this balance's index
+    
+  
+return the best length
+```
+
 ```java
 class Solution {
     public int findMaxLength(int[] nums) {
@@ -2231,6 +3305,24 @@ class Solution {
 **Key:** frequency map; for k==0 count values with freq >= 2, else count distinct values v with v+k present.
 
 **Intuition:** Counting distinct values avoids duplicate pairs; the zero-diff case needs a repeated value.
+
+**Variables:** `count` = frequency map · `result` = unique-pair count · `e` = a (value, freq) entry
+**Pseudocode:**
+```
+count each value
+  
+  
+result zero
+for each distinct value entry:
+  if k is zero:
+    count it once if it appears at least twice
+      
+    
+  else if value+k also exists, count the pair
+    
+  
+return the count
+```
 
 ```java
 class Solution {
@@ -2264,6 +3356,19 @@ class Solution {
 
 **Intuition:** Each earlier prefix equal to `s-k` marks the start of a qualifying subarray ending here.
 
+**Variables:** `count` = map prefix sum to frequency · `sum` = running prefix · `result` = subarray count
+**Pseudocode:**
+```
+map prefix sum to frequency
+seed sum 0 with count 1
+running sum and result zero
+for each value x:
+  extend the running sum
+  add how many earlier prefixes equal sum-k
+  record this prefix
+return the count
+```
+
 ```java
 class Solution {
     public int subarraySum(int[] nums, int k) {
@@ -2290,6 +3395,19 @@ class Solution {
 
 **Intuition:** Both shapes share a linear index, so map between them with division and modulo.
 
+**Variables:** `m`/`n` = source dims · `t` = flat index; source `(t/n, t%n)`, target `(t/c, t%c)`
+**Pseudocode:**
+```
+read source dims
+if the element counts differ, return the original
+  
+  
+allocate the reshaped grid
+for each flat index t:
+  map it from source layout to target layout
+return the reshaped matrix
+```
+
 ```java
 class Solution {
     public int[][] matrixReshape(int[][] mat, int r, int c) {
@@ -2315,6 +3433,21 @@ class Solution {
 **Key:** scan from right tracking min to find left bound; scan from left tracking max to find right bound.
 
 **Intuition:** The window starts where an element exceeds some later minimum and ends where an element falls below some earlier maximum.
+
+**Variables:** `n` = length · `left`/`right` = bounds of the unsorted window (default empty) · `max`/`min` = running extremes
+**Pseudocode:**
+```
+let n be the length
+default to an empty window
+seed max from the left, min from the right
+left-to-right, find the right bound:
+  track the running max
+  any element below it extends the right bound
+right-to-left, find the left bound:
+  track the running min
+  any element above it extends the left bound
+return the window length
+```
 
 ```java
 class Solution {
@@ -2345,6 +3478,20 @@ class Solution {
 
 **Intuition:** A harmonious subsequence uses exactly two adjacent values, so combine each pair's counts.
 
+**Variables:** `count` = frequency map · `best` = longest harmonious length · `e` = a (value, freq) entry
+**Pseudocode:**
+```
+count each value
+  
+  
+best zero
+for each value entry:
+  if the value plus one exists:
+    candidate is the sum of both counts
+  
+return the best
+```
+
 ```java
 class Solution {
     public int findLHS(int[] nums) {
@@ -2372,6 +3519,28 @@ class Solution {
 **Key:** map first list value to index; scan second tracking the minimum index sum.
 
 **Intuition:** Index sum is minimized greedily as you scan; ties are collected together.
+
+**Variables:** `index` = map list1 string to its index · `result` = best matches · `best` = smallest index sum · `j` = list2 index
+**Pseudocode:**
+```
+map each list1 string to its index
+  
+  
+prepare the result list
+best index sum is infinity
+for each list2 index j:
+  if this string is in list1:
+    its index sum
+    if strictly smaller, reset the result to just this
+      
+      
+      
+    else if tied, add it too
+      
+    
+  
+return the best matches
+```
 
 ```java
 class Solution {
@@ -2409,6 +3578,22 @@ class Solution {
 
 **Intuition:** Only the two smaller sides need to beat the largest, so fix the largest and bulk-count valid pairs.
 
+**Variables:** `k` = fixed largest side index · `i`/`j` = left/right over `[0, k-1]` · `count` = valid triangles
+**Pseudocode:**
+```
+sort the sides
+count zero
+for each largest side k from the top:
+  set inner pointers at the start and just below k
+  while they haven't crossed:
+    if the two smaller sides beat the largest:
+      every i between also works, add j-i
+      shrink the larger of the two
+    else:
+      grow the smaller of the two
+return the count
+```
+
 ```java
 class Solution {
     public int triangleNumber(int[] nums) {
@@ -2439,6 +3624,28 @@ class Solution {
 **Key:** for each cell sum valid neighbors (including self) and divide by the count.
 
 **Intuition:** Average over the in-bounds 3×3 window centered on each cell.
+
+**Variables:** `m`/`n` = dims · `dr`/`dc` = 8 neighbor offsets plus self · `sum`/`cnt` = neighborhood total and member count
+**Pseudocode:**
+```
+read dims
+allocate the result
+neighbor row offsets including self
+neighbor col offsets including self
+for each cell (r,c):
+  
+    sum and count zero
+    for each of the 9 offsets:
+      
+      if the neighbor is in bounds:
+        add its value
+        bump the count
+      
+    
+    store the floored average
+  
+return the smoothed grid
+```
 
 ```java
 class Solution {
@@ -2474,6 +3681,45 @@ class Solution {
 **Key:** mark crushable cells (negate), zero them, drop columns; repeat until no change.
 
 **Intuition:** Mark all matches in one pass before clearing so simultaneous crushes are handled, then let candies fall.
+
+**Variables:** `m`/`n` = dims · `changed` = whether any crush happened this round · `r`/`c` = scan cell · `v` = candidate value · `write` = gravity write row
+**Pseudocode:**
+```
+read dims
+loop until a stable round
+  
+  reset the changed flag
+  scan horizontal runs of 3:
+    
+      
+      if three equal positive candies in a row:
+        mark all three negative
+        
+      
+    
+  scan vertical runs of 3:
+    
+      
+      if three equal positive candies in a column:
+        mark all three negative
+        
+      
+    
+  if anything was marked, apply gravity per column:
+    
+      write row starts at the bottom
+      for each row from the bottom up:
+        if it's a surviving candy, drop it to the write row
+          
+        
+      fill the rest of the column with zeros
+        
+        
+      
+    
+  
+return the stable board
+```
 
 ```java
 class Solution {
@@ -2529,6 +3775,21 @@ class Solution {
 
 **Intuition:** Track a running left sum and derive the right sum from the precomputed total.
 
+**Variables:** `total` = full sum · `left` = running left-side sum; right side = `total - left - nums[i]`
+**Pseudocode:**
+```
+sum the whole array
+  
+  
+left sum zero
+for each index i:
+  if left equals total minus left minus current, it's the pivot
+    
+  
+  add the current element to the left sum
+no pivot found
+```
+
 ```java
 class Solution {
     public int pivotIndex(int[] nums) {
@@ -2558,6 +3819,18 @@ class Solution {
 
 **Intuition:** Comparing each cell to its diagonal predecessor verifies all diagonals locally.
 
+**Variables:** `r`/`c` = cell being compared to its up-left neighbor `(r-1, c-1)`
+**Pseudocode:**
+```
+for each row from the second:
+  for each col from the second:
+    if a cell differs from its up-left neighbor:
+      not Toeplitz
+    
+  
+all diagonals consistent
+```
+
 ```java
 class Solution {
     public boolean isToeplitzMatrix(int[][] matrix) {
@@ -2583,6 +3856,18 @@ class Solution {
 
 **Intuition:** When the largest value seen so far equals the index, everything up to here is a self-contained block.
 
+**Variables:** `max` = running max value seen · `chunks` = chunk count; boundary when `max == i`
+**Pseudocode:**
+```
+running max and chunk count zero
+for each index i:
+  update the running max
+  if the max equals the index, close a chunk
+    
+  
+return the chunk count
+```
+
 ```java
 class Solution {
     public int maxChunksToSorted(int[] arr) {
@@ -2607,6 +3892,23 @@ class Solution {
 **Key:** count subarrays with max <= right minus those with max <= left-1.
 
 **Intuition:** "Max in range" equals the difference of two "max at most X" counts, each computed in one pass.
+
+**Variables:** `bound` = upper limit for the helper · `count` = subarray count · `run` = length of the current valid run
+**Pseudocode:**
+```
+answer = (max <= right) minus (max <= left-1)
+helper counting subarrays with max at most bound:
+  count and run zero
+  for each value x:
+    if within bound:
+      extend the run
+    else:
+      reset the run
+    
+    every run of length r adds r new subarrays ending here
+  
+  return the count
+```
 
 ```java
 class Solution {
@@ -2637,6 +3939,25 @@ class Solution {
 **Key:** each cell can rise to `min(rowMax, colMax)`; sum the increases.
 
 **Intuition:** A building is capped by the smaller of its row and column maxima to preserve both silhouettes.
+
+**Variables:** `n` = grid size · `rowMax`/`colMax` = per-row and per-col maxima · `total` = sum of allowed increases
+**Pseudocode:**
+```
+let n be the size
+per-row maxima
+per-col maxima
+compute both maxima in one pass:
+  
+    update this row's max
+    update this col's max
+  
+total zero
+for each cell, raise it to min(rowMax, colMax):
+  
+    add the gained height
+  
+return the total
+```
 
 ```java
 class Solution {
@@ -2671,6 +3992,26 @@ class Solution {
 
 **Intuition:** Ages are bounded, so counting per age-bucket pair collapses the problem to constant-size work.
 
+**Variables:** `count` = per-age population (1..120) · `x`/`y` = requester/target age buckets · `result` = total requests
+**Pseudocode:**
+```
+bucket population by age
+  
+  
+result zero
+for each requester age x:
+  for each target age y:
+    skip if the request rules forbid it
+      
+    
+    add all x-by-y pairs
+    if same age, remove self-requests
+      
+    
+  
+return the request count
+```
+
 ```java
 class Solution {
     public int numFriendRequests(int[] ages) {
@@ -2704,6 +4045,38 @@ class Solution {
 **Key:** compute net force at each cell — R pushes right (+, decaying), L pushes left (-, decaying); sign decides final state.
 
 **Intuition:** Each cell's outcome is the balance of forces from the nearest pushers on either side.
+
+**Variables:** `n` = length · `force` = net force per cell (+ right, - left) · `f` = decaying push strength
+**Pseudocode:**
+```
+let n be the length
+net force per cell
+push strength zero
+left-to-right pass for rightward forces:
+  read the cell
+  R starts a full-strength rightward push
+    
+  L kills any rightward push
+    
+  a gap decays the push toward zero
+    
+  
+  add the rightward force
+reset strength
+right-to-left pass for leftward forces:
+  read the cell
+  L starts a full-strength leftward push
+    
+  R kills any leftward push
+    
+  a gap decays it
+    
+  
+  subtract the leftward force
+build the result from each cell's net force:
+  positive -> R, negative -> L, zero -> upright
+return the string
+```
 
 ```java
 class Solution {
@@ -2753,6 +4126,22 @@ class Solution {
 
 **Intuition:** Scan to a peak by rising, then descend; the span counts only when both directions occurred.
 
+**Variables:** `n` = length · `best` = longest mountain · `i` = scan index · `start` = foot of the climb · `peak` = top of the climb
+**Pseudocode:**
+```
+length, best, scan index zero
+scan the array:
+  remember the foot of a potential mountain
+  climb while strictly rising
+  if there was an up-slope:
+    remember the peak
+    descend while strictly falling
+    if there was a down-slope too, it's a mountain; update best
+  
+  if nothing was consumed, force progress
+return the best length
+```
+
 ```java
 class Solution {
     public int longestMountain(int[] arr) {
@@ -2782,6 +4171,19 @@ class Solution {
 
 **Intuition:** A single pass noting direction changes detects non-monotonicity.
 
+**Variables:** `inc`/`dec` = whether any increase / decrease occurred · `i` = scan index
+**Pseudocode:**
+```
+increase-seen and decrease-seen flags false
+for each adjacent pair:
+  if it rises, note an increase
+    
+  else if it falls, note a decrease
+    
+  
+monotonic unless both directions appeared
+```
+
 ```java
 class Solution {
     public boolean isMonotonic(int[] nums) {
@@ -2807,6 +4209,33 @@ class Solution {
 **Key:** merge sort with a reusable buffer.
 
 **Intuition:** Recursively split, sort halves, and merge — stable O(n log n) without library sort.
+
+**Variables:** `lo`/`hi` = sort range · `mid` = split · `buf` = shared merge buffer · `i`/`j` = half pointers · `k` = buffer write index
+**Pseudocode:**
+```
+sort over the whole array with a shared buffer
+  
+merge sort:
+  base case single element
+    
+  
+  midpoint
+  sort the left half
+  sort the right half
+  set the two half pointers and the buffer index
+  while both halves have elements:
+    take the smaller front element:
+      take from the left
+    
+      take from the right
+    
+  drain the left half
+    
+  drain the right half
+    
+  copy the merged run back
+  
+```
 
 ```java
 class Solution {
@@ -2850,6 +4279,20 @@ class Solution {
 
 **Intuition:** Two prefixes with the same remainder mod k bound a divisible subarray; count pairs per remainder.
 
+**Variables:** `count` = remainder-frequency array · `sum` = running prefix · `rem` = normalized remainder · `result` = subarray count
+**Pseudocode:**
+```
+remainder counts, seed remainder 0 with count 1
+  
+running sum and result zero
+for each value x:
+  extend the running sum
+  compute the normalized remainder
+  add how many earlier prefixes share this remainder
+  record this remainder
+return the count
+```
+
 ```java
 class Solution {
     public int subarraysDivByK(int[] nums, int k) {
@@ -2876,6 +4319,23 @@ class Solution {
 **Key:** opposite pointers; the larger absolute value is at one of the two ends — write from the back.
 
 **Intuition:** The biggest squares sit at the extremes, so fill the result from the largest slot inward.
+
+**Variables:** `n` = length · `result` = output · `i`/`j` = left/right pointers · `k` = write index filling from the back
+**Pseudocode:**
+```
+let n be the length
+allocate the output
+pointers at both ends, write index at the back
+while pointers haven't crossed:
+  square both ends
+  if the left square is larger:
+    write it at the back
+    advance left
+  else:
+    write the right square at the back
+    retreat right
+return the result
+```
 
 ```java
 class Solution {
@@ -2907,6 +4367,28 @@ class Solution {
 **Key:** total must be divisible by 3; sweep accumulating, counting completed `total/3` parts.
 
 **Intuition:** Greedily close off a part each time the running sum hits one-third; succeed if at least three parts form.
+
+**Variables:** `total` = full sum · `target` = `total/3` · `running` = current part sum · `parts` = completed parts
+**Pseudocode:**
+```
+sum the whole array
+  
+  
+if not divisible by 3, impossible
+  
+  
+target, running sum, parts count
+for each index i:
+  extend the running sum
+  if it reaches one-third:
+    close a part and reset the running sum
+    
+    if two parts are closed with elements left, success
+      
+    
+  
+otherwise fail
+```
 
 ```java
 class Solution {
@@ -2943,6 +4425,30 @@ class Solution {
 **Key:** fix a pair of rows, collapse columns to a 1D array, then apply prefix-sum hashmap (#560) per column.
 
 **Intuition:** Reduce 2D to 1D by fixing the top and bottom rows, then count target-sum subarrays.
+
+**Variables:** `m`/`n` = dims · `prefix` = column-prefix sums (rows padded) · `top`/`bottom` = fixed row band · `count` = map collapsed-sum to frequency · `sum` = running 1D prefix · `result` = answer
+**Pseudocode:**
+```
+read dims
+column-prefix sums, padded by a top row
+build them:
+  
+    prefix[r+1][c] = prefix above plus this cell
+  
+result zero
+for each top row:
+  for each bottom row below it:
+    fresh prefix-sum map seeded with 0->1
+    
+    running 1D sum zero
+    sweep columns:
+      add this column's band sum
+      add earlier prefixes equal to sum-target
+      record this prefix
+    
+  
+return the count
+```
 
 ```java
 class Solution {
@@ -2982,6 +4488,21 @@ class Solution {
 
 **Intuition:** Range increments become two endpoint marks resolved by one prefix pass.
 
+**Variables:** `diff` = difference array (one longer) · `running` = prefix accumulator · `result` = per-flight totals
+**Pseudocode:**
+```
+allocate a difference array
+for each booking [first,last,seats]:
+  add seats at first (0-based)
+  subtract seats just past last
+allocate the result
+running total zero
+prefix-sum into the result:
+  add this slot's delta
+  store the running total
+return the result
+```
+
 ```java
 class Solution {
     public int[] corpFlightBookings(int[][] bookings, int n) {
@@ -3010,6 +4531,27 @@ class Solution {
 **Key:** three pointers; advance the smallest; record when all three match.
 
 **Intuition:** Like merging — advance whichever pointer lags so all three meet at shared values.
+
+**Variables:** `i`/`j`/`k` = independent pointers into the three sorted arrays · `result` = common values
+**Pseudocode:**
+```
+prepare the result list
+all three pointers at the start
+while all three are in range:
+  if all three values match:
+    record it and advance all three
+    
+    
+    
+  else if arr1's value is the smallest, advance it
+    
+  else if arr2's value is the smallest, advance it
+    
+  else advance arr3
+    
+  
+return the common values
+```
 
 ```java
 class Solution {
@@ -3044,6 +4586,30 @@ class Solution {
 **Key:** tally row/col/diagonal sums with +1 for A and -1 for B; |sum| == 3 wins.
 
 **Intuition:** Signed counts per line reveal a win the moment any line reaches +3 or -3.
+
+**Variables:** `rows`/`cols` = signed per-line sums · `diag`/`anti` = main/anti diagonal sums · `t` = move index · `sign` = +1 for A, -1 for B
+**Pseudocode:**
+```
+row sums
+column sums
+diagonal sums zero
+for each move t:
+  +1 on even (A), -1 on odd (B)
+  read its row and col
+  add to that row
+  add to that col
+  if on the main diagonal, add to it
+    
+  
+  if on the anti-diagonal, add to it
+    
+  
+  if any line reaches +-3:
+    
+    the current player won
+  
+full board is a draw, otherwise pending
+```
 
 ```java
 class Solution {
@@ -3082,6 +4648,21 @@ class Solution {
 
 **Intuition:** From the bottom-left, sorted order lets each step rule out a whole row or column of negatives.
 
+**Variables:** `m`/`n` = dims · `r`/`c` = staircase position starting bottom-left · `count` = negatives found
+**Pseudocode:**
+```
+read dims
+start at bottom-left, count zero
+while in the grid:
+  if the cell is negative:
+    everything to the right in this row is negative too
+    move up a row
+  else:
+    move right
+  
+return the count
+```
+
 ```java
 class Solution {
     public int countNegatives(int[][] grid) {
@@ -3109,6 +4690,30 @@ class Solution {
 **Key:** group cells by `r+c`; within a diagonal, larger row comes first (bottom-left start).
 
 **Intuition:** Cells on a diagonal share `r+c`; emitting rows in descending order gives the bottom-left-up direction.
+
+**Variables:** `diagonals` = map `r+c` to its cell list · `total` = element count · `maxKey` = largest diagonal key · `idx` = output write index
+**Pseudocode:**
+```
+map diagonal key to its values
+total and max key zero
+scan every cell:
+  
+    diagonal key is r+c
+    append the cell to that diagonal
+    track the largest key
+    bump the total
+  
+allocate the flat output
+output index zero
+for each diagonal key in order:
+  fetch its list
+  skip if empty
+    
+  emit it bottom-up (reversed) for the right direction
+    
+  
+return the result
+```
 
 ```java
 class Solution {
@@ -3149,6 +4754,23 @@ class Solution {
 
 **Intuition:** Any permutation is reachable through reversals, so only element counts matter.
 
+**Variables:** `count` = per-value frequency difference (1001 buckets) · `x` = scanned value
+**Pseudocode:**
+```
+frequency-difference buckets
+add each target value
+  
+  
+subtract each arr value
+  
+  
+if any bucket is non-zero, the multisets differ
+  
+    
+  
+they match
+```
+
 ```java
 class Solution {
     public boolean canBeEqual(int[] target, int[] arr) {
@@ -3179,6 +4801,14 @@ class Solution {
 
 **Intuition:** Each running sum is the prior running sum plus the current value.
 
+**Variables:** `i` = scan index; each element absorbs the previous running sum
+**Pseudocode:**
+```
+from the second element on:
+  add the previous running sum into this slot
+return the array (now prefix sums)
+```
+
 ```java
 class Solution {
     public int[] runningSum(int[] nums) {
@@ -3199,6 +4829,27 @@ class Solution {
 **Key:** sort; opposite pointers — if `nums[i]+nums[j] <= target`, all subsets of `(i,j]` with i included count → `2^(j-i)`.
 
 **Intuition:** After sorting, fixing the minimum lets every subset of the elements up to the max be chosen freely.
+
+**Variables:** `MOD` = 1e9+7 · `n` = length · `pow` = precomputed powers of two · `i`/`j` = left/right pointers · `result` = subsequence count
+**Pseudocode:**
+```
+modulus and length
+sort so min/max are the pointer ends
+precompute powers of two:
+  
+  
+    
+  
+pointers at both ends, result zero
+while they haven't crossed:
+  if min plus max fits the target:
+    every subset between adds 2^(j-i)
+    advance the left (min)
+  else:
+    retreat the right (max)
+  
+return the count
+```
 
 ```java
 class Solution {
@@ -3235,6 +4886,21 @@ class Solution {
 
 **Intuition:** Count occurrences, then sum only the singletons.
 
+**Variables:** `count` = per-value frequency (1..100) · `x` = scanned value · `v` = value being summed · `sum` = total of singletons
+**Pseudocode:**
+```
+frequency buckets
+count each value
+  
+  
+sum zero
+for each possible value v:
+  if it occurred exactly once, add it
+    
+  
+return the sum
+```
+
 ```java
 class Solution {
     public int sumOfUnique(int[] nums) {
@@ -3262,6 +4928,24 @@ class Solution {
 **Key:** scan right-to-left tracking max height; a building qualifies if taller than all seen so far.
 
 **Intuition:** Sweeping from the ocean side, only record buildings that exceed every taller one already passed.
+
+**Variables:** `result` = qualifying indices (collected back-to-front) · `max` = tallest building seen from the right · `arr` = final output
+**Pseudocode:**
+```
+prepare the result list
+max height seen zero
+scan from the right (ocean) side:
+  if this building beats everything to its right:
+    record it
+    raise the max
+  
+copy to an array in increasing-index order
+  
+  
+    
+  
+return it
+```
 
 ```java
 class Solution {
@@ -3292,6 +4976,32 @@ class Solution {
 **Key:** two pointers over the runs; multiply values, take the min remaining length, decrement, merge equal adjacent products.
 
 **Intuition:** March through both run lists together, consuming the shorter overlap and coalescing equal results.
+
+**Variables:** `result` = output runs · `i`/`j` = run pointers into the two encodings · `product` = value of the overlap · `len` = overlap length · `last` = last result run
+**Pseudocode:**
+```
+prepare the result list
+both run pointers at the start
+while both have runs left:
+  product of the two current run values
+  overlap length = the shorter remaining run
+  if it matches the previous result run's value:
+    extend that run
+    
+    
+  else:
+    start a new run
+  
+  consume the overlap from both runs
+  
+  if the first run is used up, advance it
+    
+  
+  if the second run is used up, advance it
+    
+  
+return the merged runs
+```
 
 ```java
 class Solution {
@@ -3331,6 +5041,18 @@ class Solution {
 
 **Intuition:** Pairing extremes balances the sums, keeping the largest pair as small as possible.
 
+**Variables:** `i`/`j` = left/right pointers after sorting · `max` = largest pair sum
+**Pseudocode:**
+```
+sort the array
+pointers at both ends, max zero
+while they haven't crossed:
+  pair the extremes and track the largest sum
+  advance left
+  retreat right
+return the max pair sum
+```
+
 ```java
 class Solution {
     public int minPairSum(int[] nums) {
@@ -3355,6 +5077,22 @@ class Solution {
 **Key:** difference array over the small value domain (1..50); prefix-sum to test coverage.
 
 **Intuition:** Mark interval starts and ends, then a prefix sweep shows which points are covered.
+
+**Variables:** `diff` = difference array over values 1..50 · `running` = coverage at the current point · `i` = value being checked
+**Pseudocode:**
+```
+difference array over the value domain
+for each interval:
+  +1 at its start
+  -1 just past its end
+running coverage zero
+sweep values 1..50:
+  accumulate coverage
+  if a queried value has zero coverage, fail
+    
+  
+all queried values covered
+```
 
 ```java
 class Solution {
@@ -3386,6 +5124,21 @@ class Solution {
 
 **Intuition:** Whole cycles repeat, so only the remainder after a full round determines the failing student.
 
+**Variables:** `total` = chalk per full cycle · `k` = remaining chalk after whole cycles · `i` = student index
+**Pseudocode:**
+```
+sum chalk over one full round
+  
+  
+reduce k by whole cycles
+walk students in order:
+  if this student can't be served, they run out
+    
+  
+  subtract their consumption
+wrap to the first student
+```
+
 ```java
 class Solution {
     public int chalkReplacer(int[] chalk, int k) {
@@ -3415,6 +5168,16 @@ class Solution {
 
 **Intuition:** Each output is a double lookup into the permutation.
 
+**Variables:** `result` = output · `i` = scan index; each slot is a double lookup
+**Pseudocode:**
+```
+allocate the result
+for each index i:
+  result[i] = the value at nums[nums[i]]
+  
+return the result
+```
+
 ```java
 class Solution {
     public int[] buildArray(int[] nums) {
@@ -3436,6 +5199,18 @@ class Solution {
 **Key:** allocate 2n and copy nums into both halves.
 
 **Intuition:** Copy each element into position `i` and `i+n`.
+
+**Variables:** `n` = length · `result` = doubled output · `i` = scan index; copy into slots `i` and `i+n`
+**Pseudocode:**
+```
+let n be the length
+allocate an array of double length
+for each index i:
+  copy into the first half
+  copy into the second half
+  
+return the concatenation
+```
 
 ```java
 class Solution {
@@ -3465,6 +5240,34 @@ Window = `[i, j]`, size = `j - i + 1`.
 ---
 
 ## The Three Templates
+
+**Variables:** `i` = left edge (inclusive) · `j` = right edge / loop variable (inclusive), window = `[i, j]`, size = `j - i + 1` · `n` = array length · `k` = target window size · `result` = answer (max length, or min length seeded to MAX)
+**Pseudocode:**
+```
+FIXED window of size k:
+    i = 0
+    for j = 0..n-1:
+        add nums[j] to window state
+        if window size (j - i + 1) == k:
+            record the window (it is exactly size k)
+            remove nums[i] from state; i = i + 1
+
+MAX variable window (longest valid):
+    i = 0; result = 0
+    for j = 0..n-1:
+        add nums[j] to state
+        while window violates the constraint:
+            remove nums[i] from state; i = i + 1
+        result = max(result, j - i + 1)   (window is valid here)
+
+MIN variable window (shortest valid):
+    i = 0; result = +infinity
+    for j = 0..n-1:
+        add nums[j] to state
+        while window is valid:
+            result = min(result, j - i + 1)   (record while still valid)
+            remove nums[i] from state; i = i + 1   (then shrink to try smaller)
+```
 
 ```java
 // FIXED window of size k — shrink exactly once when full
@@ -3539,6 +5342,19 @@ for (int j = 0; j < n; j++) {
 
 Both use a `need[]` array and a `required` counter to avoid scanning the map each step.
 
+**Variables:** `need[c]` = how many more of char `c` the window still needs (positive = still short, zero/negative = surplus) · `required` = total chars still missing; hits 0 when the window covers all of t · `i` = left edge, `j` = right edge
+**Pseudocode:**
+```
+Expanding (add char at j):
+    if need[char] was still positive (> 0): required = required - 1   (filled one more)
+    need[char] = need[char] - 1
+
+Shrinking (remove char at i):
+    if need[char] was already 0 or surplus (>= 0): required = required + 1  (now short one)
+    need[char] = need[char] + 1
+    i = i + 1
+```
+
 ```java
 // Expanding j — add s.charAt(j):
 if (need[s.charAt(j)]-- > 0) required--;   // was needed → satisfied one more
@@ -3560,6 +5376,18 @@ i++;
 **Description:** Find the contiguous subarray of length k with the maximum average value.
 
 **Intuition:** Max average of fixed length = max sum; slide a width-k window and track the best running sum.
+
+**Variables:** `i` = left edge, `j` = right edge, window `[i, j]` · `sum` = running sum of the window · `maxSum` = best window sum seen · `k` = fixed window size
+**Pseudocode:**
+```
+i = 0; sum = 0; maxSum = -infinity
+for j = 0..n-1:
+    sum = sum + nums[j]                 (add new right element)
+    if window size (j - i + 1) == k:
+        maxSum = max(maxSum, sum)       (record full window)
+        sum = sum - nums[i]; i = i + 1  (drop left element, stay size k)
+return maxSum / k
+```
 
 ```java
 class Solution {
@@ -3588,6 +5416,20 @@ class Solution {
 **Key:** fixed window of size `s1.length()`. Use `required` counter — no need to compare maps.
 
 **Intuition:** A permutation is just a fixed-length window whose letter counts match s1, so slide and check the counts.
+
+**Variables:** `need[]` = remaining count needed per letter · `required` = letters still missing (0 = match) · `i` = left edge, `j` = right edge, fixed window of size `s1.length()`
+**Pseudocode:**
+```
+build need[] from s1; required = s1.length(); i = 0
+for j = 0..len(s2)-1:
+    if need[s2[j]] was > 0: required = required - 1     (expand: filled one)
+    need[s2[j]] = need[s2[j]] - 1
+    if window size (j - i + 1) == s1.length():
+        if required == 0: return true                  (window is a permutation)
+        if need[s2[i]] was >= 0: required = required + 1 (shrink: now short)
+        need[s2[i]] = need[s2[i]] + 1; i = i + 1
+return false
+```
 
 ```java
 class Solution {
@@ -3620,6 +5462,18 @@ class Solution {
 
 **Intuition:** Keep only the last k values in a set; a failed insert means a duplicate within k indices.
 
+**Variables:** `window` = set of the last k values · `i` = left edge, `j` = right edge (window held to size k) · `k` = max allowed gap
+**Pseudocode:**
+```
+window = empty set; i = 0
+for j = 0..n-1:
+    if nums[j] is already in window: return true   (duplicate within k)
+    add nums[j] to window
+    if window size (j - i + 1) > k:
+        remove nums[i] from window; i = i + 1       (keep only last k)
+return false
+```
+
 ```java
 class Solution {
     public boolean containsNearbyDuplicate(int[] nums, int k) {
@@ -3645,6 +5499,20 @@ class Solution {
 **Key:** monotone deque stores indices in decreasing value order. Front is always the max of current window.
 
 **Intuition:** A smaller value with a larger one still in the window can never be the max again, so discard it.
+
+**Variables:** `result[]` = max of each window · `queue` = monotone deque of indices, values decreasing front->back (front = current max) · `i` = left edge, `j` = right edge · `k` = window size
+**Pseudocode:**
+```
+result = array sized (n - k + 1); queue = empty deque (of indices); i = 0
+for j = 0..n-1:
+    while front index < i: drop it                 (evict indices out of window)
+    while back value <= nums[j]: drop back         (evict smaller values)
+    push j onto the back
+    if window size (j - i + 1) == k:
+        result[i] = nums[front]                    (front is the max)
+        i = i + 1
+return result
+```
 
 ```java
 class Solution {
@@ -3678,6 +5546,19 @@ class Solution {
 
 **Intuition:** "Flip at most k zeros" = longest window containing at most k zeros; grow, and shrink only when zeros exceed k.
 
+**Variables:** `i` = left edge, `j` = right edge · `zeros` = count of 0s in the window (invalid when > k) · `result` = longest valid window · `k` = max flips
+**Pseudocode:**
+```
+i = 0; zeros = 0; result = 0
+for j = 0..n-1:
+    if nums[j] == 0: zeros = zeros + 1
+    while zeros > k:                        (too many zeros -> shrink)
+        if nums[i] == 0: zeros = zeros - 1
+        i = i + 1
+    result = max(result, j - i + 1)         (record valid window length)
+return result
+```
+
 ```java
 class Solution {
     public int longestOnes(int[] nums, int k) {
@@ -3706,6 +5587,18 @@ class Solution {
 
 **Intuition:** A repeat appears the moment you add it, so shrink from the left until that one character is unique again.
 
+**Variables:** `freq[]` = count of each char in the window · `i` = left edge, `j` = right edge · `result` = longest window with all-unique chars (invalid when the just-added char count > 1)
+**Pseudocode:**
+```
+freq = counts (all 0); i = 0; result = 0
+for j = 0..len-1:
+    freq[s[j]] = freq[s[j]] + 1
+    while freq[s[j]] > 1:                  (the new char repeats -> shrink)
+        freq[s[i]] = freq[s[i]] - 1; i = i + 1
+    result = max(result, j - i + 1)
+return result
+```
+
 ```java
 class Solution {
     public int lengthOfLongestSubstring(String s) {
@@ -3729,6 +5622,19 @@ class Solution {
 **Intuition:** A window is valid if the non-dominant chars (size − maxFreq) fit within k replacements; otherwise shrink.
 
 **Note:** `maxFreq` never decreases when shrinking — we only care about windows larger than current best, so a stale maxFreq is safe and avoids a rescan.
+
+**Variables:** `freq[]` = count of each char in window · `maxFreq` = highest single-char count seen (never decreased) · `i` = left edge, `j` = right edge · `result` = longest valid window · `k` = max replacements (invalid when size - maxFreq > k)
+**Pseudocode:**
+```
+freq = counts (all 0); i = 0; maxFreq = 0; result = 0
+for j = 0..len-1:
+    freq[s[j]] = freq[s[j]] + 1
+    maxFreq = max(maxFreq, freq[s[j]])
+    while (window size) - maxFreq > k:     (too many non-dominant chars to replace -> shrink)
+        freq[s[i]] = freq[s[i]] - 1; i = i + 1
+    result = max(result, j - i + 1)
+return result
+```
 
 ```java
 class Solution {
@@ -3758,6 +5664,18 @@ class Solution {
 
 **Intuition:** Once the window reaches target, every extra left-trim that stays ≥ target gives a shorter candidate.
 
+**Variables:** `i` = left edge, `j` = right edge · `sum` = running window sum (valid when >= target) · `result` = shortest valid window (seeded to MAX) · `target` = sum threshold
+**Pseudocode:**
+```
+i = 0; sum = 0; result = +infinity
+for j = 0..n-1:
+    sum = sum + nums[j]
+    while sum >= target:                   (window valid -> record then shrink)
+        result = min(result, j - i + 1)
+        sum = sum - nums[i]; i = i + 1
+return result if found else 0
+```
+
 ```java
 class Solution {
     public int minSubArrayLen(int target, int[] nums) {
@@ -3785,6 +5703,20 @@ class Solution {
 **State:** `need[]` freq array + `required` counter. Valid when `required == 0`.
 
 **Intuition:** Expand until all of t is covered, then shrink as far as you can while still covering it to find the tightest window.
+
+**Variables:** `need[]` = remaining count per char of t · `required` = chars still missing (0 = covered) · `i` = left edge, `j` = right edge · `start`/`minLen` = best window start and length
+**Pseudocode:**
+```
+build need[] from t; required = t.length(); i = 0; start = 0; minLen = +infinity
+for j = 0..len(s)-1:
+    if need[s[j]] was > 0: required = required - 1     (expand: filled one)
+    need[s[j]] = need[s[j]] - 1
+    while required == 0:                               (window covers t -> shrink)
+        if (j - i + 1) < minLen: minLen = j - i + 1; start = i
+        if need[s[i]] was >= 0: required = required + 1 (about to break coverage)
+        need[s[i]] = need[s[i]] + 1; i = i + 1
+return substring [start, start+minLen) or "" if none found
+```
 
 ```java
 class Solution {
@@ -3859,6 +5791,18 @@ Shrink:             sum -= nums[i]              need[c]++ >= 0 → required++
 
 **Algorithm:** Fixed-size window of length `p.length()`. Maintain a frequency count for the window. Compare with `p`'s frequency count at each step using `Arrays.equals`.
 
+**Variables:** `need[]` = letter counts of p · `window[]` = letter counts of the current window · `result` = start indices of anagrams · `i` = left edge, `j` = right edge, fixed window of size `p.length()`
+**Pseudocode:**
+```
+build need[] from p; window = counts (all 0); result = empty; i = 0
+for j = 0..len(s)-1:
+    window[s[j]] = window[s[j]] + 1                 (add right char)
+    if window size (j - i + 1) == p.length():
+        if window equals need: append i to result    (anagram match)
+        window[s[i]] = window[s[i]] - 1; i = i + 1   (drop left char, stay fixed size)
+return result
+```
+
 ```java
 class Solution {
     public List<Integer> findAnagrams(String s, String p) {
@@ -3892,6 +5836,19 @@ class Solution {
 
 **Algorithm:** Max-variable sliding window. Expand `j`; shrink `i` when the frequency map has more than 2 distinct characters.
 
+**Variables:** `freq` = map char -> count in window (its size = number of distinct chars) · `i` = left edge, `j` = right edge · `result` = longest window with at most 2 distinct
+**Pseudocode:**
+```
+freq = empty map; i = 0; result = 0
+for j = 0..len-1:
+    freq[s[j]] = freq[s[j]] + 1
+    while freq has more than 2 distinct chars:      (shrink)
+        c = s[i]; i = i + 1
+        freq[c] = freq[c] - 1; if freq[c] == 0 remove c
+    result = max(result, j - i + 1)
+return result
+```
+
 ```java
 class Solution {
     public int lengthOfLongestSubstringTwoDistinct(String s) {
@@ -3921,6 +5878,19 @@ class Solution {
 **Intuition:** Same as #159 but the distinct cap is `k`; shrink whenever the map holds more than k distinct characters.
 
 **Variation:** Parameterized generalization of #159 — replace the hard-coded `2` with `k`.
+
+**Variables:** `freq` = map char -> count (size = distinct chars) · `i` = left edge, `j` = right edge · `result` = longest window with at most `k` distinct · `k` = distinct cap
+**Pseudocode:**
+```
+freq = empty map; i = 0; result = 0
+for j = 0..len-1:
+    freq[s[j]] = freq[s[j]] + 1
+    while freq has more than k distinct chars:       (shrink)
+        c = s[i]; i = i + 1
+        freq[c] = freq[c] - 1; if freq[c] == 0 remove c
+    result = max(result, j - i + 1)
+return result
+```
 
 ```java
 class Solution {
@@ -3953,6 +5923,18 @@ class Solution {
 **Intuition:** "Average ≥ threshold" over fixed width k is just "sum ≥ k·threshold"; slide a width-k window and count the hits.
 
 **Variation:** fixed-size sliding window. To avoid floating-point division, compare `windowSum >= k * threshold`.
+
+**Variables:** `target` = `k * threshold` (avoids division) · `windowSum` = running window sum · `count` = qualifying windows · `i` = left edge, `j` = right edge · `k` = window size
+**Pseudocode:**
+```
+target = k * threshold; windowSum = 0; count = 0; i = 0
+for j = 0..n-1:
+    windowSum = windowSum + arr[j]
+    if window size (j - i + 1) == k:
+        if windowSum >= target: count = count + 1
+        windowSum = windowSum - arr[i]; i = i + 1   (slide, stay size k)
+return count
+```
 ```java
 class Solution {
     public int numOfSubarrays(int[] arr, int k, int threshold) {
@@ -3983,6 +5965,25 @@ class Solution {
 **Intuition:** Every candidate substring has fixed length `words.length * wordLen`. Slide a word-aligned window: start at each offset `0..wordLen-1` and move in steps of `wordLen`, maintaining a frequency map of words seen.
 
 **Algorithm:** For each starting offset, run a sliding window over words. Track a `seen` map and a `count` of matched words; shrink from the left when a word over-fills or is unknown. Record when `count == words.length`.
+
+**Variables:** `need` = required count per word · `wordLen`/`total`/`windowLen` = word size, word count, full window length · `offset` = word-alignment start (0..wordLen-1) · `i` = left edge (in chars), `j` = right edge stepping by wordLen · `seen` = word counts in current window · `count` = matched words
+**Pseudocode:**
+```
+build need from words; if s shorter than windowLen, return empty
+for offset = 0..wordLen-1:                       (each word-aligned starting phase)
+    i = offset; count = 0; seen = empty
+    for j = offset, j+wordLen <= len(s), step wordLen:
+        word = s[j .. j+wordLen)
+        if word is in need:
+            seen[word] = seen[word] + 1; count = count + 1
+            while seen[word] > need[word]:        (too many -> shrink from left)
+                left = s[i .. i+wordLen); seen[left] = seen[left] - 1
+                count = count - 1; i = i + wordLen
+            if count == total: append i to result
+        else:                                     (unknown word -> reset past it)
+            clear seen; count = 0; i = j + wordLen
+return result
+```
 
 ```java
 class Solution {
@@ -4038,6 +6039,19 @@ class Solution {
 
 **Algorithm:** Fixed-size sliding window of length 10. Use a `seen` set to detect duplicates and a `result` set to avoid reporting the same sequence twice.
 
+**Variables:** `seen` = substrings encountered once · `result` = substrings found at least twice (set, dedupes) · `i` = left edge, `j` = right edge, fixed window of size 10
+**Pseudocode:**
+```
+seen = empty set; result = empty set; i = 0
+for j = 0..len-1:
+    if window size (j - i + 1) == 10:
+        window = s[i .. j]
+        if window was already in seen: add window to result   (duplicate)
+        otherwise add window to seen
+        i = i + 1                                              (slide, stay size 10)
+return result as a list
+```
+
 ```java
 class Solution {
     public List<String> findRepeatedDnaSequences(String s) {
@@ -4068,6 +6082,26 @@ class Solution {
 **Intuition:** "At least k" is not monotone for a single window, so fix the number of distinct characters allowed. For each target `unique` from 1 to 26, run a max-window that holds exactly `unique` distinct chars, and record when all of them meet the count `k`.
 
 **Algorithm:** Outer loop over `unique` (1..26). Inner sliding window tracks `count[ch-'a']`, the number of distinct chars, and how many of them reach `k`. Shrink while distinct exceeds `unique`. Record when distinct equals `unique` and all are at count k.
+
+**Variables:** `unique` = fixed distinct-char target this pass (1..26) · `count[]` = char counts in window · `distinct` = distinct chars present · `atLeastK` = how many of them reach count `k` · `i` = left edge, `j` = right edge · `result` = best valid length
+**Pseudocode:**
+```
+result = 0
+for unique = 1..26:                              (fix distinct count to make it monotone)
+    count = all 0; i = 0; distinct = 0; atLeastK = 0
+    for j = 0..len-1:
+        if count[s[j]] == 0: distinct = distinct + 1
+        count[s[j]] = count[s[j]] + 1
+        if count[s[j]] == k: atLeastK = atLeastK + 1
+        while distinct > unique:                 (shrink to keep at most `unique` distinct)
+            if count[s[i]] == k: atLeastK = atLeastK - 1
+            count[s[i]] = count[s[i]] - 1
+            if count[s[i]] == 0: distinct = distinct - 1
+            i = i + 1
+        if distinct == unique and atLeastK == unique:
+            result = max(result, j - i + 1)      (all distinct chars hit count k)
+return result
+```
 
 ```java
 class Solution {
@@ -4115,6 +6149,19 @@ class Solution {
 
 **Algorithm:** Max-variable sliding window. Track `zeros`; shrink from the left while `zeros > 1`.
 
+**Variables:** `i` = left edge, `j` = right edge · `zeros` = 0s in window (invalid when > 1) · `result` = longest window with at most one zero
+**Pseudocode:**
+```
+i = 0; zeros = 0; result = 0
+for j = 0..n-1:
+    if nums[j] == 0: zeros = zeros + 1
+    while zeros > 1:                       (second zero entered -> shrink)
+        if nums[i] == 0: zeros = zeros - 1
+        i = i + 1
+    result = max(result, j - i + 1)
+return result
+```
+
 ```java
 class Solution {
     public int findMaxConsecutiveOnes(int[] nums) {
@@ -4146,6 +6193,20 @@ class Solution {
 **Intuition:** Precompute every window sum of size k, then for each middle window pick the best left window to its left and the best right window to its right.
 
 **Algorithm:** Fixed window sums into `windowSum`. Build `left[m]` = index of best window in `[0..m]` and `right[m]` = index of best window in `[m..end]`. Sweep the middle window and combine.
+
+**Variables:** `windowSum[]` = sum of the size-k window starting at each index (built with `i`/`j` fixed window) · `left[m]`/`right[m]` = best window start at or before/after m · `mid` = scanned middle window · `result` = the three start indices · `maxTotal` = best combined sum
+**Pseudocode:**
+```
+windowSum: slide a fixed size-k window (i=left, j=right), store each window's sum
+left[m]  = index of best window in [0..m]   (sweep left to right, > to keep earliest on ties)
+right[m] = index of best window in [m..end] (sweep right to left, >= to keep earliest on ties)
+maxTotal = -1; result = [-1,-1,-1]
+for mid = k .. numWindows-1-k:               (middle window leaves room on both sides)
+    l = left[mid - k]; r = right[mid + k]    (best non-overlapping left and right)
+    total = windowSum[l] + windowSum[mid] + windowSum[r]
+    if total > maxTotal: maxTotal = total; result = [l, mid, r]
+return result
+```
 
 ```java
 class Solution {
@@ -4205,6 +6266,19 @@ class Solution {
 
 **Algorithm:** Maintain a running product. Shrink from the left while `product >= k`. Add `j - i + 1` to the count at each step.
 
+**Variables:** `i` = left edge, `j` = right edge · `product` = running product of the window · `result` = count of qualifying subarrays · `k` = product bound
+**Pseudocode:**
+```
+if k <= 1: return 0                       (no positive product can be < 1)
+i = 0; product = 1; result = 0
+for j = 0..n-1:
+    product = product * nums[j]
+    while product >= k:                   (shrink until product < k)
+        product = product / nums[i]; i = i + 1
+    result = result + (j - i + 1)         (every subarray ending at j that is valid)
+return result
+```
+
 ```java
 class Solution {
     public int numSubarrayProductLessThanK(int[] nums, int k) {
@@ -4235,6 +6309,24 @@ class Solution {
 **Intuition:** Walk forward matching `s2` as a subsequence; once fully matched at index `j`, walk backward to tighten the start, giving the smallest window ending at `j`. Restart the forward scan just past that start.
 
 **Algorithm:** Two-pointer subsequence match. Forward pass advances `k` over `s2`; when `k` reaches the end, scan back to find the matching start, record the window, then resume scanning after the start position.
+
+**Variables:** `n`/`m` = lengths of s1/s2 · `j` = forward scanner over s1 · `k` = pointer into s2 · `i` = backward scanner finding the tight start · `start`/`minLen` = best window start and length
+**Pseudocode:**
+```
+start = -1; minLen = +infinity; k = 0
+for j = 0..n-1:
+    if s1[j] == s2[k]:                        (matched next char of s2)
+        k = k + 1
+        if k == m:                            (s2 fully matched ending at j)
+            end = j + 1; i = j; k = m - 1
+            while k >= 0:                      (walk back to tightest start)
+                if s1[i] == s2[k]: k = k - 1
+                i = i - 1
+            i = i + 1; k = 0                   (i now at window start)
+            if (end - i) < minLen: minLen = end - i; start = i
+            j = i                              (resume scanning just after start)
+return substring [start, start+minLen) or "" if start == -1
+```
 
 ```java
 class Solution {
@@ -4281,6 +6373,30 @@ class Solution {
 **Intuition:** Binary search the answer length: if a duplicate of length `L` exists, a duplicate of any shorter length also exists. Check each candidate length with a rolling hash over a fixed-size window.
 
 **Algorithm:** Binary search on length `L`. For each `L`, slide a window of size `L`, compute its rolling (Rabin-Karp) hash, and store hashes in a set; a collision (verified by substring compare) means a duplicate of length `L` exists.
+
+**Variables:** `lo`/`hi` = binary-search bounds on the answer length · `len` = candidate length · `result` = longest duplicate found · in `search`: `hash`/`power` = rolling hash and `base^(len-1)` · `seen` = hash -> start indices · `i` = window left edge, `j` = window right edge
+**Pseudocode:**
+```
+binary search the length:
+    lo = 1; hi = n-1; result = ""
+    while lo <= hi:
+        len = mid of [lo, hi]
+        start = search(s, len)                  (does a duplicate of this length exist?)
+        if start != -1: result = s[start, start+len); lo = len + 1   (try longer)
+        else: hi = len - 1                                            (try shorter)
+    return result
+
+search(s, len):                                 (rolling hash over a fixed window of size len)
+    hash = hash of first window [0, len); power = base^(len-1)
+    seen = { hash : [0] }; i = 1
+    for j = len .. len(s)-1:
+        roll hash: remove char i-1, add char j
+        window = s[i, j]
+        for each stored index with the same hash:
+            if its substring equals window: return i   (verified duplicate)
+        record i under hash; i = i + 1
+    return -1
+```
 
 ```java
 class Solution {
@@ -4345,6 +6461,19 @@ class Solution {
 
 **Algorithm:** Sort. Max-variable sliding window over a running `sum`. Cost to level the window up to `nums[j]` is `(long)(j - i + 1) * nums[j] - sum`; shrink while that exceeds `k`. Track the largest window size.
 
+**Variables:** `i` = left edge, `j` = right edge (in sorted array; `nums[j]` is the window max and cheapest target) · `sum` = window sum · `result` = largest achievable window size · `k` = increment budget
+**Pseudocode:**
+```
+sort nums                                  (so the window max is its rightmost element)
+i = 0; result = 0; sum = 0
+for j = 0..n-1:
+    sum = sum + nums[j]
+    while (window size) * nums[j] - sum > k:   (cost to raise all to nums[j] exceeds budget -> shrink)
+        sum = sum - nums[i]; i = i + 1
+    result = max(result, j - i + 1)
+return result
+```
+
 ```java
 class Solution {
     public int maxFrequency(int[] nums, int k) {
@@ -4378,6 +6507,19 @@ Store that X in a HashMap for O(1) lookup.
 ---
 
 ## Core Template
+
+**Variables:** `map` = prefixSum→count or index seen so far · `sum` = running prefix sum · `lookup` = the complement prefix we search for · `i` = current scan position
+**Pseudocode:**
+```
+create empty map of prefix → (count or index)
+seed map with prefix 0 (count=1 for counting, index=-1 for length)
+sum = 0
+for each index i:
+    add nums[i] to sum
+    lookup = transform(sum)        // sum-k, sum%k, etc.
+    use map.get(lookup) to update result
+    store sum (or sum%k) into map with count or index i
+```
 
 ```java
 // a subarray is the difference of two prefixes; remember prefixes seen so far and look up the complement.  — WHEN: "subarray sum equals/divisible by k", "longest subarray with sum X" — anything reducible to prefix[r]-prefix[l]
@@ -4431,6 +6573,19 @@ Read the two map-value modes first: **count** problems store `prefix sum → how
 
 **Intuition:** A subarray summing to k ends here for every earlier prefix equal to `sum - k`; count those prefixes.
 
+**Variables:** `map` = prefixSum→count of times seen · `sum` = running prefix sum · `count` = answer (subarrays summing to k) · `num` = current element
+**Pseudocode:**
+```
+create empty map of prefixSum → count
+seed map with (0 → 1)            // empty prefix counts once
+sum = 0, count = 0
+for each num in nums:
+    add num to sum
+    count += how many earlier prefixes equal sum-k
+    increment map count for sum
+return count
+```
+
 ```java
 class Solution {
     public int subarraySum(int[] nums, int k) {
@@ -4458,6 +6613,21 @@ class Solution {
 **Lookup:** if `sum - k` was seen at index `p`, length = `i - p`. Only keep first occurrence (maximizes length).
 
 **Intuition:** Same complement as #560, but store the earliest index so `i - p` gives the longest subarray summing to k.
+
+**Variables:** `map` = prefixSum→first index seen · `sum` = running prefix sum · `maxLen` = longest subarray length found · `i` = current index
+**Pseudocode:**
+```
+create empty map of prefixSum → first index
+seed map with (0 → -1)           // empty prefix at virtual index -1
+sum = 0, maxLen = 0
+for i from 0 to n-1:
+    add nums[i] to sum
+    if sum-k was seen before:
+        maxLen = max(maxLen, i - index where sum-k was first seen)
+    if sum not in map:
+        store sum → i          // keep earliest only
+return maxLen
+```
 
 ```java
 class Solution {
@@ -4490,6 +6660,19 @@ class Solution {
 
 **Intuition:** Two prefixes with the same remainder bracket a subarray divisible by k; count how many share each remainder.
 
+**Variables:** `map` = remainder(sum%k)→count of times seen · `sum` = running prefix sum mod k (normalized non-negative) · `count` = answer · `num` = current element
+**Pseudocode:**
+```
+create empty map of remainder → count
+seed map with (0 → 1)            // empty prefix has remainder 0
+sum = 0, count = 0
+for each num in nums:
+    sum = (sum + num) mod k, normalized to be non-negative
+    count += how many earlier prefixes share this remainder
+    increment map count for sum
+return count
+```
+
 ```java
 class Solution {
     public int subarraysDivByK(int[] nums, int k) {
@@ -4517,6 +6700,21 @@ class Solution {
 **Key difference from #974:** store first index (not count), check gap, return on first hit.
 
 **Intuition:** Same-remainder pair means a divisible subarray; store the earliest index so the gap `i - p >= 2` proves length ≥ 2.
+
+**Variables:** `map` = remainder(sum%k)→first index seen · `sum` = running prefix sum mod k (normalized non-negative) · `i` = current index
+**Pseudocode:**
+```
+create empty map of remainder → first index
+seed map with (0 → -1)           // empty prefix at virtual index -1
+sum = 0
+for i from 0 to n-1:
+    sum = (sum + nums[i]) mod k, normalized to be non-negative
+    if remainder sum was seen before:
+        if i - first index of sum >= 2: return true
+    else:
+        store sum → i            // keep earliest only
+return false
+```
 
 ```java
 class Solution {
@@ -4547,6 +6745,20 @@ class Solution {
 **Key difference:** tree DFS — must **backtrack** (decrement count) when leaving a node, so sibling subtrees don't share state.
 
 **Intuition:** Apply the #560 prefix-count idea along each root-to-node path; undo the prefix on the way back up so branches stay independent.
+
+**Variables:** `map` = path prefixSum→count seen on current root-to-node path · `sum` = running prefix sum down the path · `node` = current tree node · `count` = paths ending at/below this node
+**Pseudocode:**
+```
+create map of prefixSum → count, seeded with (0 → 1)
+dfs(root, sum=0):
+    if node is null: return 0
+    add node value to sum
+    count = how many path prefixes equal sum-target
+    increment map count for sum            // add this node's prefix
+    count += dfs(left) + dfs(right)
+    decrement map count for sum            // backtrack before returning
+    return count
+```
 
 ```java
 class Solution {
@@ -4625,6 +6837,18 @@ map.put(0, 1);      // ✗ compile error: int boxes to Integer, not Long
 
 **Algorithm:** HashMap complement lookup. As you scan, for each `nums[i]` check whether its complement `target - nums[i]` was already seen. This is the same "has a value been seen before?" idea as prefix-sum problems, but the key is the raw value (not a running sum).
 
+**Variables:** `map` = value→index seen so far · `complement` = the partner value `target - nums[i]` we need · `i` = current index
+**Pseudocode:**
+```
+create empty map of value → index
+for i from 0 to n-1:
+    complement = target - nums[i]
+    if complement already in map:
+        return [index of complement, i]
+    store nums[i] → i             // after the check, so we never pair with self
+return [-1, -1]
+```
+
 ```java
 class Solution {
     public int[] twoSum(int[] nums, int target) {
@@ -4694,6 +6918,16 @@ Binary search appears in two forms: searching an **array index**, or searching a
 
 **There is one binary search.** Define a monotone `condition(k)` (`false…false TRUE…true`); the loop returns the **first `k` where `condition(k)` is true**. Then look at `i`: if `i == n` no index qualified, otherwise `i` is the boundary — check the value to decide.
 
+**Variables:** `[i, j)` = half-open search range (answer lives in here) · `k` = midpoint · `condition(k)` = monotone test, false…false then TRUE…true; answer is the first `k` it holds
+**Pseudocode:**
+```
+i = 0, j = length        # half-open [i, j)
+while range non-empty (i < j):
+    k = midpoint of i and j
+    if condition(k) is false: answer is to the right, set i = k+1
+    else: k might be the answer, set j = k
+# i is the first index satisfying condition (or == length if none)
+```
 ```java
 int i = 0, j = nums.length;       // [i, j)
 // find first k that meets condition(k)
@@ -4763,6 +6997,18 @@ while (i < j) {
 
 **Solution 1 — lowerBound (look at `i`):**
 
+**Variables:** `[i, j)` = half-open range over indices · `k` = midpoint · `condition(k)` = `nums[k] >= target` (first slot at-or-past target) · `target` = value sought
+**Pseudocode:**
+```
+i = 0, j = n
+while i < j:
+    k = midpoint
+    if nums[k] < target: condition false, go right (i = k+1)
+    else: condition true, k might be it (j = k)
+# i = first index with nums[i] >= target
+if i == n or nums[i] != target: return -1
+return i
+```
 ```java
 class Solution {
     public int search(int[] nums, int target) {
@@ -4784,6 +7030,18 @@ class Solution {
 
 **Solution 2 — upperBound (look at `i - 1`):**
 
+**Variables:** `[i, j)` = half-open range over indices · `k` = midpoint · `condition(k)` = `nums[k] > target` (first slot strictly past target) · answer candidate is `i - 1`
+**Pseudocode:**
+```
+i = 0, j = n
+while i < j:
+    k = midpoint
+    if nums[k] <= target: condition false, go right (i = k+1)
+    else: condition true, k might be it (j = k)
+# i = first index with nums[i] > target, so target (if present) is at i-1
+if i == 0 or nums[i-1] != target: return -1
+return i - 1
+```
 ```java
 class Solution {
     public int search(int[] nums, int target) {
@@ -4820,6 +7078,15 @@ class Solution {
 
 **Intuition:** Find the boundary where "< target" flips to "≥ target" (first position), and the next boundary just past target.
 
+**Variables:** `[i, j)` = half-open range in each helper · `k` = midpoint · `lo` = lowerBound result (first `>= target`) · lowerBound `condition(k)` = `nums[k] >= target`; upperBound `condition(k)` = `nums[k] > target`
+**Pseudocode:**
+```
+lo = lowerBound(target)                 # first index >= target
+if lo == n or nums[lo] != target: return {-1, -1}   # absent
+return {lo, upperBound(target) - 1}     # last = (first > target) - 1
+lowerBound: [i, j) loop, go right while nums[k] < target, return i
+upperBound: same loop, go right while nums[k] <= target, return i
+```
 ```java
 class Solution {
     public int[] searchRange(int[] nums, int target) {
@@ -4876,6 +7143,16 @@ So a single `lo == n || nums[lo] != target` test handles all three "absent" buck
 
 **Intuition:** The insert position is the first index whose value is ≥ target — exactly `lowerBound`.
 
+**Variables:** `[i, j)` = half-open range over indices · `k` = midpoint · `condition(k)` = `arr[k] >= target` (first slot at-or-past target) · answer = `i`
+**Pseudocode:**
+```
+i = 0, j = n
+while i < j:
+    k = midpoint
+    if arr[k] < target: condition false, go right (i = k+1)
+    else: condition true, k might be it (j = k)
+return i        # the insert position (lowerBound)
+```
 ```java
 class Solution {
     public int searchInsert(int[] arr, int target) {
@@ -4904,6 +7181,25 @@ class Solution {
 
 **Intuition:** First locate the rotation point with a boundary search, then the array splits into one sorted segment that must contain target — run a plain `lowerBound` there.
 
+**Variables:** `[i, j)` = half-open range (reused for both searches) · `k` = midpoint · `pivot` = index of the minimum (rotation point); search-1 `condition(k)` = `nums[k] <= nums[n-1]` (k in the low run) · `lo`/`hi` = bounds of the sorted segment holding target; search-2 `condition(k)` = `nums[k] >= target`
+**Pseudocode:**
+```
+# 1) find pivot (index of minimum) over [0, n-1)
+while i < j:
+    k = midpoint
+    if nums[k] > nums[n-1]: still in high run, go right (i = k+1)
+    else: k might be the pivot (j = k)
+pivot = i
+# 2) pick the sorted segment that can contain target
+if pivot==0 or target <= nums[n-1]: segment = [pivot, n)   # right part
+else: segment = [0, pivot)                                  # left part
+# lowerBound target within that segment
+while i < j:
+    k = midpoint
+    if nums[k] < target: go right (i = k+1)
+    else: j = k
+return (nums[i] == target) ? i : -1
+```
 ```java
 class Solution {
     public int search(int[] nums, int target) {
@@ -4952,6 +7248,16 @@ Both loops are the standard `[i, j)` template; the only post-step is the same `i
 
 **Intuition:** Always walk uphill — an upward slope guarantees a peak to the right, so the slope direction is the "condition".
 
+**Variables:** `[i, j)` = half-open range with `j = n-1` (loop reads `arr[k+1]`) · `k` = midpoint · `condition(k)` = `arr[k] >= arr[k+1]` (slope down → peak at k or left)
+**Pseudocode:**
+```
+i = 0, j = n-1            # j = n-1 because we read arr[k+1]
+while i < j:
+    k = midpoint
+    if arr[k] < arr[k+1]: slope up, condition false, go right (i = k+1)
+    else: slope down, k might be a peak (j = k)
+return i        # a peak index
+```
 ```java
 class Solution {
     public int findPeakElement(int[] arr) {
@@ -4999,6 +7305,17 @@ Search on the **answer value** itself, not an array index. All use half-open `[i
 
 **Intuition:** Feasibility is monotonic in speed (faster always works), so binary search the speed axis for the smallest that finishes in time.
 
+**Variables:** `[i, j)` = half-open range over candidate speeds · `k` = midpoint speed · `condition(k)` = `canFinish(speed=k)` (hours <= h); MINIMIZE → answer = `i`
+**Pseudocode:**
+```
+i = 1, j = max(piles)        # search the speed axis
+while i < j:
+    k = midpoint
+    if not canFinish(k): too slow, condition false, go right (i = k+1)
+    else: k might be the answer (j = k)
+return i        # smallest feasible speed
+# canFinish(speed): sum of ceil(pile/speed) hours, true if <= h
+```
 ```java
 class Solution {
     public int minEatingSpeed(int[] piles, int h) {
@@ -5032,6 +7349,17 @@ class Solution {
 
 **Intuition:** Bigger capacity is always feasible, so binary search capacity for the smallest that ships within the day budget.
 
+**Variables:** `[i, j)` = half-open range over capacities · `k` = midpoint capacity · `condition(k)` = `canShip(capacity=k)` (days needed <= days); MINIMIZE → answer = `i`
+**Pseudocode:**
+```
+i = max(weights), j = sum(weights)        # smallest fits heaviest; largest ships all in one day
+while i < j:
+    k = midpoint
+    if not canShip(k): too small, condition false, go right (i = k+1)
+    else: k might be the answer (j = k)
+return i        # smallest feasible capacity
+# canShip(cap): greedily fill days, count days, true if <= days
+```
 ```java
 class Solution {
     public int shipWithinDays(int[] weights, int days) {
@@ -5069,6 +7397,17 @@ class Solution {
 
 **Intuition:** A larger allowed max-sum needs fewer parts, so binary search that cap for the smallest splittable into ≤ m parts.
 
+**Variables:** `[i, j)` = half-open range over max-sum caps · `k` = midpoint cap · `condition(k)` = `canSplit` into <= m parts with cap k; MINIMIZE → answer = `i`
+**Pseudocode:**
+```
+i = max(nums), j = sum(nums)        # cap must hold biggest element; whole array is one part at most
+while i < j:
+    k = midpoint
+    if not canSplit(k): cap too small, condition false, go right (i = k+1)
+    else: k might be the answer (j = k)
+return i        # smallest feasible cap
+# canSplit(cap): greedily form parts not exceeding cap, true if parts <= m
+```
 ```java
 class Solution {
     public int splitArray(int[] nums, int m) {
@@ -5106,6 +7445,17 @@ class Solution {
 
 **Intuition:** A bigger divisor shrinks the sum, so the condition flips false→true; binary search for the smallest divisor that fits the threshold.
 
+**Variables:** `[i, j)` = half-open range over divisors · `k` = midpoint divisor · `condition(k)` = `divSum(k) <= threshold`; MINIMIZE → answer = `i`
+**Pseudocode:**
+```
+i = 1, j = max(nums)        # bigger divisor shrinks the ceil-sum
+while i < j:
+    k = midpoint
+    if divSum(k) > threshold: divisor too small, condition false, go right (i = k+1)
+    else: k might be the answer (j = k)
+return i        # smallest feasible divisor
+# divSum(d): sum of ceil(num/d) over all nums
+```
 ```java
 class Solution {
     public int smallestDivisor(int[] nums, int threshold) {
@@ -5139,6 +7489,17 @@ class Solution {
 
 **Intuition:** A larger target-minimum yields fewer pieces, so feasibility flips true→false. MAXIMIZE = search the FIRST INFEASIBLE minimum and step back one: `condition(k) = !canDivide(k)` (pieces `< k+1`), false…false TRUE…true. Half-open `[lo, hi+1)`, return `i - 1` — no ceiling mid needed.
 
+**Variables:** `[i, j)` = half-open range over candidate minimum-sweetness values · `m` = midpoint candidate · `condition(m)` = `!canDivide` into k+1 pieces each `>= m` (first INFEASIBLE); MAXIMIZE → answer = `i - 1`
+**Pseudocode:**
+```
+i = min(s), j = sum(s)/(k+1) + 1        # half-open [lo, hi+1)
+while i < j:
+    m = midpoint
+    if canDivide(m): feasible, condition false, go right (i = m+1)
+    else: infeasible, m might be the boundary (j = m)
+return i - 1        # last feasible minimum
+# canDivide(minSweet): greedily count pieces each summing >= minSweet, true if count >= k+1
+```
 ```java
 class Solution {
     public int maximizeSweetness(int[] s, int k) {
@@ -5196,6 +7557,21 @@ so the `i+1 == j` infinite-loop trap of `i = k` simply never arises.
 
 **Intuition:** Pick a split of the smaller array; the rest of the split is forced. Shrink the partition until the left half's max ≤ the right half's min, then the median falls out of the boundary values.
 
+**Variables:** `[i, j)` = half-open range over cuts `k` in the smaller array · `k` = cut in nums1 · `cut2 = half - k` = forced cut in nums2 · `left1`/`right1`/`left2`/`right2` = boundary values around the two cuts · `condition(k)` = `left2 <= right1` (cut k is a valid partition)
+**Pseudocode:**
+```
+ensure nums1 is the smaller array (else recurse swapped)
+half = (m+n+1)/2
+i = max(0, half-n), j = min(m, half) + 1        # cuts keeping cut2 in [0, n]
+while i < j:
+    k = midpoint; cut2 = half - k
+    right1 = nums1[k] (or +inf), left2 = nums2[cut2-1] (or -inf)
+    if left2 > right1: condition false, go right (i = k+1)
+    else: valid partition, k might be it (j = k)
+# i is the valid cut; read left1/right1/left2/right2 around both cuts
+if total length odd: return max(left1, left2)
+else: return (max(left1,left2) + min(right1,right2)) / 2
+```
 ```java
 class Solution {
     public double findMedianSortedArrays(int[] nums1, int[] nums2) {
@@ -5246,6 +7622,17 @@ class Solution {
 
 **Intuition:** Feasibility `k*k <= x` is true…true then false as k grows. MAXIMIZE = find the FIRST INFEASIBLE k with `condition(k) = k*k > x` (false…false TRUE…true), over `[1, x+1)`, and return `i - 1` — the largest k still feasible. No ceiling mid needed.
 
+**Variables:** `[i, j)` = half-open range over candidate roots · `k` = midpoint candidate · `condition(k)` = `k*k > x` (first INFEASIBLE); MAXIMIZE → answer = `i - 1`
+**Pseudocode:**
+```
+if x < 2: return x
+i = 1, j = x + 1        # half-open [1, x+1)
+while i < j:
+    k = midpoint
+    if k*k <= x: feasible, condition false, go right (i = k+1)
+    else: infeasible, k might be the boundary (j = k)
+return i - 1        # largest k with k*k <= x
+```
 ```java
 class Solution {
     public int mySqrt(int x) {
@@ -5276,6 +7663,18 @@ class Solution {
 
 **Intuition:** The layout means the whole matrix reads as a single sorted sequence; map a flat index to `(row, col)` and run a standard `[i, j)` lowerBound, then verify the landed value.
 
+**Variables:** `[i, j)` = half-open range over flat indices `0..m*n` · `k` = midpoint flat index, mapped to `matrix[k/n][k%n]` · `condition(k)` = `value >= target` · `target` = value sought
+**Pseudocode:**
+```
+i = 0, j = m*n        # treat matrix as one flat sorted array
+while i < j:
+    k = midpoint
+    value = matrix[k/n][k%n]        # flatten index to 2D
+    if value < target: condition false, go right (i = k+1)
+    else: k might be it (j = k)
+# i is lowerBound; verify the landed cell
+return i < m*n and matrix[i/n][i%n] == target
+```
 ```java
 class Solution {
     public boolean searchMatrix(int[][] matrix, int target) {
@@ -5307,6 +7706,20 @@ class Solution {
 
 **Intuition:** Duplicates can make both ends equal to the midpoint so neither half looks sorted; in that ambiguous case shrink both bounds by one and retry.
 
+**Variables:** `[i, j)` = half-open range (last in-range element is `arr[j-1]`) · `k` = midpoint · branching search (no single monotone condition because duplicates break monotonicity)
+**Pseudocode:**
+```
+i = 0, j = n        # last element is arr[j-1]
+while i < j:
+    k = midpoint
+    if arr[k] == target: return true
+    if arr[i] == arr[k] == arr[j-1]: ambiguous duplicates, shrink both ends (i++, j--)
+    elif left half sorted (arr[i] <= arr[k]):
+        if target in [arr[i], arr[k]): go left (j = k) else go right (i = k+1)
+    else:   # right half sorted
+        if target in (arr[k], arr[j-1]]: go right (i = k+1) else go left (j = k)
+return false
+```
 ```java
 class Solution {
     public boolean search(int[] arr, int target) {
@@ -5350,6 +7763,16 @@ class Solution {
 
 **Intuition:** The minimum is the single point where the order breaks; if `arr[k] > arr[j]` the break is to the right, otherwise the min is at k or left.
 
+**Variables:** `[i, j]` = closed range (compares to the running right end `arr[j]`) · `k` = midpoint · `condition(k)` = `arr[k] <= arr[j]` (min is at k or to its left)
+**Pseudocode:**
+```
+i = 0, j = n-1        # compare midpoint to the right end
+while i < j:
+    k = midpoint
+    if arr[k] > arr[j]: break is to the right, condition false, go right (i = k+1)
+    else: min at k or left, k might be it (j = k)
+return arr[i]        # the minimum
+```
 ```java
 class Solution {
     public int findMin(int[] arr) {
@@ -5378,6 +7801,17 @@ class Solution {
 
 **Intuition:** From the top-right, moving left strictly decreases and moving down strictly increases, so each comparison eliminates a full row or column.
 
+**Variables:** `row` = current row (starts at 0) · `col` = current column (starts at last) · staircase walk from the top-right corner · `target` = value sought
+**Pseudocode:**
+```
+start at top-right corner (row=0, col=last)
+while inside the matrix:
+    value = matrix[row][col]
+    if value == target: return true
+    elif value > target: move left (col--)   # current column too big
+    else: move down (row++)                    # current row too small
+return false
+```
 ```java
 class Solution {
     public boolean searchMatrix(int[][] matrix, int target) {
@@ -5407,6 +7841,16 @@ class Solution {
 
 **Intuition:** Versions are good...good then bad...bad once corrupted; this is the classic first-true boundary search.
 
+**Variables:** `[i, j]` = closed range over versions `1..n` · `k` = midpoint version · `condition(k)` = `isBadVersion(k)` (good…good then bad…bad)
+**Pseudocode:**
+```
+i = 1, j = n
+while i < j:
+    k = midpoint
+    if not isBadVersion(k): still good, condition false, go right (i = k+1)
+    else: k might be the first bad (j = k)
+return i        # first bad version
+```
 ```java
 /* The isBadVersion API is defined in the parent class VersionControl.
    boolean isBadVersion(int version); */
@@ -5437,6 +7881,16 @@ public class Solution extends VersionControl {
 
 **Intuition:** `guess(k)` returns `-1` when the pick is lower than `k`, `1` when higher, `0` on a hit. So `guess(k) <= 0` is false…false TRUE…true as `k` grows, and the first true `k` is the answer.
 
+**Variables:** `[i, j)` = half-open range over candidates `1..n` · `k` = midpoint guess · `condition(k)` = `guess(k) <= 0` (k is the pick or pick is lower)
+**Pseudocode:**
+```
+i = 1, j = n + 1
+while i < j:
+    k = midpoint
+    if guess(k) > 0: pick is higher, condition false, go right (i = k+1)
+    else: k is the pick or pick is lower (j = k)
+return i        # the picked number
+```
 ```java
 /* The guess API is defined in the parent class GuessGame.
    int guess(int num);  returns -1 (pick is lower), 1 (pick is higher), or 0 (hit). */
@@ -5467,6 +7921,19 @@ public class Solution extends GuessGame {
 
 **Intuition:** Each house needs the closest heater; the required radius is the largest of those closest distances. Find each house's nearest heater by binary search.
 
+**Variables:** `[i, j)` = half-open range over heater indices (per house) · `k` = midpoint · `condition(k)` = `heaters[k] >= house` (lowerBound) · `distance` = closest heater distance for this house · `result` = max over all houses
+**Pseudocode:**
+```
+sort heaters; result = 0
+for each house:
+    lowerBound first heater >= house over [0, n):
+        if heaters[k] < house: go right (i = k+1) else j = k
+    distance = +inf
+    if i < n: distance = heaters[i] - house        # heater to the right
+    if i > 0: distance = min(distance, house - heaters[i-1])   # also check left neighbor
+    result = max(result, distance)
+return result        # the required radius
+```
 ```java
 class Solution {
     public int findRadius(int[] houses, int[] heaters) {
@@ -5508,6 +7975,16 @@ class Solution {
 
 **Intuition:** Before the unique element each pair starts at an even index; after it, the parity shifts. Force the midpoint even and check whether its partner matches to pick a half.
 
+**Variables:** `[i, j]` = closed range on even indices · `k` = midpoint forced even · `condition(k)` = `arr[k] != arr[k+1]` (single is at k or to its left)
+**Pseudocode:**
+```
+i = 0, j = n-1
+while i < j:
+    k = midpoint; if k is odd, drop to k-1 (force even)
+    if arr[k] == arr[k+1]: pair intact, single is to the right (i = k+2)
+    else: pair broken, single at k or left (j = k)
+return arr[i]        # the single element
+```
 ```java
 class Solution {
     public int singleNonDuplicate(int[] arr) {
@@ -5539,6 +8016,16 @@ class Solution {
 
 **Intuition:** The answer is a contiguous window of size k; search for its start by comparing the distances of the two window edges to x and sliding toward the closer side.
 
+**Variables:** `[i, j]` = closed range over window-start indices `0..n-k` · `mid` = candidate window start · `condition(mid)` = `x - arr[mid] <= arr[mid+k] - x` (left edge at mid is closer than the right edge)
+**Pseudocode:**
+```
+i = 0, j = n-k        # window start range
+while i < j:
+    mid = midpoint
+    if x - arr[mid] > arr[mid+k] - x: right edge closer, shift window right (i = mid+1)
+    else: left edge closer, mid might be the start (j = mid)
+collect arr[i .. i+k-1] as the answer window
+```
 ```java
 class Solution {
     public List<Integer> findClosestElements(int[] arr, int k, int x) {
@@ -5571,6 +8058,18 @@ class Solution {
 
 **Intuition:** The count of pairs with distance ≤ d is monotonic in d, so binary search the distance axis; count pairs ≤ d with a sliding window over the sorted array.
 
+**Variables:** `[i, j]` = closed range over candidate distances · `mid` = candidate distance · `condition(mid)` = `countPairs(dist <= mid) >= k`; MINIMIZE → answer = `i`
+**Pseudocode:**
+```
+sort nums
+i = 0, j = max - min        # search the distance axis
+while i < j:
+    mid = midpoint
+    if countPairs(mid) < k: too few pairs, condition false, go right (i = mid+1)
+    else: mid might be the answer (j = mid)
+return i        # smallest distance with >= k pairs
+# countPairs(maxDist): sliding window over sorted nums, sum (right - left) per right
+```
 ```java
 class Solution {
     public int smallestDistancePair(int[] nums, int k) {
@@ -5610,6 +8109,16 @@ class Solution {
 
 **Intuition:** An upward slope means the peak is strictly to the right; a downward slope means the peak is here or to the left.
 
+**Variables:** `[i, j]` = closed range with `j = n-1` (loop reads `arr[k+1]`) · `k` = midpoint · `condition(k)` = `arr[k] >= arr[k+1]` (slope down → peak at k or left)
+**Pseudocode:**
+```
+i = 0, j = n-1            # j = n-1 because we read arr[k+1]
+while i < j:
+    k = midpoint
+    if arr[k] < arr[k+1]: slope up, condition false, go right (i = k+1)
+    else: slope down, k might be the peak (j = k)
+return i        # peak index
+```
 ```java
 class Solution {
     public int peakIndexInMountainArray(int[] arr) {
@@ -5638,6 +8147,17 @@ class Solution {
 
 **Intuition:** Missing count at each index increases monotonically, so binary search for the first index whose missing count is ≥ k, then offset from the previous element.
 
+**Variables:** `[i, j]` = closed range over indices · `mid` = midpoint · `condition(mid)` = `missingCount(mid) >= k` where `missingCount(idx) = nums[idx] - nums[0] - idx`
+**Pseudocode:**
+```
+i = 0, j = n-1
+while i < j:
+    mid = midpoint
+    if missingCount(mid) < k: too few missing, condition false, go right (i = mid+1)
+    else: mid might be it (j = mid)
+if even nums[n-1] has < k missing: answer lies beyond the array, offset from last element
+else: offset the kth missing from nums[i-1] using its missing count
+```
 ```java
 class Solution {
     public int missingElement(int[] nums, int k) {
@@ -5673,6 +8193,15 @@ class Solution {
 
 **Intuition:** Each row is sorted 0...0 1...1; starting top-right, move left on a 1 (column might be even further left) and down on a 0, tracking the leftmost 1 seen.
 
+**Variables:** `row` = current row (starts at 0) · `col` = current column (starts at last) · `result` = leftmost column with a 1 seen so far (start -1) · staircase walk from the top-right corner
+**Pseudocode:**
+```
+start at top-right corner (row=0, col=last); result = -1
+while inside the matrix:
+    if cell is 1: record col as result; move left (col--)   # maybe further left
+    else: move down (row++)                                  # no 1 in this row at/after col
+return result
+```
 ```java
 /* interface BinaryMatrix {
        public int get(int row, int col);
@@ -5707,6 +8236,18 @@ class Solution {
 
 **Intuition:** Waiting more days only adds bloomed flowers, so feasibility is monotonic; binary search the day axis and greedily count adjacent runs of bloomed flowers.
 
+**Variables:** `[i, j]` = closed range over day counts · `k2` = midpoint day · `condition(k2)` = `canMake(day=k2)` yields >= m bouquets; MINIMIZE → answer = `i`
+**Pseudocode:**
+```
+if m*k > number of flowers: impossible, return -1
+i = min(bloomDay), j = max(bloomDay)        # search the day axis
+while i < j:
+    k2 = midpoint
+    if not canMake(k2): not enough days, condition false, go right (i = k2+1)
+    else: k2 might be the answer (j = k2)
+return i        # smallest feasible day count
+# canMake(day): count adjacent runs of k bloomed flowers, true if bouquets >= m
+```
 ```java
 class Solution {
     public int minDays(int[] bloomDay, int m, int k) {
@@ -5755,6 +8296,16 @@ class Solution {
 
 **Intuition:** At each index the number of missing positives so far is `arr[k] - (k+1)`; binary search the first index whose missing count is ≥ k, then offset.
 
+**Variables:** `[i, j)` = half-open range over indices · `mid` = midpoint · `condition(mid)` = `arr[mid] - (mid+1) >= k` (missing count reaches k) · answer = `i + k`
+**Pseudocode:**
+```
+i = 0, j = n
+while i < j:
+    mid = midpoint
+    if arr[mid] - (mid+1) < k: too few missing, condition false, go right (i = mid+1)
+    else: mid might be it (j = mid)
+return i + k        # i missing-free slots, then the kth missing
+```
 ```java
 class Solution {
     public int findKthPositive(int[] arr, int k) {
@@ -5783,6 +8334,20 @@ class Solution {
 
 **Intuition:** Total cost is the sum of absolute differences; one swap can only help where the closest available nums1 value beats the current difference. Find that closest value by binary search and track the best gain.
 
+**Variables:** `sorted` = sorted copy of nums1 · `total` = sum of |nums1[p]-nums2[p]| · `maxGain` = best reduction from one swap · `[i, j)` = half-open range (per element) · `k` = midpoint · `condition(k)` = `sorted[k] >= target` (lowerBound for `target = nums2[p]`)
+**Pseudocode:**
+```
+sorted = sorted copy of nums1; total = 0; maxGain = 0
+for each p:
+    diff = |nums1[p] - nums2[p]|; total += diff; target = nums2[p]
+    lowerBound first sorted value >= target over [0, n):
+        if sorted[k] < target: go right (i = k+1) else j = k
+    best = diff
+    if i < n: best = min(best, |sorted[i] - target|)        # value at/above target
+    if i > 0: best = min(best, |sorted[i-1] - target|)      # also check left neighbor
+    maxGain = max(maxGain, diff - best)
+return (total - maxGain) mod 1e9+7
+```
 ```java
 class Solution {
     public int minAbsoluteSumDiff(int[] nums1, int[] nums2) {
@@ -5830,6 +8395,18 @@ class Solution {
 
 **Intuition:** Longer pieces produce fewer ribbons, so feasibility flips true→false as length grows. Search the first INFEASIBLE length (`condition(k) = countRibbons(k) < k`, false…false TRUE…true) and step back one; that is the largest feasible length. If no length is feasible the loop lands on `lo`, giving `i - 1 = 0`.
 
+**Variables:** `[i, j)` = half-open range over candidate lengths `[1, max+1)` · `mid` = candidate length · `condition(mid)` = `countRibbons(mid) < k` (first INFEASIBLE length); MAXIMIZE → answer = `i - 1`
+**Pseudocode:**
+```
+max = longest ribbon
+i = 1, j = max + 1        # half-open [1, max+1)
+while i < j:
+    mid = midpoint
+    if countRibbons(mid) >= k: feasible, condition false, go right (i = mid+1)
+    else: infeasible, mid might be the boundary (j = mid)
+return i - 1        # last feasible length (0 if none)
+# countRibbons(length): sum of (ribbon / length) over all ribbons
+```
 ```java
 class Solution {
     public int maxLength(int[] ribbons, int k) {
@@ -5890,6 +8467,24 @@ Inside merge and partition: `i`, `j`, `k` as scan/write pointers (consistent wit
 
 ## Template 1 — Merge Sort
 
+**Variables:** `[start, end)` half-open range being sorted · `mid` = split point · `temp` = scratch buffer · `i` = left scan pointer `[start,mid)` · `j` = right scan pointer `[mid,end)` · `k` = write pointer into temp
+**Pseudocode:**
+```
+mergeSort(nums, start, end):
+    if range has 0 or 1 elements: return        // already sorted
+    mid = midpoint of [start, end)
+    mergeSort left half  [start, mid)
+    mergeSort right half [mid, end)
+    merge the two sorted halves
+
+merge:
+    i = start, j = mid, k = start
+    while either half has elements left:
+        pick smaller front of the two halves (left wins ties → stable)
+        write it to temp[k], advance that half's pointer and k
+    copy temp back into nums[start, end)
+```
+
 ```java
 // split in half until trivially sorted, then merge two sorted halves into one.  — WHEN: need stable sort, sort a linked list, or count cross-pairs (inversions) during the merge.
 // Entry point
@@ -5923,6 +8518,21 @@ private void merge(int[] nums, int start, int mid, int end, int[] temp) {
 ---
 
 ## Template 2 — Quick Sort (3-way Dutch Flag Partition)
+
+**Variables:** `[start, end)` half-open range · `pivot` = chosen partition value · `i` = boundary of `<pivot` region · `k` = scan/cursor pointer · `j` = boundary of `>pivot` region (from the right)
+**Pseudocode:**
+```
+quickSort(nums, start, end):
+    if range has 0 or 1 elements: return
+    pivot = middle element's value
+    i = start, k = start, j = end-1     // [start,i)<p | [i,k)==p | [k,j] unknown | (j,end)>p
+    while k <= j:
+        if nums[k] < pivot:  swap into < region, advance k and i
+        elif nums[k] == pivot: advance k
+        else:                swap to > region, shrink j (don't advance k)
+    recurse on < region [start, i)
+    recurse on > region [k, end)         // ==pivot middle is final
+```
 
 ```java
 // pick a pivot, partition into <pivot | ==pivot | >pivot, recurse on the two ends only.  — WHEN: in-place sort with O(log n) stack; the ==pivot middle is already in final position.
@@ -5962,6 +8572,17 @@ private void swap(int[] nums, int i, int j) {
 
 Extends quick sort: after partition, only recurse into the side that contains `target` index.
 
+**Variables:** `[start, end)` half-open range · `target` = 0-indexed position we want settled · `pivot` = partition value · `i` = boundary of `<pivot` region · `k` = scan/cursor pointer · `j` = boundary of `>pivot` region
+**Pseudocode:**
+```
+quickSelect(nums, start, end, target):
+    pivot = middle element's value
+    partition into [start,i)<p | [i,k)==p | [k,end)>p   // same 3-way as quick sort
+    if target < i:        recurse into left  [start, i)
+    elif target < k:      target sits in ==pivot region → return pivot
+    else:                 recurse into right [k, end)
+```
+
 ```java
 // same partition as quick sort, but recurse into only the one side holding target → O(n) avg.  — WHEN: "k-th largest/smallest", "k closest/most frequent" — you need a position, not a full sort.
 // Returns value at 0-indexed position target after sorting
@@ -5994,6 +8615,18 @@ private int quickSelect(int[] nums, int start, int end, int target) {
 
 O(n + range). Use when values are bounded integers.
 
+**Variables:** `min`/`max` = value range bounds · `buckets[v-min]` = count of value `v` · `i` = write pointer back into arr · `v` = current value index into buckets
+**Pseudocode:**
+```
+if array empty: return
+find min and max values
+buckets = array sized (max-min+1), all zero
+for each x in arr: increment buckets[x-min]      // tally occurrences
+i = 0
+for v from 0 to last bucket:
+    while bucket v still has count: write (v+min) into arr[i], advance i
+```
+
 ```java
 // tally how many times each value occurs, then emit values in order — no comparisons.  — WHEN: integers in a small bounded range; beats O(n log n) when range = O(n).
 public void countingSort(int[] arr) {
@@ -6014,6 +8647,17 @@ public void countingSort(int[] arr) {
 
 **Description:** Sort an integer array. No built-in sort allowed.  
 **Intuition:** Divide and conquer — either split-then-merge (merge sort) or partition-then-recurse (quick sort); both reach O(n log n).
+
+**Variables:** `[start, end)` half-open range · `mid` = split point · `temp` = merge scratch buffer · `pivot` = quick-sort partition value · `i`/`j`/`k` = scan and write pointers
+**Pseudocode:**
+```
+Merge Sort version:
+    mergeSort [0, n): split at mid, sort both halves, merge them
+    merge: walk i over left, j over right, write smaller into temp[k], copy temp back
+Quick Sort version:
+    quickSort [0, n): pick middle pivot, 3-way partition <p | ==p | >p
+    recurse on the < region [start,i) and the > region [k,end)
+```
 
 ```java
 // Merge Sort version
@@ -6079,6 +8723,17 @@ class Solution {
 **Intuition:** Quick select partitions around a pivot and only recurses into the side containing the target rank, so it averages O(n) instead of fully sorting.  
 **Key:** k-th largest = `(n - k)`-th smallest (0-indexed). Quick select, recurse one side only.
 
+**Variables:** `target` = `n-k` (0-indexed position of k-th largest) · `[start, end)` range · `pivot` = partition value · `i`/`k` = `<`/`==` region boundaries · `j` = `>` boundary
+**Pseudocode:**
+```
+target = n - k                       // k-th largest is (n-k)-th smallest
+quickSelect [0, n) for target:
+    pick middle pivot, 3-way partition <p | ==p | >p
+    if target < i:   recurse left  [start, i)
+    elif target < k: return pivot   // target lands in ==pivot region
+    else:            recurse right [k, end)
+```
+
 ```java
 class Solution {
     public int findKthLargest(int[] nums, int k) {
@@ -6118,6 +8773,20 @@ class Solution {
 **Description:** Return the k closest points to origin (0,0). Any order.  
 **Intuition:** Same quick select, but partition on squared distance — once the first k slots are filled with the closest points, their internal order doesn't matter.  
 **Key:** same quick select template; comparator = squared distance (avoid sqrt). After select, first k entries in `[0, k)` are the answer.
+
+**Variables:** `k` = how many closest points wanted · `[start, end)` range · `pivot` = squared distance of pivot point · `i`/`current` = `<`/`==` region boundaries · `j` = `>` boundary · `less`/`equal` = sizes of `<`/`==` regions
+**Pseudocode:**
+```
+quickSelect partitions points so the closest k land in [0, k):
+    if range size <= k: already done, return
+    pivot = squared distance of middle point
+    3-way partition by squared distance: <p | ==p | >p
+    less = size of < region, equal = size of == region
+    if k <= less:          recurse into < region
+    elif k <= less+equal:  first k already in place, return
+    else:                  recurse into > region for remaining (k-less-equal)
+answer = first k points
+```
 
 ```java
 class Solution {
@@ -6165,6 +8834,20 @@ class Solution {
 **Intuition:** Merge sort fits linked lists — there's no random access for quick sort, but splitting at the middle and merging two sorted lists needs only pointer rewiring.  
 **Key:** same merge sort structure — slow/fast pointers to find mid, split, sort halves, merge.
 
+**Variables:** `head` = list start · `slow`/`fast` = pointers to locate the middle (fast moves 2x) · `mid` = head of second half · `left`/`right` = sorted halves · `dummy`/`current` = builder for the merged list
+**Pseudocode:**
+```
+sortList(head):
+    if 0 or 1 nodes: return head
+    advance slow by 1 and fast by 2 to find middle
+    mid = slow.next; cut the list at slow (slow.next = null)
+    left = sortList(first half), right = sortList(second half)
+    return merge(left, right)
+merge(a, b):
+    walk both lists, append smaller node to current, advance
+    attach whatever remains; return dummy.next
+```
+
 ```java
 class Solution {
     public ListNode sortList(ListNode head) {
@@ -6206,6 +8889,15 @@ class Solution {
 **Intuition:** Order two numbers by which concatenation is bigger (`b+a` vs `a+b`) — this pairwise rule sorts the whole list into the largest possible string.  
 **Key:** custom comparator — between `a` and `b`, prefer whichever concatenation `a+b` vs `b+a` is lexicographically larger.
 
+**Variables:** `strs` = numbers as strings · `a`/`b` = two strings being compared · comparator key = compare `b+a` vs `a+b`
+**Pseudocode:**
+```
+convert every number to a string
+sort strings by: a before b if (b+a) < (a+b)   // bigger concatenation comes first
+if the largest string is "0": return "0"        // all zeros case
+join all strings together and return
+```
+
 ```java
 class Solution {
     public String largestNumber(int[] nums) {
@@ -6226,6 +8918,18 @@ class Solution {
 **Description:** For each element, count how many elements to its right are smaller.  
 **Intuition:** During a merge, whenever a left-half element is placed, every right-half element already emitted is both smaller and to its right — so the merge counts the smaller-after-self pairs for free.  
 **Key:** same merge sort template but track original indices. When element from left side is placed, `j - mid` elements from the right side that have already been placed are all smaller and to its right.
+
+**Variables:** `result[orig]` = smaller-after-self count per original index · `indices` = positions sorted by value (sort indices, not values) · `[start, end)` range · `mid` = split · `i`/`j` = left/right scan over indices · `k` = write pointer into temp
+**Pseudocode:**
+```
+indices = [0,1,...,n-1]
+mergeSort over indices, comparing by nums[indices[..]]:
+    merge: when placing a left element (nums[indices[i]] <= nums[indices[j]]):
+        result[indices[i]] += (j - mid)   // right elements already emitted are smaller & to the right
+    else place the right element
+    copy merged indices back
+collect result into a list
+```
 
 ```java
 class Solution {
@@ -6271,6 +8975,18 @@ class Solution {
 **Description:** Merge all overlapping intervals. Return array of non-overlapping intervals.  
 **Intuition:** After sorting by start, overlaps can only be with the most recent interval, so one scan either extends its end or appends a new one.  
 **Key:** sort by start time; greedily extend the last interval's end when overlap found.
+
+**Variables:** `intervals` sorted by start · `result` = list of merged intervals · `iv` = current interval · last interval's `[1]` = end being extended
+**Pseudocode:**
+```
+sort intervals by start value
+for each interval iv:
+    if result empty OR last result's end < iv.start:  // no overlap
+        append iv as a new interval
+    else:                                              // overlap
+        extend last result's end to max(last end, iv.end)
+return result as array
+```
 
 ```java
 class Solution {
@@ -6328,6 +9044,16 @@ quickSort(nums, start, end)   →  sorts [start, end)
 
 **Variation:** Fill from the END backwards using three pointers `i` (end of nums1 valid data), `j` (end of nums2), `k` (end of merged result). This avoids the need to shift elements.
 
+**Variables:** `i` = last valid index of nums1 (m-1) · `j` = last index of nums2 (n-1) · `k` = write position at the very end of nums1 (m+n-1)
+**Pseudocode:**
+```
+i = m-1, j = n-1, k = m+n-1           // fill from the back
+while both halves have elements:
+    write the larger of nums1[i], nums2[j] into nums1[k], move that pointer and k back
+copy any remaining nums2 elements into the front of nums1
+// remaining nums1 elements are already in place
+```
+
 ```java
 class Solution {
     public void merge(int[] nums1, int m, int[] nums2, int n) {
@@ -6347,6 +9073,21 @@ class Solution {
 **Description:** Given an integer array, count the number of range sums `sum(i,j)` that lie within `[lower, upper]` (inclusive).
 
 **Variation:** Build prefix sum array. Then use modified merge sort — during the merge phase, for each element in the left half, use two sliding pointers `j` and `k` into the right half to count valid prefix sums (those where `arr[k] - arr[i]` falls in range). This gives O(n log n) vs O(n²) brute force.
+
+**Variables:** `prefix` = prefix sum array (length n+1) · `[start, end)` half-open range over prefix · `mid` = split · `i` = left-half element (a range's start prefix) · `j`/`k` = sliding lower/upper bounds into the right half · `count` = valid range sums
+**Pseudocode:**
+```
+build prefix sums; a range sum = prefix[hi] - prefix[lo]
+mergeCount [0, n+1):
+    if 0 or 1 elements: return 0
+    count = mergeCount(left) + mergeCount(right)
+    for each left element i:
+        advance j while prefix[j]-prefix[i] < lower    // first index in range
+        advance k while prefix[k]-prefix[i] <= upper   // first index past range
+        count += k - j                                 // right elements in [lower,upper]
+    sort the two halves (merge phase) so parent sees sorted data
+    return count
+```
 
 ```java
 class Solution {
@@ -6383,6 +9124,22 @@ class Solution {
 ## #164 Maximum Gap
 **Description:** Given an unsorted array, return the maximum difference between successive elements in its sorted form. Must run in linear time.
 **Variation:** bucket sort by pigeonhole principle. With n elements, the max gap is at least `ceil((max-min)/(n-1))`. Place elements into buckets of that size; the max gap spans between one bucket's max and the next non-empty bucket's min.
+
+**Variables:** `min`/`max` = value range · `bucketSize` = floor gap `(max-min)/(n-1)` · `bucketCount` = number of buckets · `bucketMin[b]`/`bucketMax[b]` = extremes within bucket b · `b` = bucket index · `previousMax` = max of last non-empty bucket · `maxGap` = answer
+**Pseudocode:**
+```
+if fewer than 2 elements: return 0
+find min and max; if equal return 0
+bucketSize = max(1, (max-min)/(n-1))     // gap can't be smaller than this
+create bucketCount buckets, track each bucket's min and max
+for each num: drop into bucket (num-min)/bucketSize, update that bucket's min/max
+previousMax = min, maxGap = 0
+for each bucket b in order:
+    skip empty buckets
+    maxGap = max(maxGap, bucketMin[b] - previousMax)   // gap straddles bucket boundary
+    previousMax = bucketMax[b]
+return maxGap
+```
 ```java
 class Solution {
     public int maximumGap(int[] nums) {
@@ -6477,6 +9234,36 @@ Consistent naming throughout: `sentinel`, `previous`, `current`, `next`, `slow`,
 
 ## All Four Templates
 
+**Variables:** `sentinel` = dummy node before head · `previous` = last kept node · `current` = node under inspection · `next` = saved successor · `slow`/`fast` = 1×/2× walkers · `a`/`b` = the two input lists
+**Pseudocode:**
+```
+# 1. DELETE / FILTER
+make sentinel pointing at head; previous = sentinel, current = head
+while current exists:
+    if current should be deleted: rewire previous.next to skip current
+    else: advance previous to current
+    advance current
+return sentinel.next
+# 2. REVERSAL
+previous = null, current = head
+while current exists:
+    save next = current.next
+    point current backward at previous
+    advance previous to current, current to next
+return previous as new head
+# 3. FAST / SLOW
+slow = head, fast = head
+while fast and fast.next exist:
+    advance slow one step, fast two steps
+# slow is at middle (or slow == fast means cycle)
+# 4. MERGE
+make sentinel; current = sentinel
+while both a and b exist:
+    splice the smaller head onto current; advance that list
+    advance current
+attach whichever list remains
+return sentinel.next
+```
 ```java
 // 1. DELETE / FILTER  — sentinel guards head removal; previous tracks last kept node
 // previous always points at the last node you decided to keep, so re-wiring it skips anything unwanted.  — WHEN: "remove / delete / skip nodes by value or duplicate"
@@ -6542,6 +9329,16 @@ return sentinel.next;
 **Description:** Remove all nodes whose value equals `val`.  
 **Delete condition:** `current.val == val`
 
+**Variables:** `sentinel` = dummy before head · `previous` = last kept node · `current` = node under inspection · `val` = value to remove
+**Pseudocode:**
+```
+make sentinel pointing at head; previous = sentinel, current = head
+while current exists:
+    if current.val == val: rewire previous.next to skip current
+    else: advance previous to current
+    advance current
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode removeElements(ListNode head, int val) {
@@ -6568,6 +9365,16 @@ class Solution {
 **Description:** Keep exactly one copy of each value. List is sorted.  
 **Delete condition:** `previous != sentinel && previous.val == current.val`
 
+**Variables:** `sentinel` = dummy before head · `previous` = last kept node · `current` = node under inspection
+**Pseudocode:**
+```
+make sentinel pointing at head; previous = sentinel, current = head
+while current exists:
+    if previous is a real node with same value as current: skip current (drop the duplicate)
+    else: advance previous to current
+    advance current
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode deleteDuplicates(ListNode head) {
@@ -6594,6 +9401,18 @@ class Solution {
 **Description:** Remove ALL nodes that have duplicate values — only distinct-valued nodes remain.  
 **Key difference from #83:** when a duplicate run is detected, skip the entire run (including the first occurrence). Inner `while` advances `current` past the whole run; `previous.next` is rewired to skip all of them.
 
+**Variables:** `sentinel` = dummy before head · `previous` = last kept node · `current` = node under inspection · `dupVal` = value of the run being removed
+**Pseudocode:**
+```
+make sentinel pointing at head; previous = sentinel, current = head
+while current exists:
+    if current starts a duplicate run (current.val == next.val):
+        record dupVal; advance current past every node equal to dupVal
+        rewire previous.next to skip the whole run
+    else:
+        advance previous to current; advance current
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode deleteDuplicates(ListNode head) {
@@ -6623,6 +9442,16 @@ class Solution {
 **Description:** Remove the nth node from the end. Return the head.  
 **Key:** `fast` starts n+1 steps ahead of `slow` (both from sentinel). When `fast == null`, `slow` is just before the target node.
 
+**Variables:** `sentinel` = dummy before head · `fast` = lead pointer · `slow` = trailing pointer (lands just before target) · `n` = offset from the end
+**Pseudocode:**
+```
+make sentinel pointing at head; fast = sentinel, slow = sentinel
+move fast forward n+1 steps
+while fast exists: advance slow and fast together
+# slow now sits just before the node to delete
+rewire slow.next to skip the target
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode removeNthFromEnd(ListNode head, int n) {
@@ -6648,6 +9477,16 @@ class Solution {
 
 **Intuition:** flip each node's arrow to point at the node you just came from; `previous` is the reversed list built so far.
 
+**Variables:** `previous` = reversed list built so far · `current` = node being re-wired · `next` = saved successor
+**Pseudocode:**
+```
+previous = null, current = head
+while current exists:
+    save next = current.next
+    point current backward at previous
+    advance previous to current, current to next
+return previous as new head
+```
 ```java
 class Solution {
     public ListNode reverseList(ListNode head) {
@@ -6670,6 +9509,18 @@ class Solution {
 **Description:** Reverse only the nodes from position `left` to `right` (1-indexed).  
 **Key:** walk `previous` to the node just before `left`. Then insert-at-front `(right - left)` times — each time take `current.next`, unlink it, and attach it right after `previous`.
 
+**Variables:** `sentinel` = dummy before head · `previous` = node just before the reversal region · `current` = first node of the region (stays put, drifts to the tail) · `next` = node being moved to the front · `left`/`right` = 1-indexed bounds
+**Pseudocode:**
+```
+make sentinel pointing at head; previous = sentinel
+walk previous forward left-1 steps (to node before position left)
+current = previous.next
+repeat right-left times:
+    next = current.next               # node just after current
+    unlink next from current
+    splice next in right after previous (front of reversed region)
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode reverseBetween(ListNode head, int left, int right) {
@@ -6696,6 +9547,20 @@ class Solution {
 **Description:** Reverse every consecutive group of k nodes. Leave remaining nodes (< k) as-is.  
 **Key:** `groupPrev` is the tail of the already-processed part. Find the kth node ahead; if it exists, reverse the group using the same insert-at-front technique as #92.
 
+**Variables:** `sentinel` = dummy before head · `groupPrev` = tail of the processed part (node before current group) · `kth` = kth node ahead (end of current group) · `groupNext` = node after the group · `previous`/`current`/`next` = reversal pointers · `tmp` = old group head (becomes new tail)
+**Pseudocode:**
+```
+make sentinel pointing at head; groupPrev = sentinel
+loop:
+    kth = node k steps past groupPrev; if none, stop (leftover < k stays as-is)
+    groupNext = kth.next
+    reverse the k nodes between groupPrev.next and groupNext (insert-at-front style)
+    tmp = old first node of group (now its tail)
+    link groupPrev.next to kth (new head of reversed group)
+    advance groupPrev to tmp
+return sentinel.next
+# getKth: walk k steps from node, return where you land (or null)
+```
 ```java
 class Solution {
     public ListNode reverseKGroup(ListNode head, int k) {
@@ -6737,6 +9602,14 @@ When `slow == fast` after the start, a cycle is detected.
 
 **Description:** Return the middle node. For even length, return the second middle.
 
+**Variables:** `slow` = 1×-speed pointer (lands on middle) · `fast` = 2×-speed pointer
+**Pseudocode:**
+```
+slow = head, fast = head
+while fast and fast.next exist:
+    advance slow one step, fast two steps
+return slow as the middle
+```
 ```java
 class Solution {
     public ListNode middleNode(ListNode head) {
@@ -6756,6 +9629,15 @@ class Solution {
 
 **Description:** Return true if the list contains a cycle.
 
+**Variables:** `slow` = 1×-speed pointer · `fast` = 2×-speed pointer
+**Pseudocode:**
+```
+slow = head, fast = head
+while fast and fast.next exist:
+    advance slow one step, fast two steps
+    if slow == fast: a cycle exists, return true
+return false (fast reached the end)
+```
 ```java
 class Solution {
     public boolean hasCycle(ListNode head) {
@@ -6779,6 +9661,18 @@ class Solution {
 
 **Intuition:** the distance from head to the cycle entry equals the distance from the meeting point to the entry, so two 1-step walkers from those spots collide exactly at the entry.
 
+**Variables:** `slow` = 1×-speed pointer (reset to head after meeting) · `fast` = 2×-speed pointer
+**Pseudocode:**
+```
+slow = head, fast = head
+while fast and fast.next exist:
+    advance slow one step, fast two steps
+    if slow == fast:                 # meeting point inside the cycle
+        reset slow to head
+        advance slow and fast one step each until they meet
+        return that node as the cycle entry
+return null (no cycle)
+```
 ```java
 class Solution {
     public ListNode detectCycle(ListNode head) {
@@ -6812,6 +9706,16 @@ class Solution {
 
 **Intuition:** like a zipper — always splice on whichever current head is smaller, then advance that list.
 
+**Variables:** `sentinel` = dummy result head · `current` = write pointer (tail of merged list) · `list1`/`list2` = remaining heads of the two inputs
+**Pseudocode:**
+```
+make sentinel; current = sentinel
+while both lists exist:
+    splice the smaller of list1/list2 onto current; advance that list
+    advance current
+attach whichever list still has nodes
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode mergeTwoLists(ListNode list1, ListNode list2) {
@@ -6840,6 +9744,16 @@ class Solution {
 **Description:** Merge k sorted linked lists into one sorted list.  
 **Key:** min-heap of size ≤ k. Always extract the smallest current head; push its next node back.
 
+**Variables:** `sentinel` = dummy result head · `current` = write pointer · `pq` = min-heap of current list heads keyed by value
+**Pseudocode:**
+```
+make sentinel; current = sentinel
+push every non-null list head into a min-heap
+while heap not empty:
+    pop the smallest node; append it to current; advance current
+    if that node has a next, push the next onto the heap
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode mergeKLists(ListNode[] lists) {
@@ -6868,6 +9782,22 @@ Problems that chain multiple patterns together.
 **Description:** Reorder list as L0 → Ln → L1 → Ln-1 → L2 → ...  
 **Steps:** (1) find middle with slow/fast, (2) reverse second half, (3) merge the two halves.
 
+**Variables:** `slow`/`fast` = middle-finding pointers · `second` = head of the second half · `previous`/`current`/`next` = reversal pointers · `first` = walker over first half · `nextFirst`/`nextSecond` = saved successors during the zip
+**Pseudocode:**
+```
+# Step 1: find middle (fast starts one ahead so first half >= second)
+slow = head, fast = head.next
+advance slow 1× and fast 2× until fast reaches the end
+# Step 2: cut and reverse the second half
+second = slow.next; cut list at slow
+reverse second into previous
+# Step 3: zip first half and reversed second half alternately
+first = head, second = previous
+while second exists:
+    save nextFirst, nextSecond
+    splice second right after first
+    advance first to nextFirst, second to nextSecond
+```
 ```java
 class Solution {
     public void reorderList(ListNode head) {
@@ -6907,6 +9837,17 @@ class Solution {
 
 **Description:** Group all odd-indexed nodes first, then even-indexed nodes. Preserve relative order within each group. (Indexing is 1-based.)
 
+**Variables:** `odd` = tail of the odd-index chain · `even` = tail of the even-index chain · `evenHead` = saved head of the even chain (to splice on at the end)
+**Pseudocode:**
+```
+if list empty: return null
+odd = head, even = head.next, evenHead = even
+while even and even.next exist:
+    link odd to the node after even; advance odd
+    link even to the node after odd; advance even
+attach evenHead after the odd tail
+return head
+```
 ```java
 class Solution {
     public ListNode oddEvenList(ListNode head) {
@@ -6938,6 +9879,13 @@ class Solution {
 
 **SENTINEL:** dummy node before head so head removal needs no special-casing; use it whenever the head itself might be removed/replaced.
 
+**Variables:** `sentinel` = dummy node placed before head; `sentinel.next` always tracks the real head
+**Pseudocode:**
+```
+make sentinel; point sentinel.next at head
+do the operations (head may get removed or replaced)
+return sentinel.next as the true head
+```
 ```java
 // Always use sentinel when the head itself might be removed or replaced:
 ListNode sentinel = new ListNode(0);
@@ -6963,6 +9911,18 @@ previous advances?:     only when keeping            only when not a dup
 
 **Algorithm:** Use sentinel + carry variable. Traverse both lists simultaneously; at each step compute `sum = l1.val + l2.val + carry`. Create a new node with `sum % 10`, carry `sum / 10` forward. Continue while either list has nodes or carry is non-zero.
 
+**Variables:** `sentinel` = dummy result head · `current` = write pointer · `carry` = carry-over digit · `sum` = per-step total · `l1`/`l2` = remaining input heads (reverse order)
+**Pseudocode:**
+```
+make sentinel; current = sentinel, carry = 0
+while l1 or l2 has nodes, or carry is non-zero:
+    sum = carry
+    add l1's digit if present and advance l1
+    add l2's digit if present and advance l2
+    carry = sum / 10
+    append a new node with digit sum % 10; advance current
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode addTwoNumbers(ListNode l1, ListNode l2) {
@@ -6991,6 +9951,15 @@ class Solution {
 
 **Algorithm:** Fill from the END backwards using three pointers `i` (end of nums1 values), `j` (end of nums2), `k` (end of merged array). This avoids overwriting unprocessed elements in nums1.
 
+**Variables:** `i` = index of last real value in nums1 · `j` = index of last value in nums2 · `k` = write index at the very end of nums1
+**Pseudocode:**
+```
+i = m-1, j = n-1, k = m+n-1
+while both i and j are in range:
+    write the larger of nums1[i]/nums2[j] into nums1[k]; step that source back; step k back
+copy any remaining nums2 values into the front of nums1
+# leftover nums1 values are already in place
+```
 ```java
 class Solution {
     public void merge(int[] nums1, int m, int[] nums2, int n) {
@@ -7011,6 +9980,20 @@ class Solution {
 
 **Algorithm:** Composite — (1) fast/slow to find middle, (2) reverse the second half in-place, (3) compare both halves. Variation: combines three separate patterns.
 
+**Variables:** `slow`/`fast` = middle-finding pointers · `previous`/`current`/`next` = reversal pointers · `i`/`j` = comparison walkers over the two halves
+**Pseudocode:**
+```
+# Step 1: find middle
+advance slow 1× and fast 2× until fast reaches the end
+# Step 2: reverse from slow onward into previous
+reverse the second half
+# Step 3: compare halves
+i = head, j = previous
+while j exists:
+    if values differ: return false
+    advance i and j
+return true
+```
 ```java
 class Solution {
     public boolean isPalindrome(ListNode head) {
@@ -7049,6 +10032,15 @@ class Solution {
 
 **Algorithm:** Two pointers `a` and `b` start at `headA` and `headB`. When either reaches the end, redirect it to the other list's head. After at most `m + n` steps they meet at the intersection (or both become null for no intersection). This works because both pointers travel the same total distance.
 
+**Variables:** `a` = walker starting at headA (jumps to headB on null) · `b` = walker starting at headB (jumps to headA on null)
+**Pseudocode:**
+```
+a = headA, b = headB
+while a != b:
+    advance a; if it fell off the end, redirect it to headB
+    advance b; if it fell off the end, redirect it to headA
+return a   # the intersection node, or null if none
+```
 ```java
 class Solution {
     public ListNode getIntersectionNode(ListNode headA, ListNode headB) {
@@ -7075,6 +10067,18 @@ class Solution {
 
 **Algorithm:** Loop while there are at least two nodes ahead of `previous`. Name them `first` and `second`. Splice so order becomes `second → first`, reconnect `first.next` to whatever followed `second`, then move `previous` to `first` (now the tail of the swapped pair).
 
+**Variables:** `sentinel` = dummy before head · `previous` = node before the current pair · `first`/`second` = the two nodes being swapped
+**Pseudocode:**
+```
+make sentinel pointing at head; previous = sentinel
+while two nodes exist after previous:
+    first = previous.next, second = first.next
+    point first past the pair (to second.next)
+    point second at first
+    link previous to second (new pair head)
+    advance previous to first (tail of swapped pair)
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode swapPairs(ListNode head) {
@@ -7105,6 +10109,19 @@ class Solution {
 
 **Algorithm:** Measure length and find the tail. Connect tail to head to form a cycle. The new tail sits `length - (k % length)` steps from the head; the node after it is the new head. Break the cycle there.
 
+**Variables:** `length` = node count · `tail` = last node · `k` = rotation amount (reduced mod length) · `stepsToNewTail` = distance from head to new tail · `current` = walker to the new tail · `newHead` = node after new tail
+**Pseudocode:**
+```
+if list empty/single or k==0: return head
+walk to tail while counting length
+k = k mod length; if k==0 return head (no-op rotation)
+close the list into a ring (tail.next = head)
+stepsToNewTail = length - k
+walk current to the new tail
+newHead = current.next
+break the ring (current.next = null)
+return newHead
+```
 ```java
 class Solution {
     public ListNode rotateRight(ListNode head, int k) {
@@ -7145,6 +10162,17 @@ class Solution {
 
 **Algorithm:** Walk `current` over the list, appending each node to the `less` tail or `greater` tail by comparing with `x`. Terminate the `greater` chain, then connect the `less` tail to the head of the `greater` chain.
 
+**Variables:** `lessSentinel`/`greaterSentinel` = dummy heads of the two chains · `less`/`greater` = tails of each chain · `current` = walker over input · `x` = partition value
+**Pseudocode:**
+```
+make two sentinels (less chain, greater-or-equal chain); less = lessSentinel, greater = greaterSentinel
+for each node current:
+    if current.val < x: append to less tail
+    else: append to greater tail
+terminate the greater chain (greater.next = null)
+splice less tail to the start of the greater chain
+return lessSentinel.next
+```
 ```java
 class Solution {
     public ListNode partition(ListNode head, int x) {
@@ -7180,6 +10208,17 @@ class Solution {
 
 **Algorithm:** Use fast/slow to find the middle of the current range `[head, tail)`. The middle becomes the root. Recurse on `[head, middle)` for the left child and `[middle.next, tail)` for the right child. The half-open range avoids cutting the list and keeps recursion clean.
 
+**Variables:** `head` = start of current range · `tail` = exclusive end of range · `slow`/`fast` = middle-finding pointers within `[head, tail)` · `root` = subtree root built from the middle
+**Pseudocode:**
+```
+build(head, tail):
+    if head == tail: return null (empty range)
+    find middle of [head, tail) with slow 1× / fast 2× (fast stops at tail)
+    root = node from slow's value
+    root.left  = build(head, slow)        # left half before middle
+    root.right = build(slow.next, tail)    # right half after middle
+    return root
+```
 ```java
 class Solution {
     public TreeNode sortedListToBST(ListNode head) {
@@ -7213,6 +10252,15 @@ class Solution {
 
 **Algorithm:** Pass 1: insert `clone` right after each `current`. Pass 2: set `current.next.random = current.random.next` (guarding null). Pass 3: detach the cloned chain and restore the original list.
 
+**Variables:** `current` = walker over the list · `clone` = freshly made copy node · `sentinel`/`copy` = dummy + write pointer for extracting the cloned chain
+**Pseudocode:**
+```
+if list empty: return null
+Pass 1: for each current, insert a fresh clone right after it (interleave)
+Pass 2: for each original current, set clone.random = current.random's clone (current.random.next), guarding null
+Pass 3: walk again, detaching clones into their own list and restoring original next pointers
+return head of the cloned list (sentinel.next)
+```
 ```java
 class Solution {
     public Node copyRandomList(Node head) {
@@ -7261,6 +10309,21 @@ class Solution {
 
 **Algorithm:** Use fast/slow (with `fast = head.next` so the left half is never empty) to split the list in two. Recursively sort each half, then merge them with the standard sentinel-based merge.
 
+**Variables:** `slow`/`fast` = splitting pointers (fast starts one ahead) · `second` = head of the right half · `left`/`right` = sorted halves · merge's `sentinel`/`current` = dummy + write pointer · `a`/`b` = merge inputs
+**Pseudocode:**
+```
+sortList(head):
+    if 0 or 1 node: return head
+    find middle with slow 1× and fast 2× (fast = head.next)
+    second = slow.next; cut list into two halves
+    left = sortList(head); right = sortList(second)
+    return merge(left, right)
+merge(a, b):
+    make sentinel; current = sentinel
+    while both exist: splice smaller head onto current; advance
+    attach the leftover list
+    return sentinel.next
+```
 ```java
 class Solution {
     public ListNode sortList(ListNode head) {
@@ -7308,6 +10371,12 @@ class Solution {
 
 **Algorithm:** Overwrite `node.val` with `node.next.val`, then bypass `node.next` by setting `node.next = node.next.next`.
 
+**Variables:** `node` = the node to delete (only reference given; not the tail)
+**Pseudocode:**
+```
+copy the successor's value into node
+unlink the successor (node.next = node.next.next)
+```
 ```java
 class Solution {
     public void deleteNode(ListNode node) {
@@ -7328,6 +10397,19 @@ class Solution {
 
 **Algorithm:** Reverse the list. Walk it adding `carry` (starting at 1); each node becomes `(val + carry) % 10`, carry becomes `(val + carry) / 10`. If carry remains after the last node, append a new node. Reverse back to big-endian.
 
+**Variables:** `reversed` = list reversed to least-significant-first · `carry` = carry digit (seeded with 1 = the +1) · `current` = walker · `last` = last visited node (for appending overflow) · `sum` = per-node total
+**Pseudocode:**
+```
+reverse the list (now least-significant first)
+carry = 1
+walk current while carry remains:
+    sum = current.val + carry
+    current.val = sum % 10; carry = sum / 10
+    remember current as last; advance current
+if carry left over: append a new node holding it after last
+reverse back to big-endian and return
+# reverse helper: standard previous/current/next reversal
+```
 ```java
 class Solution {
     public ListNode plusOne(ListNode head) {
@@ -7370,6 +10452,20 @@ class Solution {
 
 **Algorithm:** Walk `current` with a stack. When `current` has a child, push `current.next` (if non-null) for later, link `current` to the child, clear the child pointer, and fix `previous`/`next` doubly-linked wiring. When `current.next` is null but the stack is non-empty, pop and reattach.
 
+**Variables:** `stack` = deferred continuations (original `next` pointers) · `current` = walker · `resumed` = continuation popped when a branch ends
+**Pseudocode:**
+```
+if head null: return null
+stack empty; current = head
+while current exists:
+    if current has a child:
+        push current.next (if any) to resume later
+        splice the child in as current.next, fix prev pointer, clear child
+    if current.next is null and stack not empty:
+        pop a deferred continuation and reattach it (fix prev)
+    advance current
+return head
+```
 ```java
 class Solution {
     public Node flatten(Node head) {
@@ -7410,6 +10506,17 @@ class Solution {
 
 **Algorithm:** Push every digit of each list onto its own stack. Pop both stacks while either is non-empty or a carry remains, summing with carry. Prepend each new digit node to the front of the result so order is correct without a final reversal.
 
+**Variables:** `stack1`/`stack2` = digit stacks (top = least significant) · `result` = result head built by prepending · `carry` = carry digit · `sum` = per-step total
+**Pseudocode:**
+```
+push all digits of l1 onto stack1, all of l2 onto stack2
+result = null, carry = 0
+while either stack non-empty or carry remains:
+    sum = carry + popped digit of each non-empty stack
+    carry = sum / 10
+    prepend a new node holding sum % 10 to result
+return result
+```
 ```java
 class Solution {
     public ListNode addTwoNumbers(ListNode l1, ListNode l2) {
@@ -7452,6 +10559,19 @@ class Solution {
 
 **Algorithm:** If the list is empty, create a self-referential node. Otherwise scan `previous`/`current` around the ring. Insert when `previous.val <= val <= current.val`, or at the wrap point `previous.val > current.val` when `val` is `>= max` or `<= min`. If a full loop completes with no fit (all equal), insert anywhere.
 
+**Variables:** `node` = new node to insert · `previous`/`current` = adjacent nodes scanned around the ring · `insertVal` = value to insert
+**Pseudocode:**
+```
+make node from insertVal
+if list empty: make it self-referential and return it
+previous = head, current = head.next
+loop around the ring:
+    if previous.val <= insertVal <= current.val: stop (normal slot)
+    if at wrap point (previous.val > current.val) and insertVal is >= max or <= min: stop
+    advance previous/current; if back to head (all equal): stop
+splice node between previous and current
+return head
+```
 ```java
 class Solution {
     public Node insert(Node head, int insertVal) {
@@ -7493,6 +10613,19 @@ class Solution {
 
 **Algorithm:** Compute the length, then `baseSize = n / k` and `remainder = n % k`. For each of the `k` parts, the size is `baseSize + (i < remainder ? 1 : 0)`. Advance that many nodes, then sever the link to start the next part.
 
+**Variables:** `length` = node count · `baseSize` = floor(length/k) per part · `remainder` = length mod k (extra nodes for early parts) · `result` = array of part heads · `current` = walker · `partSize` = size of the current part
+**Pseudocode:**
+```
+count length of list
+baseSize = length / k; remainder = length % k
+current = head
+for i in 0..k-1:
+    record current as result[i] (head of this part)
+    partSize = baseSize + (1 if i < remainder else 0)
+    walk current to the last node of this part
+    if current exists: save next, sever this part, move to next
+return result
+```
 ```java
 class Solution {
     public ListNode[] splitListToParts(ListNode head, int k) {
@@ -7532,6 +10665,16 @@ class Solution {
 
 **Algorithm:** First pass: compute prefix sums over a sentinel-prefixed list, storing the last node seen for each prefix sum in a map (later occurrences overwrite earlier ones). Second pass: for each prefix sum, jump directly to the last node holding that same sum, skipping the zero-sum span.
 
+**Variables:** `sentinel` = dummy before head · `lastSeen` = map prefix-sum → last node with that sum · `prefix` = running prefix sum · `current` = walker
+**Pseudocode:**
+```
+make sentinel pointing at head
+Pass 1: walk from sentinel, accumulate prefix sum, store lastSeen[prefix] = current (overwrite)
+Pass 2: reset prefix; walk from sentinel:
+    accumulate prefix
+    rewire current.next to lastSeen[prefix].next (skip any zero-sum span)
+return sentinel.next
+```
 ```java
 class Solution {
     public ListNode removeZeroSumSublists(ListNode head) {
@@ -7564,6 +10707,14 @@ class Solution {
 
 **Algorithm:** If the node is null, return. Otherwise recurse on `head.getNext()` first, then call `head.printValue()`. Values print from tail to head as the stack unwinds.
 
+**Variables:** `head` = current node in the recursion (uses only getNext / printValue)
+**Pseudocode:**
+```
+printReverse(head):
+    if head is null: return
+    printReverse(head.getNext())   # recurse to the end first
+    head.printValue()              # print on the way back up
+```
 ```java
 class Solution {
     public void printLinkedListInReverse(ImmutableListNode head) {
@@ -7684,6 +10835,32 @@ For sliding window string problems (#3, #76, #567, #424), see `sliding_window.md
 
 ## Core Idioms
 
+**Variables:** `count` = frequency vector (index = char/digit bucket) · `ch - 'a'` = 0–25 bucket index · `ch - '0'` = 0–9 digit value · `num` = number built so far · `builder` = encoded/result string · `buckets` = lists indexed by frequency · `expand(i,j)` = palindrome length from a center
+**Pseudocode:**
+```
+idiom 1 — char count for letters:
+  make count of size 26
+  for each char: count[ch-'a'] += 1
+idiom 2 — char count for digits:
+  make count of size 10
+  for each char: count[ch-'0'] += 1
+idiom 3 — char to integer:
+  num = 0
+  for each char left to right: num = num*10 + (char - '0')
+idiom 4 — anagram hash key (frequency-based):
+  count the 26 letters of s
+  build a string from each letter label followed by its count
+  return it (same key for all anagrams)
+  alternative: sort the chars and use the sorted string as key
+idiom 5 — bucket sort by frequency:
+  count all ASCII chars
+  make buckets indexed by frequency
+  for each char with count>0: add it to buckets[its count]
+  walk buckets from highest frequency down, append each char that many times
+idiom 6 — expand from center:
+  while i in bounds and j in bounds and chars at i and j match: move i left, j right
+  return j - i - 1 (length of palindrome found)
+```
 ```java
 // a lowercase string is a length-26 frequency vector; most string problems are vector ops on it.  — WHEN: "anagram", "char count", "group by letters", "first unique", "sort by frequency".
 // 1. CHAR COUNT — lowercase letters
@@ -7752,6 +10929,16 @@ int expand(String s, int i, int j) {          // i == j: odd length; i+1 == j: e
 **Description:** Return true if `t` is an anagram of `s` (same characters, same counts).  
 **Intuition:** Anagrams have identical letter counts, so add up `s` and subtract `t` in one 26-slot array — all zeros means they match.
 
+**Variables:** `count[ch-'a']` = net frequency of each letter (s adds, t subtracts) · `c` = one slot's net count
+**Pseudocode:**
+```
+if lengths differ: return false
+make count of size 26
+for each char in s: add 1 to count[ch-'a']
+for each char in t: subtract 1 from count[ch-'a']
+for each slot c: if c is non-zero, return false
+return true
+```
 ```java
 class Solution {
     public boolean isAnagram(String s, String t) {
@@ -7773,6 +10960,14 @@ class Solution {
 **Description:** Can `ransomNote` be constructed from the letters in `magazine` (each letter used at most once)?  
 **Intuition:** Stock the letter counts from the magazine, then draw down for each note letter — if any count goes negative the magazine is short.
 
+**Variables:** `count[ch-'a']` = available copies of each letter from the magazine
+**Pseudocode:**
+```
+make count of size 26
+for each char in magazine: add 1 to count[ch-'a']
+for each char in ransomNote: subtract 1 from count[ch-'a'], and if it drops below 0 return false
+return true
+```
 ```java
 class Solution {
     public boolean canConstruct(String ransomNote, String magazine) {
@@ -7792,6 +10987,15 @@ class Solution {
 **Description:** Return the index of the first non-repeating character. Return -1 if none exists.  
 **Intuition:** One pass to count every letter, a second pass to return the first whose count is exactly 1.
 
+**Variables:** `count[ch-'a']` = frequency of each letter · `i` = scan index
+**Pseudocode:**
+```
+make count of size 26
+for each char in s: add 1 to count[ch-'a']
+for i from 0 to end of s:
+  if count of the char at i equals 1: return i
+return -1
+```
 ```java
 class Solution {
     public int firstUniqChar(String s) {
@@ -7815,6 +11019,20 @@ class Solution {
 **Intuition:** Anagrams share identical letter frequencies, so the frequency vector encoded as a string is a unique group key — O(k) to build vs O(k log k) to sort the characters.  
 **Key:** each anagram group shares the same frequency hash key. `computeIfAbsent` cleanly handles first-time group creation.
 
+**Variables:** `map` = key → list of strings sharing that key · `key` = frequency-vector string (same for all anagrams) · `count[ch-'a']` = letter frequency · `builder` = the key being built
+**Pseudocode:**
+```
+make empty map from key to list
+for each string s:
+  key = hashKey(s)
+  add s to map[key] (creating the list if absent)
+return all the lists in the map
+
+hashKey(s):
+  count the 26 letters of s
+  build a string from each letter label followed by its count
+  return that string
+```
 ```java
 class Solution {
     public List<List<String>> groupAnagrams(String[] strs) {
@@ -7841,6 +11059,14 @@ class Solution {
 ```
 
 **Alternative key (sort-based, simpler but O(k log k)):**
+
+**Variables:** `chars` = the string's characters · `key` = the sorted characters as a string (same for all anagrams)
+**Pseudocode:**
+```
+turn s into a char array
+sort the chars
+the sorted string is the key
+```
 ```java
 char[] chars = s.toCharArray();
 Arrays.sort(chars);
@@ -7855,6 +11081,17 @@ String key = new String(chars);   // "eat" → "aet", "tea" → "aet"
 **Intuition:** Frequencies are bounded by string length, so bucket chars by their count and read buckets high-to-low — no O(n log n) comparison sort needed.  
 **Key:** bucket sort by frequency — avoids O(n log n) comparison sort. Each bucket holds all chars with that frequency.
 
+**Variables:** `count[ch]` = frequency of each ASCII char · `buckets[freq]` = list of chars that occur exactly `freq` times · `builder` = result string
+**Pseudocode:**
+```
+count the frequency of every ASCII char
+make buckets indexed by frequency (0..length)
+for each char with count>0: add it to buckets[its count]
+for freq from length down to 1:
+  if that bucket is empty, skip
+  for each char in the bucket: append it freq times
+return the result
+```
 ```java
 class Solution {
     public String frequencySort(String s) {
@@ -7888,6 +11125,17 @@ class Solution {
 
 ## Template
 
+**Variables:** `i` = center index · `(i,i)` = odd-length center · `(i,i+1)` = even-length center · `expand(i,j)` = length of palindrome grown from that center
+**Pseudocode:**
+```
+for each index i in s:
+  process the odd center (i, i)
+  process the even center (i, i+1)
+
+expand(i, j):
+  while i and j are in bounds and the chars match: move i left, j right
+  return j - i - 1 (the palindrome length)
+```
 ```java
 // Call for each center: odd-length palindromes (i == i) and even-length (i, i+1)
 for (int i = 0; i < s.length(); i++) {
@@ -7912,6 +11160,21 @@ int expand(String s, int i, int j) {
 **Intuition:** Every palindrome has a center; try all 2n-1 centers (each char and each gap) and grow outward while characters mirror.  
 **Key:** expand from every center (odd and even), track the longest found.
 
+**Variables:** `start` = start index of best palindrome · `maxLen` = best length so far · `odd`/`even` = palindrome lengths from the two center types · `len` = best of the two · `expand(i,j)` = palindrome length from a center
+**Pseudocode:**
+```
+start = 0, maxLen = 1
+for each index i:
+  odd = expand from center (i, i)
+  even = expand from center (i, i+1)
+  len = the larger of odd and even
+  if len beats maxLen: update maxLen and back-compute start = i - (len-1)/2
+return the substring from start of length maxLen
+
+expand(i, j):
+  while in bounds and chars match: move i left, j right
+  return j - i - 1
+```
 ```java
 class Solution {
     public String longestPalindrome(String s) {
@@ -7943,6 +11206,20 @@ class Solution {
 **Intuition:** Same center-expansion, but each successful step outward is itself one more palindrome, so accumulate a count rather than a max.  
 **Key:** same expand helper — count expansions instead of tracking max length.
 
+**Variables:** `count` = total palindromes found · `expandCount(i,j)` = number of palindromes centered there (one per successful expansion step)
+**Pseudocode:**
+```
+count = 0
+for each index i:
+  count += palindromes from odd center (i, i)
+  count += palindromes from even center (i, i+1)
+return count
+
+expandCount(i, j):
+  count = 0
+  while in bounds and chars match: count += 1, move i left, j right
+  return count
+```
 ```java
 class Solution {
     public int countSubstrings(String s) {
@@ -7985,6 +11262,20 @@ Expand returns:     palindrome length          palindrome count
 **Intuition:** Process the string in strict phases — spaces, then sign, then digits accumulated as `num*10 + digit` — clamping to int bounds the moment overflow would occur.  
 **Key steps in order:** skip spaces → read sign → read digits (`num = num * 10 + (ch - '0')`) → clamp on overflow.
 
+**Variables:** `i` = scan index · `sign` = +1 or -1 · `result` = number built so far (long, to detect overflow)
+**Pseudocode:**
+```
+i = 0
+skip leading spaces
+if reached end: return 0
+sign = +1; if next is '-' set -1 and advance, if '+' just advance
+result = 0
+while next is a digit:
+  result = result*10 + digit
+  if result*sign exceeds int max: return int max
+  if result*sign below int min: return int min
+return result*sign as int
+```
 ```java
 class Solution {
     public int myAtoi(String s) {
@@ -8014,6 +11305,15 @@ class Solution {
 **Intuition:** Start with the first string as the candidate prefix and trim its tail until every other string starts with it.  
 **Key:** use the first string as the candidate prefix. Shrink it until every string starts with it.
 
+**Variables:** `prefix` = current candidate common prefix
+**Pseudocode:**
+```
+prefix = the first string
+for each other string:
+  while that string does not start with prefix: drop prefix's last char
+  if prefix became empty: return ""
+return prefix
+```
 ```java
 class Solution {
     public String longestCommonPrefix(String[] strs) {
@@ -8037,6 +11337,17 @@ class Solution {
 **Intuition:** Two pointers — read scans each run while write lays down the compressed `char + count` behind it; write never overtakes read, so it's safe in place.  
 **Key:** write pointer `write` advances independently of read pointer `i`. Count run length, then write char + (count if > 1).
 
+**Variables:** `write` = next position to write the compressed output · `i` = read scan index · `ch` = current run's char · `count` = run length
+**Pseudocode:**
+```
+write = 0, i = 0
+while i < length:
+  ch = chars[i]
+  count consecutive copies of ch, advancing i
+  write ch at the write position and advance write
+  if count > 1: write each digit of count, advancing write
+return write (the new length)
+```
 ```java
 class Solution {
     public int compress(char[] chars) {
@@ -8064,6 +11375,16 @@ class Solution {
 **Intuition:** A stack mirrors the partially-cleaned string — if the next char equals the top it's an adjacent pair, so pop instead of pushing.  
 **Key:** stack — push each char; if it equals the top, they form a pair → pop instead. Stack holds the result after all removals.
 
+**Variables:** `stack` = chars of the partially-cleaned string · `ch` = current char · `builder` = final result
+**Pseudocode:**
+```
+make empty stack
+for each char ch:
+  if stack not empty and top equals ch: pop (the pair cancels)
+  else: push ch
+pop everything into a builder, then reverse it
+return the result
+```
 ```java
 class Solution {
     public String removeDuplicates(String s) {
@@ -8087,6 +11408,14 @@ class Solution {
 
 ## String Idioms Cheat Sheet
 
+**Variables:** `ch` = a single char · `i` = an index/offset · `s` = a string · `builder` = a StringBuilder accumulating output · `map` = a grouping map
+**Pseudocode:**
+```
+char/index conversions: 'a'+i makes a letter, ch-'a' makes a letter index, ch-'0' makes a digit; test/convert chars with the Character helpers
+string operations: read a char, convert to/from char array, take a substring, test contains/startsWith, split on whitespace
+building strings: append chars or strings to a builder, delete or reverse, then convert to string, or join a list with a delimiter
+grouping: use computeIfAbsent to fetch-or-create a list for a key, then add the value
+```
 ```java
 // Char ↔ index
 'a' + i             // int → char (i=0→'a', i=25→'z')
@@ -8139,6 +11468,18 @@ map.computeIfAbsent(key, k -> new ArrayList<>()).add(value);
 **Description:** Convert a string into a zigzag pattern across `numRows` rows and read it row by row.  
 **Intuition:** Walk the string once, appending each char to its current row's builder while bouncing the row index down then up.
 
+**Variables:** `rows[i]` = builder for the i-th zigzag row · `row` = current row index · `step` = +1 going down, -1 going up · `result` = rows concatenated
+**Pseudocode:**
+```
+if there is only one row: return s unchanged
+make one builder per row
+row = 0, step = 1 (downward)
+for each char:
+  append it to the current row's builder
+  if at the top row: step = down; if at the bottom row: step = up
+  move row by step
+concatenate all row builders and return
+```
 ```java
 class Solution {
     public String convert(String s, int numRows) {
@@ -8176,6 +11517,14 @@ class Solution {
 **Description:** Convert an integer to its Roman numeral representation (values 1–3999).  
 **Intuition:** Greedily subtract the largest possible value (including the 4/9 subtractive pairs) and append its symbol.
 
+**Variables:** `values` = Roman values high to low (incl. 900/400/90/...) · `symbols` = matching symbols · `builder` = result · `num` = remaining amount
+**Pseudocode:**
+```
+list the values high to low and their symbols (including the subtractive pairs)
+for each value/symbol pair:
+  while num is at least this value: append the symbol and subtract the value
+return the result
+```
 ```java
 class Solution {
     public String intToRoman(int num) {
@@ -8201,6 +11550,17 @@ class Solution {
 **Description:** Convert a Roman numeral string to an integer.  
 **Intuition:** Add each symbol's value, but subtract instead when a smaller value precedes a larger one (subtractive notation).
 
+**Variables:** `map` = symbol → value · `result` = running total · `value` = current symbol's value
+**Pseudocode:**
+```
+map each Roman symbol to its value
+result = 0
+for each index i:
+  value = the value of symbol at i
+  if a larger value follows: subtract value (subtractive pair)
+  else: add value
+return result
+```
 ```java
 class Solution {
     public int romanToInt(String s) {
@@ -8229,6 +11589,15 @@ class Solution {
 **Description:** Find the first occurrence of `needle` in `haystack`. Return -1 if not found.  
 **Intuition:** Slide a window of needle's length across haystack and compare; the first full match wins.
 
+**Variables:** `n`/`m` = lengths of haystack/needle · `i` = window start in haystack · `j` = match offset within needle
+**Pseudocode:**
+```
+for each start i where the needle still fits:
+  j = 0
+  while j < m and haystack[i+j] equals needle[j]: advance j
+  if j reached m: full match, return i
+return -1
+```
 ```java
 class Solution {
     public int strStr(String haystack, String needle) {
@@ -8255,6 +11624,19 @@ class Solution {
 **Description:** Generate the nth term of the "count and say" sequence: read digits of the previous term aloud.  
 **Intuition:** Starting from "1", repeatedly scan runs of equal digits and emit count followed by the digit.
 
+**Variables:** `result` = current term · `builder` = next term · `j` = scan index · `ch` = current run's digit · `count` = run length
+**Pseudocode:**
+```
+result = "1"
+repeat n-1 times:
+  j = 0, start a fresh builder
+  while j < length of result:
+    ch = digit at j
+    count consecutive copies of ch, advancing j
+    append count then ch
+  result = builder
+return result
+```
 ```java
 class Solution {
     public String countAndSay(int n) {
@@ -8286,6 +11668,20 @@ class Solution {
 **Description:** Multiply two non-negative integers given as strings. Return the product as a string.  
 **Intuition:** Schoolbook multiplication: digit i of num1 times digit j of num2 lands in result positions i+j and i+j+1.
 
+**Variables:** `product[k]` = digit accumulator for result position k · `mul` = single-digit product · `sum` = mul plus what's already at i+j+1 · `builder` = trimmed result
+**Pseudocode:**
+```
+if either number is "0": return "0"
+make product array of size n+m
+for i from last digit of num1 down:
+  for j from last digit of num2 down:
+    mul = digit i times digit j
+    sum = mul + product[i+j+1]
+    product[i+j+1] = sum mod 10 (low digit)
+    product[i+j] += sum / 10 (carry up)
+build a string from product, skipping leading zeros
+return it
+```
 ```java
 class Solution {
     public String multiply(String num1, String num2) {
@@ -8321,6 +11717,15 @@ class Solution {
 **Description:** Return the length of the last word in a string (word = max sequence of non-space chars).  
 **Intuition:** Scan from the right: skip trailing spaces, then count letters until the next space.
 
+**Variables:** `i` = scan index from the right · `length` = length of last word
+**Pseudocode:**
+```
+i = last index
+skip trailing spaces (decrement i while space)
+length = 0
+while i >= 0 and char is not space: length += 1, decrement i
+return length
+```
 ```java
 class Solution {
     public int lengthOfLastWord(String s) {
@@ -8346,6 +11751,18 @@ class Solution {
 **Description:** Validate whether a string is a valid decimal number (integers, fractions, exponents).  
 **Intuition:** A single left-to-right scan tracking whether we have seen a digit, a dot, and an exponent enforces all the ordering rules.
 
+**Variables:** `seenDigit` = a digit appeared (resets after `e`) · `seenDot` = a `.` appeared · `seenExp` = an `e`/`E` appeared · `ch` = current char
+**Pseudocode:**
+```
+seenDigit = seenDot = seenExp = false
+for each char ch:
+  if digit: seenDigit = true
+  else if sign: valid only at start or right after e, else fail
+  else if dot: fail if a dot or exponent already seen, else seenDot = true
+  else if e/E: fail if exponent already seen or no digit yet; seenExp = true; seenDigit = false (need digits after e)
+  else: fail
+return seenDigit
+```
 ```java
 class Solution {
     public boolean isNumber(String s) {
@@ -8386,6 +11803,21 @@ class Solution {
 **Description:** Format words into lines of `maxWidth`, fully justified (equal spaces, last line left-aligned).  
 **Intuition:** Greedily pack as many words as fit per line, then distribute leftover spaces evenly between gaps (extras to the left); the last line is left-justified.
 
+**Variables:** `i`/`j` = first/after-last word index of the current line · `lineLen` = total word chars on the line · `wordCount` = words on the line · `spaces` = leftover spaces · `gaps` = word gaps · `base`/`extra` = even spaces per gap and remainder · `builder` = the line
+**Pseudocode:**
+```
+i = 0
+while i < number of words:
+  j = i, lineLen = 0
+  greedily add words while they plus the minimum single spaces still fit; track lineLen and advance j
+  wordCount = j - i, spaces = maxWidth - lineLen
+  if this is the last line or only one word: left-justify (single spaces between, pad right to maxWidth)
+  else:
+    gaps = wordCount - 1, base = spaces/gaps, extra = spaces mod gaps
+    for each word but the last: append word, then base spaces plus one extra for the leftmost `extra` gaps
+  add the line; set i = j
+return all lines
+```
 ```java
 class Solution {
     public List<String> fullJustify(String[] words, int maxWidth) {
@@ -8439,6 +11871,17 @@ class Solution {
 **Description:** Check if a string is a palindrome, ignoring non-alphanumeric characters and case.  
 **Intuition:** Two pointers move inward, skipping non-alphanumeric chars and comparing lowercased letters.
 
+**Variables:** `i`/`j` = left/right pointers moving inward
+**Pseudocode:**
+```
+i = 0, j = last index
+while i < j:
+  advance i past non-alphanumeric chars
+  retreat j past non-alphanumeric chars
+  if lowercased chars at i and j differ: return false
+  move i right, j left
+return true
+```
 ```java
 class Solution {
     public boolean isPalindrome(String s) {
@@ -8469,6 +11912,18 @@ class Solution {
 **Description:** Reverse the order of words in a string (split on spaces, handle multiple spaces).  
 **Intuition:** Scan from the right, extract each word, and append them in reverse order with single spaces.
 
+**Variables:** `result` = reversed sentence being built · `i` = scan index from the right · `j` = end index of the current word
+**Pseudocode:**
+```
+i = last index
+while i >= 0:
+  skip spaces (decrement i)
+  if i < 0: stop
+  j = i; scan left over the word (decrement i) until a space or start
+  if result already has words: append a space
+  append the word spanning i+1..j
+return result
+```
 ```java
 class Solution {
     public String reverseWords(String s) {
@@ -8503,6 +11958,17 @@ class Solution {
 **Description:** Determine if two strings are one edit distance apart (insert, delete, or replace one char).  
 **Intuition:** Scan to the first mismatch; equal lengths force a replace, otherwise skip one char in the longer string and require the rest to match.
 
+**Variables:** `n`/`m` = lengths of s/t · `i` = scan index of the first mismatch
+**Pseudocode:**
+```
+if lengths differ by more than 1: return false
+for i over the common prefix:
+  if chars at i differ:
+    if lengths equal: rest after i must match (replace)
+    if s longer: s after i+1 must equal t after i (delete from s)
+    else: s after i must equal t after i+1 (insert into s)
+no mismatch found: true only if lengths differ by exactly 1
+```
 ```java
 class Solution {
     public boolean isOneEditDistance(String s, String t) {
@@ -8534,6 +12000,18 @@ class Solution {
 **Description:** Given a sorted array, return missing ranges between `lower` and `upper` bounds.  
 **Intuition:** Walk a running "next expected" value; whenever a number exceeds it, the gap before it is a missing range.
 
+**Variables:** `next` = smallest value not yet covered · `num` = current array element · `format(lo,hi)` = single value or "lo->hi"
+**Pseudocode:**
+```
+next = lower
+for each num:
+  if num > next: record the gap from next to num-1
+  next = num + 1
+if next <= upper: record the final gap from next to upper
+return the ranges
+
+format(lo, hi): if lo equals hi return lo, else return "lo->hi"
+```
 ```java
 class Solution {
     public List<String> findMissingRanges(int[] nums, int lower, int upper) {
@@ -8564,6 +12042,16 @@ class Solution {
 **Description:** Compare two version number strings (dot-separated integers). Return -1, 0, or 1.  
 **Intuition:** Parse both revisions position by position, treating missing components as 0, and compare numerically.
 
+**Variables:** `a`/`b` = dot-split components of each version · `x`/`y` = numeric value of each component (0 if missing)
+**Pseudocode:**
+```
+split both versions on '.'
+for i up to the longer length:
+  x = component i of a, or 0 if missing
+  y = component i of b, or 0 if missing
+  if x != y: return -1 or 1
+return 0
+```
 ```java
 class Solution {
     public int compareVersion(String version1, String version2) {
@@ -8590,6 +12078,20 @@ class Solution {
 **Description:** Convert a fraction numerator/denominator to a decimal string, noting repeating parts in parentheses.  
 **Intuition:** Do long division; remember the position of each remainder so a repeat reveals the cycle to wrap in parentheses.
 
+**Variables:** `builder` = result string · `num`/`den` = absolute numerator/denominator · `remainder` = current long-division remainder · `seen` = remainder → position in builder where its digit started
+**Pseudocode:**
+```
+if numerator is 0: return "0"
+append '-' if exactly one of numerator/denominator is negative
+take absolute values; append integer part num/den; remainder = num mod den
+if remainder is 0: return result
+append '.'; make empty seen map
+while remainder != 0:
+  if remainder already in seen: insert '(' at its recorded position, append ')', stop
+  record remainder -> current builder length
+  remainder *= 10; append remainder/den; remainder = remainder mod den
+return result
+```
 ```java
 class Solution {
     public String fractionToDecimal(int numerator, int denominator) {
@@ -8633,6 +12135,14 @@ class Solution {
 **Description:** Arrange numbers so their concatenation forms the largest possible number.  
 **Intuition:** Sort by a custom comparator that prefers the order producing a larger concatenation (a+b vs b+a).
 
+**Variables:** `strs` = numbers as strings · comparator orders by which of `a+b` vs `b+a` is larger · `builder` = concatenated result
+**Pseudocode:**
+```
+convert each number to a string
+sort so that for any pair a,b, whichever of (b+a) vs (a+b) is larger comes first
+if the largest string is "0": all zeros, return "0"
+concatenate all strings and return
+```
 ```java
 class Solution {
     public String largestNumber(int[] nums) {
@@ -8661,6 +12171,16 @@ class Solution {
 **Description:** Reverse words in a character array in-place (words separated by spaces).  
 **Intuition:** Reverse the whole array, then reverse each word back so the order flips but each word reads forward.
 
+**Variables:** `start` = start index of the current word · `i` = scan index marking word boundaries · `reverse(i,j)` = in-place reverse of a range
+**Pseudocode:**
+```
+reverse the entire array
+start = 0
+for i from 0 to length (inclusive):
+  if at end or a space: reverse the word from start to i-1, then set start = i+1
+
+reverse(i, j): swap ends moving inward until i meets j
+```
 ```java
 class Solution {
     public void reverseWords(char[] s) {
@@ -8693,6 +12213,15 @@ class Solution {
 **Description:** Check if two strings follow the same character-substitution pattern (isomorphic).  
 **Intuition:** Maintain a bijective mapping both ways; any conflicting mapping breaks isomorphism.
 
+**Variables:** `mapS[a]` = char that s-char `a` maps to (-1 if unset) · `mapT[b]` = char that t-char `b` maps back to · `a`/`b` = current chars of s/t
+**Pseudocode:**
+```
+make mapS and mapT, all set to -1 (unset)
+for each index i with a = s[i], b = t[i]:
+  if both unset: link a->b and b->a
+  else if existing links disagree (mapS[a] != b or mapT[b] != a): return false
+return true
+```
 ```java
 class Solution {
     public boolean isIsomorphic(String s, String t) {
@@ -8721,6 +12250,17 @@ class Solution {
 **Description:** Find the shortest palindrome by adding characters in front of a string.  
 **Intuition:** Find the longest palindromic prefix via KMP failure on `s + '#' + reverse(s)`; reverse the leftover suffix and prepend it.
 
+**Variables:** `reversed` = s reversed · `combined` = s + '#' + reversed · `lps[i]` = longest prefix-also-suffix length ending at i · `j` = KMP fallback pointer · `palinLen` = longest palindromic prefix length · `suffix` = leftover to prepend
+**Pseudocode:**
+```
+reversed = reverse of s
+combined = s + "#" + reversed
+build KMP lps array over combined:
+  for i from 1: j = lps[i-1]; fall back while mismatch; if match j++; lps[i] = j
+palinLen = lps[last] (length of longest palindromic prefix of s)
+suffix = the first (len(s) - palinLen) chars of reversed
+return suffix + s
+```
 ```java
 class Solution {
     public String shortestPalindrome(String s) {
@@ -8752,6 +12292,18 @@ class Solution {
 **Description:** Given a sorted unique integer array, summarize consecutive runs as ranges.  
 **Intuition:** Track the start of each consecutive run; when the run breaks, emit either a single number or a "start->end" range.
 
+**Variables:** `i` = scan index · `start` = index where the current run began
+**Pseudocode:**
+```
+i = 0
+while i < length:
+  start = i
+  extend i while the next number is exactly one more
+  if start equals i: emit the single number
+  else: emit "nums[start]->nums[i]"
+  advance i past the run
+return ranges
+```
 ```java
 class Solution {
     public List<String> summaryRanges(int[] nums) {
@@ -8782,6 +12334,17 @@ class Solution {
 **Description:** Check if a number reads the same when rotated 180 degrees.  
 **Intuition:** Two pointers move inward; each pair must be a valid strobogrammatic mapping (0-0, 1-1, 6-9, 8-8, 9-6).
 
+**Variables:** `map` = digit → its 180-degree rotation · `i`/`j` = pointers moving inward · `a`/`b` = the paired chars
+**Pseudocode:**
+```
+map the rotatable digits: 0->0, 1->1, 6->9, 8->8, 9->6
+i = 0, j = last index
+while i <= j:
+  a = char at i, b = char at j
+  if a is not rotatable or its rotation is not b: return false
+  move i right, j left
+return true
+```
 ```java
 class Solution {
     public boolean isStrobogrammatic(String num) {
@@ -8810,6 +12373,16 @@ class Solution {
 **Description:** Group strings that follow the same shift sequence (each char shifted by the same amount).  
 **Intuition:** Encode each string by the gaps between consecutive chars (mod 26) so all members of a shift group share the same key.
 
+**Variables:** `map` = key → list of strings · `builder` = the gap-sequence key · `diff` = gap between consecutive chars mod 26 · `key` = finished gap string
+**Pseudocode:**
+```
+make empty map from key to list
+for each string s:
+  for each adjacent pair: diff = (later char - earlier char + 26) mod 26; append diff and a comma
+  key = the gap sequence string
+  add s to map[key]
+return all the lists
+```
 ```java
 class Solution {
     public List<List<String>> groupStrings(String[] strings) {
@@ -8836,6 +12409,15 @@ class Solution {
 **Description:** Check if a string can be rearranged into a palindrome (at most one odd-count char).  
 **Intuition:** A palindrome allows at most one character with an odd count; track parity with a set.
 
+**Variables:** `odd` = set of chars currently seen an odd number of times
+**Pseudocode:**
+```
+make empty set odd
+for each char:
+  if it is in odd: remove it (now even)
+  else: add it (now odd)
+return true if at most one char remains odd
+```
 ```java
 class Solution {
     public boolean canPermutePalindrome(String s) {
@@ -8860,6 +12442,18 @@ class Solution {
 **Description:** Encode a list of strings to a single string and decode it back.  
 **Intuition:** Length-prefix each string ("len#str") so the decoder always knows exactly how many chars to read, regardless of content.
 
+**Variables:** `builder` = encoded output · `i` = decode scan position · `j` = position of the '#' delimiter · `length` = parsed length of the next string
+**Pseudocode:**
+```
+encode: for each string append its length, then '#', then the string; return the buffer
+decode:
+  i = 0
+  while i < length:
+    scan from i to the next '#' to read the length
+    parse the length, then take that many chars after '#' as one string
+    advance i past that string
+  return the list
+```
 ```java
 public class Codec {
     public String encode(List<String> strs) {
@@ -8895,6 +12489,25 @@ public class Codec {
 **Description:** Convert a non-negative integer to its English words representation.  
 **Intuition:** Process the number in groups of three digits, naming each group and appending the right scale word (Thousand, Million, Billion).
 
+**Variables:** `BELOW_20`/`TENS`/`SCALES` = word lookup tables · `scale` = which 1000-group (0=units, 1=Thousand, ...) · `group` = current 3-digit chunk · `builder` = words assembled · `threeDigits(n)` = words for a 0–999 chunk
+**Pseudocode:**
+```
+if num is 0: return "Zero"
+scale = 0
+while num > 0:
+  group = num mod 1000
+  if group != 0:
+    words = threeDigits(group); if scale > 0 append the scale word
+    prepend words to the front of the result
+  num = num / 1000; scale += 1
+return trimmed result
+
+threeDigits(n):
+  if n >= 100: append hundreds word + "Hundred", drop the hundreds
+  if n >= 20: append the tens word, drop the tens
+  if n > 0: append the below-20 word
+  return it
+```
 ```java
 class Solution {
     private static final String[] BELOW_20 = {"", "One", "Two", "Three", "Four", "Five",
@@ -8951,6 +12564,17 @@ class Solution {
 **Description:** Check if a string `s` follows a given pattern (bijective character-to-word mapping).  
 **Intuition:** Maintain a two-way mapping between pattern chars and words; any conflict breaks the bijection.
 
+**Variables:** `words` = s split on spaces · `charToWord` = pattern char → word · `wordToChar` = word → pattern char · `ch`/`word` = current pair
+**Pseudocode:**
+```
+split s into words; if count differs from pattern length: return false
+make both maps empty
+for each index i with ch = pattern[i], word = words[i]:
+  if charToWord has ch but maps to a different word: return false
+  if wordToChar has word but maps to a different char: return false
+  link ch->word and word->ch
+return true
+```
 ```java
 class Solution {
     public boolean wordPattern(String pattern, String s) {
@@ -8985,6 +12609,18 @@ class Solution {
 **Description:** Count bulls (right digit, right place) and cows (right digit, wrong place) in a number guessing game.  
 **Intuition:** Count exact-position matches as bulls; for the rest, use a digit-count array where positive entries (secret surplus) and negative entries (guess surplus) reveal cows.
 
+**Variables:** `bulls`/`cows` = counts · `count[d]` = unmatched balance for digit d (secret adds, guess subtracts) · `s`/`g` = secret/guess char at this index
+**Pseudocode:**
+```
+bulls = cows = 0; make count of size 10
+for each index i with s = secret[i], g = guess[i]:
+  if s equals g: bulls += 1
+  else:
+    if count[s] is negative (guess already had s waiting): cows += 1
+    if count[g] is positive (secret already had g waiting): cows += 1
+    count[s] += 1; count[g] -= 1
+return "<bulls>A<cows>B"
+```
 ```java
 class Solution {
     public String getHint(String secret, String guess) {
@@ -9018,6 +12654,14 @@ class Solution {
 **Description:** Reverse a character array in-place.  
 **Intuition:** Two pointers swap from both ends moving inward.
 
+**Variables:** `i`/`j` = left/right pointers · `tmp` = swap holder
+**Pseudocode:**
+```
+i = 0, j = last index
+while i < j:
+  swap chars at i and j
+  move i right, j left
+```
 ```java
 class Solution {
     public void reverseString(char[] s) {
@@ -9041,6 +12685,17 @@ class Solution {
 **Description:** Reverse only the vowels of a string.  
 **Intuition:** Two pointers advance until each lands on a vowel, then swap those vowels.
 
+**Variables:** `chars` = mutable char array · `vowels` = the vowel set string · `i`/`j` = left/right pointers · `tmp` = swap holder
+**Pseudocode:**
+```
+i = 0, j = last index
+while i < j:
+  advance i until it lands on a vowel
+  retreat j until it lands on a vowel
+  swap chars at i and j
+  move i right, j left
+return the array as a string
+```
 ```java
 class Solution {
     public String reverseVowels(String s) {
@@ -9073,6 +12728,18 @@ class Solution {
 **Description:** Find the length of the longest absolute file path in a file system string.  
 **Intuition:** Tab depth gives the nesting level; keep a stack of path lengths per level and, on hitting a file (has a dot), compute the full path length.
 
+**Variables:** `depthLen` = depth → cumulative length of path up to that depth · `depth` = tab count (nesting level) · `name` = the file/dir name on this line · `length` = path length including this name · `result` = best file path length
+**Pseudocode:**
+```
+depthLen[0] = 0; result = 0
+for each line:
+  depth = number of leading tabs
+  name = the line after the tabs
+  length = depthLen[depth] + length of name
+  if name contains '.' (a file): result = max(result, length + depth for the slashes)
+  else (a directory): depthLen[depth+1] = length (for its children)
+return result
+```
 ```java
 class Solution {
     public int lengthLongestPath(String input) {
@@ -9105,6 +12772,14 @@ class Solution {
 **Description:** Check if string `s` is a subsequence of string `t`.  
 **Intuition:** Walk `t` with one pointer; advance the `s` pointer each time chars match. If `s` is exhausted, it is a subsequence.
 
+**Variables:** `i` = how many chars of s are matched so far · `j` = scan index into t
+**Pseudocode:**
+```
+i = 0
+for j over t (stop early if all of s matched):
+  if s[i] equals t[j]: advance i
+return true if i reached the end of s
+```
 ```java
 class Solution {
     public boolean isSubsequence(String s, String t) {
@@ -9127,6 +12802,19 @@ class Solution {
 **Description:** Check if an abbreviation matches a word (digits represent skipped characters).  
 **Intuition:** Walk both with pointers; on a digit, parse the skip count (no leading zero) and jump the word pointer; otherwise chars must match.
 
+**Variables:** `i` = index into word · `j` = index into abbr · `ch` = current abbr char · `num` = parsed skip count
+**Pseudocode:**
+```
+i = 0, j = 0
+while both have chars left:
+  ch = abbr[j]
+  if ch is a digit:
+    if it is '0': fail (no leading zero)
+    parse the full number, advancing j; jump i forward by that count
+  else:
+    word[i] must equal ch, else fail; advance both i and j
+return true if both i and j reached their ends
+```
 ```java
 class Solution {
     public boolean validWordAbbreviation(String word, String abbr) {
@@ -9164,6 +12852,16 @@ class Solution {
 **Description:** Find the length of the longest palindrome that can be built from the given letters.  
 **Intuition:** Use every pair of each letter; if any letter has a leftover single, one of them can sit in the center.
 
+**Variables:** `count[ch]` = frequency of each char · `length` = palindrome length from full pairs · `hasOdd` = some letter has an odd count
+**Pseudocode:**
+```
+count every char
+length = 0, hasOdd = false
+for each count c:
+  add the largest even part (c/2*2) to length
+  if c is odd: hasOdd = true
+return length plus 1 if any odd char can sit in the center
+```
 ```java
 class Solution {
     public int longestPalindrome(String s) {
@@ -9192,6 +12890,17 @@ class Solution {
 **Description:** Add two non-negative integers given as strings. Return the sum as a string.  
 **Intuition:** Add digit by digit from the right with a carry, exactly like grade-school addition.
 
+**Variables:** `builder` = result digits (reversed) · `i`/`j` = right-to-left indices into num1/num2 · `carry` = carry into the next column · `sum` = column total
+**Pseudocode:**
+```
+i = last of num1, j = last of num2, carry = 0
+while either index valid or carry remains:
+  sum = carry
+  add num1[i] if valid (and decrement i)
+  add num2[j] if valid (and decrement j)
+  append sum mod 10; carry = sum / 10
+reverse the builder and return
+```
 ```java
 class Solution {
     public String addStrings(String num1, String num2) {
@@ -9221,6 +12930,14 @@ class Solution {
 **Description:** Given a sequence of words, check whether they form a valid word square (kth row equals kth column).  
 **Intuition:** For each cell (i,j), the char must equal the char at (j,i); guard against ragged rows by bounds-checking.
 
+**Variables:** `i` = row index · `j` = column index within row i
+**Pseudocode:**
+```
+for each row i:
+  for each column j in that row:
+    if j is out of row range, or i is past word j's length, or char (i,j) != char (j,i): return false
+return true
+```
 ```java
 class Solution {
     public boolean validWordSquare(List<String> words) {
@@ -9245,6 +12962,16 @@ class Solution {
 **Description:** Given a scrambled string of digit-word letters, decode the original digits in order.  
 **Intuition:** Some letters are unique to one digit (z→zero, w→two, u→four, x→six, g→eight); count those first, then peel off the remaining digits using letters that become unique after subtraction.
 
+**Variables:** `freq[ch-'a']` = letter frequencies · `count[d]` = how many times digit d appears · `builder` = digits in order
+**Pseudocode:**
+```
+count all 26 letters
+unique-letter digits first: zero(z), two(w), four(u), six(x), eight(g)
+then digits whose letter is now unique after subtracting: three(h minus eight), five(f minus four), seven(s minus six)
+then one(o minus zero,two,four) and nine(i minus five,six,eight)
+for d from 0 to 9: append d, count[d] times
+return the digits
+```
 ```java
 class Solution {
     public String originalDigits(String s) {
@@ -9282,6 +13009,14 @@ class Solution {
 **Description:** Count the number of segments (maximal runs of non-space chars) in a string.  
 **Intuition:** A new segment starts at each non-space char whose predecessor is a space (or string start).
 
+**Variables:** `count` = number of segments · `i` = scan index
+**Pseudocode:**
+```
+count = 0
+for each index i:
+  if char is not a space and (i is 0 or previous char is a space): count += 1 (new segment starts)
+return count
+```
 ```java
 class Solution {
     public int countSegments(String s) {
@@ -9304,6 +13039,12 @@ class Solution {
 **Description:** Check if a string can be built by repeating one of its substrings multiple times.  
 **Intuition:** If `s` is a repeated pattern, it appears inside `(s+s)` with the first and last char removed.
 
+**Variables:** `doubled` = (s+s) with the first and last char stripped
+**Pseudocode:**
+```
+doubled = s+s with the first and last character removed
+return whether doubled contains s
+```
 ```java
 class Solution {
     public boolean repeatedSubstringPattern(String s) {
@@ -9321,6 +13062,16 @@ class Solution {
 **Description:** Validate whether a string is a valid IPv4 or IPv6 address.  
 **Intuition:** Dispatch on the separator: dots mean IPv4 (four 0–255 octets, no leading zeros), colons mean IPv6 (eight 1–4 hex groups).
 
+**Variables:** `parts` = the address split on its separator · `part` = one octet/group · `isIPv4`/`isIPv6` = validators
+**Pseudocode:**
+```
+if it contains '.': return "IPv4" if isIPv4 else "Neither"
+if it contains ':': return "IPv6" if isIPv6 else "Neither"
+otherwise: "Neither"
+
+isIPv4: split on '.'; need exactly 4 parts; each part: non-empty, <=3 chars, all digits, no leading zero, value <= 255
+isIPv6: split on ':'; need exactly 8 parts; each part: non-empty, <=4 chars, all valid hex digits
+```
 ```java
 class Solution {
     public String validIPAddress(String queryIP) {
@@ -9384,6 +13135,17 @@ class Solution {
 **Description:** Find all words that can be typed on a single row of a QWERTY keyboard.  
 **Intuition:** Map each letter to its row index, then keep words whose letters all share one row.
 
+**Variables:** `rows` = the three keyboard rows · `rowOf[ch-'a']` = which row each letter is on · `row` = the first letter's row · `ok` = all letters share that row
+**Pseudocode:**
+```
+fill rowOf so each letter knows its keyboard row
+for each word:
+  row = row of its first letter (lowercased)
+  ok = true
+  for each letter (lowercased): if its row differs, ok = false, stop
+  if ok: keep the word
+return the kept words
+```
 ```java
 class Solution {
     public String[] findWords(String[] words) {
@@ -9421,6 +13183,13 @@ class Solution {
 **Description:** Check if a word is capitalized correctly (all caps, all lower, or first letter only).  
 **Intuition:** Count uppercase letters: valid only if all are uppercase, none are, or exactly the first one is.
 
+**Variables:** `upper` = number of uppercase letters in the word
+**Pseudocode:**
+```
+upper = count of uppercase letters
+if upper equals the length (all caps) or upper is 0 (all lower): return true
+return true only if upper is exactly 1 and the first letter is uppercase
+```
 ```java
 class Solution {
     public boolean detectCapitalUse(String word) {
@@ -9446,6 +13215,17 @@ class Solution {
 **Description:** Find the longest word in a dictionary that is a subsequence of string `s` (smallest lexicographically on ties).  
 **Intuition:** Check each candidate with the subsequence two-pointer, keeping the best by length then lexicographic order.
 
+**Variables:** `result` = best word found so far · `isSubsequence(word,s)` = two-pointer subsequence check · `i` = matched chars of word
+**Pseudocode:**
+```
+result = ""
+for each word in the dictionary:
+  if word is a subsequence of s:
+    if it is longer, or same length but lexicographically smaller: result = word
+return result
+
+isSubsequence(word, s): walk s; advance a word pointer on each match; true if all of word matched
+```
 ```java
 class Solution {
     public String findLongestWord(String s, List<String> dictionary) {
@@ -9480,6 +13260,14 @@ class Solution {
 **Description:** Reverse the first `k` characters of every `2k`-character block in a string.  
 **Intuition:** Step through the array in `2k` jumps, reversing the first `k` chars of each block (or all that remain).
 
+**Variables:** `chars` = mutable array · `i` = start of each 2k block · `left`/`right` = bounds of the first k chars to reverse · `tmp` = swap holder
+**Pseudocode:**
+```
+for i stepping by 2k through the array:
+  left = i, right = min(i+k-1, last index) (first k of this block)
+  swap inward from left/right until they meet
+return the array as a string
+```
 ```java
 class Solution {
     public String reverseStr(String s, int k) {
@@ -9507,6 +13295,16 @@ class Solution {
 **Description:** Check if a record is award-eligible (fewer than 2 absences total, no 3 consecutive lates).  
 **Intuition:** Count total absences and track the current run of lates; fail on the second absence or third consecutive late.
 
+**Variables:** `absent` = total absences · `lateStreak` = current run of consecutive lates
+**Pseudocode:**
+```
+absent = 0, lateStreak = 0
+for each char:
+  if 'A': absent += 1; fail if it reaches 2
+  if 'L': lateStreak += 1; fail if it reaches 3
+  else: reset lateStreak to 0
+return true
+```
 ```java
 class Solution {
     public boolean checkRecord(String s) {
@@ -9540,6 +13338,16 @@ class Solution {
 **Description:** Find the next greater number by rearranging the digits of `n`. Return -1 if none or on overflow.  
 **Intuition:** Standard next-permutation on digits: find the rightmost ascending pair, swap with the next larger digit to its right, reverse the suffix.
 
+**Variables:** `digits` = digits of n as a char array · `i` = pivot (rightmost digit smaller than its right neighbor) · `j` = next larger digit to the right · `value` = parsed result (long, for overflow)
+**Pseudocode:**
+```
+i = second-to-last; move left while digits[i] >= digits[i+1] (find the pivot)
+if no pivot (i < 0): return -1
+j = last; move left while digits[j] <= digits[i] (next larger digit)
+swap digits at i and j
+reverse the suffix after i (smallest arrangement)
+parse as a long; return -1 if it overflows int, else the int
+```
 ```java
 class Solution {
     public int nextGreaterElement(int n) {
@@ -9581,6 +13389,15 @@ class Solution {
 **Description:** Reverse individual words in a string while preserving word order.  
 **Intuition:** Split on spaces, reverse each word, and rejoin with single spaces.
 
+**Variables:** `words` = s split on spaces · `builder` = result · `i` = word index
+**Pseudocode:**
+```
+split s into words
+for each word index i:
+  if not the first word: append a space
+  append the reversed word
+return the result
+```
 ```java
 class Solution {
     public String reverseWords(String s) {
@@ -9605,6 +13422,19 @@ class Solution {
 **Description:** Add or subtract a sequence of fractions, returning the result in lowest terms.  
 **Intuition:** Parse each signed fraction, accumulate over a common denominator, then reduce by the GCD.
 
+**Variables:** `num`/`den` = running result fraction · `i` = scan index · `sign` = +1/-1 of the current fraction · `a`/`b` = current numerator/denominator · `g` = GCD for reducing
+**Pseudocode:**
+```
+num = 0, den = 1, i = 0
+while i < length:
+  read an optional sign
+  parse numerator a (digits)
+  skip the '/'
+  parse denominator b (digits)
+  num = num*b + sign*a*den; den = den*b (add over a common denominator)
+g = gcd(|num|, den)
+return (num/g) + "/" + (den/g)
+```
 ```java
 class Solution {
     public String fractionAddition(String expression) {
@@ -9647,6 +13477,19 @@ class Solution {
 **Description:** Wrap every substring of `s` that matches a word in the dictionary with `<b>...</b>`, merging overlaps.  
 **Intuition:** Mark every covered index in a boolean array, then emit bold tags around maximal marked runs.
 
+**Variables:** `bold[i]` = whether index i is covered by some word · `start` = each match position · `builder` = tagged result
+**Pseudocode:**
+```
+make bold array all false
+for each dictionary word:
+  find every occurrence in s; mark all its indices bold
+build the result:
+  for each index i:
+    if bold[i] and (i is 0 or previous not bold): open "<b>"
+    append the char
+    if bold[i] and (i is last or next not bold): close "</b>"
+return the result
+```
 ```java
 class Solution {
     public String addBoldTag(String s, String[] words) {
@@ -9683,6 +13526,13 @@ class Solution {
 **Description:** Check if a robot following an instruction string (UDLR) returns to the origin.  
 **Intuition:** Track net horizontal and vertical displacement; the robot returns only if both are zero.
 
+**Variables:** `x`/`y` = net horizontal/vertical displacement
+**Pseudocode:**
+```
+x = 0, y = 0
+for each move: U adds to y, D subtracts from y, L subtracts from x, R adds to x
+return true if both x and y are 0
+```
 ```java
 class Solution {
     public boolean judgeCircle(String moves) {
@@ -9711,6 +13561,15 @@ class Solution {
 **Description:** Swap two digits at most once to get the maximum possible value.  
 **Intuition:** Record the last index of each digit; scanning left to right, swap the first digit with the largest later digit that exceeds it.
 
+**Variables:** `digits` = digits of num as a char array · `last[d]` = last index where digit d appears · `i` = scan index · `d` = a candidate larger digit
+**Pseudocode:**
+```
+record the last position of each digit 0–9
+for each index i left to right:
+  for d from 9 down to (digits[i]+1):
+    if d appears after i: swap digits[i] with that later d, return the new number
+return num unchanged
+```
 ```java
 class Solution {
     public int maximumSwap(int num) {
@@ -9742,6 +13601,17 @@ class Solution {
 **Description:** Check if a string is a palindrome after deleting at most one character.  
 **Intuition:** Two pointers inward; at the first mismatch, try skipping either the left or right char and check the remainder.
 
+**Variables:** `i`/`j` = pointers moving inward · `isPalindrome(i,j)` = plain palindrome check on a range
+**Pseudocode:**
+```
+i = 0, j = last index
+while i < j:
+  if chars at i and j differ: return true if skipping the left char OR the right char leaves a palindrome
+  move i right, j left
+return true
+
+isPalindrome(i, j): move inward; false on any mismatch
+```
 ```java
 class Solution {
     public boolean validPalindrome(String s) {
@@ -9776,6 +13646,16 @@ class Solution {
 **Description:** Find the next closest valid time using only the digits present in a given time string.  
 **Intuition:** From the current minute, advance one minute at a time and return the first time whose digits are all in the allowed set.
 
+**Variables:** `allowed` = set of digit chars present in the input · `minutes` = current time in minutes since midnight · `candidate` = formatted next time · `ok` = all its digits allowed
+**Pseudocode:**
+```
+collect the allowed digit chars (skip ':')
+minutes = hours*60 + minutes of the input
+loop:
+  minutes = (minutes + 1) mod (24*60) (advance one minute)
+  format as HH:MM
+  if every digit of it is allowed: return it
+```
 ```java
 class Solution {
     public String nextClosestTime(String time) {
@@ -9813,6 +13693,15 @@ class Solution {
 **Description:** Find the minimum number of times string `a` must repeat so `b` is a substring. Return -1 if impossible.  
 **Intuition:** Repeat `a` until its length covers `b`, then check one extra copy to handle offset overlap.
 
+**Variables:** `builder` = repeated copies of a · `count` = number of copies so far
+**Pseudocode:**
+```
+repeat a (counting copies) until the buffer is at least as long as b
+if the buffer contains b: return count
+append one more copy of a (for offset overlap)
+if it now contains b: return count + 1
+return -1
+```
 ```java
 class Solution {
     public int repeatedStringMatch(String a, String b) {
@@ -9842,6 +13731,13 @@ class Solution {
 **Description:** Convert a string to lowercase.  
 **Intuition:** Uppercase ASCII letters differ from lowercase by 32, so shift any A–Z char.
 
+**Variables:** `chars` = mutable char array · `i` = scan index
+**Pseudocode:**
+```
+turn s into a char array
+for each char: if it is A–Z, add 32 to shift it to lowercase
+return the array as a string
+```
 ```java
 class Solution {
     public String toLowerCase(String s) {
@@ -9864,6 +13760,21 @@ class Solution {
 **Description:** Parse a chemical formula string and return atom counts in sorted order.  
 **Intuition:** Recursive-descent style parse with a stack of count maps for parentheses; multiply a group's counts by the number following its closing paren.
 
+**Variables:** `i` = global parse position · `formula` = the string · `counts` = atom → count for the current scope · `parse()` = parse one group · `parseName()` = read an element name · `parseNumber()` = read a count (default 1) · `mult` = multiplier after a ')'
+**Pseudocode:**
+```
+countOfAtoms: parse the whole formula, sort atoms (TreeMap), build name + count (omit count 1)
+
+parse():
+  make empty counts
+  while not at end and not at ')':
+    if '(': skip '(', recurse into parse(), skip ')', read the multiplier, add inner counts times the multiplier
+    else: read an element name, read its number, add to counts
+  return counts
+
+parseName(): take the uppercase letter then following lowercase letters
+parseNumber(): read digits into a number; return 1 if there were none
+```
 ```java
 class Solution {
     private int i = 0;
@@ -9930,6 +13841,17 @@ class Solution {
 **Description:** Find the shortest word in a list that contains all letters of a license plate (case-insensitive, with multiplicity).  
 **Intuition:** Build the plate's letter-count vector, then keep the shortest word whose own counts cover it.
 
+**Variables:** `target[ch-'a']` = required count of each letter from the plate · `count[ch-'a']` = a word's letter counts · `covers` = word has enough of every letter · `result` = shortest covering word so far
+**Pseudocode:**
+```
+build target counts from the plate's letters (lowercased, letters only)
+result = none
+for each word:
+  count its letters
+  covers = true; if any letter's count is below target, covers = false
+  if covers and (no result yet or this word is shorter): result = word
+return result
+```
 ```java
 class Solution {
     public String shortestCompletingWord(String licensePlate, String[] words) {
@@ -9969,6 +13891,20 @@ class Solution {
 **Description:** Count numbers in `[1, n]` that become a different valid number when each digit is rotated 180 degrees.  
 **Intuition:** A number is "good" if all digits are valid rotations and at least one digit (2,5,6,9) actually changes.
 
+**Variables:** `count` = how many good numbers · `isGood(num)` = valid + actually changed · `d` = a digit · `changed` = some digit flips to a different one
+**Pseudocode:**
+```
+count = 0
+for i from 1 to n: if isGood(i): count += 1
+return count
+
+isGood(num):
+  changed = false
+  for each digit d of num:
+    if d is 3, 4, or 7: invalid rotation, return false
+    if d is 2, 5, 6, or 9: changed = true
+  return changed
+```
 ```java
 class Solution {
     public int rotatedDigits(int n) {
@@ -10005,6 +13941,14 @@ class Solution {
 **Description:** Sort string `s` so its characters appear in the order given by string `order`.  
 **Intuition:** Count chars in `s`, emit them in `order`'s sequence, then append any chars not mentioned in `order`.
 
+**Variables:** `count[ch-'a']` = remaining copies of each char in s · `builder` = result
+**Pseudocode:**
+```
+count every char of s
+for each char in order: append it count[ch] times and zero that count
+for each remaining letter still counted: append it count times
+return the result
+```
 ```java
 class Solution {
     public String customSortString(String order, String s) {
@@ -10038,6 +13982,19 @@ class Solution {
 **Description:** Decide whether the given tic-tac-toe board is reachable from valid play.  
 **Intuition:** Count X and O; X count must equal O or be one more, and if a player has won the move counts must be consistent (both can't win).
 
+**Variables:** `xCount`/`oCount` = piece counts · `xWin`/`oWin` = whether each player has three in a row · `wins(board,p)` = three-in-a-row check for player p
+**Pseudocode:**
+```
+count X and O across the board
+if oCount is not equal to xCount and not xCount-1: invalid (turn order)
+xWin = X has a line, oWin = O has a line
+if both win: invalid
+if X wins but xCount != oCount+1: invalid (X must have just moved)
+if O wins but xCount != oCount: invalid (O must have just moved)
+otherwise valid
+
+wins(board, p): check all rows, columns, and both diagonals for three p's
+```
 ```java
 class Solution {
     public boolean validTicTacToe(String[] board) {
@@ -10094,6 +14051,11 @@ class Solution {
 **Description:** Check if string `t` is a rotation of string `s`.  
 **Intuition:** Every rotation of `s` is a substring of `s+s`, so check containment after a length match.
 
+**Variables:** `s+s` = s concatenated with itself (contains every rotation)
+**Pseudocode:**
+```
+return true if s and goal have the same length and (s+s) contains goal
+```
 ```java
 class Solution {
     public boolean rotateString(String s, String goal) {
@@ -10110,6 +14072,23 @@ class Solution {
 **Description:** Determine how many query words match a stretched version of `s` (groups stretched to length ≥ 3).  
 **Intuition:** Compare run lengths group by group: the stretched group must be ≥ 3, or equal to the original run length.
 
+**Variables:** `count` = matching words · `stretchy(s,word)` = group-by-group match · `i`/`j` = positions in s/word · `lenS`/`lenW` = run lengths at each position · `runLength(s,i)` = length of the run starting at i
+**Pseudocode:**
+```
+count = 0
+for each word: if stretchy(s, word): count += 1
+return count
+
+stretchy(s, word):
+  walk both with i, j:
+    if the chars differ: return false
+    lenS = run length in s, lenW = run length in word
+    if lenS < lenW, or (they differ and lenS < 3): return false (can't stretch to match)
+    advance i by lenS, j by lenW
+  return true only if both fully consumed
+
+runLength(s, i): count chars equal to s[i] starting at i
+```
 ```java
 class Solution {
     public int expressiveWords(String s, String[] words) {
@@ -10154,6 +14133,18 @@ class Solution {
 **Description:** Convert words to Goat Latin: append "ma" (plus per-word index of 'a's); move leading consonants to the end for non-vowel words.  
 **Intuition:** For each word, decide vowel vs consonant start, transform, then append "ma" and i+1 trailing 'a's.
 
+**Variables:** `vowels` = vowel set · `words` = the sentence split · `i` = word index · `builder` = one transformed word · `result` = full output
+**Pseudocode:**
+```
+make the vowel set; split the sentence into words
+for each word index i:
+  if it starts with a vowel: keep it
+  else: move the first letter to the end
+  append "ma"
+  append i+1 trailing 'a's
+  separate words with single spaces
+return the result
+```
 ```java
 class Solution {
     public String toGoatLatin(String sentence) {
@@ -10191,6 +14182,16 @@ class Solution {
 **Description:** Apply non-overlapping indexed replacements: at each index, if `sources[k]` matches, replace it with `targets[k]`.  
 **Intuition:** Map each start index to its replacement; rebuild the string, jumping over matched sources and copying unmatched chars verbatim.
 
+**Variables:** `indexToOp` = start index → operation number k (only for matching sources) · `i` = rebuild scan position · `k` = the operation at index i · `builder` = result
+**Pseudocode:**
+```
+for each operation k: if sources[k] matches s at indices[k], record indices[k] -> k
+i = 0
+while i < length of s:
+  if i has a recorded op k: append targets[k], jump i past sources[k]
+  else: copy s[i], advance i
+return the result
+```
 ```java
 class Solution {
     public String findReplaceString(String s, int[] indices, String[] sources, String[] targets) {
@@ -10225,6 +14226,15 @@ class Solution {
 **Description:** Check if two strings are "buddy strings": swapping exactly one pair of chars makes them equal.  
 **Intuition:** Equal length is required; if the strings are identical, you need a duplicate char to swap; otherwise exactly two positions must differ and be mirror images.
 
+**Variables:** `count[ch-'a']` = letter counts (for the equal case) · `first`/`second` = the two differing positions
+**Pseudocode:**
+```
+if lengths differ: return false
+if s equals goal:
+  return true only if some letter appears twice (a swap of equals)
+find the differing positions; record first then second; more than two -> false
+return true only if there are exactly two and they are mirror images (s[first]=goal[second] and s[second]=goal[first])
+```
 ```java
 class Solution {
     public boolean buddyStrings(String s, String goal) {
@@ -10266,6 +14276,18 @@ class Solution {
 **Description:** Check if words are sorted in a given alien language's alphabetical order.  
 **Intuition:** Map each letter to its rank, then verify each adjacent pair is in non-decreasing order under that ranking.
 
+**Variables:** `rank[ch-'a']` = position of each letter in the alien order · `inOrder(a,b,rank)` = whether a comes before-or-equal b · `ra`/`rb` = ranks of the compared chars
+**Pseudocode:**
+```
+build rank from the alien order
+for each adjacent pair of words: if not inOrder, return false
+return true
+
+inOrder(a, b):
+  compare char by char up to the shorter length:
+    if ranks differ: a is in order iff its rank is smaller
+  if all equal: a must be no longer than b (prefix comes first)
+```
 ```java
 class Solution {
     public boolean isAlienSorted(String[] words, String order) {
@@ -10301,6 +14323,17 @@ class Solution {
 **Description:** Find the minimum number of subsequences of `source` whose concatenation equals `target`. Return -1 if impossible.  
 **Intuition:** Greedily consume as much of `target` as possible from each pass over `source`; if a pass makes no progress, a needed char is missing.
 
+**Variables:** `count` = passes over source (subsequences) used · `i` = how much of target is consumed · `prev` = i at the start of the pass · `j` = scan index into source
+**Pseudocode:**
+```
+count = 0, i = 0
+while i < length of target:
+  prev = i
+  scan source once; each time source[j] matches target[i], advance i
+  if i did not move (i equals prev): a needed char is missing, return -1
+  count += 1
+return count
+```
 ```java
 class Solution {
     public int shortestWay(String source, String target) {
@@ -10330,6 +14363,12 @@ class Solution {
 **Description:** Defang an IP address by replacing each '.' with '[.]'.  
 **Intuition:** Append each char, expanding dots into the bracketed form.
 
+**Variables:** `builder` = defanged result
+**Pseudocode:**
+```
+for each char: if it is '.', append "[.]"; else append the char
+return the result
+```
 ```java
 class Solution {
     public String defangIPaddr(String address) {
@@ -10354,6 +14393,14 @@ class Solution {
 **Description:** Find the maximum number of balanced strings ('R' count == 'L' count) to split into.  
 **Intuition:** Track a running balance; every time it returns to zero a balanced piece has closed.
 
+**Variables:** `count` = balanced pieces closed · `balance` = R count minus L count so far
+**Pseudocode:**
+```
+count = 0, balance = 0
+for each char: add 1 for 'R', subtract 1 for 'L'
+  whenever balance returns to 0: a balanced piece closed, count += 1
+return count
+```
 ```java
 class Solution {
     public int balancedStringSplit(String s) {
@@ -10377,6 +14424,13 @@ class Solution {
 **Description:** Break a palindrome by changing one character to get the lexicographically smallest non-palindrome.  
 **Intuition:** Change the first non-'a' in the first half to 'a'; if all are 'a', change the last char to 'b'. Single-char strings can't be broken.
 
+**Variables:** `n` = length · `chars` = mutable char array · `i` = scan index over the first half
+**Pseudocode:**
+```
+if length is 1: return "" (can't break)
+scan the first half: at the first non-'a', change it to 'a' and return
+if the whole first half is 'a': change the last char to 'b' and return
+```
 ```java
 class Solution {
     public String breakPalindrome(String palindrome) {
@@ -10405,6 +14459,13 @@ class Solution {
 **Description:** Find the longest happy prefix (a non-empty prefix that is also a suffix).  
 **Intuition:** The KMP failure value at the last index is exactly the length of the longest proper prefix that is also a suffix.
 
+**Variables:** `n` = length · `lps[i]` = longest prefix-also-suffix length ending at i · `j` = KMP fallback pointer
+**Pseudocode:**
+```
+build the KMP lps array over s:
+  for i from 1: j = lps[i-1]; fall back while mismatch; if s[i] matches s[j], j++; lps[i] = j
+return the prefix of s of length lps[last] (the longest prefix that is also a suffix)
+```
 ```java
 class Solution {
     public String longestPrefix(String s) {
@@ -10433,6 +14494,16 @@ class Solution {
 **Description:** Find the maximum number of consecutive same characters in a string (the "power" of the string).  
 **Intuition:** Track the current run length, resetting on a change, and keep the maximum seen.
 
+**Variables:** `max` = longest run seen · `run` = current run length
+**Pseudocode:**
+```
+max = 1, run = 1
+for each index i from 1:
+  if same as previous char: run += 1
+  else: run = 1
+  max = max(max, run)
+return max
+```
 ```java
 class Solution {
     public int maxPower(String s) {
@@ -10458,6 +14529,15 @@ class Solution {
 **Description:** Check if any two strings in a list differ by exactly one character (same length, same position).  
 **Intuition:** For each position, hash each word with that position wildcarded; a collision among same-length words means they differ in only that spot.
 
+**Variables:** `m` = word length · `seen` = set of masked words for the current position · `j` = wildcarded position · `masked` = word with position j replaced by '*'
+**Pseudocode:**
+```
+for each position j from 0 to m-1:
+  clear the seen set
+  for each word: build masked = word with char j replaced by '*'
+    if masked is already in seen: two words differ only at j, return true
+return false
+```
 ```java
 class Solution {
     public boolean differByOne(String[] dict) {
@@ -10485,6 +14565,15 @@ class Solution {
 **Description:** Format an integer with a dot as the thousands separator.  
 **Intuition:** Build the result from the right, inserting a separator after every three digits.
 
+**Variables:** `s` = n as a string · `builder` = result (built reversed) · `count` = digits appended since the last separator · `i` = scan index from the right
+**Pseudocode:**
+```
+s = n as a string; count = 0
+for i from the last digit down to 0:
+  append s[i]; count += 1
+  if count is a multiple of 3 and i is not the first digit: append '.'
+reverse the builder and return
+```
 ```java
 class Solution {
     public String thousandSeparator(int n) {
@@ -10511,6 +14600,15 @@ class Solution {
 **Description:** Find the latest valid time by replacing each '?' with an appropriate digit.  
 **Intuition:** Greedily choose the largest valid digit at each '?' position, respecting hour (≤ 23) and minute (≤ 59) constraints.
 
+**Variables:** `chars` = mutable HH:MM array · positions 0,1 = hour digits, 3,4 = minute digits
+**Pseudocode:**
+```
+if hour tens is '?': set '2' if hour ones is '?' or <= 3, else '1'
+if hour ones is '?': set '3' if hour tens is '2', else '9'
+if minute tens is '?': set '5'
+if minute ones is '?': set '9'
+return the assembled time
+```
 ```java
 class Solution {
     public String maximumTime(String time) {
@@ -10540,6 +14638,14 @@ class Solution {
 **Description:** Truncate a sentence to its first `k` words.  
 **Intuition:** Copy chars until the (k)th space is reached.
 
+**Variables:** `builder` = truncated result · `k` = words still allowed (decremented at each space) · `i` = scan index
+**Pseudocode:**
+```
+for each char:
+  if it is a space and decrementing k hits 0: stop (reached the k-th boundary)
+  append the char
+return the result
+```
 ```java
 class Solution {
     public String truncateSentence(String s, int k) {
@@ -10563,6 +14669,13 @@ class Solution {
 **Description:** Replace each digit at an odd index with the letter shifted from the preceding char by that digit.  
 **Intuition:** Even indices are letters; for each odd index, shift the previous letter forward by the digit's value.
 
+**Variables:** `chars` = mutable char array · `i` = odd index holding a digit · `chars[i-1]` = the preceding letter to shift
+**Pseudocode:**
+```
+for each odd index i:
+  replace chars[i] with the previous letter shifted forward by chars[i]'s digit value
+return the array as a string
+```
 ```java
 class Solution {
     public String replaceDigits(String s) {
@@ -10653,6 +14766,16 @@ Four data structures — each with a canonical template and representative probl
 
 ## All Templates
 
+**Variables:** `stack` = LIFO ArrayDeque (holds indices for monotone variants) · `queue` = monotone deque (front = window answer) · `minPQ`/`maxPQ`/`pq` = priority queue (heap) · `maxHeap` = lower half, `minHeap` = upper half for median
+**Pseudocode:**
+```
+STACK: push/pop/peek all at the front (LIFO)
+MONO-DECREASING (next greater): while current > stack top, pop and record current as its answer; push index
+MONO-INCREASING (next smaller / span): while current < stack top, pop and compute width to new top boundary; push index
+MONO-DEQUE (window max): drop back while smaller than current, push; drop front if out of window; front = window max
+PRIORITY QUEUE: offer/poll/peek the min (or max with reverse comparator)
+TWO HEAPS: push to maxHeap then shift its top to minHeap; rebalance so maxHeap >= minHeap; median from the tops
+```
 ```java
 // 1. STACK (LIFO) — use ArrayDeque, not Stack class
 Deque<Integer> stack = new ArrayDeque<>();
@@ -10735,6 +14858,13 @@ double findMedian() {
 
 **Intuition:** the most recent unmatched open bracket is the only one a closing bracket can legally match — that is exactly LIFO.
 
+**Variables:** `stack` = expected closing brackets (LIFO) · `c` = current character
+**Pseudocode:**
+```
+for each char: if it's an opener, push the matching closer
+else (a closer): if stack empty or popped top != this char, return false
+valid iff stack ends empty
+```
 ```java
 class Solution {
     public boolean isValid(String s) {
@@ -10758,6 +14888,13 @@ class Solution {
 **Description:** Design a stack that supports push, pop, top, and `getMin()` in O(1).  
 **Key:** auxiliary `minStack` mirrors the main stack — each level stores the current running minimum.
 
+**Variables:** `stack` = the values · `minStack` = running minimum at each level
+**Pseudocode:**
+```
+push: push value; push min(current minStack top, value) onto minStack
+pop: pop both stacks together
+top: stack top; getMin: minStack top
+```
 ```java
 class MinStack {
     Deque<Integer> stack    = new ArrayDeque<>();
@@ -10781,6 +14918,15 @@ class MinStack {
 **Description:** Decode a string like `"3[a2[bc]]"` → `"abcbcabcbc"`.  
 **Key:** two stacks — one for repeat counts, one for the string built before each `[`. On `]`, pop both and repeat.
 
+**Variables:** `countStack` = repeat counts · `strStack` = strings built before each `[` · `current` = string being built now · `k` = number being parsed
+**Pseudocode:**
+```
+digit: build multi-digit k
+'[': push k and current, reset both
+']': pop count and parent string; append current count times to parent; current = parent
+letter: append to current
+return current at end
+```
 ```java
 class Solution {
     public String decodeString(String s) {
@@ -10833,6 +14979,14 @@ Both store INDICES (not values) so you can compute distances and widths.
 
 **Intuition:** a colder day just waits on the stack until the first warmer day arrives and resolves it.
 
+**Variables:** `stack` = indices of days awaiting a warmer day (temps decreasing) · `result[]` = days-to-warmer per day · `idx` = popped day
+**Pseudocode:**
+```
+for each day i: while stack top is colder than today
+    pop that day; its answer = i - that index (distance to warmer)
+push i
+days left on stack keep 0 (no warmer day)
+```
 ```java
 class Solution {
     public int[] dailyTemperatures(int[] temperatures) {
@@ -10859,6 +15013,12 @@ class Solution {
 **Description:** For each element in `nums1` (a subset of `nums2`), find the first greater element to its right in `nums2`. Return -1 if none.  
 **Key:** precompute NGE for all elements in `nums2` using a monotone stack + HashMap. Then look up each `nums1` element.
 
+**Variables:** `nextGreater` = value → its next greater · `stack` = values awaiting a greater one (decreasing) · `result[]` = answers for nums1
+**Pseudocode:**
+```
+scan nums2: while stack top < current, pop and map it to current as its next greater; push current
+for each nums1 element, look up its next greater (default -1)
+```
 ```java
 class Solution {
     public int[] nextGreaterElement(int[] nums1, int[] nums2) {
@@ -10888,6 +15048,14 @@ class Solution {
 
 **Intuition:** a bar can only stretch sideways until it hits a shorter bar; the stack remembers each bar's left limit so the right limit (current shorter bar) closes the rectangle.
 
+**Variables:** `h[]` = heights padded with 0 sentinels · `stack` = indices, heights increasing · `left` = left boundary · `width` = bars spanned · `maxArea` = best area
+**Pseudocode:**
+```
+pad with 0 at both ends to flush the stack
+for each bar i: while stack top is taller than h[i]
+    pop it as the rectangle height; width = i - newLeftBoundary - 1; update maxArea
+push i
+```
 ```java
 class Solution {
     public int largestRectangleArea(int[] heights) {
@@ -10920,6 +15088,14 @@ class Solution {
 
 **Intuition:** water sits in a dip between a left wall and a right wall, and its depth is set by whichever wall is shorter.
 
+**Variables:** `stack` = indices, heights increasing · `bottom` = valley floor (popped bar) · `left` = left wall index · `h`/`w` = water depth and width · `water` = total
+**Pseudocode:**
+```
+for each bar i: while stack top is shorter than h[i]
+    pop it as the valley floor; if stack now empty, no left wall, break
+    depth = min(left wall, current bar) - floor; width = i - left - 1; add depth*width
+push i
+```
 ```java
 class Solution {
     public int trap(int[] height) {
@@ -10964,6 +15140,13 @@ Area/water:         height × width               min(left_wall, right_wall) × 
 
 **Intuition:** any element smaller than a newer element can never be the window max again, so discard it; the front always holds the current best.
 
+**Variables:** `queue` = indices, values decreasing front→back (front = max) · `result[]` = window maxima
+**Pseudocode:**
+```
+for each i: drop back indices whose value <= nums[i] (they can't be max), then offer i
+if front index fell out of window (< i-k+1), drop it
+once i covers a full window, record nums[front] as that window's max
+```
 ```java
 class Solution {
     public int[] maxSlidingWindow(int[] nums, int k) {
@@ -10994,6 +15177,13 @@ class Solution {
 **Description:** Smash the two heaviest stones repeatedly. Return the last remaining weight (or 0).  
 **Template:** max-heap — always poll the two largest.
 
+**Variables:** `pq` = max-heap of stone weights · `a`/`b` = two heaviest stones
+**Pseudocode:**
+```
+heap all stones (max-heap)
+while at least two: poll two heaviest a,b; if unequal, offer a-b back
+return last stone or 0 if empty
+```
 ```java
 class Solution {
     public int lastStoneWeight(int[] stones) {
@@ -11016,6 +15206,13 @@ class Solution {
 **Description:** Return the k most frequent elements.  
 **Template:** min-heap of size k — evict the least frequent when size exceeds k. What remains = top k.
 
+**Variables:** `freq` = element → count · `pq` = min-heap on frequency, capped at k
+**Pseudocode:**
+```
+count frequencies
+for each (value,count): offer to heap; if heap exceeds k, poll (evict least frequent)
+the k entries left are the most frequent
+```
 ```java
 class Solution {
     public int[] topKFrequent(int[] nums, int k) {
@@ -11041,6 +15238,12 @@ class Solution {
 
 **Intuition:** keep the smaller half and larger half balanced; the median always lives right at the boundary, on the tops of the two heaps.
 
+**Variables:** `maxHeap` = lower half (top = its largest) · `minHeap` = upper half (top = its smallest)
+**Pseudocode:**
+```
+addNum: push to maxHeap, move its top to minHeap; if maxHeap smaller, move minHeap's top back
+findMedian: if maxHeap bigger, its top; else average of the two tops
+```
 ```java
 class MedianFinder {
     PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder()); // lower half
@@ -11068,6 +15271,14 @@ class MedianFinder {
 **Description:** Before each project you must have enough capital. Start with capital `w`. Pick at most `k` projects to maximize final capital.  
 **Template:** sort by required capital + max-heap of profits. At each step, unlock all affordable projects (move them into the heap), then greedily pick the most profitable.
 
+**Variables:** `projects` = (capital, profit) sorted by capital · `pq` = max-heap of affordable profits · `w` = current capital · `idx` = next project to unlock
+**Pseudocode:**
+```
+sort projects by required capital
+repeat k times: move every project affordable with current w into the profit max-heap
+    if heap empty, stop; else take the most profitable, add its profit to w
+return w
+```
 ```java
 class Solution {
     public int findMaximizedCapital(int k, int w, int[] profits, int[] capital) {
@@ -11095,6 +15306,13 @@ class Solution {
 **Description:** Rearrange characters so no two adjacent characters are the same. Return `""` if impossible.  
 **Template:** max-heap of (char, count) — at each step, pick the two most frequent chars and append them alternately.
 
+**Variables:** `count[]` = per-letter frequency · `pq` = max-heap of (char, count) · `builder` = result · `a`/`b` = two most frequent letters
+**Pseudocode:**
+```
+count letters; push each into a max-heap by count
+while two remain: pop top two, append both, decrement counts, re-push if still positive
+if one remains: impossible if its count > 1, else append it
+```
 ```java
 class Solution {
     public String reorganizeString(String s) {
@@ -11183,6 +15401,13 @@ queue.offerLast(x);   queue.pollLast();   queue.peekLast();
 
 **Variation:** Monotone decreasing stack. Iterate through the array TWICE (indices 0 to 2n-1, using `i % n`). Only push index `i` onto the stack during the first pass (`i < n`) to avoid duplicates.
 
+**Variables:** `stack` = indices awaiting a greater value (decreasing) · `result[]` = next greater per element (default -1)
+**Pseudocode:**
+```
+loop i from 0 to 2n-1, using nums[i % n] for circular wraparound
+    while stack top < current, pop and set its answer to current
+    push i only on the first pass (i < n) to avoid duplicate indices
+```
 ```java
 class Solution {
     public int[] nextGreaterElements(int[] nums) {
@@ -11209,6 +15434,13 @@ class Solution {
 
 **Variation:** For each row, compute cumulative histogram heights (1s stack vertically). Then apply the Largest Rectangle in Histogram algorithm (#84) on each row's histogram.
 
+**Variables:** `heights[]` = running column heights of consecutive 1s · `maxArea` = best rectangle · `stack` = indices for the #84 sub-routine
+**Pseudocode:**
+```
+for each row: update heights[j] = +1 if '1' else reset to 0
+run Largest-Rectangle-in-Histogram (#84) on that row's heights
+track the overall max area
+```
 ```java
 class Solution {
     public int maximalRectangle(char[][] matrix) {
@@ -11251,6 +15483,15 @@ class Solution {
 
 **Variation:** When encountering `(`, push current (result, sign) onto stack and reset. When encountering `)`, combine current result with the saved result and sign from the stack.
 
+**Variables:** `stack` = saved (result, sign) before each `(` · `result` = running total · `number` = digits being parsed · `sign` = +1/-1
+**Pseudocode:**
+```
+digit: build number
+'+'/'-': fold sign*number into result, reset number, set sign
+'(': push result then sign, reset result=0 sign=1
+')': fold current number in, then multiply by saved sign and add saved result (both popped)
+return result + sign*number
+```
 ```java
 class Solution {
     public int calculate(String s) {
@@ -11287,6 +15528,16 @@ class Solution {
 
 **Variation:** Process operator BEFORE the current number. Push positive/negative numbers for `+`/`-`. For `*`/`/`, immediately multiply/divide the top of the stack. Sum the stack at the end.
 
+**Variables:** `stack` = pending terms to sum · `number` = digits parsed · `sign` = previous operator (default '+')
+**Pseudocode:**
+```
+build number from digits
+at each operator (or end), apply the PREVIOUS operator:
+    '+' push number, '-' push -number
+    '*'/'/' pop top and push top·number or top/number (precedence applied now)
+update sign, reset number
+return sum of the stack
+```
 ```java
 class Solution {
     public int calculate(String s) {
@@ -11318,6 +15569,14 @@ class Solution {
 
 **Variation:** Binary search on the VALUE range [matrix[0][0], matrix[n-1][n-1]]. For a given `mid`, count elements ≤ mid by scanning from the bottom-left corner: if `matrix[row][col] <= mid`, all `row+1` elements in this column (0..row) are ≤ mid.
 
+**Variables:** `i`/`j` = binary-search value bounds · `mid` = candidate value · `count` = elements <= mid · `row`/`col` = staircase scan position
+**Pseudocode:**
+```
+binary search on value range [min, max]:
+    count elements <= mid by walking from bottom-left: if cell <= mid add row+1 and step right, else step up
+    if count >= k shrink high to mid, else low = mid+1
+converge to the kth smallest value
+```
 ```java
 class Solution {
     public int kthSmallest(int[][] matrix, int k) {
@@ -11358,6 +15617,14 @@ class Solution {
 
 **Variation:** Seed min-heap with `(nums1[i], nums2[0])` for i = 0..min(k, n1.length)-1. On each pop, if `j+1 < nums2.length`, push `(nums1[i], nums2[j+1])`. This expands row-by-row in the implicit pair matrix.
 
+**Variables:** `pq` = min-heap of pair indices [i,j] ordered by sum · `result` = k smallest pairs
+**Pseudocode:**
+```
+seed heap with (i,0) for each i up to min(k, len1) — the smallest pair in each row
+pop smallest-sum pair, add to result
+push (i, j+1) — the next pair in the same row — if it exists
+stop after k pops
+```
 ```java
 class Solution {
     public List<List<Integer>> kSmallestPairs(int[] nums1, int[] nums2, int k) {
@@ -11388,6 +15655,13 @@ class Solution {
 
 **Variation:** Greedy formula. Find the most frequent task (maxFreq). It creates `maxFreq - 1` "frames" of `n + 1` slots, plus `maxCount` (count of tasks with maxFreq) slots. The answer is `max(tasks.length, (maxFreq - 1) * (n + 1) + maxCount)`.
 
+**Variables:** `count[]` = per-task frequency · `maxFreq` = highest frequency · `maxCount` = number of tasks tied at maxFreq
+**Pseudocode:**
+```
+count task frequencies; find maxFreq and how many tasks share it (maxCount)
+slots = (maxFreq-1)*(n+1) + maxCount  (frames sized by cooldown plus the trailing peak group)
+answer = max(total tasks, slots)  (no idle if tasks dense enough)
+```
 ```java
 class Solution {
     public int leastInterval(char[] tasks, int n) {
@@ -11408,6 +15682,15 @@ class Solution {
 ## #358 Rearrange String k Distance Apart
 **Description:** Rearrange a string so that the same characters are at least `k` distance apart. Return "" if impossible.
 **Variation:** greedy with a max-heap by frequency plus a cooldown queue of size k that holds recently used characters until they're eligible again.
+
+**Variables:** `count` = char → frequency · `maxHeap` = chars by remaining count · `cooldown` = queue of size k holding recently placed chars · `builder` = result
+**Pseudocode:**
+```
+count chars; push all into max-heap by count
+loop: pop most frequent, append it, decrement, put it on cooldown
+once cooldown has k entries, release the oldest back to the heap if still positive
+valid iff result length equals s length, else ""
+```
 ```java
 class Solution {
     public String rearrangeString(String s, int k) {
@@ -11439,6 +15722,15 @@ class Solution {
 ## #480 Sliding Window Median
 **Description:** Return the median of every window of size k as it slides across the array.
 **Variation:** two heaps (maxHeap = lower half, minHeap = upper half) with lazy deletion — defer removing elements that left the window, tracking balance with counts.
+
+**Variables:** `maxHeap` = lower half · `minHeap` = upper half · `out` = element leaving the window · `result[]` = medians
+**Pseudocode:**
+```
+for each i: insert nums[i] into the correct half
+if window full, remove the element that left (nums[i-k]) from its half
+rebalance so |sizes| differ by at most 1, maxHeap never smaller
+once a full window exists, median = maxHeap top (odd k) or average of tops (even)
+```
 ```java
 class Solution {
     public double[] medianSlidingWindow(int[] nums, int k) {
@@ -11477,6 +15769,14 @@ class Solution {
 ## #692 Top K Frequent Words
 **Description:** Return the k most frequent words. Sort by frequency descending; ties broken by lexicographic order.
 **Variation:** min-heap of size k ordered so the "smallest" (lowest freq, or same freq with lexicographically larger word) sits on top for eviction.
+
+**Variables:** `count` = word → frequency · `minHeap` = size-k heap; top = least frequent (ties: lexicographically larger) · `result` = top k words
+**Pseudocode:**
+```
+count word frequencies
+for each word: offer to heap; if size > k poll (evict the "smallest" by the comparator)
+drain heap into list (ascending), then reverse to get descending order
+```
 ```java
 class Solution {
     public List<String> topKFrequent(String[] words, int k) {
@@ -11503,6 +15803,16 @@ class Solution {
 ## #772 Basic Calculator III
 **Description:** Evaluate an arithmetic expression with `+`, `-`, `*`, `/`, and parentheses.
 **Variation:** combines #224 (parentheses via recursion) and #227 (operator precedence: apply `*`/`/` immediately, defer `+`/`-`).
+
+**Variables:** `i` = shared global parse cursor · `stack` = pending terms for this frame · `num` = digits parsed · `op` = previous operator
+**Pseudocode:**
+```
+eval scans from cursor i: digits build num
+'(' recurse to get the parenthesized value into num
+on operator or end: apply previous op (+/- push, * / fold into stack top)
+')' breaks out, returning this frame's value
+return sum of the stack
+```
 ```java
 class Solution {
     private int i;
@@ -11542,6 +15852,14 @@ class Solution {
 
 **Intuition:** push indices onto a stack; the bottom of the stack is always the index just before the current valid run, so the gap to it gives the run length.
 
+**Variables:** `stack` = indices; bottom = base just before the current valid run (seeded with -1) · `result` = longest run
+**Pseudocode:**
+```
+push sentinel -1
+'(': push its index
+')': pop; if stack now empty, push this index as a new base
+    else update result with i - new stack top (current valid run length)
+```
 ```java
 class Solution {
     public int longestValidParentheses(String s) {
@@ -11574,6 +15892,13 @@ class Solution {
 
 **Intuition:** split on `/` and treat directories as a stack — `..` pops the last directory, `.` and empty tokens are ignored.
 
+**Variables:** `stack` = directory names in order · `part` = current path token · `builder` = rebuilt path
+**Pseudocode:**
+```
+split path on '/'
+for each token: skip empty and '.'; on '..' pop if non-empty; else push directory name
+join stack from bottom to top with '/'; return "/" if empty
+```
 ```java
 class Solution {
     public String simplifyPath(String path) {
@@ -11607,6 +15932,13 @@ class Solution {
 
 **Intuition:** push operands; on an operator pop the two most recent operands, apply, and push the result back — exactly LIFO.
 
+**Variables:** `stack` = operands · `a`/`b` = the two popped operands (a first, b second)
+**Pseudocode:**
+```
+for each token: if operator, pop b then a, apply a op b, push result
+else push the parsed integer
+final stack top is the answer
+```
 ```java
 class Solution {
     public int evalRPN(String[] tokens) {
@@ -11642,6 +15974,12 @@ class Solution {
 
 **Intuition:** a min-heap of size k keeps the k largest seen so far; its top is the kth largest.
 
+**Variables:** `minHeap` = the k largest seen; top = smallest of them (= kth largest)
+**Pseudocode:**
+```
+for each num: offer to heap; if size > k poll (evict smallest)
+heap top is the kth largest
+```
 ```java
 class Solution {
     public int findKthLargest(int[] nums, int k) {
@@ -11664,6 +16002,13 @@ class Solution {
 
 **Intuition:** sweep left to right over building edges; a max-heap of active heights tracks the tallest standing building, and a key point is emitted whenever that maximum changes.
 
+**Variables:** `events` = (x, ±height): negative = start, positive = end · `maxHeap` = active building heights (incl. ground 0) · `prevMax` = last emitted height
+**Pseudocode:**
+```
+make start/end events; sort by x, ties: starts before ends, taller-start first, shorter-end first
+sweep events: start adds its height, end removes its height
+if the heap's current max changed, emit (x, newMax) as a key point
+```
 ```java
 class Solution {
     public List<List<Integer>> getSkyline(int[][] buildings) {
@@ -11704,6 +16049,12 @@ class Solution {
 
 **Intuition:** after each push, rotate the queue so the newest element sits at the front — then `poll`/`peek` behave like stack `pop`/`top`.
 
+**Variables:** `queue` = single FIFO queue holding stack contents, newest rotated to front
+**Pseudocode:**
+```
+push: enqueue x, then rotate (dequeue+enqueue) size-1 times so x reaches the front
+pop/top: poll/peek the front (now the most recently pushed)
+```
 ```java
 class MyStack {
     Queue<Integer> queue = new ArrayDeque<>();
@@ -11729,6 +16080,13 @@ class MyStack {
 
 **Intuition:** one stack receives pushes, the other serves pops; moving elements over reverses their order, restoring FIFO. Amortized O(1) per element.
 
+**Variables:** `inStack` = receives pushes · `outStack` = serves pops (reversed order)
+**Pseudocode:**
+```
+push: push onto inStack
+peek/pop: if outStack empty, drain inStack into outStack (reversing order) so oldest is on top
+then peek/pop outStack
+```
 ```java
 class MyQueue {
     Deque<Integer> inStack  = new ArrayDeque<>();    // ← VARIATION: two stacks emulate FIFO
@@ -11758,6 +16116,15 @@ class MyQueue {
 
 **Intuition:** monotone increasing stack of letters — pop a larger letter when a smaller one arrives, but only if the popped letter appears again later (so we can re-add it).
 
+**Variables:** `lastIndex[]` = last position of each letter · `inStack[]` = letter currently in stack · `stack` = result letters increasing
+**Pseudocode:**
+```
+record last index of each letter
+for each char: skip if already in stack
+    while stack top > char AND that top recurs later, pop it (mark not in stack)
+    push char, mark in stack
+read stack bottom-to-top for the answer
+```
 ```java
 class Solution {
     public String removeDuplicateLetters(String s) {
@@ -11791,6 +16158,14 @@ class Solution {
 
 **Intuition:** monotone increasing stack of digits — whenever a smaller digit arrives, pop larger preceding digits (each pop is one removal) so high places hold the smallest digits.
 
+**Variables:** `stack` = kept digits increasing · `k` = removals remaining · `builder` = result
+**Pseudocode:**
+```
+for each digit: while k>0 and stack top > digit, pop (one removal each), k--
+push digit
+if k still > 0, drop k digits from the top
+strip leading zeros; return "0" if empty
+```
 ```java
 class Solution {
     public String removeKdigits(String num, int k) {
@@ -11824,6 +16199,15 @@ class Solution {
 
 **Variation:** scan right to left with a monotone decreasing stack; pop to track the largest value that is still smaller than some element to its right (the "2"). If a later element is below that "2", a 132 pattern exists.
 
+**Variables:** `stack` = candidate "3" values (decreasing) · `two` = best "2" so far (largest value below some "3")
+**Pseudocode:**
+```
+scan right to left:
+    if current < two, we found the "1" → pattern exists, return true
+    while stack top < current, pop it into two (a valid "2" with this current as "3")
+    push current
+return false
+```
 ```java
 class Solution {
     public boolean find132pattern(int[] nums) {
@@ -11850,6 +16234,13 @@ class Solution {
 
 **Intuition:** a max-heap of (score, index) pops athletes in descending score order, so each pop assigns the next rank back to its original position.
 
+**Variables:** `maxHeap` = (score, original index) by score desc · `rank` = current rank counter · `result[]` = rank string per athlete
+**Pseudocode:**
+```
+push every (score, index) into a max-heap
+pop highest scores in order, assigning rank 1/2/3 → medals, then numeric rank
+write each result back at the athlete's original index
+```
 ```java
 class Solution {
     public String[] findRelativeRanks(int[] score) {
@@ -11885,6 +16276,13 @@ class Solution {
 
 **Intuition:** a call stack mirrors execution; when a new call starts, the currently running function pauses (accumulate its slice), and when a call ends, the resumed parent restarts its clock.
 
+**Variables:** `stack` = ids of currently running functions · `prevTime` = timestamp of last event · `result[]` = exclusive time per function
+**Pseudocode:**
+```
+for each log (id, start/end, time):
+    start: charge caller (stack top) for time - prevTime, push id, prevTime = time
+    end: charge top for time - prevTime + 1 (inclusive), pop it, prevTime = time + 1
+```
 ```java
 class Solution {
     public int[] exclusiveTime(int n, List<String> logs) {
@@ -11918,6 +16316,15 @@ class Solution {
 
 **Variation:** track a range `[low, high]` of possible open-paren counts; `*` widens the range (could be `(`, `)`, or empty). Valid iff the range can return to 0 and never goes negative.
 
+**Variables:** `low` = min possible open count · `high` = max possible open count
+**Pseudocode:**
+```
+'(': low++, high++
+')': low--, high--
+'*': low-- (as ')'), high++ (as '(')
+if high < 0, too many ')' → false; clamp low at 0
+valid iff low can reach 0 at the end
+```
 ```java
 class Solution {
     public boolean checkValidString(String s) {
@@ -11947,6 +16354,12 @@ class Solution {
 
 **Intuition:** a min-heap capped at size k always holds the k largest seen; its top is the running kth largest.
 
+**Variables:** `minHeap` = the k largest seen so far · `k` = target rank
+**Pseudocode:**
+```
+constructor: add each initial num
+add(val): offer val; if size > k poll smallest; return heap top (kth largest so far)
+```
 ```java
 class KthLargest {
     private PriorityQueue<Integer> minHeap = new PriorityQueue<>();
@@ -11973,6 +16386,13 @@ class KthLargest {
 
 **Variation:** mirror an auxiliary `maxStack` (like #155). `popMax` pops down to the max into a temp buffer, removes it, then pushes the buffer back — re-establishing both stacks.
 
+**Variables:** `stack` = values · `maxStack` = running max per level · `buffer` = temp holder during popMax
+**Pseudocode:**
+```
+push: push value, push max(maxStack top, value)
+pop/top/peekMax: operate on the stack tops
+popMax: pop values above the max into a buffer, drop the max, then push the buffer back (rebuilds maxStack)
+```
 ```java
 class MaxStack {
     Deque<Integer> stack    = new ArrayDeque<>();
@@ -12005,6 +16425,14 @@ class MaxStack {
 
 **Intuition:** a stack holds surviving asteroids; a left-moving asteroid only collides with a right-moving one on top, resolving collisions repeatedly until it survives, explodes, or the stack clears.
 
+**Variables:** `stack` = surviving asteroids · `a` = incoming asteroid · `alive` = whether a survives
+**Pseudocode:**
+```
+for each asteroid a: while a moves left and stack top moves right (collision)
+    smaller top explodes (pop, continue); equal: both explode (pop, a dies); larger: a dies
+if a survived all collisions, push it
+return stack contents in order
+```
 ```java
 class Solution {
     public int[] asteroidCollision(int[] asteroids) {
@@ -12039,6 +16467,13 @@ class Solution {
 
 **Intuition:** flatten all intervals, sort by start, then sweep tracking the furthest end seen so far; any gap between that end and the next start is common free time.
 
+**Variables:** `all` = every interval flattened · `prevEnd` = furthest end seen so far · `result` = common free gaps
+**Pseudocode:**
+```
+flatten all employees' intervals, sort by start
+sweep: if next interval starts after prevEnd, the gap (prevEnd, start) is free time
+extend prevEnd to max(prevEnd, this end)
+```
 ```java
 /*
 // Definition for an Interval.
@@ -12076,6 +16511,13 @@ class Solution {
 
 **Intuition:** build each string with a stack where `#` pops the last character, then compare the resulting stacks.
 
+**Variables:** `stack` = chars after applying backspaces · `builder` = final processed string
+**Pseudocode:**
+```
+build(s): for each char, '#' pops last char if any, else push char
+materialize the stack into a string
+return build(s) equals build(t)
+```
 ```java
 class Solution {
     public boolean backspaceCompare(String s, String t) {
@@ -12106,6 +16548,14 @@ class Solution {
 
 **Variation:** stack holds the accumulated score at each depth; push 0 on `(`, and on `)` collapse the inner score (`max(2*inner, 1)`) into the parent frame.
 
+**Variables:** `stack` = accumulated score per depth frame · `inner` = score of the frame just closed · `add` = its contribution to parent
+**Pseudocode:**
+```
+push 0 as the outer frame
+'(': push a fresh 0 frame
+')': pop inner; add = 1 if inner==0 else 2*inner; fold into parent (pop+push parent+add)
+final stack top is the total score
+```
 ```java
 class Solution {
     public int scoreOfParentheses(String s) {
@@ -12134,6 +16584,14 @@ class Solution {
 
 **Variation:** monotone increasing deque over prefix sums — pop from the front when a window qualifies, and from the back when a newer prefix is smaller (dominating older larger ones).
 
+**Variables:** `prefix[]` = prefix sums · `queue` = indices, prefix increasing front→back · `result` = shortest qualifying length
+**Pseudocode:**
+```
+build prefix sums
+for each i: while prefix[i] - prefix[front] >= k, window qualifies → update result, pop front
+while prefix[back] >= prefix[i], pop back (newer smaller prefix dominates)
+offer i; return result or -1
+```
 ```java
 class Solution {
     public int shortestSubarray(int[] nums, int k) {
@@ -12165,6 +16623,14 @@ class Solution {
 
 **Variation:** monotone increasing stack — for each element as the minimum, count subarrays via distance to the previous strictly-smaller and next smaller-or-equal element, then weight by the value.
 
+**Variables:** `stack` = indices, values increasing · `mid` = element being counted as minimum · `left`/`i` = its strictly-smaller boundary and current right boundary · `count` = subarrays where mid is the min
+**Pseudocode:**
+```
+walk with a sentinel min at the end to flush the stack
+when current < stack top, pop mid (it's the min of a span)
+    left = new stack top; count = (mid - left) * (i - mid) subarrays; add count * arr[mid]
+accumulate mod 1e9+7
+```
 ```java
 class Solution {
     public int sumSubarrayMins(int[] arr) {
@@ -12196,6 +16662,13 @@ class Solution {
 
 **Intuition:** track open parentheses as a counter (stack of size); each unmatched `)` needs an added `(`, and leftover `(` each need a `)`.
 
+**Variables:** `open` = unmatched '(' count (stack height) · `additions` = insertions needed
+**Pseudocode:**
+```
+'(': open++
+')': if open>0 match it (open--), else needs an added '(' (additions++)
+answer = additions + open (each leftover '(' needs a ')')
+```
 ```java
 class Solution {
     public int minAddToMakeValid(String s) {
@@ -12226,6 +16699,13 @@ class Solution {
 
 **Intuition:** simulate — push each value, then greedily pop whenever the stack top matches the next expected popped value. If everything pops, the sequence is valid.
 
+**Variables:** `stack` = simulated stack · `j` = index into popped (next expected pop)
+**Pseudocode:**
+```
+for each pushed value: push it
+    while stack top equals popped[j], pop and advance j
+sequence is valid iff the stack ends empty
+```
 ```java
 class Solution {
     public boolean validateStackSequences(int[] pushed, int[] popped) {
@@ -12252,6 +16732,13 @@ class Solution {
 
 **Intuition:** a max-heap of size k keyed on squared distance keeps the k closest seen; evict the farthest whenever the heap overflows.
 
+**Variables:** `maxHeap` = up to k points by squared distance; top = farthest · `result[][]` = k closest points
+**Pseudocode:**
+```
+for each point: offer to max-heap keyed on squared distance
+    if size > k poll (evict the farthest)
+the k points left are the closest; drain into result
+```
 ```java
 class Solution {
     public int[][] kClosest(int[][] points, int k) {
@@ -12277,6 +16764,12 @@ class Solution {
 
 **Intuition:** keep a min-heap of size 5 per student so only their five highest scores remain, then average those.
 
+**Variables:** `map` = student id → min-heap of top-5 scores (TreeMap keeps ids sorted) · `result[][]` = (id, average)
+**Pseudocode:**
+```
+for each (id, score): push into that student's min-heap; if size > 5 poll (drop lowest)
+per student (in id order): sum the five scores, average = sum/5
+```
 ```java
 class Solution {
     public int[][] highFive(int[][] items) {
@@ -12310,6 +16803,14 @@ class Solution {
 
 **Variation:** stack of builders — push current builder on `(`; on `)` reverse the inner builder and append it to the parent frame.
 
+**Variables:** `stack` = parent builders per depth · `current` = builder for the current frame
+**Pseudocode:**
+```
+'(': push current as parent, start a fresh builder
+')': reverse current, append it to the parent (popped), make parent the current
+letter: append to current
+return current at end
+```
 ```java
 class Solution {
     public String reverseParentheses(String s) {
@@ -12341,6 +16842,13 @@ class Solution {
 
 **Variation:** stack of (char, count) pairs — increment the top's count on a repeat, and pop the frame once its count reaches k.
 
+**Variables:** `stack` = [charCode, runLength] frames · `builder` = result
+**Pseudocode:**
+```
+for each char: if it equals stack top's char, increment its count; if count hits k, pop the frame
+else push a new frame (char, 1)
+rebuild the string by repeating each frame's char its count times
+```
 ```java
 class Solution {
     public String removeDuplicates(String s, int k) {
@@ -12373,6 +16881,14 @@ class Solution {
 
 **Variation:** stack stores indices of unmatched `(`; a `)` with no match is marked for removal, and any `(` left on the stack at the end is also removed.
 
+**Variables:** `chars` = mutable string · `stack` = indices of unmatched '(' · `'*'` = removal marker · `builder` = result
+**Pseudocode:**
+```
+'(': push its index
+')': if stack non-empty pop (matched), else mark this ')' for removal
+after scan, mark every unmatched '(' left on the stack
+build the result skipping marked characters
+```
 ```java
 class Solution {
     public String minRemoveToMakeValid(String s) {
@@ -12408,6 +16924,13 @@ class Solution {
 
 **Variation:** max-heap of size k keyed on (soldier count, row index) so the strongest qualifying row sits on top for eviction; the remaining k are the weakest.
 
+**Variables:** `maxHeap` = up to k rows by (soldiers, index); top = strongest · `soldiers` = count per row · `result[]` = weakest k row indices
+**Pseudocode:**
+```
+for each row: count soldiers; offer (count, index) to max-heap
+    if size > k poll (evict strongest)
+the k rows left are weakest; drain into result in reverse (weakest first)
+```
 ```java
 class Solution {
     public int[] kWeakestRows(int[][] mat, int k) {
@@ -12436,6 +16959,14 @@ class Solution {
 
 **Variation:** counter-style stack tracking open `(`; each `(` demands two `)`. Handle `)` carefully since they come in pairs, inserting a `)` when only one is available.
 
+**Variables:** `open` = unmatched '(' each needing two ')' · `insertions` = chars added · `i` = scan cursor
+**Pseudocode:**
+```
+'(': open++, advance one
+')': if the next char is also ')', consume both (advance two); else insert one ')' and advance one
+    then if open>0 match it (open--), else insert a missing '('
+answer = insertions + open*2 (each leftover '(' needs '))')
+```
 ```java
 class Solution {
     public int minInsertions(String s) {
@@ -12474,6 +17005,13 @@ class Solution {
 
 **Intuition:** the stack depth equals the current nesting level; track a running counter for `(`/`)` and record its peak.
 
+**Variables:** `depth` = current nesting level (virtual stack height) · `result` = peak depth
+**Pseudocode:**
+```
+'(': depth++, update result with the new peak
+')': depth--
+return result
+```
 ```java
 class Solution {
     public int maxDepth(String s) {
@@ -12501,6 +17039,14 @@ class Solution {
 
 **Variation:** max-heap keyed on the marginal gain from adding one student to a class; greedily assign each extra student where it helps most, then push the updated gain back.
 
+**Variables:** `maxHeap` = (pass, total, marginal gain) per class, ordered by gain · `gain()` = ratio improvement from one more passing student
+**Pseudocode:**
+```
+push each class with its current marginal gain
+for each extra student: pop the class with the highest gain
+    add one passing student (pass+1, total+1), recompute its gain, push back
+finally average pass/total across all classes
+```
 ```java
 class Solution {
     public double maxAverageRatio(int[][] classes, int extraStudents) {
@@ -12535,6 +17081,14 @@ class Solution {
 
 **Variation:** monotone decreasing stack scanned right to left; pop shorter people (each is visible) until a taller one blocks the view — that taller person is visible too.
 
+**Variables:** `stack` = heights to the right, decreasing bottom→top · `result[]` = visible count per person
+**Pseudocode:**
+```
+scan right to left:
+    while stack top is shorter than current, pop (each shorter is visible), result[i]++
+    if a taller blocker remains, it's also visible, result[i]++
+    push current height
+```
 ```java
 class Solution {
     public int[] canSeePersonsCount(int[] heights) {
@@ -12563,6 +17117,12 @@ class Solution {
 
 **Variation:** min-heap of size k comparing the numeric strings by length first, then lexicographically (so big-integer values compare correctly without overflow).
 
+**Variables:** `minHeap` = size-k heap comparing strings by length then lexicographically (numeric order for big ints)
+**Pseudocode:**
+```
+for each number string: offer to heap; if size > k poll (evict smallest)
+the heap top is the kth largest (longer string = larger; same length compares lexically)
+```
 ```java
 class Solution {
     public String kthLargestNumber(String[] nums, int k) {
@@ -12591,6 +17151,22 @@ One template: snapshot the level size, then drain exactly that many nodes per le
 ---
 
 ## The Template — Level-Aware BFS
+
+**Variables:** `queue` = nodes waiting to be processed · `size` = level snapshot (count of nodes in the current level) · `level` = current depth counter · `node` = node polled this step · `i` = index within the level
+**Pseudocode:**
+```
+make an empty queue
+put root in the queue
+level = 0
+while the queue is not empty:
+    size = how many nodes are in the queue right now (one whole level)
+    level = level + 1
+    repeat size times (index i = 0..size-1):
+        node = take the front of the queue
+        process node (level known; i==0 -> first, i==size-1 -> last)
+        if node has a left child, add it to the queue
+        if node has a right child, add it to the queue
+```
 
 ```java
 // LEVEL-AWARE PROCESSING — snapshot size to make per-level decisions
@@ -12663,6 +17239,24 @@ and i == size-1 / i == 0 checks become meaningless.
 
 **Description:** Return all node values level by level, left to right.
 
+**Variables:** `result` = list of levels · `queue` = BFS queue · `size` = level snapshot · `level` = values collected for this level · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+result = empty list
+if root is null, return result
+queue = new queue, put root in it
+while queue not empty:
+    size = current queue size (this whole level)
+    level = empty list
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        append node value to level
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+    append level to result
+return result
+```
+
 ```java
 class Solution {
     public List<List<Integer>> levelOrder(TreeNode root) {
@@ -12694,6 +17288,24 @@ class Solution {
 **Description:** Same as #102 but return levels from bottom to top.  
 **Key:** `LinkedList` as result — `addFirst` prepends each level, producing bottom-up order without a final reverse.
 
+**Variables:** `result` = LinkedList of levels (prepended) · `queue` = BFS queue · `size` = level snapshot · `level` = values for this level · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+result = empty linked list
+if root is null, return result
+queue = new queue, put root in it
+while queue not empty:
+    size = current queue size (this whole level)
+    level = empty list
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        append node value to level
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+    prepend level to result (addFirst -> bottom-up order)
+return result
+```
+
 ```java
 class Solution {
     public List<List<Integer>> levelOrderBottom(TreeNode root) {
@@ -12724,6 +17336,27 @@ class Solution {
 
 **Description:** Level 1 left-to-right, level 2 right-to-left, alternating.  
 **Key:** `LinkedList<Integer>` per level as a deque — `addLast` for left-to-right, `addFirst` for right-to-left. Flip flag after each level.
+
+**Variables:** `result` = list of levels · `queue` = BFS queue · `leftToRight` = direction flag for this level · `size` = level snapshot · `level` = deque of values for this level · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+result = empty list
+if root is null, return result
+queue = new queue, put root in it
+leftToRight = true
+while queue not empty:
+    size = current queue size (this whole level)
+    level = empty deque
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        if leftToRight: append node value to back of level
+        else:           append node value to front of level
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+    append level to result
+    flip leftToRight
+return result
+```
 
 ```java
 class Solution {
@@ -12761,6 +17394,23 @@ class Solution {
 
 **Description:** Return the average value of nodes at each level.
 
+**Variables:** `result` = list of per-level averages · `queue` = BFS queue · `size` = level snapshot (also the divisor) · `sum` = running sum of this level · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+result = empty list
+queue = new queue, put root in it
+while queue not empty:
+    size = current queue size (this whole level)
+    sum = 0
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        sum = sum + node value
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+    append sum / size to result
+return result
+```
+
 ```java
 class Solution {
     public List<Double> averageOfLevels(TreeNode root) {
@@ -12795,6 +17445,22 @@ All share the same outer loop. Only the `if` inside the `for` changes.
 **Description:** Return the value of the rightmost node at each level.  
 **Key:** record when `i == size - 1`.
 
+**Variables:** `result` = rightmost value per level · `queue` = BFS queue · `size` = level snapshot · `node` = node polled · `i` = index within level (record when `i == size-1`, the last node)
+**Pseudocode:**
+```
+result = empty list
+if root is null, return result
+queue = new queue, put root in it
+while queue not empty:
+    size = current queue size (this whole level)
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        if i == size-1: append node value to result   (last in level)
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+return result
+```
+
 ```java
 class Solution {
     public List<Integer> rightSideView(TreeNode root) {
@@ -12824,6 +17490,21 @@ class Solution {
 **Description:** Return the leftmost value in the last level (deepest row).  
 **Key:** record when `i == 0` every level — after the loop, `bottomLeft` holds the first node of the final level.
 
+**Variables:** `queue` = BFS queue · `bottomLeft` = first value of the latest level seen (overwritten each level) · `size` = level snapshot · `node` = node polled · `i` = index within level (record when `i == 0`, the first node)
+**Pseudocode:**
+```
+queue = new queue, put root in it
+bottomLeft = root value
+while queue not empty:
+    size = current queue size (this whole level)
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        if i == 0: bottomLeft = node value   (first in level, overwritten each level)
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+return bottomLeft   (first node of the last level)
+```
+
 ```java
 class Solution {
     public int findBottomLeftValue(TreeNode root) {
@@ -12850,6 +17531,24 @@ class Solution {
 ### #515 Find Largest Value in Each Tree Row
 
 **Description:** Return the maximum value found at each level.
+
+**Variables:** `result` = max value per level · `queue` = BFS queue · `size` = level snapshot · `max` = running maximum for this level · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+result = empty list
+if root is null, return result
+queue = new queue, put root in it
+while queue not empty:
+    size = current queue size (this whole level)
+    max = negative infinity
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        max = larger of (max, node value)
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+    append max to result
+return result
+```
 
 ```java
 class Solution {
@@ -12880,6 +17579,24 @@ class Solution {
 ### #1161 Maximum Level Sum of a Binary Tree
 
 **Description:** Return the smallest level number (1-indexed) whose node sum is maximum.
+
+**Variables:** `queue` = BFS queue · `maxSum` = best level sum so far · `maxLevel` = level number of that best sum · `level` = current level (1-indexed) · `size` = level snapshot · `sum` = sum of this level · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+queue = new queue, put root in it
+maxSum = negative infinity; maxLevel = 1; level = 0
+while queue not empty:
+    size = current queue size (this whole level)
+    level = level + 1
+    sum = 0
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        sum = sum + node value
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+    if sum > maxSum: maxSum = sum; maxLevel = level
+return maxLevel
+```
 
 ```java
 class Solution {
@@ -12915,6 +17632,23 @@ class Solution {
 **Key:** BFS is optimal here (DFS must visit the whole tree). Return `depth` the moment the first leaf is dequeued — that is guaranteed to be the shallowest.  
 **Intuition:** BFS reaches nodes in depth order, so the first leaf it dequeues is necessarily the shallowest.
 
+**Variables:** `queue` = BFS queue · `depth` = current level depth (1-indexed) · `size` = level snapshot · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+if root is null, return 0
+queue = new queue, put root in it
+depth = 0
+while queue not empty:
+    size = current queue size (this whole level)
+    depth = depth + 1
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        if node has no children: return depth   (first leaf = shallowest)
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+return depth
+```
+
 ```java
 class Solution {
     public int minDepth(TreeNode root) {
@@ -12948,6 +17682,23 @@ class Solution {
 **Key:** `previous` tracks the last node seen in the current level — wire `previous.next = node` before advancing. Reset `previous = null` at each level start.  
 **Intuition:** BFS already visits a level left to right, so just chain each node to the one polled before it.
 
+**Variables:** `queue` = BFS queue · `size` = level snapshot · `previous` = last node seen in this level (reset to null each level) · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+if root is null, return null
+queue = new queue, put root in it
+while queue not empty:
+    size = current queue size (this whole level)
+    previous = null
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        if previous is not null: previous.next = node   (chain within level)
+        previous = node
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+return root
+```
+
 ```java
 class Solution {
     public Node connect(Node root) {
@@ -12977,6 +17728,23 @@ class Solution {
 
 **Description:** Same as #116 but the tree can be any binary tree (not necessarily perfect).  
 **Key:** the BFS solution is **identical** to #116 — the `size` snapshot handles uneven levels automatically.
+
+**Variables:** `queue` = BFS queue · `size` = level snapshot (handles uneven levels) · `previous` = last node seen in this level (reset to null each level) · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+if root is null, return null
+queue = new queue, put root in it
+while queue not empty:
+    size = current queue size (this whole level)
+    previous = null
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        if previous is not null: previous.next = node   (chain within level)
+        previous = node
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+return root
+```
 
 ```java
 class Solution {
@@ -13010,6 +17778,28 @@ class Solution {
 **Description:** Two nodes `x` and `y` are cousins if they are at the same depth but have different parents. Return true if `x` and `y` are cousins.  
 **Key:** for each node polled, check if its children are `x` or `y`. After each full level, if both parents found → check `xParent != yParent`. If only one found → different depths → false.  
 **Intuition:** cousins must surface in the *same* BFS level; if only one shows up per level, their depths differ.
+
+**Variables:** `queue` = BFS queue · `size` = level snapshot · `xParent`/`yParent` = parents of x/y found in this level (null if not yet) · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+queue = new queue, put root in it
+while queue not empty:
+    size = current queue size (this whole level)
+    xParent = null; yParent = null
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        if node.left exists:
+            add node.left to queue
+            if node.left value == x: xParent = node
+            if node.left value == y: yParent = node
+        if node.right exists:
+            add node.right to queue
+            if node.right value == x: xParent = node
+            if node.right value == y: yParent = node
+    if both parents found: return xParent != yParent   (same depth -> cousins iff different parent)
+    if exactly one parent found: return false           (different depths)
+return false
+```
 
 ```java
 class Solution {
@@ -13090,6 +17880,25 @@ Snapshot the level size **before** the inner `for` loop — see "The One Rule" a
 **Description:** Return the maximum width of any level of a binary tree. Width is defined as the length between the leftmost and rightmost non-null nodes, including all the null nodes in between.
 
 **Variation:** BFS with position tracking. Assign each node a position: root=1, left child of node at pos `p` gets `2*p`, right child gets `2*p+1`. Width of level = `lastPos - firstPos + 1`. Normalize by subtracting `firstPos` of each level to prevent overflow.
+
+**Variables:** `maxWidth` = best width found · `queue` = BFS queue of nodes · `indices` = parallel queue of heap-style positions · `size` = level snapshot · `first` = leftmost position of this level (normalize against it) · `last` = rightmost normalized position seen · `node` = node polled · `pos` = normalized position of node · `i` = index within level
+**Pseudocode:**
+```
+if root is null, return 0
+maxWidth = 0
+queue = new queue with root; indices = new queue with position 0
+while queue not empty:
+    size = current queue size (this whole level)
+    first = front position in indices; last = 0
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        pos = poll front of indices minus first   (normalize to avoid overflow)
+        last = pos
+        if node.left  exists: add node.left to queue, add 2*pos     to indices
+        if node.right exists: add node.right to queue, add 2*pos+1 to indices
+    maxWidth = larger of (maxWidth, last + 1)   (width = last - first(0) + 1)
+return maxWidth
+```
 
 ```java
 class Solution {
@@ -13296,6 +18105,23 @@ DFS appears in five forms. The pattern determines naming, return type, and where
 
 ## All Templates
 
+**Variables:** `node` = current tree node · `accumulated`/`current` = state carried down a path · `answer`/global = best cross-node result · `grid[r][c]` = cell at row `r`, col `c` · `state[node]` = 0 unseen / 1 in-stack / 2 done · `start` = first eligible index · `current` = in-progress candidate · `nums[i]` = element being chosen
+**Pseudocode:**
+```
+# 1. post-order (combine children):
+if node null: return BASE; left=dfs(left); right=dfs(right); return combine(left,right,node.val)
+# 2. pre-order (pass state down):
+if node null: return; accumulated+=node.val; if leaf: record; dfs(left,accumulated); dfs(right,accumulated)
+# 3. tree global answer:
+if node null: return 0; left=max(0,dfs(left)); right=max(0,dfs(right)); answer=max(answer,left+right+node.val); return max(left,right)+node.val
+# 4. grid flood fill:
+if out of bounds or not TARGET: return; mark VISITED; recurse into 4 neighbors
+# 5. graph 3-color cycle:
+if state==1: cycle; if state==2: safe; mark in-stack; recurse neighbors (cycle? return); mark done
+# 6. backtracking:
+if base: record copy; for i from start: skip dups; choose nums[i]; recurse(next); undo
+```
+
 ```java
 // 1. PROCESS CHILDREN FIRST, COMBINE AT NODE (post-order)
 // each node trusts its children to return a finished answer, then merges them.  — WHEN: "what is the height/sum/property OF the subtree rooted here"
@@ -13378,6 +18204,17 @@ Recurse into children first, then combine results at the current node. Answer pr
 **Description:** Maximum number of nodes along the longest root-to-leaf path.  
 **Intuition:** my depth is just one more than my deeper child's depth.
 
+**Variables:** `node` = current subtree root · `left`/`right` = depths of child subtrees
+**Pseudocode:**
+```
+maxDepth(root): return dfs(root)
+dfs(node):
+  if node null: return 0
+  left = dfs(node.left)
+  right = dfs(node.right)
+  return max(left, right) + 1
+```
+
 ```java
 class Solution {
     public int maxDepth(TreeNode root) {
@@ -13400,6 +18237,18 @@ class Solution {
 **Description:** Length of the longest path between any two nodes (path does not need to pass through root).  
 **Key:** the path through a node = `left height + right height`. Track global max; return only the single best arm up.  
 **Intuition:** the longest path bends at some node using both arms, but only one arm can extend to its parent.
+
+**Variables:** `node` = current subtree root · `left`/`right` = heights of child subtrees · `diameter` = global longest cross-node path length
+**Pseudocode:**
+```
+diameterOfBinaryTree(root): dfs(root); return diameter
+dfs(node):
+  if node null: return 0
+  left = dfs(node.left)
+  right = dfs(node.right)
+  diameter = max(diameter, left + right)   # path bending here
+  return max(left, right) + 1              # single arm up
+```
 
 ```java
 class Solution {
@@ -13427,6 +18276,18 @@ class Solution {
 **Key:** clamp negative arms to 0 (`Math.max(0, ...)`). Global tracks the best `left + right + node.val`; return only `max(left, right) + node.val` upward.  
 **Intuition:** a negative arm is worse than taking nothing, so clamp it to 0 before adding.
 
+**Variables:** `node` = current subtree root · `left`/`right` = best non-negative arm sums (clamped to 0) · `maxSum` = global best path sum
+**Pseudocode:**
+```
+maxPathSum(root): dfs(root); return maxSum
+dfs(node):
+  if node null: return 0
+  left = max(0, dfs(node.left))
+  right = max(0, dfs(node.right))
+  maxSum = max(maxSum, left + right + node.val)   # path bending here
+  return max(left, right) + node.val              # single arm up
+```
+
 ```java
 class Solution {
     int maxSum = Integer.MIN_VALUE;
@@ -13453,6 +18314,20 @@ class Solution {
 **Key:** return -1 as a sentinel for "unbalanced"; short-circuit immediately on -1.  
 **Intuition:** fold "is it balanced" into the height return — a poisoned -1 bubbles up and stops the work.
 
+**Variables:** `node` = current subtree root · `left`/`right` = child heights, or -1 sentinel meaning unbalanced
+**Pseudocode:**
+```
+isBalanced(root): return dfs(root) != -1
+dfs(node):
+  if node null: return 0
+  left = dfs(node.left)
+  if left == -1: return -1            # propagate unbalanced
+  right = dfs(node.right)
+  if right == -1: return -1
+  if abs(left - right) > 1: return -1
+  return max(left, right) + 1
+```
+
 ```java
 class Solution {
     public boolean isBalanced(TreeNode root) {
@@ -13477,6 +18352,18 @@ class Solution {
 
 **Description:** Mirror a binary tree — swap left and right subtrees at every node.  
 **Intuition:** invert both children, then swap the pointers at this node.
+
+**Variables:** `root` = current node · `left`/`right` = already-inverted child subtrees
+**Pseudocode:**
+```
+invertTree(root):
+  if root null: return null
+  left = invertTree(root.left)
+  right = invertTree(root.right)
+  root.left = right          # swap pointers
+  root.right = left
+  return root
+```
 
 ```java
 class Solution {
@@ -13503,6 +18390,17 @@ State is built on the way **down** and consumed at leaves. Use backtracking when
 **Description:** Does any root-to-leaf path sum to `targetSum`?  
 **Intuition:** subtract each node from the target on the way down; a leaf with remaining 0 is a hit.
 
+**Variables:** `node` = current node · `remaining` = target minus values seen so far on this path
+**Pseudocode:**
+```
+hasPathSum(root, targetSum): return dfs(root, targetSum)
+dfs(node, remaining):
+  if node null: return false
+  remaining -= node.val
+  if node is leaf: return remaining == 0
+  return dfs(node.left, remaining) OR dfs(node.right, remaining)
+```
+
 ```java
 class Solution {
     public boolean hasPathSum(TreeNode root, int targetSum) {
@@ -13525,6 +18423,20 @@ class Solution {
 **Description:** Return all root-to-leaf paths that sum to `targetSum`.  
 **Key:** pass a mutable `path` list down. **Backtrack** (remove last element) after returning from each child.  
 **Intuition:** the same `path` list is reused for every branch, so undo your add as you unwind.
+
+**Variables:** `node` = current node · `remaining` = target minus values seen on this path · `path` = shared list of current root-to-node values · `result` = collected matching paths
+**Pseudocode:**
+```
+pathSum(root, targetSum): dfs(root, targetSum, [], result); return result
+dfs(node, remaining, path, result):
+  if node null: return
+  path.add(node.val)
+  remaining -= node.val
+  if node is leaf and remaining == 0: result.add(copy of path)
+  dfs(node.left, remaining, path, result)
+  dfs(node.right, remaining, path, result)
+  path.remove last        # backtrack
+```
 
 ```java
 class Solution {
@@ -13554,6 +18466,21 @@ class Solution {
 **Description:** Return all root-to-leaf paths as strings (`"1->2->5"`).  
 **Intuition:** append to a shared StringBuilder, then truncate back to your entry length to undo.
 
+**Variables:** `node` = current node · `path` = shared StringBuilder of the current path · `len` = path length before this node (restore point) · `result` = collected path strings
+**Pseudocode:**
+```
+binaryTreePaths(root): dfs(root, "", result); return result
+dfs(node, path, result):
+  if node null: return
+  len = path.length()
+  if len > 0: path.append("->")
+  path.append(node.val)
+  if node is leaf: result.add(path.toString())
+  dfs(node.left, path, result)
+  dfs(node.right, path, result)
+  path.setLength(len)     # backtrack to before this node
+```
+
 ```java
 class Solution {
     public List<String> binaryTreePaths(TreeNode root) {
@@ -13582,6 +18509,17 @@ class Solution {
 
 **Description:** Each root-to-leaf path represents a number (e.g., 1→2→3 = 123). Return the total sum.  
 **Intuition:** build the number digit by digit on the way down (`current*10 + val`); add it up at each leaf.
+
+**Variables:** `node` = current node · `current` = number built from root down to this node
+**Pseudocode:**
+```
+sumNumbers(root): return dfs(root, 0)
+dfs(node, current):
+  if node null: return 0
+  current = current * 10 + node.val
+  if node is leaf: return current
+  return dfs(node.left, current) + dfs(node.right, current)
+```
 
 ```java
 class Solution {
@@ -13625,6 +18563,21 @@ Mark visited by overwriting the cell value. Return the accumulated property (cou
 **Description:** Count the number of islands (connected groups of `'1'`) in a binary grid.  
 **Intuition:** each unvisited land cell starts a new island; flood-fill sinks the whole island so it's counted once.
 
+**Variables:** `grid[r][c]` = cell at row `r`, col `c` ('1' land / '0' water-or-visited) · `count` = number of islands found
+**Pseudocode:**
+```
+numIslands(grid):
+  count = 0
+  for each cell (r, c):
+    if grid[r][c] == '1': dfs(grid, r, c); count++
+  return count
+dfs(grid, r, c):
+  if (r,c) out of bounds: return
+  if grid[r][c] != '1': return
+  grid[r][c] = '0'           # mark visited
+  recurse into 4 neighbors
+```
+
 ```java
 class Solution {
     public int numIslands(char[][] grid) {
@@ -13652,6 +18605,20 @@ class Solution {
 **Description:** Return the area of the largest island.  
 **Key:** same flood fill but DFS returns the area of the connected component.  
 **Intuition:** an island's area is 1 (this cell) plus the areas its four neighbors flood back.
+
+**Variables:** `grid[r][c]` = cell at row `r`, col `c` (1 land / 0 water-or-visited) · `max` = largest island area seen
+**Pseudocode:**
+```
+maxAreaOfIsland(grid):
+  max = 0
+  for each cell (r, c): max = max(max, dfs(grid, r, c))
+  return max
+dfs(grid, r, c):
+  if (r,c) out of bounds: return 0
+  if grid[r][c] != 1: return 0
+  grid[r][c] = 0             # mark visited
+  return 1 + sum of dfs over 4 neighbors
+```
 
 ```java
 class Solution {
@@ -13684,6 +18651,23 @@ A back edge (reaching a node with state `1`) means a cycle.
 
 **Description:** Can you finish all courses given prerequisites? Return false if there is a cycle.  
 **Intuition:** re-entering a node still on the current DFS stack means you looped back to a prerequisite → cycle.
+
+**Variables:** `state[node]` = 0 unseen / 1 in-stack / 2 done · `graph` = adjacency list (prereq → dependent courses) · `node`/`neighbor` = course indices
+**Pseudocode:**
+```
+canFinish(numCourses, prerequisites):
+  init state[], build empty graph
+  for each [a, b] in prerequisites: graph[b].add(a)
+  for each course i: if hasCycle(i): return false
+  return true
+hasCycle(node):
+  if state[node] == 1: return true        # back edge → cycle
+  if state[node] == 2: return false       # already safe
+  state[node] = 1
+  for each neighbor: if hasCycle(neighbor): return true
+  state[node] = 2
+  return false
+```
 
 ```java
 class Solution {
@@ -13719,6 +18703,25 @@ class Solution {
 **Description:** Return a valid order to take all courses. Return `[]` if a cycle exists.  
 **Key:** same 3-color DFS. Add node to `order` in **post-order** (after all neighbors done). Reverse at the end → topological order.  
 **Intuition:** a node finishes only after all it depends on do, so post-order reversed is a valid prerequisite order.
+
+**Variables:** `state[node]` = 0 unseen / 1 in-stack / 2 done · `graph` = adjacency list (prereq → dependent courses) · `order` = post-order finish list · `node`/`neighbor` = course indices
+**Pseudocode:**
+```
+findOrder(numCourses, prerequisites):
+  init state[], order[], build empty graph
+  for each [a, b] in prerequisites: graph[b].add(a)
+  for each course i: if not dfs(i): return []   # cycle
+  reverse(order)
+  return order as int array
+dfs(node):
+  if state[node] == 1: return false       # cycle
+  if state[node] == 2: return true        # already done
+  state[node] = 1
+  for each neighbor: if not dfs(neighbor): return false
+  state[node] = 2
+  order.add(node)                          # post-order
+  return true
+```
 
 ```java
 class Solution {
@@ -13769,6 +18772,18 @@ Post-process:       —                          Collections.reverse(order)
 **Template:** choose → recurse → undo.  
 `start` controls which elements are eligible at each level. `current` is the in-progress candidate.
 
+**Variables:** `start` = first eligible index at this level · `current` = in-progress candidate list · `nums[i]` = element being chosen · `result` = collected candidates · `nextStart` = `i` to reuse element or `i+1` to forbid reuse
+**Pseudocode:**
+```
+backtrack(start, current):
+  if base case: result.add(copy of current); return
+  for i from start to n-1:
+    if skipCondition: continue        # prune duplicates
+    current.add(nums[i])              # choose
+    backtrack(nextStart, current)     # nextStart = i (reuse) or i+1 (no reuse)
+    current.remove last              # undo
+```
+
 ```java
 // MENTAL MODEL: grow one candidate by picking an element, recurse, then undo to try the next branch.
 private void backtrack(int start, List<Integer> current) {
@@ -13800,6 +18815,18 @@ private void backtrack(int start, List<Integer> current) {
 **Key:** loop always from 0; use `boolean[] used` to avoid reusing elements within one permutation.  
 **Intuition:** order matters, so every position considers all unused elements (no `start` index).
 
+**Variables:** `nums` = input array of distinct ints · `used[i]` = whether `nums[i]` is already in current permutation · `current` = permutation being built · `result` = all permutations
+**Pseudocode:**
+```
+backtrack(used, current):
+  if current has n elements: add copy to result, return
+  for each index i in nums:
+    if used[i]: skip
+    mark i used, append nums[i]
+    recurse
+    remove last, unmark i
+```
+
 ```java
 class Solution {
     public List<List<Integer>> permute(int[] nums) {
@@ -13830,6 +18857,17 @@ class Solution {
 **Key:** record at every node (not just leaves). Pass `i+1` — each element used at most once, order enforced by `start`.  
 **Intuition:** every prefix on the way down is itself a valid subset, so record at every node.
 
+**Variables:** `nums` = input distinct ints · `start` = first index allowed to pick · `current` = subset being built · `result` = all subsets
+**Pseudocode:**
+```
+backtrack(start, current):
+  record copy of current (every node is a subset)
+  for i from start to end:
+    append nums[i]
+    recurse with start = i+1
+    remove last
+```
+
 ```java
 class Solution {
     public List<List<Integer>> subsets(int[] nums) {
@@ -13856,6 +18894,19 @@ class Solution {
 **Description:** All combinations summing to target. Same element may be used unlimited times. No duplicate combos.  
 **Key:** pass `i` (not `i+1`) to allow reuse. Sort + prune when `candidates[i] > remaining`.  
 **Intuition:** passing `i` (not `i+1`) lets you pick the same element again; `start` still forbids going backward, so no reordered dups.
+
+**Variables:** `candidates` = sorted distinct ints · `start` = first index allowed · `remaining` = target minus sum so far · `current` = combo being built · `result` = all combos
+**Pseudocode:**
+```
+sort candidates
+backtrack(start, remaining, current):
+  if remaining == 0: add copy, return
+  for i from start to end:
+    if candidates[i] > remaining: break (pruning)
+    append candidates[i]
+    recurse with start = i (allow reuse), remaining - candidates[i]
+    remove last
+```
 
 ```java
 class Solution {
@@ -13885,6 +18936,20 @@ class Solution {
 **Description:** Each element used at most once. Input may have duplicates. No duplicate combos in output.  
 **Key:** sort first. Skip `candidates[i] == candidates[i-1]` when `i > start` — avoids duplicate combos at the same recursion level. Pass `i+1` — no reuse.  
 **Intuition:** after sorting, equal values sit together; skipping a repeat at the *same level* prevents producing the same combo twice.
+
+**Variables:** `candidates` = sorted ints (may have dups) · `start` = first index allowed · `remaining` = target minus sum so far · `current` = combo being built · `result` = all combos
+**Pseudocode:**
+```
+sort candidates
+backtrack(start, remaining, current):
+  if remaining == 0: add copy, return
+  for i from start to end:
+    if candidates[i] > remaining: break (pruning)
+    if i > start and candidates[i] == candidates[i-1]: skip dup at same level
+    append candidates[i]
+    recurse with start = i+1 (no reuse), remaining - candidates[i]
+    remove last
+```
 
 ```java
 class Solution {
@@ -13916,6 +18981,22 @@ class Solution {
 **Key:** mark cell as visited by overwriting, then restore after recursion (backtrack).  
 **Intuition:** the grid itself is the state — temporarily blank a cell so the same path can't reuse it, then restore on the way back.
 
+**Variables:** `board` = grid of chars · `word` = target string · `r`,`c` = current cell · `idx` = index into word being matched · `temp` = saved cell char for restore
+**Pseudocode:**
+```
+for each cell (r,c): if dfs(r,c,0) return true
+return false
+
+dfs(r, c, idx):
+  if idx == word length: return true
+  if out of bounds: return false
+  if board[r][c] != word[idx]: return false
+  save char, blank cell with '#'
+  found = dfs any of 4 neighbors with idx+1
+  restore char
+  return found
+```
+
 ```java
 class Solution {
     public boolean exist(char[][] board, String word) {
@@ -13945,6 +19026,22 @@ class Solution {
 
 **Description:** Partition string `s` such that every substring is a palindrome. Return all such partitions.  
 **Intuition:** try every prefix as the first cut; only recurse on the rest when that prefix is a palindrome.
+
+**Variables:** `s` = input string · `start` = index where next substring begins · `end` = exclusive end of candidate substring · `sub` = `s[start, end)` · `current` = list of palindrome pieces so far · `result` = all partitions
+**Pseudocode:**
+```
+backtrack(start, current):
+  if start == length: add copy, return
+  for end from start+1 to length:
+    sub = s[start, end)
+    if sub not palindrome: skip
+    append sub
+    recurse with start = end
+    remove last
+
+isPalindrome(s):
+  two pointers i,j move inward; mismatch -> false
+```
 
 ```java
 class Solution {
@@ -14000,6 +19097,17 @@ BST key property: `left subtree values < node.val < right subtree values`. This 
 
 ## BST Template: Pass Bounds Down
 
+**Variables:** `node` = current node · `min`/`max` = exclusive value bounds valid for this subtree
+**Pseudocode:**
+```
+validate(node, min, max):
+  if node null: return true
+  if node.val <= min OR node.val >= max: return false      # bounds check
+  return validate(node.left, min, node.val)                # left tightens max
+     AND validate(node.right, node.val, max)               # right tightens min
+# call: validate(root, LONG_MIN, LONG_MAX)
+```
+
 ```java
 // Validate BST by passing min/max constraints down the tree
 boolean validate(TreeNode node, long min, long max) {
@@ -14015,6 +19123,16 @@ boolean validate(TreeNode node, long min, long max) {
 
 ## BST Template: Inorder Traversal = Sorted Order
 
+**Variables:** `node` = current node (visited in ascending value order)
+**Pseudocode:**
+```
+inorder(node):
+  if node null: return
+  inorder(node.left)
+  process node            # e.g. kth smallest: count, return at k
+  inorder(node.right)
+```
+
 ```java
 // BST inorder (left → node → right) visits nodes in ascending order
 void inorder(TreeNode node) {
@@ -14026,6 +19144,17 @@ void inorder(TreeNode node) {
 ```
 
 ## BST Template: Binary Search on Tree
+
+**Variables:** `root` = current node being examined · `target` = value searched for
+**Pseudocode:**
+```
+search(root, target):
+  while root not null:
+    if root.val == target: return root
+    else if root.val < target: root = root.right   # go right
+    else: root = root.left                          # go left
+  return null
+```
 
 ```java
 // Navigate BST like binary search: go left or right based on comparison
@@ -14051,6 +19180,18 @@ TreeNode search(TreeNode root, int target) {
 
 **Variation:** Pass min/max bounds down — each call tightens the valid range. Use `long` to handle `Integer.MIN_VALUE` and `Integer.MAX_VALUE` edge cases.
 
+**Variables:** `root` = tree root · `node` = current node · `min`,`max` = exclusive valid value bounds (as `long`) for this subtree
+**Pseudocode:**
+```
+return validate(root, -inf, +inf)
+
+validate(node, min, max):
+  if node is null: return true
+  if node.val <= min or node.val >= max: return false
+  return validate(left, min, node.val)
+     and validate(right, node.val, max)
+```
+
 ```java
 class Solution {
     public boolean isValidBST(TreeNode root) {
@@ -14074,6 +19215,18 @@ class Solution {
 **Description:** Find the kth smallest element in a BST (1-indexed).
 
 **Variation:** BST inorder traversal visits nodes in ascending order. Count nodes visited; when count reaches k, record the answer and stop early.
+
+**Variables:** `root` = tree root · `k` = target rank (1-indexed) · `count` = nodes visited so far in inorder · `result` = value of kth node · `node` = current node
+**Pseudocode:**
+```
+inorder(root, k); return result
+
+inorder(node, k):
+  if node is null: return
+  inorder(left, k)
+  count++; if count == k: result = node.val, return
+  inorder(right, k)
+```
 
 ```java
 class Solution {
@@ -14102,6 +19255,16 @@ class Solution {
 
 **Variation:** Use BST structure to navigate in O(h). At each node, compare distance to closest seen so far, then binary-search left or right.
 
+**Variables:** `root` = tree root / current node · `target` = double to approach · `closest` = best value seen so far
+**Pseudocode:**
+```
+closest = root.val
+while root not null:
+  if |root.val - target| < |closest - target|: closest = root.val
+  go right if root.val < target else go left
+return closest
+```
+
 ```java
 class Solution {
     public int closestValue(TreeNode root, double target) {
@@ -14124,6 +19287,16 @@ class Solution {
 **Description:** Given a node `p` in a BST, return its inorder successor (the smallest node with value greater than `p.val`). Return null if no such node exists.
 
 **Variation:** Navigate the BST. When `root.val > p.val`, this root is a candidate — save it and go left (to find a smaller valid candidate). When `root.val <= p.val`, go right (must find something larger).
+
+**Variables:** `root` = tree root / current node · `p` = node whose successor we want · `result` = best candidate (smallest value > p.val) so far
+**Pseudocode:**
+```
+result = null
+while root not null:
+  if root.val > p.val: result = root; go left (seek closer)
+  else: go right (need larger)
+return result
+```
 
 ```java
 class Solution {
@@ -14150,6 +19323,20 @@ class Solution {
 **Description:** Return the length of the longest path in a binary tree where every node along the path has the same value. The path does not need to pass through the root.
 
 **Variation:** Post-order DFS. At each node, extend the left or right path only if the child's value matches. The path through the current node = leftPath + rightPath. Return the max single-direction extension upward.
+
+**Variables:** `root` = tree root · `node` = current node · `max` = global longest univalue path (edge count) · `left`,`right` = child dfs results · `leftPath`,`rightPath` = matching-value extension toward each child
+**Pseudocode:**
+```
+dfs(root); return max
+
+dfs(node):
+  if node is null: return 0
+  left = dfs(node.left); right = dfs(node.right)
+  leftPath  = left+1  if left child exists and equals node.val else 0
+  rightPath = right+1 if right child exists and equals node.val else 0
+  max = max(max, leftPath + rightPath)   // path through node
+  return max(leftPath, rightPath)        // single direction up
+```
 
 ```java
 class Solution {
@@ -14179,6 +19366,26 @@ class Solution {
 ## #37 Sudoku Solver
 **Description:** Fill a partially filled 9×9 Sudoku so every row, column, and 3×3 box contains digits 1-9.
 **Variation:** backtracking that tries digits 1-9 in each empty cell, validating against row, column, and box constraints before recursing.
+**Variables:** `board` = 9x9 grid · `i`,`j` = current cell · `c` = digit being tried · `row`,`col` = cell coords in isValid
+**Pseudocode:**
+```
+solve(board):
+  for each cell (i,j):
+    if cell empty:
+      for c from '1' to '9':
+        if isValid(board,i,j,c):
+          place c
+          if solve(board): return true
+          erase c (backtrack)
+      return false   // no digit fits
+  return true        // all filled
+
+isValid(board, row, col, c):
+  for i in 0..8:
+    if c in row, in column, or in 3x3 box: return false
+  return true
+```
+
 ```java
 class Solution {
     public void solveSudoku(char[][] board) { solve(board); }
@@ -14212,6 +19419,20 @@ class Solution {
 ## #47 Permutations II
 **Description:** Return all unique permutations of an array that may contain duplicates.
 **Variation:** sort first; use a `used[]` array; skip a value if the previous equal value at the same tree level has not been used (prevents duplicate permutations).
+**Variables:** `nums` = sorted input (may have dups) · `used[i]` = whether `nums[i]` is in current path · `path` = permutation being built · `result` = all unique permutations
+**Pseudocode:**
+```
+sort nums
+backtrack(used, path):
+  if path full: add copy, return
+  for i in 0..n-1:
+    if used[i]: skip
+    if i>0 and nums[i]==nums[i-1] and prev not used: skip dup at this level
+    mark used, append nums[i]
+    recurse
+    unmark, remove last
+```
+
 ```java
 class Solution {
     public List<List<Integer>> permuteUnique(int[] nums) {
@@ -14237,6 +19458,20 @@ class Solution {
 ## #51 N-Queens
 **Description:** Place n queens on an n×n board so no two attack each other; return all distinct solutions.
 **Variation:** backtrack row by row; track occupied columns and both diagonals. Cells on the same `\` diagonal share `r-c`; cells on the same `/` diagonal share `r+c`.
+**Variables:** `n` = board size · `row` = current row · `c` = candidate column · `queens[row]` = chosen column for that row · `cols` = occupied columns · `diag1` = occupied `\` diagonals (`row-c`) · `diag2` = occupied `/` diagonals (`row+c`) · `result` = all boards
+**Pseudocode:**
+```
+backtrack(row):
+  if row == n: build board from queens, add, return
+  for c in 0..n-1:
+    if c in cols or row-c in diag1 or row+c in diag2: skip
+    place queen: queens[row]=c, add to cols/diag1/diag2
+    recurse(row+1)
+    remove queen from cols/diag1/diag2
+
+build(queens): make each row '.'*n with 'Q' at queens[r]
+```
+
 ```java
 class Solution {
     public List<List<String>> solveNQueens(int n) {
@@ -14273,6 +19508,18 @@ class Solution {
 ## #60 Permutation Sequence
 **Description:** Return the kth permutation (1-indexed) of the sequence 1..n.
 **Variation:** no backtracking — use the factorial number system. Each position's digit is determined directly by `(k-1) / (remaining-1)!`.
+**Variables:** `n` = sequence size · `k` = target permutation (made 0-indexed) · `digits` = remaining available digits 1..n · `factorial[i]` = i! · `index` = position of next digit to pick · `result` = answer string
+**Pseudocode:**
+```
+build factorial[] and digits list 1..n
+k--   // 0-indexed
+for i from n down to 1:
+  index = k / factorial[i-1]
+  k = k % factorial[i-1]
+  append and remove digits[index]
+return result
+```
+
 ```java
 class Solution {
     public String getPermutation(int n, int k) {
@@ -14296,6 +19543,19 @@ class Solution {
 ## #90 Subsets II
 **Description:** Return all possible unique subsets of an array that may contain duplicates.
 **Variation:** sort first; within a recursion level, skip a value equal to its predecessor to avoid duplicate subsets.
+**Variables:** `nums` = sorted input (may have dups) · `start` = first index allowed · `path` = subset being built · `result` = all unique subsets
+**Pseudocode:**
+```
+sort nums
+backtrack(start, path):
+  record copy of path
+  for i from start to end:
+    if i > start and nums[i] == nums[i-1]: skip dup at same depth
+    append nums[i]
+    recurse with start = i+1
+    remove last
+```
+
 ```java
 class Solution {
     public List<List<Integer>> subsetsWithDup(int[] nums) {
@@ -14320,6 +19580,18 @@ class Solution {
 ## #216 Combination Sum III
 **Description:** Find all combinations of k numbers from 1-9 (each used at most once) that sum to n.
 **Variation:** standard combination backtracking with start index `i+1` (no reuse), but with two stopping constraints — count and remaining sum.
+**Variables:** `k` = required count of numbers · `remain` = n minus sum so far · `start` = smallest number allowed next · `path` = combo being built · `result` = all combos
+**Pseudocode:**
+```
+backtrack(remain, start, path):
+  if path size == k and remain == 0: add copy, return
+  if path size == k or remain < 0: return
+  for i from start to 9:
+    append i
+    recurse with remain-i, start = i+1 (no reuse)
+    remove last
+```
+
 ```java
 class Solution {
     public List<List<Integer>> combinationSum3(int k, int n) {
@@ -14343,6 +19615,23 @@ class Solution {
 ## #549 Binary Tree Longest Consecutive Sequence II
 **Description:** Find the length of the longest consecutive path in a binary tree. The path can be increasing or decreasing and may go through a node (child-parent-child).
 **Variation:** post-order DFS returns a pair `{increasing, decreasing}` for each node. A path through the node combines an increasing run from one child with a decreasing run from the other.
+**Variables:** `root` = tree root · `node` = current node · `max` = global longest consecutive path (node count) · `inc`/`dec` = longest increasing/decreasing run ending at node · `left`,`right` = child `{inc,dec}` pairs
+**Pseudocode:**
+```
+dfs(root); return max
+
+dfs(node):
+  if node null: return {0,0}
+  inc=1, dec=1
+  left=dfs(left); right=dfs(right)
+  if left child val+1==node.val: inc = left.inc+1
+  elif left child val-1==node.val: dec = left.dec+1
+  if right child val+1==node.val: inc = max(inc, right.inc+1)
+  elif right child val-1==node.val: dec = max(dec, right.dec+1)
+  max = max(max, inc+dec-1)   // through node
+  return {inc, dec}
+```
+
 ```java
 class Solution {
     private int max = 0;
@@ -14378,6 +19667,22 @@ class Solution {
 **Description:** Given a string of digits 2-9, return all letter combinations the phone keypad could represent.
 **Intuition:** backtrack one digit at a time, appending each candidate letter and undoing it.
 
+**Variables:** `MAP[d]` = letters for digit `d` · `start` = current digit index · `builder` = current letter prefix · `letters` = candidate letters for digit at `start`
+**Pseudocode:**
+```
+if digits empty: return []
+backtrack(start=0, empty builder)
+return result
+
+backtrack(start, builder):
+  if start == length: record builder; return
+  letters = MAP[digit at start]
+  for each ch in letters:
+    append ch
+    backtrack(start+1, builder)
+    remove last char
+```
+
 ```java
 class Solution {
     private static final String[] MAP = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
@@ -14406,6 +19711,20 @@ class Solution {
 
 **Description:** Generate all combinations of n pairs of well-formed parentheses.
 **Intuition:** add `(` while opens remain; add `)` only while closes outstanding; backtrack each choice.
+
+**Variables:** `open` = remaining `(` to place · `close` = remaining `)` to place · `builder` = current parenthesis string
+**Pseudocode:**
+```
+backtrack(open=n, close=n, empty builder)
+return result
+
+backtrack(open, close, builder):
+  if open == 0 and close == 0: record builder; return
+  if open > 0:
+    append '('; backtrack(open-1, close); remove last
+  if close > open:
+    append ')'; backtrack(open, close-1); remove last
+```
 
 ```java
 class Solution {
@@ -14438,6 +19757,17 @@ class Solution {
 **Description:** Determine if a filled-in 9×9 Sudoku board is valid (no repeats in any row, column, or 3×3 box).
 **Intuition:** encode each digit's row/column/box membership into a HashSet of unique keys; a collision means invalid.
 
+**Variables:** `board` = 9x9 grid · `seen` = set of membership keys · `c` = current digit · `row`/`col`/`box` = unique keys encoding c's row, column, and 3x3 box
+**Pseudocode:**
+```
+seen = empty set
+for each cell (i,j):
+  c = board[i][j]; if '.' skip
+  build keys: c+"r"+i, c+"c"+j, c+"b"+(i/3)+(j/3)
+  if any key already in seen: return false
+return true
+```
+
 ```java
 class Solution {
     public boolean isValidSudoku(char[][] board) {
@@ -14467,6 +19797,20 @@ class Solution {
 **Description:** Return all combinations of k numbers chosen from 1 to n.
 **Intuition:** standard backtracking with start index advancing to i+1; record when path reaches size k.
 
+**Variables:** `n` = range upper bound · `k` = target size · `start` = next candidate number · `path` = current combination
+**Pseudocode:**
+```
+backtrack(start=1, empty path)
+return result
+
+backtrack(start, path):
+  if path.size == k: record copy of path; return
+  for i = start..n:
+    add i to path
+    backtrack(i+1, path)
+    remove last from path
+```
+
 ```java
 class Solution {
     public List<List<Integer>> combine(int n, int k) {
@@ -14492,6 +19836,26 @@ class Solution {
 
 **Description:** Return all valid IP addresses formable by inserting dots into a digit string.
 **Intuition:** backtrack choosing 1-3 digit segments; each segment must be 0-255 and have no leading zero.
+
+**Variables:** `start` = index into `s` · `parts` = segments placed so far · `builder` = IP being built (with trailing dots) · `len` = current segment length · `segment` = candidate `s[start, start+len)` · `mark` = builder length before append
+**Pseudocode:**
+```
+backtrack(start=0, parts=0, empty builder)
+return result
+
+backtrack(start, parts, builder):
+  if parts == 4:
+    if start == length: record builder without trailing dot
+    return
+  for len = 1..3 while start+len <= length:
+    segment = s[start, start+len)
+    if leading zero: break
+    if value > 255: break
+    mark = builder length
+    append segment + '.'
+    backtrack(start+len, parts+1, builder)
+    truncate builder to mark
+```
 
 ```java
 class Solution {
@@ -14526,6 +19890,18 @@ class Solution {
 **Description:** Return the inorder traversal (left → root → right) of a binary tree.
 **Intuition:** recurse left, visit node, recurse right.
 
+**Variables:** `node` = current subtree root · `result` = inorder values
+**Pseudocode:**
+```
+dfs(root); return result
+
+dfs(node):
+  if node null: return
+  dfs(node.left)
+  add node.val
+  dfs(node.right)
+```
+
 ```java
 class Solution {
     public List<Integer> inorderTraversal(TreeNode root) {
@@ -14549,6 +19925,22 @@ class Solution {
 
 **Description:** Generate all structurally unique BSTs storing values 1..n.
 **Intuition:** pick each value as root; recursively build all left subtrees from the smaller range and all right subtrees from the larger range, then combine.
+
+**Variables:** `[lo, hi]` = inclusive value range for subtree · `i` = chosen root value · `left` = all left subtrees from `[lo, i-1]` · `right` = all right subtrees from `[i+1, hi]`
+**Pseudocode:**
+```
+if n == 0: return []
+return build(1, n)
+
+build(lo, hi):
+  if lo > hi: return [null]
+  for i = lo..hi:
+    left = build(lo, i-1)
+    right = build(i+1, hi)
+    for each l in left, each r in right:
+      make root i with children l, r; add to result
+  return result
+```
 
 ```java
 class Solution {
@@ -14584,6 +19976,22 @@ class Solution {
 **Description:** Two nodes of a BST were swapped by mistake; recover the tree without changing its structure.
 **Intuition:** an inorder traversal of a valid BST is ascending; the swapped pair shows up as one or two descents. Track them and swap their values.
 
+**Variables:** `first`, `second` = the two swapped nodes · `prev` = previous node in inorder order · `node` = current node
+**Pseudocode:**
+```
+inorder(root)
+swap first.val and second.val
+
+inorder(node):
+  if node null: return
+  inorder(node.left)
+  if prev exists and prev.val > node.val:
+    if first not set: first = prev
+    second = node
+  prev = node
+  inorder(node.right)
+```
+
 ```java
 class Solution {
     private TreeNode first = null, second = null, prev = null;
@@ -14614,6 +20022,16 @@ class Solution {
 **Description:** Check if two binary trees are structurally identical with the same node values.
 **Intuition:** both null is equal; one null or differing values is not; otherwise recurse on both children.
 
+**Variables:** `p`, `q` = corresponding nodes in the two trees
+**Pseudocode:**
+```
+isSameTree(p, q):
+  if both null: return true
+  if exactly one null: return false
+  if p.val != q.val: return false
+  return isSameTree(p.left, q.left) and isSameTree(p.right, q.right)
+```
+
 ```java
 class Solution {
     public boolean isSameTree(TreeNode p, TreeNode q) {
@@ -14632,6 +20050,19 @@ class Solution {
 
 **Description:** Check if a binary tree is a mirror image of itself.
 **Intuition:** compare the outer pairs and inner pairs of two mirrored subtrees.
+
+**Variables:** `a`, `b` = mirrored node pair being compared
+**Pseudocode:**
+```
+if root null: return true
+return mirror(root.left, root.right)
+
+mirror(a, b):
+  if both null: return true
+  if exactly one null: return false
+  if a.val != b.val: return false
+  return mirror(a.left, b.right) and mirror(a.right, b.left)
+```
 
 ```java
 class Solution {
@@ -14655,6 +20086,22 @@ class Solution {
 
 **Description:** Return node values level by level, left to right.
 **Intuition:** BFS with a queue; drain one level's worth of nodes per outer iteration.
+
+**Variables:** `queue` = nodes pending by level · `size` = node count of current level · `level` = current level's values · `node` = dequeued node
+**Pseudocode:**
+```
+if root null: return []
+enqueue root
+while queue not empty:
+  size = queue size
+  level = []
+  repeat size times:
+    node = dequeue
+    add node.val to level
+    enqueue non-null children
+  add level to result
+return result
+```
 
 ```java
 class Solution {
@@ -14686,6 +20133,23 @@ class Solution {
 
 **Description:** Return node values level by level, alternating left-to-right and right-to-left.
 **Intuition:** standard BFS, but reverse the level list on alternate levels.
+
+**Variables:** `queue` = nodes pending by level · `leftToRight` = current level direction · `size` = current level node count · `level` = deque of current level values · `node` = dequeued node
+**Pseudocode:**
+```
+if root null: return []
+enqueue root; leftToRight = true
+while queue not empty:
+  size = queue size
+  level = empty deque
+  repeat size times:
+    node = dequeue
+    if leftToRight: add node.val at end else at front
+    enqueue non-null children
+  add level to result
+  flip leftToRight
+return result
+```
 
 ```java
 class Solution {
@@ -14721,6 +20185,22 @@ class Solution {
 **Description:** Reconstruct a binary tree from its preorder and inorder traversals.
 **Intuition:** the first preorder element is the root; its position in inorder splits left/right subtree sizes.
 
+**Variables:** `preIndex` = next preorder position · `inIndex` = value → inorder index map · `[lo, hi]` = inorder range of current subtree · `rootVal` = root value · `mid` = root's inorder index
+**Pseudocode:**
+```
+map each inorder value to its index
+return build(0, n-1)
+
+build(lo, hi):
+  if lo > hi: return null
+  rootVal = preorder[preIndex++]
+  root = node(rootVal)
+  mid = inIndex[rootVal]
+  root.left = build(lo, mid-1)
+  root.right = build(mid+1, hi)
+  return root
+```
+
 ```java
 class Solution {
     private int preIndex = 0;
@@ -14750,6 +20230,23 @@ class Solution {
 
 **Description:** Reconstruct a binary tree from its inorder and postorder traversals.
 **Intuition:** the last postorder element is the root; build right subtree before left since postorder is consumed back to front.
+
+**Variables:** `postIndex` = next postorder position (back to front) · `inIndex` = value → inorder index map · `[lo, hi]` = inorder range of current subtree · `rootVal` = root value · `mid` = root's inorder index
+**Pseudocode:**
+```
+postIndex = n-1
+map each inorder value to its index
+return build(0, n-1)
+
+build(lo, hi):
+  if lo > hi: return null
+  rootVal = postorder[postIndex--]
+  root = node(rootVal)
+  mid = inIndex[rootVal]
+  root.right = build(mid+1, hi)
+  root.left = build(lo, mid-1)
+  return root
+```
 
 ```java
 class Solution {
@@ -14781,6 +20278,23 @@ class Solution {
 
 **Description:** Return node values level by level, from bottom to top.
 **Intuition:** standard BFS, then reverse the list of levels.
+
+**Variables:** `queue` = nodes pending by level · `size` = current level node count · `level` = current level values · `node` = dequeued node
+**Pseudocode:**
+```
+if root null: return []
+enqueue root
+while queue not empty:
+  size = queue size
+  level = []
+  repeat size times:
+    node = dequeue
+    add node.val to level
+    enqueue non-null children
+  add level to result
+reverse result
+return result
+```
 
 ```java
 class Solution {
@@ -14814,6 +20328,20 @@ class Solution {
 **Description:** Convert a sorted array to a height-balanced BST.
 **Intuition:** pick the middle element as the root so left and right halves are balanced; recurse on each half.
 
+**Variables:** `[lo, hi]` = inclusive array range for subtree · `mid` = midpoint chosen as root
+**Pseudocode:**
+```
+return build(0, n-1)
+
+build(lo, hi):
+  if lo > hi: return null
+  mid = lo + (hi-lo)/2
+  root = node(nums[mid])
+  root.left = build(lo, mid-1)
+  root.right = build(mid+1, hi)
+  return root
+```
+
 ```java
 class Solution {
     public TreeNode sortedArrayToBST(int[] nums) {
@@ -14838,6 +20366,17 @@ class Solution {
 **Description:** Find the shortest path length from root to any leaf.
 **Intuition:** like max depth, but a node with one missing child must take the existing child's depth (a non-leaf cannot end a root-to-leaf path).
 
+**Variables:** `left` = min depth of left subtree · `right` = min depth of right subtree
+**Pseudocode:**
+```
+minDepth(root):
+  if root null: return 0
+  left = minDepth(root.left)
+  right = minDepth(root.right)
+  if one child missing: return max(left, right) + 1
+  return min(left, right) + 1
+```
+
 ```java
 class Solution {
     public int minDepth(TreeNode root) {
@@ -14860,6 +20399,18 @@ class Solution {
 **Description:** Flatten a binary tree into a right-pointer linked list following preorder, in place.
 **Intuition:** reverse-preorder traversal (right, left, node) lets you prepend each node to a running tail.
 
+**Variables:** `prev` = head of already-flattened suffix (built in reverse preorder) · `root` = current node
+**Pseudocode:**
+```
+flatten(root):
+  if root null: return
+  flatten(root.right)
+  flatten(root.left)
+  root.right = prev
+  root.left = null
+  prev = root
+```
+
 ```java
 class Solution {
     private TreeNode prev = null;
@@ -14881,6 +20432,20 @@ class Solution {
 
 **Description:** Connect each node's `next` pointer to its right neighbor in a perfect binary tree, using O(1) extra space.
 **Intuition:** use already-established `next` links of the current level to thread the next level.
+
+**Variables:** `leftmost` = leftmost node of current level · `head` = node walking across current level
+**Pseudocode:**
+```
+leftmost = root
+while leftmost and leftmost.left exist:
+  head = leftmost
+  while head not null:
+    head.left.next = head.right
+    if head.next exists: head.right.next = head.next.left
+    head = head.next
+  leftmost = leftmost.left
+return root
+```
 
 ```java
 class Solution {
@@ -14908,6 +20473,19 @@ class Solution {
 **Description:** Same as #116 but for an arbitrary binary tree.
 **Intuition:** walk each level via `next` links, building the next level's chain through a dummy head since children may be missing.
 
+**Variables:** `head` = leftmost node of current level · `dummy` = sentinel before next level's chain · `tail` = builder tail for next level · `cur` = node walking across current level
+**Pseudocode:**
+```
+head = root
+while head not null:
+  dummy = sentinel; tail = dummy
+  for cur = head across level via next:
+    if cur.left: tail.next = cur.left; advance tail
+    if cur.right: tail.next = cur.right; advance tail
+  head = dummy.next
+return root
+```
+
 ```java
 class Solution {
     public Node connect(Node root) {
@@ -14934,6 +20512,18 @@ class Solution {
 **Description:** Return the preorder traversal (root → left → right) of a binary tree.
 **Intuition:** visit node, recurse left, recurse right.
 
+**Variables:** `node` = current subtree root · `result` = preorder values
+**Pseudocode:**
+```
+dfs(root); return result
+
+dfs(node):
+  if node null: return
+  add node.val
+  dfs(node.left)
+  dfs(node.right)
+```
+
 ```java
 class Solution {
     public List<Integer> preorderTraversal(TreeNode root) {
@@ -14958,6 +20548,18 @@ class Solution {
 **Description:** Return the postorder traversal (left → right → root) of a binary tree.
 **Intuition:** recurse left, recurse right, visit node.
 
+**Variables:** `node` = current subtree root · `result` = postorder values
+**Pseudocode:**
+```
+dfs(root); return result
+
+dfs(node):
+  if node null: return
+  dfs(node.left)
+  dfs(node.right)
+  add node.val
+```
+
 ```java
 class Solution {
     public List<Integer> postorderTraversal(TreeNode root) {
@@ -14981,6 +20583,20 @@ class Solution {
 
 **Description:** Return the values visible from the right side, one per level.
 **Intuition:** BFS each level; the last node dequeued in a level is the rightmost visible one.
+
+**Variables:** `queue` = nodes pending by level · `size` = current level node count · `node` = dequeued node · `i` = index within level
+**Pseudocode:**
+```
+if root null: return []
+enqueue root
+while queue not empty:
+  size = queue size
+  for i = 0..size-1:
+    node = dequeue
+    if i == size-1: add node.val (rightmost)
+    enqueue non-null children
+return result
+```
 
 ```java
 class Solution {
@@ -15010,6 +20626,20 @@ class Solution {
 
 **Description:** Count nodes in a complete binary tree faster than O(n).
 **Intuition:** if leftmost and rightmost depths match, the subtree is perfect (2^h − 1 nodes); otherwise recurse on both children.
+
+**Variables:** `left` = leftmost path depth · `right` = rightmost path depth · `d` = depth counter in helpers
+**Pseudocode:**
+```
+countNodes(root):
+  if root null: return 0
+  left = leftDepth(root)
+  right = rightDepth(root)
+  if left == right: return 2^left - 1   // perfect subtree
+  return 1 + countNodes(root.left) + countNodes(root.right)
+
+leftDepth/rightDepth(node):
+  d = 0; walk down left/right counting nodes; return d
+```
 
 ```java
 class Solution {
@@ -15041,6 +20671,16 @@ class Solution {
 **Description:** Find the LCA of two nodes in a BST.
 **Intuition:** if both values are less than the node, go left; if both greater, go right; otherwise the node is the split point = LCA.
 
+**Variables:** `root` = current node walking down · `p`, `q` = target nodes
+**Pseudocode:**
+```
+while root not null:
+  if both p,q < root.val: root = root.left
+  else if both p,q > root.val: root = root.right
+  else: return root   // split point
+return null
+```
+
 ```java
 class Solution {
     public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
@@ -15062,6 +20702,17 @@ class Solution {
 **Description:** Find the LCA of two nodes in a general binary tree.
 **Intuition:** post-order: if p or q matches the node, return it; the node where both arms return non-null is the LCA.
 
+**Variables:** `root` = current node · `p`, `q` = target nodes · `left` = LCA result from left subtree · `right` = LCA result from right subtree
+**Pseudocode:**
+```
+lowestCommonAncestor(root, p, q):
+  if root null or root is p or q: return root
+  left = recurse on root.left
+  right = recurse on root.right
+  if left and right both non-null: return root
+  return whichever of left/right is non-null
+```
+
 ```java
 class Solution {
     public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
@@ -15081,6 +20732,21 @@ class Solution {
 
 **Description:** Compute all results obtainable by parenthesizing an expression differently.
 **Intuition:** at each operator, split into left and right subexpressions, recursively evaluate both, and combine every pair.
+
+**Variables:** `i` = scan index · `c` = current char · `left` = results of left subexpression · `right` = results of right subexpression · `a`, `b` = one operand pair
+**Pseudocode:**
+```
+diffWaysToCompute(expression):
+  for i over expression:
+    c = char at i
+    if c is operator:
+      left = diffWaysToCompute(expression[0, i))
+      right = diffWaysToCompute(expression[i+1, end])
+      for each a in left, each b in right:
+        apply c to a,b; add to result
+  if result empty: result = [parse expression as int]
+  return result
+```
 
 ```java
 class Solution {
@@ -15114,6 +20780,19 @@ class Solution {
 **Description:** Count subtrees in which all nodes share the same value.
 **Intuition:** post-order; a subtree is univalue if both children are univalue and their values match the node's value.
 
+**Variables:** `count` = running total of univalue subtrees · `left`/`right` = whether each child subtree is univalue
+**Pseudocode:**
+```
+isUnival(root); return count
+isUnival(node):
+  if node null: return true
+  left = isUnival(node.left); right = isUnival(node.right)
+  if either child not univalue: return false
+  if left child exists and differs in value: return false
+  if right child exists and differs in value: return false
+  count++; return true
+```
+
 ```java
 class Solution {
     private int count = 0;
@@ -15142,6 +20821,17 @@ class Solution {
 **Description:** Verify whether an array is a valid BST preorder traversal.
 **Intuition:** use a stack to simulate the path; popping when a value exceeds the top sets a lower bound. Any later value below that bound is invalid.
 
+**Variables:** `stack` = path of ancestors with no right child yet seen · `lowerBound` = min allowed value once we turn right
+**Pseudocode:**
+```
+lowerBound = -inf
+for each value in preorder:
+  if value < lowerBound: return false
+  while stack nonempty and top < value: lowerBound = pop()
+  push(value)
+return true
+```
+
 ```java
 class Solution {
     public boolean verifyPreorder(int[] preorder) {
@@ -15166,6 +20856,23 @@ class Solution {
 
 **Description:** Return all palindrome permutations of a string.
 **Intuition:** a palindrome needs at most one odd-count character; build half the palindrome by permuting half the characters, then mirror it.
+
+**Variables:** `count[c]` = frequency of char `c` · `mid` = single odd-count char (center) · `half` = chars for one half · `used[i]` = whether `half[i]` is placed · `builder` = current half being built
+**Pseudocode:**
+```
+count frequencies of all chars
+for each char i:
+  if odd count: if mid already set return [] else mid = char i
+  add count[i]/2 copies of char i to half
+backtrack(half, used, builder, mid)
+backtrack:
+  if builder full: result += builder + mid + reverse(builder); return
+  for each i in half:
+    if used or (duplicate of prev unused): skip
+    mark used, append half[i]
+    recurse
+    undo append, unmark
+```
 
 ```java
 class Solution {
@@ -15212,6 +20919,19 @@ class Solution {
 **Description:** Find the k values in a BST closest to a target.
 **Intuition:** inorder gives sorted values; keep a sliding window of size k, evicting the farther end while a closer candidate exists.
 
+**Variables:** `window` = deque of k closest values so far (sorted) · `target` = value to be close to · `k` = window size
+**Pseudocode:**
+```
+inorder(root); return window as list
+inorder(node):
+  if null: return
+  recurse left
+  if window smaller than k: add node.val at back
+  else if node.val closer than front element: remove front, add node.val at back
+  else: return   // farther from here on, stop early
+  recurse right
+```
+
 ```java
 class Solution {
     public List<Integer> closestKValues(TreeNode root, double target, int k) {
@@ -15242,6 +20962,22 @@ class Solution {
 
 **Description:** Insert +, -, * between digits of a string to reach a target value; return all expressions.
 **Intuition:** backtrack each operand prefix; track running value and the last multiplied term so * can fold correctly.
+
+**Variables:** `start` = index where current operand begins · `value` = running evaluated total · `prev` = last term (for * folding) · `cur` = current operand · `builder` = expression so far · `len` = builder length to truncate back to
+**Pseudocode:**
+```
+backtrack(start=0, value=0, prev=0)
+if start at end: if value == target record builder; return
+for i from start to end:
+  if operand has leading zero: break
+  cur = num[start..i]
+  if start == 0:
+    append cur; recurse(i+1, cur, cur); truncate
+  else:
+    append "+cur"; recurse(i+1, value+cur, cur); truncate
+    append "-cur"; recurse(i+1, value-cur, -cur); truncate
+    append "*cur"; recurse(i+1, value-prev+prev*cur, prev*cur); truncate
+```
 
 ```java
 class Solution {
@@ -15289,6 +21025,25 @@ class Solution {
 **Description:** Check if a string follows a pattern where each pattern char maps to a non-empty, non-overlapping substring.
 **Intuition:** backtrack assigning substrings to pattern characters, enforcing a bijection via two maps.
 
+**Variables:** `pi` = index in pattern · `si` = index in string `s` · `map` = pattern char to assigned substring · `used` = set of substrings already assigned · `candidate` = trial substring `s[si..i]`
+**Pseudocode:**
+```
+backtrack(pi=0, si=0)
+if both exhausted: return true
+if one exhausted: return false
+c = pattern[pi]
+if c already mapped:
+  if s does not start with mapped at si: return false
+  return recurse(pi+1, si + mapped length)
+for i from si to end:
+  candidate = s[si..i]
+  if candidate already used: skip
+  map c -> candidate, mark used
+  if recurse(pi+1, i+1): return true
+  unmap, unmark
+return false
+```
+
 ```java
 class Solution {
     public boolean wordPatternMatch(String pattern, String s) {
@@ -15325,6 +21080,17 @@ class Solution {
 **Description:** Given a string of '+' and '-', return all states after flipping one "++" to "--".
 **Intuition:** scan for each "++" occurrence and produce the flipped string.
 
+**Variables:** `arr` = mutable char array of state · `i` = position of candidate "++"
+**Pseudocode:**
+```
+for i in 0..len-2:
+  if arr[i]=='+' and arr[i+1]=='+':
+    flip both to '-'
+    record new string
+    restore both to '+'
+return result
+```
+
 ```java
 class Solution {
     public List<String> generatePossibleNextMoves(String currentState) {
@@ -15351,6 +21117,18 @@ class Solution {
 
 **Description:** Determine if the first player can guarantee a win in Flip Game.
 **Intuition:** the current player wins if any "++" flip leaves the opponent in a losing position; memoize states.
+
+**Variables:** `state` = current board string · `memo` = state to win/lose result · `next` = board after flipping a "++" at i
+**Pseudocode:**
+```
+canWin(state):
+  if state in memo: return memo
+  for i in 0..len-2:
+    if "++" at i:
+      next = flip both to "--"
+      if not canWin(next): memo[state]=true; return true
+  memo[state]=false; return false
+```
 
 ```java
 class Solution {
@@ -15381,6 +21159,24 @@ class Solution {
 
 **Description:** Serialize a binary tree to a string and deserialize it back.
 **Intuition:** preorder with explicit "#" null markers uniquely encodes structure; rebuild by consuming tokens in the same order.
+
+**Variables:** `builder` = output buffer · `queue` = tokens split by comma · `token` = current node value or "#" (null)
+**Pseudocode:**
+```
+serialize(node, builder):
+  if null: append "#,"; return
+  append val + ","
+  serialize left; serialize right
+deserialize(data):
+  queue = tokens of data
+  return build(queue)
+build(queue):
+  token = poll
+  if "#": return null
+  node = new node(token)
+  node.left = build; node.right = build
+  return node
+```
 
 ```java
 public class Codec {
@@ -15418,6 +21214,18 @@ public class Codec {
 **Description:** Find the longest consecutive increasing-by-1 path going from parent to child.
 **Intuition:** pass the current run length down; extend it when the child is exactly parent + 1, otherwise reset to 1.
 
+**Variables:** `max` = longest consecutive run found · `parent` = previous node on path · `length` = current consecutive run length
+**Pseudocode:**
+```
+dfs(root, null, 0); return max
+dfs(node, parent, length):
+  if null: return
+  if parent exists and node.val == parent.val+1: length++
+  else: length = 1
+  max = max(max, length)
+  dfs(left, node, length); dfs(right, node, length)
+```
+
 ```java
 class Solution {
     private int max = 0;
@@ -15443,6 +21251,22 @@ class Solution {
 
 **Description:** Remove the minimum number of parentheses to make a string valid; return all distinct results.
 **Intuition:** BFS by removal count; the first level whose strings include valid ones is the minimum-removal answer.
+
+**Variables:** `queue` = BFS frontier of candidate strings · `visited` = strings already enqueued · `found` = whether a valid string was found at current level · `cur` = current string · `balance` = paren balance in validity check
+**Pseudocode:**
+```
+enqueue s, mark visited
+while queue nonempty:
+  cur = poll
+  if valid: add to result, found = true
+  if found: skip expanding (only finish this level)
+  for each position i:
+    if char not a paren: skip
+    next = cur without char i
+    if newly visited: enqueue
+return result
+isValid: scan tracking balance, fail if it goes negative, require 0 at end
+```
 
 ```java
 class Solution {
@@ -15484,6 +21308,21 @@ class Solution {
 **Description:** Check if a string forms an additive sequence (each number is the sum of the two preceding).
 **Intuition:** backtrack the first two numbers; the rest of the string is forced, so just verify it matches the running sums.
 
+**Variables:** `i` = end of first number `[0, i)` · `j` = end of second number `[i, j)` · `first`/`second` = first two numbers · `sum` = first+second · `sumStr` = its string · `start` = index in num to match next
+**Pseudocode:**
+```
+for i from 1 to n/2 (no leading-zero first):
+  for j from i+1 while remaining long enough (no leading-zero second):
+    first = num[0..i), second = num[i..j)
+    if check(first, second, j): return true
+return false
+check(first, second, start):
+  if start at end: return true
+  sum = first+second; sumStr = its string
+  if num does not start with sumStr at start: return false
+  return check(second, sum, start + sumStr length)
+```
+
 ```java
 class Solution {
     public boolean isAdditiveNumber(String num) {
@@ -15516,6 +21355,21 @@ class Solution {
 
 **Description:** Return node values ordered by column, then by row.
 **Intuition:** BFS tracking each node's column; collect values per column, then read columns left to right.
+
+**Variables:** `columns` = column index to list of values · `queue`/`cols` = parallel BFS queues of nodes and their columns · `col` = current node's column · `min`/`max` = column range seen
+**Pseudocode:**
+```
+if root null: return []
+enqueue root with col 0
+while queue nonempty:
+  node = poll, col = poll
+  columns[col].add(node.val)
+  update min, max
+  if left: enqueue left with col-1
+  if right: enqueue right with col+1
+for col from min to max: result.add(columns[col])
+return result
+```
 
 ```java
 class Solution {
@@ -15551,6 +21405,18 @@ class Solution {
 **Description:** Return all abbreviations of a word (replace any non-adjacent groups of letters with their counts).
 **Intuition:** for each character, choose to either abbreviate it (extend a count) or keep it literally; backtrack.
 
+**Variables:** `start` = current char index · `count` = pending run of abbreviated chars · `builder` = abbreviation being built · `len` = builder length to restore to
+**Pseudocode:**
+```
+backtrack(start=0, count=0)
+if start at end:
+  if count>0 append count; record; restore; return
+backtrack(start+1, count+1)   // abbreviate this char
+save len; if count>0 append count; append word[start]
+backtrack(start+1, 0)         // keep this char
+restore len
+```
+
 ```java
 class Solution {
     public List<String> generateAbbreviations(String word) {
@@ -15584,6 +21450,18 @@ class Solution {
 **Description:** Sum each integer in a nested list weighted by its depth.
 **Intuition:** DFS carrying the current depth; integers add `value·depth`, lists recurse one level deeper.
 
+**Variables:** `depth` = current nesting depth (root = 1) · `sum` = accumulated weighted sum at this level
+**Pseudocode:**
+```
+return dfs(list, depth=1)
+dfs(list, depth):
+  sum = 0
+  for ni in list:
+    if integer: sum += value * depth
+    else: sum += dfs(ni.list, depth+1)
+  return sum
+```
+
 ```java
 class Solution {
     public int depthSum(List<NestedInteger> nestedList) {
@@ -15607,6 +21485,20 @@ class Solution {
 
 **Description:** Sum each integer weighted by its inverse depth (deepest integers have weight 1).
 **Intuition:** weight = (maxDepth − depth + 1). Accumulate sum of values at each level and a running unweighted total per BFS level so deeper values get counted more often.
+
+**Variables:** `unweighted` = running sum of all integers seen through current level · `total` = answer accumulator · `queue` = BFS frontier · `size` = nodes in current level
+**Pseudocode:**
+```
+queue = nestedList
+while queue nonempty:
+  size = queue size
+  for size items:
+    ni = poll
+    if integer: unweighted += value
+    else: enqueue its list
+  total += unweighted   // shallow values re-added each level
+return total
+```
 
 ```java
 class Solution {
@@ -15635,6 +21527,16 @@ class Solution {
 **Description:** Return integers 1..n in lexicographical order.
 **Intuition:** DFS a 10-ary prefix tree: start at each digit, append 0-9 as long as the number stays ≤ n.
 
+**Variables:** `cur` = current number / prefix being visited · `n` = upper bound
+**Pseudocode:**
+```
+for i in 1..9: dfs(i)
+dfs(cur):
+  if cur > n: return
+  record cur
+  for digit in 0..9: dfs(cur*10 + digit)
+```
+
 ```java
 class Solution {
     public List<Integer> lexicalOrder(int n) {
@@ -15658,6 +21560,16 @@ class Solution {
 **Description:** Sum the values of all left leaves in a binary tree.
 **Intuition:** pass down whether a node is a left child; add its value when it is both a left child and a leaf.
 
+**Variables:** `isLeft` = whether current node is its parent's left child
+**Pseudocode:**
+```
+return dfs(root, false)
+dfs(node, isLeft):
+  if null: return 0
+  if leaf: return isLeft ? node.val : 0
+  return dfs(left, true) + dfs(right, false)
+```
+
 ```java
 class Solution {
     public int sumOfLeftLeaves(TreeNode root) {
@@ -15680,6 +21592,22 @@ class Solution {
 
 **Description:** Convert a BST into a sorted circular doubly linked list in place.
 **Intuition:** inorder traversal yields sorted order; link each node to the previous one, then close the ring between head and tail.
+
+**Variables:** `first` = head of list (smallest) · `last` = last node linked so far
+**Pseudocode:**
+```
+if root null: return null
+inorder(root)
+link last.right -> first and first.left -> last   // close ring
+return first
+inorder(node):
+  if null: return
+  recurse left
+  if last exists: last.right=node, node.left=last
+  else: first = node
+  last = node
+  recurse right
+```
 
 ```java
 class Solution {
@@ -15709,6 +21637,20 @@ class Solution {
 
 **Description:** Return the level order traversal of an N-ary tree.
 **Intuition:** BFS, enqueuing all children of each node per level.
+
+**Variables:** `queue` = BFS frontier · `size` = nodes in current level · `level` = values collected for this level
+**Pseudocode:**
+```
+if root null: return []
+enqueue root
+while queue nonempty:
+  size = queue size; level = []
+  for size items:
+    node = poll; level.add(node.val)
+    enqueue all children
+  result.add(level)
+return result
+```
 
 ```java
 class Solution {
@@ -15740,6 +21682,21 @@ class Solution {
 **Description:** Count downward paths (any node to any descendant) summing to a target.
 **Intuition:** prefix-sum the running root-to-node sum; the number of paths ending here equals how many earlier prefixes equal `current − target`.
 
+**Variables:** `prefix` = map of root-to-node running sum to occurrence count · `current` = running sum down to this node · `count` = paths found in this subtree
+**Pseudocode:**
+```
+prefix[0] = 1
+return dfs(root, 0, target)
+dfs(node, current, target):
+  if null: return 0
+  current += node.val
+  count = prefix[current - target]   // paths ending here
+  prefix[current]++
+  count += dfs(left) + dfs(right)
+  prefix[current]--                  // backtrack
+  return count
+```
+
 ```java
 class Solution {
     public int pathSum(TreeNode root, int targetSum) {
@@ -15767,6 +21724,23 @@ class Solution {
 
 **Description:** Find the kth smallest integer in 1..n by lexicographical order.
 **Intuition:** count how many numbers share a prefix; skip whole subtrees of the 10-ary prefix tree when k exceeds their size, otherwise descend.
+
+**Variables:** `cur` = current prefix in 10-ary tree · `k` = remaining steps to target · `steps` = count of numbers under prefix range `[first, last)` ≤ n
+**Pseudocode:**
+```
+cur = 1; k--
+while k > 0:
+  steps = countSteps(cur, cur+1)
+  if steps <= k: move right sibling (cur++, k -= steps)
+  else: descend (cur *= 10, k--)
+return cur
+countSteps(first, last):
+  steps = 0
+  while first <= n:
+    steps += min(n+1, last) - first   // count this level
+    first *= 10; last *= 10
+  return steps
+```
 
 ```java
 class Solution {
@@ -15804,6 +21778,24 @@ class Solution {
 
 **Description:** Serialize and deserialize a BST compactly.
 **Intuition:** preorder alone reconstructs a BST using value bounds, so no null markers are needed.
+
+**Variables:** `builder` = preorder output · `tokens` = split values · `index` = next token to consume · `min`/`max` = allowed value bounds for current node
+**Pseudocode:**
+```
+serialize(node): if null return; append val+","; recurse left; recurse right
+deserialize(data):
+  if empty: return null
+  tokens = split; index = 0
+  return build(-inf, +inf)
+build(min, max):
+  if no tokens left: return null
+  val = tokens[index]
+  if val outside [min, max]: return null   // belongs elsewhere
+  index++
+  node = new node(val)
+  node.left = build(min, val); node.right = build(val, max)
+  return node
+```
 
 ```java
 public class Codec {
@@ -15847,6 +21839,21 @@ public class Codec {
 **Description:** Delete a key from a BST and return the new root.
 **Intuition:** find the node; if it has two children, replace its value with the inorder successor (smallest in right subtree) and delete that successor.
 
+**Variables:** `key` = value to delete · `successor` = smallest node in right subtree (inorder successor)
+**Pseudocode:**
+```
+if root null: return null
+if key < root.val: root.left = delete(root.left, key)
+else if key > root.val: root.right = delete(root.right, key)
+else:   // found node
+  if no left child: return right
+  if no right child: return left
+  successor = leftmost of right subtree
+  root.val = successor.val
+  root.right = delete(root.right, successor.val)
+return root
+```
+
 ```java
 class Solution {
     public TreeNode deleteNode(TreeNode root, int key) {
@@ -15875,6 +21882,23 @@ class Solution {
 
 **Description:** Determine if matchsticks can form a square (4 equal sides) using all sticks.
 **Intuition:** backtrack placing each stick into one of 4 side buckets; prune when total isn't divisible by 4 or a stick exceeds the side length.
+
+**Variables:** `total` = sum of sticks · `side` = target side length total/4 · `sides[i]` = current length of bucket i · `index` = stick being placed (descending)
+**Pseudocode:**
+```
+total = sum; if not divisible by 4: return false
+side = total/4; sort sticks
+return backtrack(last index, sides=[0,0,0,0], side)
+backtrack(index, sides, target):
+  if index < 0: return all four sides == target
+  for each bucket i in 0..3:
+    if adding stick exceeds target: skip
+    if bucket equals previous bucket (duplicate state): skip
+    add stick to bucket i
+    if backtrack(index-1): return true
+    remove stick
+  return false
+```
 
 ```java
 class Solution {
@@ -15909,6 +21933,24 @@ class Solution {
 
 **Description:** Find the minimum balls from hand to insert to clear the board (or -1).
 **Intuition:** DFS each board state, trying every hand ball at every insertion point, removing groups of 3+; memoize visited states.
+
+**Variables:** `board` = current board · `hand` = sorted remaining balls · `memo` = state to min-steps · `key` = board+"#"+hand · `best` = min balls needed · `next` = board after inserting · `remaining` = hand minus used ball
+**Pseudocode:**
+```
+sort hand; result = dfs(board, hand)
+return result == INF ? -1 : result
+dfs(board, hand):
+  if board empty: return 0
+  if hand empty: return INF
+  if key in memo: return it
+  for each distinct hand ball i:
+    for each insert position j in board:
+      next = board with ball inserted at j, then removeGroups
+      sub = dfs(next, hand without i)
+      if sub finite: best = min(best, sub+1)
+  memo[key] = best; return best
+removeGroups(s): repeatedly find run of >=3 equal chars, remove it, restart
+```
 
 ```java
 class Solution {
@@ -15960,6 +22002,21 @@ class Solution {
 **Description:** Clean an entire room with a robot that has only relative move/turn/clean APIs and no map.
 **Intuition:** DFS with backtracking using relative coordinates; clean, try all four directions, and reverse-move to return after each branch.
 
+**Variables:** `dr`/`dc` = direction deltas (up,right,down,left) · `r`/`c` = relative coords · `dir` = current facing · `visited` = cleaned cells · `nd`/`nr`/`nc` = next direction and cell
+**Pseudocode:**
+```
+backtrack(robot, 0, 0, 0, visited)
+backtrack(r, c, dir):
+  clean; mark (r,c) visited
+  for i in 0..3:
+    nd = (dir+i)%4; nr,nc = neighbor in dir nd
+    if (nr,nc) unvisited and robot.move() succeeds:
+      backtrack(nr, nc, nd)
+      goBack()   // return to (r,c) facing dir
+    turnRight
+goBack: turn around, move, turn around again
+```
+
 ```java
 class Solution {
     private static final int[] dr = {-1, 0, 1, 0};
@@ -15999,6 +22056,20 @@ class Solution {
 **Description:** Return all increasing subsequences of length ≥ 2 (input may have duplicates).
 **Intuition:** backtrack choosing elements ≥ the last picked; within one recursion level use a set to skip duplicate starts. Cannot sort (would destroy original order).
 
+**Variables:** `start` = index to pick from · `path` = current subsequence · `used` = values already chosen at this level (dedup)
+**Pseudocode:**
+```
+backtrack(start=0, path=[])
+if path size >= 2: record copy
+used = empty set
+for i from start to end:
+  if path nonempty and nums[i] < last picked: skip
+  if nums[i] already used this level: skip
+  mark used; path.add(nums[i])
+  backtrack(i+1, path)
+  path.remove last
+```
+
 ```java
 class Solution {
     public List<List<Integer>> findSubsequences(int[] nums) {
@@ -16028,6 +22099,20 @@ class Solution {
 
 **Description:** Find the mode(s) (most frequent values) in a BST that may have duplicates.
 **Intuition:** inorder gives sorted values, so equal values are adjacent; track current run count and update the mode list when counts tie or exceed the max.
+
+**Variables:** `prev` = previous inorder node · `count` = length of current equal-value run · `maxCount` = best run length · `modes` = values achieving maxCount
+**Pseudocode:**
+```
+inorder(root); copy modes to result array
+inorder(node):
+  if null: return
+  recurse left
+  if prev exists and same value: count++ else count = 1
+  if count > maxCount: maxCount=count, modes=[node.val]
+  else if count == maxCount: modes.add(node.val)
+  prev = node
+  recurse right
+```
 
 ```java
 class Solution {
@@ -16061,6 +22146,19 @@ class Solution {
 **Description:** Find the subtree sum(s) that occur most frequently.
 **Intuition:** post-order compute each subtree's sum, tally frequencies in a map, then collect the keys with the max frequency.
 
+**Variables:** `freq` = subtree sum to occurrence count · `maxFreq` = highest frequency · `sum` = current subtree sum · `f` = updated count for this sum
+**Pseudocode:**
+```
+dfs(root)
+collect all sums whose freq == maxFreq into result array
+dfs(node):
+  if null: return 0
+  sum = node.val + dfs(left) + dfs(right)
+  f = ++freq[sum]
+  maxFreq = max(maxFreq, f)
+  return sum
+```
+
 ```java
 class Solution {
     private Map<Integer, Integer> freq = new HashMap<>();
@@ -16093,6 +22191,18 @@ class Solution {
 **Description:** Find the inorder successor of a node given only a parent pointer (no root).
 **Intuition:** if a right subtree exists, the successor is its leftmost node; otherwise climb up until you come from a left child.
 
+**Variables:** `node` = given node, walked toward successor
+**Pseudocode:**
+```
+if node has right child:
+  node = node.right
+  while node.left exists: node = node.left
+  return node
+while node has parent and node is parent's right child:
+  node = node.parent
+return node.parent
+```
+
 ```java
 class Solution {
     public Node inorderSuccessor(Node node) {
@@ -16117,6 +22227,17 @@ class Solution {
 **Description:** Find the leftmost value in the last (deepest) row of a binary tree.
 **Intuition:** BFS scanning right-to-left so the final node dequeued is the bottom-left value.
 
+**Variables:** `queue` = BFS frontier · `node` = last node dequeued (becomes bottom-left)
+**Pseudocode:**
+```
+enqueue root
+while queue nonempty:
+  node = poll
+  if right child: enqueue right   // enqueue right before left
+  if left child: enqueue left
+return node.val   // last dequeued = deepest, leftmost
+```
+
 ```java
 class Solution {
     public int findBottomLeftValue(TreeNode root) {
@@ -16140,6 +22261,20 @@ class Solution {
 
 **Description:** Return the maximum value in each row of a binary tree.
 **Intuition:** BFS level by level, tracking the max per level.
+
+**Variables:** `queue` = BFS frontier · `size` = nodes in current level · `max` = max value in current level
+**Pseudocode:**
+```
+if root null: return []
+enqueue root
+while queue nonempty:
+  size = queue size; max = -inf
+  for size items:
+    node = poll; max = max(max, node.val)
+    enqueue left and right if present
+  result.add(max)
+return result
+```
 
 ```java
 class Solution {
@@ -16172,6 +22307,18 @@ class Solution {
 **Description:** Count permutations of 1..n where each number divides or is divisible by its position.
 **Intuition:** backtrack placing numbers position by position, only choosing a number when it satisfies the divisibility rule.
 
+**Variables:** `count` = valid arrangements found · `pos` = position being filled (1-based) · `used[i]` = whether number i is placed
+**Pseudocode:**
+```
+backtrack(n, pos=1, used)
+if pos > n: count++; return
+for i in 1..n:
+  if i unused and (i divisible by pos or pos divisible by i):
+    mark i used
+    backtrack(pos+1)
+    unmark i
+```
+
 ```java
 class Solution {
     private int count = 0;
@@ -16199,6 +22346,23 @@ class Solution {
 
 **Description:** Build a binary tree from a string like `4(2(3)(1))(6(5))`.
 **Intuition:** parse the leading number as the node, then the first parenthesized group as the left subtree and the second as the right subtree.
+
+**Variables:** `index` = current parse position · `start` = start of number token · `node` = node being built
+**Pseudocode:**
+```
+if s empty: return null
+return build(s)
+build(s):
+  start = index
+  if '-': advance
+  while digit: advance
+  node = new node(num[start..index])
+  if next char '(':
+    consume '('; node.left = build; consume ')'
+  if next char '(':
+    consume '('; node.right = build; consume ')'
+  return node
+```
 
 ```java
 class Solution {
@@ -16235,6 +22399,17 @@ class Solution {
 **Description:** Replace each node's value with the sum of all values greater than or equal to it.
 **Intuition:** reverse inorder (right → node → left) visits values in descending order; carry a running sum and add it into each node.
 
+**Variables:** `sum` = running total of all values visited so far (descending) · `root` = current node
+**Pseudocode:**
+```
+if root null: return null
+recurse right
+sum += root.val
+root.val = sum
+recurse left
+return root
+```
+
 ```java
 class Solution {
     private int sum = 0;
@@ -16256,6 +22431,35 @@ class Solution {
 
 **Description:** Return the boundary: root, left boundary top-down, leaves left-to-right, right boundary bottom-up, no duplicates.
 **Intuition:** collect three parts separately — left boundary (excluding leaves), all leaves, and right boundary reversed (excluding leaves).
+
+**Variables:** `result` = boundary values in order · `node` = current node · `temp` = right-boundary values collected top-down (later reversed)
+**Pseudocode:**
+```
+if root null: return result
+if root not leaf: add root.val
+addLeftBoundary(root.left)
+addLeaves(root)
+addRightBoundary(root.right)
+return result
+
+isLeaf: both children null
+
+addLeftBoundary(node):
+  while node != null:
+    if node not leaf: add node.val
+    node = left if exists else right
+
+addLeaves(node):
+  if null: return
+  if leaf: add node.val; return
+  recurse left, recurse right
+
+addRightBoundary(node):
+  while node != null:
+    if node not leaf: temp.add(node.val)
+    node = right if exists else left
+  reverse temp; add all to result
+```
 
 ```java
 class Solution {
@@ -16303,6 +22507,15 @@ class Solution {
 **Description:** Find the maximum depth of an N-ary tree.
 **Intuition:** depth is 1 plus the max depth among all children.
 
+**Variables:** `root` = current node · `max` = deepest child depth seen
+**Pseudocode:**
+```
+if root null: return 0
+max = 0
+for each child: max = max(max, maxDepth(child))
+return max + 1
+```
+
 ```java
 class Solution {
     public int maxDepth(Node root) {
@@ -16323,6 +22536,19 @@ class Solution {
 
 **Description:** Sum the tilt of every node, where tilt = |left subtree sum − right subtree sum|.
 **Intuition:** post-order return each subtree sum; accumulate the absolute difference into a global total.
+
+**Variables:** `total` = accumulated tilt across all nodes · `left`/`right` = subtree sums
+**Pseudocode:**
+```
+sum(root); return total
+
+sum(node):
+  if null: return 0
+  left = sum(node.left)
+  right = sum(node.right)
+  total += |left - right|
+  return left + right + node.val
+```
 
 ```java
 class Solution {
@@ -16349,6 +22575,21 @@ class Solution {
 **Description:** Check whether `subRoot` is a subtree of `root`.
 **Intuition:** at every node of `root`, test for structural equality with `subRoot`.
 
+**Variables:** `root` = current node of main tree · `subRoot` = pattern tree root · `a`/`b` = nodes compared for equality
+**Pseudocode:**
+```
+isSubtree(root, subRoot):
+  if root null: return false
+  if isSame(root, subRoot): return true
+  return isSubtree(left) or isSubtree(right)
+
+isSame(a, b):
+  if both null: return true
+  if one null: return false
+  if a.val != b.val: return false
+  return isSame(lefts) and isSame(rights)
+```
+
 ```java
 class Solution {
     public boolean isSubtree(TreeNode root, TreeNode subRoot) {
@@ -16373,6 +22614,17 @@ class Solution {
 **Description:** Return the preorder traversal of an N-ary tree.
 **Intuition:** visit the node, then recurse into each child in order.
 
+**Variables:** `result` = preorder values · `node` = current node
+**Pseudocode:**
+```
+dfs(root, result); return result
+
+dfs(node):
+  if null: return
+  add node.val
+  for each child: dfs(child)
+```
+
 ```java
 class Solution {
     public List<Integer> preorder(Node root) {
@@ -16396,6 +22648,17 @@ class Solution {
 **Description:** Return the postorder traversal of an N-ary tree.
 **Intuition:** recurse into all children first, then visit the node.
 
+**Variables:** `result` = postorder values · `node` = current node
+**Pseudocode:**
+```
+dfs(root, result); return result
+
+dfs(node):
+  if null: return
+  for each child: dfs(child)
+  add node.val
+```
+
 ```java
 class Solution {
     public List<Integer> postorder(Node root) {
@@ -16418,6 +22681,20 @@ class Solution {
 
 **Description:** Build a preorder string with parentheses, e.g. `1(2(4))(3)`.
 **Intuition:** append the value, then each non-null child wrapped in parentheses; keep empty `()` for a left child only when a right child exists.
+
+**Variables:** `builder` = output string buffer · `node` = current node
+**Pseudocode:**
+```
+dfs(root, builder); return builder
+
+dfs(node):
+  if null: return
+  append node.val
+  if leaf: return
+  append '('; dfs(left); append ')'
+  if right != null:
+    append '('; dfs(right); append ')'
+```
 
 ```java
 class Solution {
@@ -16450,6 +22727,17 @@ class Solution {
 **Description:** Merge two binary trees by summing overlapping node values.
 **Intuition:** if either node is null, return the other; otherwise sum values and recurse on both child pairs.
 
+**Variables:** `root1`/`root2` = current nodes of the two trees · `merged` = new combined node
+**Pseudocode:**
+```
+if root1 null: return root2
+if root2 null: return root1
+merged = node(root1.val + root2.val)
+merged.left = merge(root1.left, root2.left)
+merged.right = merge(root1.right, root2.right)
+return merged
+```
+
 ```java
 class Solution {
     public TreeNode mergeTrees(TreeNode root1, TreeNode root2) {
@@ -16470,6 +22758,19 @@ class Solution {
 
 **Description:** Return the average value of nodes on each level.
 **Intuition:** BFS each level, summing values and dividing by the level size.
+
+**Variables:** `queue` = BFS queue · `size` = nodes on current level · `sum` = level value sum · `result` = per-level averages
+**Pseudocode:**
+```
+offer root
+while queue not empty:
+  size = queue.size; sum = 0
+  repeat size times:
+    node = poll; sum += node.val
+    offer non-null children
+  result.add(sum / size)
+return result
+```
 
 ```java
 class Solution {
@@ -16501,6 +22802,19 @@ class Solution {
 **Description:** Return one root per group of structurally identical, duplicated subtrees.
 **Intuition:** serialize each subtree post-order into a canonical string; the second time a serialization appears, record its root.
 
+**Variables:** `seen` = serialization → occurrence count · `result` = one root per duplicate group · `key` = canonical serialization of subtree · `count` = occurrences of key
+**Pseudocode:**
+```
+serialize(root, seen, result); return result
+
+serialize(node):
+  if null: return "#"
+  key = node.val + "," + serialize(left) + "," + serialize(right)
+  count = seen.merge(key, +1)
+  if count == 2: result.add(node)
+  return key
+```
+
 ```java
 class Solution {
     public List<TreeNode> findDuplicateSubtrees(TreeNode root) {
@@ -16526,6 +22840,18 @@ class Solution {
 **Description:** Find whether two nodes in a BST sum to a target.
 **Intuition:** traverse, storing seen values in a set; for each node check if `target − val` was seen.
 
+**Variables:** `k` = target sum · `seen` = values visited so far · `node` = current node
+**Pseudocode:**
+```
+return dfs(root, k, empty set)
+
+dfs(node):
+  if null: return false
+  if seen contains k - node.val: return true
+  seen.add(node.val)
+  return dfs(left) or dfs(right)
+```
+
 ```java
 class Solution {
     public boolean findTarget(TreeNode root, int k) {
@@ -16547,6 +22873,21 @@ class Solution {
 
 **Description:** Build a tree where the root is the array max, left subtree from the left subarray, right subtree from the right subarray.
 **Intuition:** find the max in the range as root, recurse on the two halves.
+
+**Variables:** range `[lo, hi]` = subarray under construction · `maxIndex` = index of max in range · `root` = node for that max
+**Pseudocode:**
+```
+return build(nums, 0, n-1)
+
+build(lo, hi):
+  if lo > hi: return null
+  maxIndex = lo
+  for i in lo+1..hi: if nums[i] > nums[maxIndex]: maxIndex = i
+  root = node(nums[maxIndex])
+  root.left = build(lo, maxIndex-1)
+  root.right = build(maxIndex+1, hi)
+  return root
+```
 
 ```java
 class Solution {
@@ -16574,6 +22915,22 @@ class Solution {
 
 **Description:** Return the maximum width of any level, where width counts the gap between the leftmost and rightmost non-null nodes.
 **Intuition:** assign heap-style indices (left = 2i, right = 2i+1); per level the width is last index − first index + 1.
+
+**Variables:** `queue` = node BFS queue · `indices` = heap-style index per node (left=2i, right=2i+1) · `first`/`last` = leftmost/rightmost index this level · `max` = widest level
+**Pseudocode:**
+```
+if root null: return 0
+offer root with index 0
+while queue not empty:
+  size = queue.size
+  for i in 0..size-1:
+    node = poll; index = indices.poll
+    if i == 0: first = index
+    if i == size-1: last = index
+    offer left with 2*index, right with 2*index+1 (if non-null)
+  max = max(max, last - first + 1)
+return max
+```
 
 ```java
 class Solution {
@@ -16610,6 +22967,19 @@ class Solution {
 **Description:** In a tree where each node's value is the min of its children, find the second smallest value overall.
 **Intuition:** the root is the global minimum; DFS for the smallest value strictly greater than the root.
 
+**Variables:** `min` = root value (global minimum) · `second` = smallest value strictly greater than min · `left`/`right` = recursive results
+**Pseudocode:**
+```
+second = dfs(root, root.val)
+return second == MAX ? -1 : second
+
+dfs(node, min):
+  if null: return MAX
+  if node.val > min: return node.val
+  left = dfs(left, min); right = dfs(right, min)
+  return min(left, right)
+```
+
 ```java
 class Solution {
     public int findSecondMinimumValue(TreeNode root) {
@@ -16633,6 +23003,24 @@ class Solution {
 
 **Description:** Determine if four numbers can be combined with +, −, ×, ÷ to make 24.
 **Intuition:** backtrack: pick any two numbers, apply each operator, replace them with the result, and recurse until one number remains.
+
+**Variables:** `nums`/`list` = current numbers as doubles · `i`,`j` = indices of the two picked numbers · `next` = remaining numbers plus result · `value` = result of one operation
+**Pseudocode:**
+```
+convert cards to doubles; return backtrack(list)
+
+backtrack(nums):
+  if size == 1: return |nums[0] - 24| < eps
+  for i in nums, for j in nums, i != j:
+    next = all nums except i, j
+    for each value in compute(nums[i], nums[j]):
+      next.add(value)
+      if backtrack(next): return true
+      next.remove last
+  return false
+
+compute(a, b): {a+b, a-b, a*b, and a/b if b != 0}
+```
 
 ```java
 class Solution {
@@ -16675,6 +23063,25 @@ class Solution {
 **Description:** Determine if an array can be split into k subsets of equal sum.
 **Intuition:** target = total/k; backtrack filling one bucket at a time, sorting descending to fail fast, skipping when total isn't divisible.
 
+**Variables:** `total` = sum of nums · `target` = total/k bucket size · `used[i]` = number i already placed · `index` = current scan start · `current` = current bucket sum · `k` = buckets remaining
+**Pseudocode:**
+```
+total = sum; if total % k != 0: return false
+target = total/k; sort nums
+if largest > target: return false
+return backtrack(n-1, used, k, 0, target)
+
+backtrack(index, used, k, current, target):
+  if k == 0: return true
+  if current == target: return backtrack(n-1, used, k-1, 0, target)
+  for i from index down to 0:
+    if used[i] or current+nums[i] > target: continue
+    used[i] = true
+    if backtrack(i-1, used, k, current+nums[i], target): return true
+    used[i] = false
+  return false
+```
+
 ```java
 class Solution {
     public boolean canPartitionKSubsets(int[] nums, int k) {
@@ -16710,6 +23117,14 @@ class Solution {
 **Description:** Find the subtree rooted at the node with a given value in a BST.
 **Intuition:** binary-search the tree: go left if target is smaller, right if larger.
 
+**Variables:** `root` = current node · `val` = target value
+**Pseudocode:**
+```
+while root != null and root.val != val:
+  root = left if val < root.val else right
+return root
+```
+
 ```java
 class Solution {
     public TreeNode searchBST(TreeNode root, int val) {
@@ -16729,6 +23144,15 @@ class Solution {
 **Description:** Insert a value into a BST and return the root.
 **Intuition:** descend like a search until reaching a null child, then attach a new node there.
 
+**Variables:** `root` = current node · `val` = value to insert
+**Pseudocode:**
+```
+if root null: return new node(val)
+if val < root.val: root.left = insert(root.left, val)
+else: root.right = insert(root.right, val)
+return root
+```
+
 ```java
 class Solution {
     public TreeNode insertIntoBST(TreeNode root, int val) {
@@ -16747,6 +23171,23 @@ class Solution {
 
 **Description:** Find the value of the leaf nearest to the node with a given value.
 **Intuition:** convert the tree to an undirected graph, then BFS from the target node until the first leaf is reached.
+
+**Variables:** `graph` = node → neighbor list (undirected) · `start[0]` = node with value k · `queue`/`visited` = BFS state · `k` = target value
+**Pseudocode:**
+```
+buildGraph(root, null, graph, k, start)
+BFS from start[0]:
+  node = poll
+  if node is leaf: return node.val
+  for each neighbor: if newly visited, offer
+return -1
+
+buildGraph(node, parent):
+  if null: return
+  if node.val == k: start[0] = node
+  if parent != null: add edges node<->parent
+  recurse left (parent=node), recurse right (parent=node)
+```
 
 ```java
 class Solution {
@@ -16788,6 +23229,20 @@ class Solution {
 **Description:** Split a BST into two trees: one with values ≤ V and one with values > V.
 **Intuition:** recurse; at each node decide which result tree it belongs to based on V, then reattach the recursively-split child.
 
+**Variables:** `root` = current node · `target` = split value · returned pair `[≤target tree, >target tree]` · `left`/`right` = recursive split pairs
+**Pseudocode:**
+```
+if root null: return [null, null]
+if root.val <= target:
+  right = split(root.right, target)
+  root.right = right[0]
+  return [root, right[1]]
+else:
+  left = split(root.left, target)
+  root.left = left[1]
+  return [left[0], root]
+```
+
 ```java
 class Solution {
     public TreeNode[] splitBST(TreeNode root, int target) {
@@ -16812,6 +23267,20 @@ class Solution {
 
 **Description:** Return all strings formable by toggling the case of letters in a string.
 **Intuition:** backtrack character by character; digits have one choice, letters branch into lower and upper case.
+
+**Variables:** `arr` = mutable char array · `start` = index being decided · `result` = all permutations
+**Pseudocode:**
+```
+backtrack(chars, 0, result); return result
+
+backtrack(arr, start):
+  if start == length: add new String(arr); return
+  if arr[start] is letter:
+    set lowercase; backtrack(start+1)
+    set uppercase; backtrack(start+1)
+  else:
+    backtrack(start+1)
+```
 
 ```java
 class Solution {
@@ -16842,6 +23311,16 @@ class Solution {
 **Description:** Remove every subtree that contains no node with value 1.
 **Intuition:** post-order prune children first; drop a node if both children become null and its own value is 0.
 
+**Variables:** `root` = current node
+**Pseudocode:**
+```
+if root null: return null
+root.left = prune(root.left)
+root.right = prune(root.right)
+if both children null and root.val == 0: return null
+return root
+```
+
 ```java
 class Solution {
     public TreeNode pruneTree(TreeNode root) {
@@ -16863,6 +23342,25 @@ class Solution {
 
 **Description:** Split a digit string into a Fibonacci-like sequence (each term = sum of previous two), with terms fitting in a 32-bit int.
 **Intuition:** backtrack the first two numbers; the rest is forced. Prune leading zeros and overflow.
+
+**Variables:** `path` = sequence built so far · `start` = current split position · `i` = end index of current number · `value` = parsed number · `size` = path length
+**Pseudocode:**
+```
+backtrack(num, 0, result); return result
+
+backtrack(start, path):
+  if start == length: return path.size >= 3
+  for i from start to end:
+    if leading zero (num[start]=='0' and i>start): break
+    value = parse num[start..i]
+    if value > INT_MAX: break
+    if size >= 2 and value > path[-1]+path[-2]: break
+    if size < 2 or value == path[-1]+path[-2]:
+      path.add(value)
+      if backtrack(i+1, path): return true
+      path.remove last
+  return false
+```
 
 ```java
 class Solution {
@@ -16897,6 +23395,22 @@ class Solution {
 
 **Description:** Find all node values exactly distance k from a target node.
 **Intuition:** build parent links so the tree becomes an undirected graph, then BFS k levels from the target.
+
+**Variables:** `parent` = node → its parent · `queue`/`visited` = BFS state · `dist` = current distance from target · `k` = target distance
+**Pseudocode:**
+```
+buildParents(root, null, parent)
+offer target; visited.add(target); dist = 0
+while queue not empty:
+  if dist == k: break
+  for each node in current level:
+    for neighbor in {left, right, parent}:
+      if non-null and newly visited: offer
+  dist++
+collect remaining queue values into result; return result
+
+buildParents(node, par): record parent, recurse children
+```
 
 ```java
 class Solution {
@@ -16940,6 +23454,18 @@ class Solution {
 **Description:** Find the smallest subtree containing all of the tree's deepest leaves.
 **Intuition:** post-order return (depth, lca). If left and right depths tie, the current node is the LCA; otherwise carry up the deeper side.
 
+**Variables:** `Result.depth` = subtree height · `Result.node` = LCA of deepest nodes in subtree · `left`/`right` = child results
+**Pseudocode:**
+```
+return dfs(root).node
+
+dfs(node):
+  if null: return Result(0, null)
+  left = dfs(left); right = dfs(right)
+  if left.depth == right.depth: return Result(left.depth+1, node)
+  return deeper side's node with depth+1
+```
+
 ```java
 class Solution {
     public TreeNode subtreeWithAllDeepest(TreeNode root) {
@@ -16972,6 +23498,16 @@ class Solution {
 **Description:** Reconstruct a binary tree from preorder and postorder traversals (any valid tree).
 **Intuition:** preorder[start] is the root; preorder[start+1] is the left subtree root, whose position in postorder gives the left subtree size.
 
+**Variables:** `preIndex` = pointer into preorder · `postIndex` = pointer into postorder · `root` = node built from current preorder value
+**Pseudocode:**
+```
+root = node(preorder[preIndex++])
+if root.val != postorder[postIndex]: root.left = recurse
+if root.val != postorder[postIndex]: root.right = recurse
+postIndex++
+return root
+```
+
 ```java
 class Solution {
     private int preIndex = 0, postIndex = 0;
@@ -16996,6 +23532,21 @@ class Solution {
 
 **Description:** Rearrange a BST into a right-skewed tree following inorder order.
 **Intuition:** inorder traversal; relink each node as the right child of the previous, clearing left pointers.
+
+**Variables:** `current` = tail of the rebuilt right-skewed list · `dummy` = sentinel before first node · `node` = current node in inorder
+**Pseudocode:**
+```
+dummy = node(0); current = dummy
+inorder(root)
+return dummy.right
+
+inorder(node):
+  if null: return
+  inorder(left)
+  node.left = null
+  current.right = node; current = node
+  inorder(right)
+```
 
 ```java
 class Solution {
@@ -17024,6 +23575,23 @@ class Solution {
 
 **Description:** Design a structure that supports O(1) insertion into a complete binary tree.
 **Intuition:** keep a BFS queue of nodes that still have a free child slot; insert into the front node and enqueue the new node.
+
+**Variables:** `root` = tree root · `queue` = nodes with a free child slot (front = next insert point) · `bfs` = init traversal queue · `parent` = node receiving the new child
+**Pseudocode:**
+```
+constructor(root):
+  BFS all nodes; enqueue any node missing a child into queue
+
+insert(val):
+  node = new node(val)
+  parent = queue.peek
+  if parent.left == null: parent.left = node
+  else: parent.right = node; queue.poll
+  queue.offer(node)
+  return parent.val
+
+get_root: return root
+```
 
 ```java
 class CBTInserter {
@@ -17060,6 +23628,18 @@ class CBTInserter {
 **Description:** Construct an array of 1..n where no three indices i<j<k satisfy 2·a[j] = a[i] + a[k].
 **Intuition:** divide and conquer: a beautiful array of odds followed by evens stays beautiful, since odd + even is never twice an integer.
 
+**Variables:** `result` = current beautiful array · `next` = next-round array (odds-mapped then evens-mapped) · `x` = element being transformed · `arr` = final output
+**Pseudocode:**
+```
+result = [1]
+while result.size < n:
+  next = []
+  for x in result: if 2x-1 <= n: next.add(2x-1)   // odds
+  for x in result: if 2x <= n: next.add(2x)        // evens
+  result = next
+copy result into arr; return arr
+```
+
 ```java
 class Solution {
     public int[] beautifulArray(int n) {
@@ -17086,6 +23666,15 @@ class Solution {
 **Description:** Sum all node values within the inclusive range [low, high].
 **Intuition:** prune branches outside the range using BST ordering.
 
+**Variables:** `root` = current node · range `[low, high]` = inclusive bounds
+**Pseudocode:**
+```
+if root null: return 0
+if root.val < low: return rangeSum(right)
+if root.val > high: return rangeSum(left)
+return root.val + rangeSum(left) + rangeSum(right)
+```
+
 ```java
 class Solution {
     public int rangeSumBST(TreeNode root, int low, int high) {
@@ -17104,6 +23693,15 @@ class Solution {
 
 **Description:** Check if two trees are flip-equivalent (can be made identical by swapping some children).
 **Intuition:** match children either directly or swapped at each node.
+
+**Variables:** `root1`/`root2` = current nodes of the two trees
+**Pseudocode:**
+```
+if both null: return true
+if one null: return false
+if values differ: return false
+return (match children directly) or (match children swapped)
+```
 
 ```java
 class Solution {
@@ -17124,6 +23722,19 @@ class Solution {
 
 **Description:** Determine if a binary tree is complete.
 **Intuition:** BFS including null children; once a null is seen, no real node may follow.
+
+**Variables:** `queue` = BFS queue (includes nulls) · `seenNull` = a gap has appeared · `node` = current node
+**Pseudocode:**
+```
+offer root; seenNull = false
+while queue not empty:
+  node = poll
+  if node null: seenNull = true
+  else:
+    if seenNull: return false   // real node after a gap
+    offer left, offer right
+return true
+```
 
 ```java
 class Solution {
@@ -17153,6 +23764,22 @@ class Solution {
 
 **Description:** Group node values by column, then by row, then by value within the same position.
 **Intuition:** DFS recording (col, row, val); sort by column, then row, then value.
+
+**Variables:** `nodes` = list of {col, row, val} · `prevCol` = column of previous group · `result` = column-grouped values · dfs args `row`/`col`
+**Pseudocode:**
+```
+dfs(root, 0, 0, nodes)
+sort nodes by col, then row, then val
+for each node:
+  if first or col changed from prevCol: start new group; prevCol = col
+  add node.val to current group
+return result
+
+dfs(node, row, col):
+  if null: return
+  add {col, row, val}
+  dfs(left, row+1, col-1); dfs(right, row+1, col+1)
+```
 
 ```java
 class Solution {
@@ -17192,6 +23819,21 @@ class Solution {
 **Description:** Return the lexicographically smallest root-to-leaf string, where each node maps to a letter 'a'..'z' and the string is read leaf to root.
 **Intuition:** build the path down, reverse it at each leaf, and track the minimum.
 
+**Variables:** `smallest` = best leaf-to-root string so far · `builder` = root-to-node path of letters · `candidate` = reversed path at a leaf
+**Pseudocode:**
+```
+dfs(root, ""); return smallest
+
+dfs(node, builder):
+  if null: return
+  append letter ('a'+node.val)
+  if leaf:
+    candidate = reverse(builder); reverse back
+    if candidate < smallest: smallest = candidate
+  dfs(left); dfs(right)
+  delete last char
+```
+
 ```java
 class Solution {
     private String smallest = null;
@@ -17221,6 +23863,22 @@ class Solution {
 
 **Description:** Check if two values are cousins (same depth, different parents).
 **Intuition:** BFS recording each value's depth and parent; cousins share depth but differ in parent.
+
+**Variables:** `queue` = BFS queue · `foundX`/`foundY` = x/y seen this level · `x`,`y` = target values · `a`,`b` = a node's two children values
+**Pseudocode:**
+```
+offer root
+while queue not empty:
+  size = queue.size; foundX = foundY = false
+  for each node in level:
+    if node.val == x: foundX = true
+    if node.val == y: foundY = true
+    if both children exist and they are {x, y}: return false  // siblings
+    offer non-null children
+  if foundX and foundY: return true
+  if foundX or foundY: return false
+return false
+```
 
 ```java
 class Solution {
@@ -17257,6 +23915,15 @@ class Solution {
 **Description:** Insert a value into a maximum tree built by appending the value to the original array's end.
 **Intuition:** since the value was appended last, it lies on the rightmost spine; insert where it first exceeds the current node.
 
+**Variables:** `root` = current node on right spine · `val` = appended value · `node` = new node when val is largest
+**Pseudocode:**
+```
+if root null or val > root.val:
+  node = new node(val); node.left = root; return node
+root.right = insert(root.right, val)
+return root
+```
+
 ```java
 class Solution {
     public TreeNode insertIntoMaxTree(TreeNode root, int val) {
@@ -17278,6 +23945,19 @@ class Solution {
 
 **Description:** Build a BST from its preorder traversal.
 **Intuition:** the first value is the root; values less than it form the left subtree, the rest form the right. Use an upper bound to decide where to stop.
+
+**Variables:** `index` = pointer into preorder · `bound` = upper limit for current subtree · `root` = node built from current value
+**Pseudocode:**
+```
+return build(preorder, INT_MAX)
+
+build(bound):
+  if index == length or preorder[index] > bound: return null
+  root = node(preorder[index++])
+  root.left = build(root.val)
+  root.right = build(bound)
+  return root
+```
 
 ```java
 class Solution {
@@ -17302,6 +23982,18 @@ class Solution {
 
 **Description:** Find the maximum |a − d| over all ancestor a and descendant d pairs.
 **Intuition:** pass the min and max seen on the path down; at each node update the answer with the largest gap against those extremes.
+
+**Variables:** `max` = best |ancestor − descendant| found · `min`/`maxVal` = smallest/largest value on path down · `node` = current node
+**Pseudocode:**
+```
+dfs(root, root.val, root.val); return max
+
+dfs(node, min, maxVal):
+  if null: return
+  max = max(max, |node.val-min|, |node.val-maxVal|)
+  min = min(min, node.val); maxVal = max(maxVal, node.val)
+  dfs(left, min, maxVal); dfs(right, min, maxVal)
+```
 
 ```java
 class Solution {
@@ -17329,6 +24021,16 @@ class Solution {
 **Description:** Replace each node's value with the sum of all values greater than or equal to it.
 **Intuition:** reverse inorder (right → node → left) processes descending order; carry a running sum.
 
+**Variables:** `sum` = running total of values visited so far (descending) · `root` = current node
+**Pseudocode:**
+```
+if root null: return null
+recurse right
+sum += root.val; root.val = sum
+recurse left
+return root
+```
+
 ```java
 class Solution {
     private int sum = 0;
@@ -17350,6 +24052,25 @@ class Solution {
 
 **Description:** Expand a string with brace options like `{a,b}c{d,e}` into all sorted concatenations.
 **Intuition:** parse each position into a sorted list of choices, then backtrack the Cartesian product.
+
+**Variables:** `groups` = per-position sorted choice lists · `i` = scan index over s · `options` = choices at one position · `builder` = current concatenation · `result` = all expansions · `start` = group index in backtrack
+**Pseudocode:**
+```
+i = 0
+while i < length:
+  options = []
+  if s[i] == '{':
+    i++; while s[i] != '}': if s[i] != ',': options.add(s[i]); i++
+    i++  // skip '}'
+  else: options.add(s[i]); i++
+  sort options; groups.add(options)
+backtrack(groups, 0, builder, result); return as array
+
+backtrack(start, builder):
+  if start == groups.size: result.add(builder); return
+  for c in groups[start]:
+    append c; backtrack(start+1); delete last
+```
 
 ```java
 class Solution {
@@ -17395,6 +24116,18 @@ class Solution {
 **Description:** Return the root-to-node path of labels in a zigzag-labeled infinite binary tree.
 **Intuition:** the normal parent of label is label/2, but rows alternate direction, so mirror the parent within its row range.
 
+**Variables:** `level` = depth of label · `result` = root-to-label path · `levelMin`/`levelMax` = label range at current level · `label` = current node label
+**Pseudocode:**
+```
+level = floor(log2(label))
+while label >= 1:
+  prepend label to result
+  levelMax = 2^(level+1) - 1; levelMin = 2^level
+  label = (levelMin + levelMax - label) / 2   // mirror within row, then halve
+  level--
+return result
+```
+
 ```java
 class Solution {
     public List<Integer> pathInZigZagTree(int label) {
@@ -17420,6 +24153,22 @@ class Solution {
 
 **Description:** Delete the given values and return the roots of the resulting forest.
 **Intuition:** post-order; if a node is deleted, its surviving children become new roots. A node is a root if its parent was deleted (or it's the original root) and it itself survives.
+
+**Variables:** `toDelete` = values to remove · `result` = forest roots · `isRoot` = node is a potential root (parent deleted/original root) · `deleted` = current node is to be deleted
+**Pseudocode:**
+```
+build toDelete set
+if dfs(root, true, ...) != null: result.add(root)
+return result
+
+dfs(node, isRoot):
+  if null: return null
+  deleted = toDelete contains node.val
+  if isRoot and not deleted: result.add(node)
+  node.left = dfs(left, isRoot=deleted)
+  node.right = dfs(right, isRoot=deleted)
+  return deleted ? null : node
+```
 
 ```java
 class Solution {
@@ -17450,6 +24199,18 @@ Note: the helper handles adding roots; the public method's extra add is avoided 
 
 **Description:** Find the LCA of all the deepest leaves.
 **Intuition:** post-order return (depth, lca); when both arms reach equal depth, the node is the LCA, else carry up the deeper arm.
+
+**Variables:** `Result.depth` = subtree height · `Result.node` = LCA of deepest leaves in subtree · `left`/`right` = child results
+**Pseudocode:**
+```
+return dfs(root).node
+
+dfs(node):
+  if null: return Result(0, null)
+  left = dfs(left); right = dfs(right)
+  if left.depth == right.depth: return Result(left.depth+1, node)
+  return deeper side's node with depth+1
+```
 
 ```java
 class Solution {
@@ -17483,6 +24244,17 @@ class Solution {
 **Description:** Return the 1-indexed level with the largest sum of node values.
 **Intuition:** BFS level by level, tracking the level whose sum is maximum.
 
+**Variables:** `queue` = BFS queue · `level` = current level (1-indexed) · `bestLevel` = level with max sum · `maxSum` = best level sum · `sum` = current level sum
+**Pseudocode:**
+```
+offer root; level = 0; bestLevel = 1; maxSum = MIN
+while queue not empty:
+  level++; size = queue.size; sum = 0
+  for each node in level: sum += node.val; offer non-null children
+  if sum > maxSum: maxSum = sum; bestLevel = level
+return bestLevel
+```
+
 ```java
 class Solution {
     public int maxLevelSum(TreeNode root) {
@@ -17514,6 +24286,20 @@ class Solution {
 **Description:** Given two BSTs and a target, decide if a value from each sums to the target.
 **Intuition:** store all values of the first BST in a set, then traverse the second checking for the complement.
 
+**Variables:** `seen` = all values from tree 1 · `target` = required sum · `node` = current node
+**Pseudocode:**
+```
+collect(root1, seen)
+return search(root2, target, seen)
+
+collect(node): if null return; add val; recurse both children
+
+search(node):
+  if null: return false
+  if seen contains target - node.val: return true
+  return search(left) or search(right)
+```
+
 ```java
 class Solution {
     public boolean twoSumBSTs(TreeNode root1, TreeNode root2, int target) {
@@ -17542,6 +24328,19 @@ class Solution {
 
 **Description:** Return all elements from two BSTs in sorted order.
 **Intuition:** inorder each tree into a sorted list, then merge the two lists like merge sort.
+
+**Variables:** `a`/`b` = sorted inorder lists of the two trees · `i`,`j` = merge pointers into a,b · `result` = merged sorted output
+**Pseudocode:**
+```
+inorder(root1, a); inorder(root2, b)
+i = j = 0
+while i < a.size and j < b.size:
+  add smaller of a[i], b[j]; advance that pointer
+append remaining a, then remaining b
+return result
+
+inorder(node): left, add val, right
+```
 
 ```java
 class Solution {
@@ -17575,6 +24374,17 @@ class Solution {
 
 **Description:** Given child arrays, verify the nodes form exactly one valid binary tree.
 **Intuition:** exactly one node has no parent (the root); every other node has exactly one parent, there are no cycles, and all nodes are reachable from the root.
+
+**Variables:** `indegree[i]` = number of parents of node i · `root` = the unique node with indegree 0 · `queue`/`count` = BFS reachability count
+**Pseudocode:**
+```
+for each i: increment indegree of its children; if any exceeds 1: return false
+root = -1
+for each i with indegree 0: if root already set return false; root = i
+if root == -1: return false
+BFS from root counting reachable nodes
+return count == n
+```
 
 ```java
 class Solution {
@@ -17614,6 +24424,22 @@ class Solution {
 **Description:** Rebuild a BST so it becomes height-balanced.
 **Intuition:** inorder gives a sorted array; build a balanced BST by recursively choosing the middle element as root.
 
+**Variables:** `values` = sorted inorder values · range `[lo, hi]` = subarray for current subtree · `mid` = chosen root index · `root` = built node
+**Pseudocode:**
+```
+inorder(root, values)
+return build(values, 0, size-1)
+
+inorder(node): left, add val, right
+
+build(lo, hi):
+  if lo > hi: return null
+  mid = lo + (hi-lo)/2
+  root = node(values[mid])
+  root.left = build(lo, mid-1); root.right = build(mid+1, hi)
+  return root
+```
+
 ```java
 class Solution {
     public TreeNode balanceBST(TreeNode root) {
@@ -17646,6 +24472,21 @@ class Solution {
 **Description:** Find the diameter (longest path between any two nodes) of an N-ary tree.
 **Intuition:** like binary-tree diameter, but track the two deepest child heights to form the longest path through each node.
 
+**Variables:** `diameter` = longest path found · `max1`/`max2` = two largest child heights · `height` = a child's height
+**Pseudocode:**
+```
+dfs(root); return diameter
+
+dfs(node):
+  if null: return 0
+  max1 = max2 = 0
+  for each child:
+    height = dfs(child)
+    update max1, max2 with height (two largest)
+  diameter = max(diameter, max1 + max2)
+  return max1 + 1
+```
+
 ```java
 class Solution {
     private int diameter = 0;
@@ -17675,6 +24516,20 @@ class Solution {
 **Description:** Find the LCA of two nodes that may not both exist in the tree; return null if either is missing.
 **Intuition:** standard LCA but count how many of p, q were actually found, so a node returned without seeing both isn't accepted.
 
+**Variables:** `found` = count of p/q actually present · `lca` = candidate LCA from dfs · `left`/`right` = recursive results
+**Pseudocode:**
+```
+lca = dfs(root, p, q)
+return found == 2 ? lca : null
+
+dfs(node):
+  if null: return null
+  left = dfs(left); right = dfs(right)
+  if node == p or node == q: found++; return node
+  if left and right both non-null: return node
+  return left != null ? left : right
+```
+
 ```java
 class Solution {
     private int found = 0;
@@ -17703,6 +24558,16 @@ class Solution {
 
 **Description:** Find the LCA of two nodes given parent pointers, without root access.
 **Intuition:** like finding the intersection of two linked lists — walk both pointers up, switching to the other node when one reaches the top; they meet at the LCA.
+
+**Variables:** `a`/`b` = two pointers walking up from p and q, switching to the other's start at the top
+**Pseudocode:**
+```
+a = p; b = q
+while a != b:
+  a = (a == null) ? q : a.parent
+  b = (b == null) ? p : b.parent
+return a
+```
 
 ```java
 class Solution {
@@ -17828,6 +24693,15 @@ int[] dc = {0,  0, 1, -1};
 
 ## Core Templates
 
+**Variables:** `queue` = BFS frontier · `visited[]` = seen flags · `level` = current distance ring · `inDegree[]` = remaining prerequisites per node · `order` = topo result · `parent[]`/`rank[]` = union-find forest · `dist[]` = shortest distance · `pq` = min-heap on cost · `color[]` = 2-coloring (-1/0/1)
+**Pseudocode:**
+```
+BFS: mark start visited, enqueue; while queue, snapshot level size, pop each, push unvisited neighbors, increment level
+TOPO: count inDegree per edge, enqueue all zero-inDegree, pop into order and decrement neighbors, enqueue new zeros
+UNION-FIND: init parent[i]=i; find follows parent to root with path compression; union links roots by rank, false if same root
+DIJKSTRA: dist[src]=0, push src; pop closest, skip if stale, relax each neighbor and push improved
+BIPARTITE: color each component start 0, BFS painting neighbors opposite, return false on same-color clash
+```
 ```java
 // 1. BFS — shortest path / level order (track distance by level-size snapshot)
 // explore in rings of equal distance; snapshot the level size so each ring = one step.  — WHEN: "fewest steps", "shortest path", "level order" on an unweighted graph
@@ -17945,6 +24819,15 @@ Multi-source:   seed queue with ALL starting nodes at once → BFS fans out from
 **Description:** Grid of `0` (empty), `1` (fresh), `2` (rotten). Each minute rotten oranges infect adjacent fresh ones. Return minutes until no fresh remain, or -1.  
 **Algorithm:** Multi-source BFS — seed queue with all rotten cells simultaneously.
 
+**Variables:** `queue` = cells rotting this round · `fresh` = count of fresh oranges left · `dr`/`dc` = 4-direction offsets · `minutes` = elapsed time
+**Pseudocode:**
+```
+scan grid: enqueue every rotten cell, count fresh
+while queue not empty and fresh remain:
+    advance one minute, snapshot level size
+    for each rotten cell, rot fresh 4-neighbors, enqueue them, decrement fresh
+return minutes if no fresh left else -1
+```
 ```java
 class Solution {
     public int orangesRotting(int[][] grid) {
@@ -17986,6 +24869,13 @@ class Solution {
 **Description:** For each cell, return the distance to the nearest `0`.  
 **Algorithm:** Multi-source BFS from all `0` cells simultaneously. Initialize `dist[r][c] = MAX` for `1` cells.
 
+**Variables:** `dist[][]` = distance to nearest 0 · `queue` = BFS frontier of 0-cells · `dr`/`dc` = 4-direction offsets
+**Pseudocode:**
+```
+seed queue with all 0-cells (dist 0); set every 1-cell dist to MAX
+while queue: pop cell, for each neighbor if dist+1 improves it, update and enqueue
+return dist
+```
 ```java
 class Solution {
     public int[][] updateMatrix(int[][] mat) {
@@ -18025,6 +24915,16 @@ class Solution {
 **Description:** Minimum number of transformations from `beginWord` to `endWord`, changing one letter at a time. Each intermediate word must be in `wordList`.  
 **Algorithm:** BFS on word states. Remove words from set when visited to prevent re-visiting.
 
+**Variables:** `wordSet` = remaining usable words (doubles as visited) · `queue` = words at current BFS level · `steps` = transformations so far · `word` = char array being mutated
+**Pseudocode:**
+```
+load wordList into set; if endWord absent return 0
+enqueue beginWord, remove it from set, steps=1
+while queue: for each word at this level, try every position×26 letters
+    if mutated word equals endWord return steps+1
+    if in set, remove it and enqueue
+increment steps each level; return 0 if exhausted
+```
 ```java
 class Solution {
     public int ladderLength(String beginWord, String endWord, List<String> wordList) {
@@ -18067,6 +24967,13 @@ class Solution {
 **Description:** Flip all `'O'` regions not connected to the border to `'X'`.  
 **Algorithm:** Multi-source BFS from all border `'O'` cells. Mark reachable as safe (`'S'`), then flip all remaining `'O'` to `'X'` and restore `'S'` to `'O'`.
 
+**Variables:** `queue` = border-connected O-cells · `'S'` = temporary safe marker · `dr`/`dc` = 4-direction offsets
+**Pseudocode:**
+```
+enqueue every border 'O', mark it 'S'
+BFS outward marking all connected 'O' as 'S'
+final sweep: 'S' becomes 'O' (safe), everything else 'O' becomes 'X'
+```
 ```java
 class Solution {
     public void solve(char[][] board) {
@@ -18104,6 +25011,13 @@ class Solution {
 **Description:** Return all cells from which water can flow to both the Pacific (top/left border) and Atlantic (bottom/right border).  
 **Algorithm:** Two separate multi-source BFS — one from each ocean's border cells, moving **uphill** (water flows down, so reachable cells going up = cells that drain down to ocean). Answer = intersection of both reachable sets.
 
+**Variables:** `pac[][]`/`atl[][]` = cells that can reach each ocean · `pacQ`/`atlQ` = BFS queues seeded from each ocean's border · `result` = cells reaching both
+**Pseudocode:**
+```
+seed pacQ+pac with top/left border, atlQ+atl with bottom/right border
+BFS each ocean uphill: move to neighbor only if its height >= current (water could flow down to here)
+collect every cell marked in both pac and atl
+```
 ```java
 class Solution {
     int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
@@ -18158,6 +25072,14 @@ class Solution {
 
 **Description:** Can you finish all courses given prerequisites? Detect if there is a directed cycle.
 
+**Variables:** `graph` = prereq → dependent edges · `inDegree[]` = unmet prerequisites per course · `queue` = courses ready to take · `processed` = courses taken
+**Pseudocode:**
+```
+build graph edge p[1]→p[0], counting inDegree[p[0]]
+enqueue every course with inDegree 0
+pop, increment processed, decrement neighbors' inDegree, enqueue new zeros
+return processed == numCourses (all taken → no cycle)
+```
 ```java
 class Solution {
     public boolean canFinish(int numCourses, int[][] prerequisites) {
@@ -18189,6 +25111,14 @@ class Solution {
 
 **Description:** Return a valid order to take all courses. Return `[]` if impossible.
 
+**Variables:** `graph` = prereq → dependent edges · `inDegree[]` = unmet prerequisites · `queue` = ready courses · `order[]` = taking sequence · `idx` = fill position
+**Pseudocode:**
+```
+build graph + inDegree (same as #207)
+enqueue all inDegree-0 courses
+pop into order[idx++], relax neighbors, enqueue new zeros
+return order if idx == numCourses else empty array (cycle)
+```
 ```java
 class Solution {
     public int[] findOrder(int numCourses, int[][] prerequisites) {
@@ -18223,6 +25153,14 @@ class Solution {
 **Algorithm:** Iteratively trim leaves (degree-1 nodes) until ≤ 2 nodes remain — same as topo sort but on undirected tree.  
 **Intuition:** the best root sits at the center of the longest path; peeling leaves layer by layer converges there.
 
+**Variables:** `graph` = adjacency sets · `queue` = current leaves (degree 1) · `remaining` = nodes not yet trimmed
+**Pseudocode:**
+```
+if n==1 return [0]
+build undirected adjacency sets; enqueue all degree-1 leaves
+while remaining > 2: subtract this leaf layer, for each leaf remove it from its neighbor; if neighbor now degree 1 enqueue it
+return nodes left in queue (1 or 2 centers)
+```
 ```java
 class Solution {
     public List<Integer> findMinHeightTrees(int n, int[][] edges) {
@@ -18266,6 +25204,13 @@ Difference:         just count                      also record node into order[
 
 **Template (always the same three methods):**
 
+**Variables:** `parent[]` = each node's parent (root represents its set) · `rank[]` = tree-height hint for balanced merging · `x`/`y` = nodes to relate · `px`/`py` = their roots
+**Pseudocode:**
+```
+init: every node is its own parent (n singleton sets)
+find(x): walk to root, compress path so each node points straight at root
+union(x,y): find both roots; if equal return false (already joined); else attach smaller-rank root under larger, bump rank on tie
+```
 ```java
 int[] parent, rank;
 
@@ -18295,6 +25240,13 @@ boolean union(int x, int y) {               // returns false if already connecte
 **Description:** Count the number of connected components (provinces) in an undirected graph given as an adjacency matrix.  
 **Intuition:** start with `n` separate sets; every successful merge drops the count by one.
 
+**Variables:** `parent[]`/`rank[]` = union-find forest · `components` = current province count
+**Pseudocode:**
+```
+init each city its own set, components = n
+for every connected pair (i,j): if union succeeds, components--
+return components
+```
 ```java
 class Solution {
     int[] parent, rank;
@@ -18329,6 +25281,13 @@ class Solution {
 **Key:** try to union each edge in order. The first edge where both nodes already share a root is the redundant one.  
 **Intuition:** if both endpoints are already in the same set, this edge closes a cycle — it's the redundant one.
 
+**Variables:** `parent[]`/`rank[]` = union-find forest · `edge` = current candidate edge
+**Pseudocode:**
+```
+init each node its own set (1..n)
+for each edge in order: try to union its endpoints
+    if union returns false (same root), this edge closes a cycle → return it
+```
 ```java
 class Solution {
     int[] parent, rank;
@@ -18361,6 +25320,14 @@ class Solution {
 **Key:** need at least `n-1` edges for `n` nodes. Count extra edges (cycles); count components. Answer = `components - 1` if enough extras exist.  
 **Intuition:** each redundant cable can be moved to bridge one gap, so `components - 1` moves suffice if you have enough spare cables.
 
+**Variables:** `parent[]`/`rank[]` = union-find forest · `components` = connected groups remaining
+**Pseudocode:**
+```
+if fewer than n-1 cables, return -1 (impossible)
+init each computer its own set, components = n
+for each cable: if union succeeds, components--
+return components - 1 (moves needed to bridge gaps)
+```
 ```java
 class Solution {
     int[] parent, rank;
@@ -18395,6 +25362,14 @@ class Solution {
 **Algorithm:** Dijkstra from source `k`. Answer = max of all shortest distances.  
 **Intuition:** every node is reached by its shortest delay; the network is "done" when the slowest of those arrives.
 
+**Variables:** `graph` = weighted adjacency (neighbor, time) · `dist[]` = shortest delay to each node · `pq` = min-heap on delay · `maxDist` = slowest arrival
+**Pseudocode:**
+```
+build weighted graph; dist[k]=0, push (k,0)
+pop closest node; skip if its entry is stale
+relax each neighbor, push improved distances
+after settling, take max over all dist; return -1 if any unreachable
+```
 ```java
 class Solution {
     public int networkDelayTime(int[][] times, int n, int k) {
@@ -18437,6 +25412,15 @@ class Solution {
 **Algorithm:** Bellman-Ford with exactly `k+1` relaxation rounds. Use a copy `temp[]` each round to prevent using the same edge twice in one round.  
 **Intuition:** each round lets paths grow by one more edge, so `k+1` rounds caps the path at `k` stops.
 
+**Variables:** `dist[]` = cheapest price found so far · `temp[]` = snapshot per round (prevents using same round's edges twice) · `round` = edges allowed
+**Pseudocode:**
+```
+dist[src]=0, rest MAX
+repeat k+1 rounds (k stops = k+1 edges):
+    copy dist into temp; for each flight u→v, relax temp[v] from dist[u]+w
+    swap dist = temp
+return dist[dst] or -1 if unreachable
+```
 ```java
 class Solution {
     public int findCheapestPrice(int n, int[][] flights, int src, int dst, int k) {
@@ -18466,6 +25450,14 @@ class Solution {
 **Algorithm:** Dijkstra with **max-heap** (maximize probability instead of minimize distance). Multiply probabilities instead of adding weights.  
 **Intuition:** probabilities in [0,1] only shrink when multiplied, so the "closest" (highest-probability) node settles first — Dijkstra still applies.
 
+**Variables:** `graph` = weighted adjacency (neighbor, prob) · `prob[]` = best probability to each node · `pq` = max-heap on probability
+**Pseudocode:**
+```
+build undirected weighted graph; prob[start]=1, push (start,1)
+pop highest-probability node; if it's end, return its probability
+skip stale entries; for each neighbor multiply probabilities, push if improved
+return 0 if end never reached
+```
 ```java
 class Solution {
     public double maxProbability(int n, int[][] edges, double[] succProb, int start, int end) {
@@ -18512,6 +25504,14 @@ class Solution {
 **Key:** run BFS from every unvisited node (graph may be disconnected).  
 **Intuition:** paint each neighbor the opposite color; a clash means an odd-length cycle, which can't be 2-colored.
 
+**Variables:** `color[]` = -1 unvisited / 0 / 1 · `queue` = BFS frontier · `start` = component seed
+**Pseudocode:**
+```
+color all -1
+for each uncolored start: color 0, BFS
+    for each neighbor: if uncolored paint opposite and enqueue; if same color as node return false
+return true
+```
 ```java
 class Solution {
     public boolean isBipartite(int[][] graph) {
@@ -18552,6 +25552,15 @@ class Solution {
 **Key:** `minEdge[i]` tracks the cheapest known edge from any tree node to node `i`. Update lazily via priority queue; skip nodes already in MST.  
 **Intuition:** grow one tree, always swallowing the cheapest edge that reaches a node not yet in it.
 
+**Variables:** `inMST[]` = node already in tree · `minEdge[]` = cheapest known edge to each node · `pq` = min-heap on edge cost · `total` = accumulated MST weight
+**Pseudocode:**
+```
+minEdge[0]=0, push (0,0)
+pop cheapest (node,cost); skip if already in MST
+add node to MST, total += cost
+for every node not in MST: compute Manhattan dist; if cheaper than minEdge, update and push
+return total
+```
 ```java
 class Solution {
     public int minCostConnectPoints(int[][] points) {
@@ -18620,6 +25629,14 @@ It replaces a `visited[]` array — simpler and correct because a better distanc
 
 **Variation:** Modified Dijkstra. Instead of summing edge weights, the "cost" of a path is the maximum edge cost. Priority queue ordered by effort; `effort[r][c]` = minimum over all paths of their max-abs-diff.
 
+**Variables:** `effort[][]` = min possible max-step to each cell · `pq` = min-heap on effort, holds {effort,row,col} · `dr`/`dc` = 4-direction offsets
+**Pseudocode:**
+```
+effort[0][0]=0, push (0,0,0)
+pop smallest-effort cell; if it's destination return its effort; skip stale
+for each neighbor: newEffort = max(current effort, |height diff|)   ← max, not sum
+    if newEffort improves neighbor, update and push
+```
 ```java
 class Solution {
     public int minimumEffortPath(int[][] heights) {
@@ -18660,6 +25677,15 @@ class Solution {
 
 **Variation:** Build a directed graph of character ordering. Compare each adjacent pair of words to find the first differing character → that gives an edge. Then topological sort. Return empty if there's a cycle or if shorter word is a prefix of longer word in wrong order.
 
+**Variables:** `graph` = char → chars that follow it · `inDegree` = unmet predecessors per char · `queue` = chars ready to place · `result` = ordering built
+**Pseudocode:**
+```
+register every char with empty edges and inDegree 0
+for each adjacent word pair: if prefix-violation (w1 longer but starts with w2) return ""
+    else find first differing char → edge w1c→w2c, bump inDegree once
+enqueue all inDegree-0 chars; topo-pop into result, relax neighbors
+return result if it covers all chars else "" (cycle)
+```
 ```java
 class Solution {
     public String alienOrder(String[] words) {
@@ -18708,6 +25734,14 @@ class Solution {
 
 **Variation:** A valid tree has exactly `n-1` edges. Use Union Find to detect cycles. If any edge connects two nodes already in the same component → cycle → not a tree.
 
+**Variables:** `parent[]`/`rank[]` = union-find forest · `edge` = current edge
+**Pseudocode:**
+```
+a tree needs exactly n-1 edges; if not, return false
+init each node its own set
+for each edge: union endpoints; if union fails (same root → cycle) return false
+return true (n-1 edges + no cycle = connected tree)
+```
 ```java
 class Solution {
     int[] parent, rank;
@@ -18743,6 +25777,13 @@ class Solution {
 
 **Algorithm:** Union Find. Start with `n` components. Each successful union (merging two previously separate components) decrements the count by 1.
 
+**Variables:** `parent[]`/`rank[]` = union-find forest · `components` = component count
+**Pseudocode:**
+```
+init each node its own set, components = n
+for each edge: if union merges two distinct sets, components--
+return components
+```
 ```java
 class Solution {
     int[] parent, rank;
@@ -18775,6 +25816,14 @@ class Solution {
 ## #286 Walls and Gates
 **Description:** Each cell is a gate (0), wall (-1), or empty (INF = 2147483647). Fill each empty room with distance to its nearest gate.
 **Variation:** multi-source BFS — seed the queue with every gate at distance 0, then expand outward simultaneously.
+
+**Variables:** `queue` = gate-rooted BFS frontier · `dr`/`dc` = 4-direction offsets · `rooms[][]` = distances written in place
+**Pseudocode:**
+```
+enqueue all gate cells (value 0)
+BFS: pop cell, for each empty (still MAX) neighbor set it to current+1 and enqueue
+distances fill outward, each room getting its nearest gate's distance
+```
 ```java
 class Solution {
     public void wallsAndGates(int[][] rooms) {
@@ -18804,6 +25853,15 @@ class Solution {
 ## #721 Accounts Merge
 **Description:** Each account has a name and a list of emails. Merge accounts that share any email. Return merged accounts with emails sorted.
 **Variation:** Union Find over emails. Assign each unique email an integer id, union all emails within the same account, then group emails by their root.
+
+**Variables:** `emailToId` = email → integer id · `emailToName` = email → owner · `parent[]` = union-find over email ids · `groups` = root id → its emails
+**Pseudocode:**
+```
+assign each unique email an id; record its owner name
+init union-find; within each account union first email's id with every other email's id
+group all emails by their root id
+per group: sort emails, prepend the owner name, add to result
+```
 ```java
 class Solution {
     private int[] parent;
@@ -18846,6 +25904,14 @@ class Solution {
 ## #827 Making A Large Island
 **Description:** In a binary grid you may change at most one 0 to 1. Return the size of the largest island possible.
 **Variation:** two passes. First DFS-color each island with a unique id (starting at 2) and record its size. Then for every 0, sum the sizes of distinct neighboring islands + 1.
+
+**Variables:** `id` = next island label (starts 2) · `size` = island id → cell count · `seen` = distinct island ids around a 0-cell · `total` = candidate island size if this 0 flips
+**Pseudocode:**
+```
+pass 1: DFS each '1' island, paint it a unique id, record its size
+pass 2: for each '0', look at 4 neighbors, sum sizes of distinct neighboring islands + 1
+track the running max over island sizes and all flip candidates
+```
 ```java
 class Solution {
     private int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
@@ -18886,6 +25952,15 @@ class Solution {
 ## #909 Snakes and Ladders
 **Description:** On an n×n board numbered in boustrophedon (zigzag) order, find the minimum dice moves (1-6) from square 1 to square n². Ladders/snakes teleport you.
 **Variation:** BFS over square numbers. Convert a square number to (row, col) accounting for the zigzag layout.
+
+**Variables:** `visited[]` = squares already reached · `queue` = BFS frontier of square numbers · `moves` = dice rolls so far · `rc` = zigzag coordinate of a square
+**Pseudocode:**
+```
+BFS from square 1; each level = one dice move
+for each square, try rolls 1..6 → candidate square
+    convert to (row,col) via zigzag; if snake/ladder, jump to its destination
+    if destination is n², return moves; enqueue if unvisited
+```
 ```java
 class Solution {
     public int snakesAndLadders(int[][] board) {
@@ -18925,6 +26000,15 @@ class Solution {
 ## #1091 Shortest Path in Binary Matrix
 **Description:** In an n×n binary grid, find the length of the shortest clear path (cells of 0) from top-left to bottom-right, moving in 8 directions.
 **Variation:** standard BFS but with 8-directional movement (includes diagonals).
+
+**Variables:** `dr`/`dc` = 8-direction offsets (incl. diagonals) · `queue` = BFS frontier · `path` = cells on current shortest path
+**Pseudocode:**
+```
+if start or end blocked, return -1
+BFS from (0,0), path length starts at 1, marking visited by setting grid to 1
+each level: pop cell, if it's bottom-right return path; push all clear 8-neighbors
+increment path per level; return -1 if unreachable
+```
 ```java
 class Solution {
     public int shortestPathBinaryMatrix(int[][] grid) {
@@ -18965,6 +26049,13 @@ class Solution {
 **Intuition:** BFS level-by-level builds a parent (predecessor) map of which words lead to which; once `endWord` is reached, DFS backtracks through parents to reconstruct every shortest path.  
 **Algorithm:** BFS recording all predecessors per word; stop expanding once `endWord` found at a level; then DFS from `endWord` back to `beginWord`.
 
+**Variables:** `wordSet` = usable words · `parents` = word → predecessor words on shortest paths · `level`/`next` = current and next BFS frontier sets · `found` = endWord reached · `path` = path being reconstructed
+**Pseudocode:**
+```
+BFS level by level: remove this level's words from set, mutate each word position×26
+    for each in-set candidate, record it as child with parent edge; if endWord, mark found
+once found, DFS backtrack from endWord through parents to beginWord, collecting every path
+```
 ```java
 class Solution {
     public List<List<String>> findLadders(String beginWord, String endWord, List<String> wordList) {
@@ -19028,6 +26119,15 @@ class Solution {
 **Intuition:** Use a map from original node to its clone to avoid re-cloning and to wire neighbors correctly; BFS the graph, creating clones on first sight.  
 **Algorithm:** BFS with a `Map<Node, Node>` of original→clone; for each node, attach cloned neighbors.
 
+**Variables:** `clones` = original node → its clone (doubles as visited) · `queue` = BFS frontier of originals
+**Pseudocode:**
+```
+if null return null; create clone of start, map it, enqueue start
+BFS: pop original; for each neighbor
+    if not yet cloned, create its clone, map it, enqueue
+    wire current's clone to neighbor's clone
+return clone of start
+```
 ```java
 /*
 // Definition for a Node.
@@ -19070,6 +26170,13 @@ class Solution {
 **Intuition:** A single linear scan narrows to one candidate (if `candidate` knows `i`, the candidate can't be the celebrity, so `i` becomes the new candidate); a second pass verifies.  
 **Algorithm:** Two passes — find candidate, then validate both directions.
 
+**Variables:** `candidate` = current celebrity guess · `i` = person being compared
+**Pseudocode:**
+```
+pass 1: candidate=0; for each i, if candidate knows i then candidate=i (old one disqualified)
+pass 2: verify candidate — must know nobody and be known by everyone; else return -1
+return candidate
+```
 ```java
 /* The knows API is defined in the parent class Relation.
       boolean knows(int a, int b); */
@@ -19099,6 +26206,13 @@ public class Solution extends Relation {
 **Intuition:** Manhattan distance separates into independent x and y components; the optimal coordinate on each axis is the median of the occupied coordinates.  
 **Algorithm:** Collect row and column indices (rows in sorted order, columns sorted), take the median on each axis, sum absolute distances.
 
+**Variables:** `rowList`/`colList` = occupied row/col coordinates · `medianRow`/`medianCol` = median on each axis · `total` = summed Manhattan distance
+**Pseudocode:**
+```
+collect home rows (outer loop → already sorted) and home cols
+sort colList; pick median of each list (minimizes sum of |coord - p|)
+sum |row - medianRow| over rows plus |col - medianCol| over cols
+```
 ```java
 class Solution {
     public int minTotalDistance(int[][] grid) {
@@ -19131,6 +26245,15 @@ class Solution {
 **Description:** Land cells are added one at a time to a water grid; after each addition return the current number of islands.  
 **Variation:** Online Union-Find — when a cell becomes land, union it with any already-land 4-neighbors; track component count.
 
+**Variables:** `parent[]` = union-find (-1 = still water) · `rank[]` = balancing · `count` = current island count · `id`/`nid` = flattened cell indices · `result` = count after each addition
+**Pseudocode:**
+```
+parent all -1 (water); count=0
+for each added position: if already land, record count and continue
+    make it its own set, count++
+    for each land 4-neighbor: if union merges, count--
+    append count to result
+```
 ```java
 class Solution {
     int[] parent, rank;
@@ -19180,6 +26303,14 @@ class Solution {
 **Intuition:** BFS from each building, accumulating distances into every reachable empty cell and counting how many buildings reach it; the answer is the minimum total among cells reachable by all buildings.  
 **Algorithm:** Multi-pass BFS — one BFS per building; track `total[][]` distance sum and `reach[][]` count.
 
+**Variables:** `total[][]` = summed distance from all buildings to each empty cell · `reach[][]` = how many buildings reach a cell · `buildings` = building count · `queue`/`visited` = per-building BFS
+**Pseudocode:**
+```
+for each building: BFS level by level over empty cells
+    add the level distance into total[cell], increment reach[cell]
+after all buildings: among empty cells reachable by every building, return the smallest total
+return -1 if none reachable by all
+```
 ```java
 class Solution {
     public int shortestDistance(int[][] grid) {
@@ -19237,6 +26368,14 @@ class Solution {
 **Intuition:** Treat variables as nodes and ratios as weighted directed edges; the answer to a query is the product of edge weights along any path from numerator to denominator.  
 **Algorithm:** Build weighted graph, then DFS each query multiplying weights along the path.
 
+**Variables:** `graph` = variable → (neighbor → ratio) · `visited` = DFS guard · `product` = accumulated ratio along path · `result[]` = answers per query
+**Pseudocode:**
+```
+build graph: a→b = value, b→a = 1/value
+for each query (src,dst): if either var unknown, answer -1
+    else DFS from src multiplying edge ratios; on reaching dst return product
+DFS returns -1 if no path
+```
 ```java
 class Solution {
     public double[] calcEquation(List<List<String>> equations, double[] values, List<List<String>> queries) {
@@ -19279,6 +26418,14 @@ class Solution {
 **Description:** Given a 2D height map, compute how much water it can trap after raining.  
 **Variation:** Dijkstra-style BFS from the border inward using a min-heap of boundary heights; water level at a cell is the highest of the minimum boundary it must pass — pop the lowest wall first.
 
+**Variables:** `pq` = min-heap of boundary cells {r,c,height} · `visited[][]` = settled cells · `level` = current lowest wall height · `water` = trapped total
+**Pseudocode:**
+```
+push all border cells (their own heights), mark visited
+pop the lowest wall; its height is current water level
+for each unvisited neighbor: if lower than level, trap (level - height) water
+    push neighbor with max(level, its height) as its effective wall, mark visited
+```
 ```java
 class Solution {
     public int trapRainWater(int[][] heightMap) {
@@ -19321,6 +26468,14 @@ class Solution {
 **Intuition:** Each land cell contributes 4 sides, minus 2 for every shared edge with an adjacent land cell (counted once per pair).  
 **Algorithm:** Count land cells ×4, subtract 2 for each adjacent land pair.
 
+**Variables:** `perimeter` = running perimeter total
+**Pseudocode:**
+```
+for each land cell: add 4
+    if its top neighbor is land, subtract 2 (shared edge, counts once per pair)
+    if its left neighbor is land, subtract 2
+return perimeter
+```
 ```java
 class Solution {
     public int islandPerimeter(int[][] grid) {
@@ -19348,6 +26503,14 @@ class Solution {
 **Description:** Reveal a cell on a Minesweeper board. `'M'` mine, `'E'` unrevealed empty, `'B'` revealed blank, digit = adjacent mine count.  
 **Variation:** BFS/DFS flood fill with 8 directions; if the clicked cell is a mine, mark `'X'`; otherwise count adjacent mines, and only recurse when count is 0.
 
+**Variables:** `cr`/`cc` = clicked cell · `dr`/`dc` = 8-direction offsets · `queue`/`visited` = flood fill · `mines` = adjacent mine count
+**Pseudocode:**
+```
+if clicked cell is a mine, mark 'X' and stop
+BFS from click: for each cell count adjacent mines
+    if mines > 0, label it with the digit (stop spreading)
+    else mark 'B' and enqueue all unrevealed empty 8-neighbors
+```
 ```java
 class Solution {
     public char[][] updateBoard(char[][] board, int[] click) {
@@ -19397,6 +26560,14 @@ class Solution {
 **Description:** Count islands that are distinct by shape (translations are the same, rotations are not).  
 **Variation:** DFS recording the path signature (the direction taken at each step plus a backtrack marker); two islands with identical signatures have the same shape.
 
+**Variables:** `shapes` = set of distinct path signatures · `builder` = signature being built · `dir` = direction char entering a cell
+**Pseudocode:**
+```
+for each unvisited land cell: DFS the island, sinking cells and appending the move direction
+    append a backtrack marker 'b' after exploring (disambiguates otherwise-equal shapes)
+add the signature string to a set
+return number of distinct signatures
+```
 ```java
 class Solution {
     public int numDistinctIslands(int[][] grid) {
@@ -19434,6 +26605,13 @@ class Solution {
 **Description:** Starting at `(sr, sc)`, change all connected same-color pixels to `color`.  
 **Algorithm:** BFS/DFS flood fill from the start cell over 4 directions; guard against re-filling when the new color equals the original.
 
+**Variables:** `original` = start cell's old color · `queue` = BFS frontier · `dr`/`dc` = 4-direction offsets
+**Pseudocode:**
+```
+record start color; if it already equals target, return unchanged (avoid infinite loop)
+recolor start, enqueue it
+BFS: pop cell, for each neighbor matching original color, recolor and enqueue
+```
 ```java
 class Solution {
     public int[][] floodFill(int[][] image, int sr, int sc, int color) {
@@ -19468,6 +26646,15 @@ class Solution {
 **Description:** A 4-wheel lock starts at `"0000"`; each move turns one wheel ±1. Find minimum moves to reach `target`, avoiding `deadends`.  
 **Variation:** BFS over the 4-digit state space; each state has 8 neighbors (each wheel up or down). Treat deadends as visited.
 
+**Variables:** `dead` = deadend states (blocked) · `visited` = reached states · `queue` = BFS frontier of lock states · `turns` = moves so far
+**Pseudocode:**
+```
+if "0000" is a deadend, return -1; if target is "0000", return 0
+BFS from "0000": each level = one turn
+for each state, for each of 4 wheels turn ±1 → 8 neighbors
+    if neighbor == target return turns; else if not dead and unvisited, enqueue
+return -1 if exhausted
+```
 ```java
 class Solution {
     public int openLock(String[] deadends, String target) {
@@ -19508,6 +26695,14 @@ class Solution {
 **Description:** At time `t` you can stand on any cell with elevation ≤ `t`. Find the least time to swim from `(0,0)` to `(n-1,n-1)`.  
 **Variation:** Modified Dijkstra — minimize the maximum elevation along the path (not the sum). Min-heap ordered by current max elevation.
 
+**Variables:** `pq` = min-heap on max-elevation-so-far {maxElev,r,c} · `visited[][]` = settled cells · `time` = current path's max elevation
+**Pseudocode:**
+```
+push (grid[0][0],0,0), mark visited
+pop cell with smallest max-elevation; if it's destination return that elevation
+for each unvisited neighbor: push max(current, neighbor height)   ← max, not sum
+mark visited on push (Dijkstra settle)
+```
 ```java
 class Solution {
     public int swimInWater(int[][] grid) {
@@ -19542,6 +26737,14 @@ class Solution {
 **Intuition:** Since it is a DAG with no cycles, plain DFS backtracking enumerates every path; no visited set is needed.  
 **Algorithm:** DFS from `0`, appending nodes to a path, recording the path when reaching `n-1`.
 
+**Variables:** `result` = all source-to-target paths · `path` = current path being extended
+**Pseudocode:**
+```
+start DFS at node 0 with path=[0]
+if node == n-1, snapshot path into result
+else for each neighbor: append, recurse, backtrack (remove last)
+no visited set needed — it's a DAG
+```
 ```java
 class Solution {
     public List<List<Integer>> allPathsSourceTarget(int[][] graph) {
@@ -19573,6 +26776,14 @@ class Solution {
 **Description:** A node is safe if every path from it eventually reaches a terminal node (no outgoing edges). Return all safe nodes sorted.  
 **Variation:** Topological sort on the reversed graph (Kahn's) — start from terminal nodes (out-degree 0); a node becomes safe once all its outgoing edges lead to safe nodes.
 
+**Variables:** `reverse` = reversed adjacency · `outDegree[]` = remaining outgoing edges per node · `queue` = newly-safe nodes · `safe[]` = node safety flags
+**Pseudocode:**
+```
+build reversed graph; outDegree[i] = original out-degree
+enqueue all terminal nodes (outDegree 0)
+pop node, mark safe; for each predecessor, decrement its outDegree; enqueue when it hits 0
+return sorted list of safe nodes
+```
 ```java
 class Solution {
     public List<Integer> eventualSafeNodes(int[][] graph) {
@@ -19609,6 +26820,15 @@ class Solution {
 **Description:** `routes[i]` is the stops served by bus `i`. Find the minimum number of buses to travel from `source` to `target`.  
 **Variation:** BFS where the "nodes" are buses (routes); build stop→routes index, then BFS route-to-route through shared stops, counting buses taken.
 
+**Variables:** `stopToRoutes` = stop → routes serving it · `queue` = stops to explore · `visitedStops`/`visitedRoutes[]` = dedup · `buses` = routes boarded so far
+**Pseudocode:**
+```
+if source==target return 0; index each stop to the routes serving it
+BFS from source stop; each level = boarding one more bus
+for each stop, for each unvisited route serving it: mark route used
+    scan that route's stops; if target found return buses; enqueue new stops
+return -1 if unreachable
+```
 ```java
 class Solution {
     public int numBusesToDestination(int[][] routes, int source, int target) {
@@ -19653,6 +26873,14 @@ class Solution {
 **Description:** Find the length of the shortest path in an undirected graph that visits every node (may revisit nodes/edges).  
 **Variation:** BFS over states `(node, visitedMask)` where `mask` is a bitmask of visited nodes; the goal is any state with all bits set. Start BFS from every node simultaneously.
 
+**Variables:** `allVisited` = full bitmask (1<<n)-1 · `queue` = states {node, mask} · `visited[node][mask]` = state seen · `steps` = path length
+**Pseudocode:**
+```
+seed queue with every node, its mask = bit for that node
+BFS by level: for each state, if mask == all bits set return steps
+    for each neighbor: nextMask = mask | bit(neighbor); enqueue if state unseen
+increment steps each level
+```
 ```java
 class Solution {
     public int shortestPathLength(int[][] graph) {
@@ -19694,6 +26922,14 @@ class Solution {
 **Description:** `richer[i] = [a, b]` means `a` is richer than `b`; `quiet[i]` is the quietness of person `i`. For each person find the quietest person among everyone at least as rich (themselves included).  
 **Variation:** Topological sort (Kahn's) on the richer→poorer graph; propagate the quietest-known answer from richer people down to poorer ones in topo order.
 
+**Variables:** `graph` = richer → poorer edges · `inDegree[]` = richer-people count per node · `result[]` = quietest known person at least as rich · `queue` = ready nodes
+**Pseudocode:**
+```
+build richer→poorer edges; result[i]=i initially
+enqueue richest people (inDegree 0)
+topo-pop node; for each poorer neighbor, if node's answer is quieter, propagate it down
+decrement neighbor inDegree, enqueue when 0
+```
 ```java
 class Solution {
     public int[] loudAndRich(int[][] richer, int[] quiet) {
@@ -19731,6 +26967,14 @@ class Solution {
 **Description:** Given `dislikes` pairs, split `n` people into two groups so disliking people are never in the same group.  
 **Algorithm:** Bipartite 2-coloring via BFS over the dislike graph; a same-color conflict means impossible.
 
+**Variables:** `graph` = dislike adjacency · `color[]` = -1/0/1 group · `queue` = BFS frontier · `start` = component seed (1..n)
+**Pseudocode:**
+```
+build undirected dislike graph
+for each uncolored person: color 0, BFS
+    paint each neighbor the opposite color; if a neighbor already shares this color, return false
+return true if no conflicts
+```
 ```java
 class Solution {
     public boolean possibleBipartition(int n, int[][] dislikes) {
@@ -19772,6 +27016,16 @@ class Solution {
 **Description:** A mouse (start node 1) and cat (start node 2) move on a graph; mouse wins by reaching node 0, cat wins by catching the mouse, else draw. Return 0/1/2 with optimal play.  
 **Variation:** Game-theory BFS over states `(mouse, cat, turn)`; start from known terminal states and propagate results backward (retrograde analysis) by counting undecided moves.
 
+**Variables:** `result[m][c][turn]` = outcome (DRAW/MOUSE/CAT) of a state · `degree[m][c][turn]` = undecided moves left from a state · `queue` = decided states to propagate · `winner` = a state's resolved winner
+**Pseudocode:**
+```
+precompute each state's move count (cat cannot enter hole 0)
+seed terminals: mouse at hole 0 → MOUSE wins; cat==mouse → CAT wins
+BFS backward: for each parent of a decided state
+    if mover can force its own win, mark and enqueue it
+    else decrement parent's degree; when 0 (all moves lose), it takes opponent's winner
+return result[1][2][0] (mouse start, cat start, mouse to move)
+```
 ```java
 class Solution {
     public int catMouseGame(int[][] graph) {
@@ -19840,6 +27094,14 @@ class Solution {
 **Description:** A grid has exactly two islands of `1`s. Find the minimum number of `0`s to flip to connect them.  
 **Variation:** DFS to mark the first island (seeding a BFS queue with its cells), then multi-source BFS expanding outward until reaching the second island; BFS levels = bridge length.
 
+**Variables:** `queue` = first island's cells, then BFS frontier · `found` = first island located · `steps` = water cells flipped (bridge length) · `dr`/`dc` = 4-direction offsets
+**Pseudocode:**
+```
+find first '1', DFS-mark its whole island as 2, seeding queue with those cells
+multi-source BFS outward, each level = one bridge step
+    if a neighbor is '1' (second island) return steps
+    if water '0', flip to 2 and enqueue
+```
 ```java
 class Solution {
     public int shortestBridge(int[][] grid) {
@@ -19893,6 +27155,14 @@ class Solution {
 **Description:** Color the border cells of the connected component containing `(row, col)` with `color`. A border cell touches the grid edge or a cell of a different original color.  
 **Variation:** BFS over same-color connected cells; mark a cell as a border when it has fewer than 4 same-component neighbors, recolor borders after traversal.
 
+**Variables:** `original` = component's source color · `visited[][]` = BFS seen · `borders` = collected border cells · `sameNeighbors` = matching 4-neighbor count
+**Pseudocode:**
+```
+BFS the connected same-color component from (row,col)
+for each cell, count same-color 4-neighbors; enqueue unvisited matching ones
+if fewer than 4 same-color neighbors, it touches edge/different color → it's a border cell
+after BFS, recolor every collected border cell
+```
 ```java
 class Solution {
     public int[][] colorBorder(int[][] grid, int row, int col, int color) {
@@ -19933,6 +27203,14 @@ class Solution {
 **Description:** Find a path from top-left to bottom-right maximizing the minimum cell value along the path (4-directional).  
 **Variation:** Modified Dijkstra with a max-heap — the path "score" is the minimum cell value seen; greedily expand the highest-scoring frontier first.
 
+**Variables:** `pq` = max-heap on min-value-so-far {score,r,c} · `visited[][]` = settled cells · `score` = minimum cell value along the path
+**Pseudocode:**
+```
+push (grid[0][0],0,0), mark visited
+pop cell with largest min-so-far; if it's destination return that score
+for each unvisited neighbor: push min(score, neighbor value)   ← min, not sum
+mark visited on push
+```
 ```java
 class Solution {
     public int maximumMinimumPath(int[][] grid) {
@@ -19966,6 +27244,14 @@ class Solution {
 **Description:** Courses 1..n with prerequisite `relations`; in each semester take all courses whose prerequisites are done. Return minimum semesters, or -1 if impossible.  
 **Variation:** Topological sort (Kahn's) processed level-by-level — each BFS level is one semester; if not all courses are processed, a cycle exists.
 
+**Variables:** `graph` = prereq → dependent · `inDegree[]` = unmet prerequisites · `queue` = courses ready this semester · `semesters`/`studied` = counters
+**Pseudocode:**
+```
+build graph + inDegree; enqueue all inDegree-0 courses
+while queue: one level = one semester, semesters++
+    pop each course (studied++), relax neighbors, enqueue new zeros
+return semesters if studied == n else -1 (cycle)
+```
 ```java
 class Solution {
     public int minimumSemesters(int n, int[][] relations) {
@@ -20003,6 +27289,14 @@ class Solution {
 **Description:** In a grid of `0` (water) and `1` (land), find the water cell whose distance to the nearest land is maximized; return that distance, or -1.  
 **Variation:** Multi-source BFS seeded with all land cells; the last BFS level expanded gives the maximum distance.
 
+**Variables:** `queue` = land-rooted BFS frontier · `distance` = current BFS level · `dr`/`dc` = 4-direction offsets
+**Pseudocode:**
+```
+enqueue all land cells; if all-land or all-water, return -1
+BFS by level, distance++ each level
+    expand into water cells, marking them as 1 (visited) and enqueueing
+the last level reached gives the farthest water cell's distance
+```
 ```java
 class Solution {
     public int maxDistance(int[][] grid) {
@@ -20042,6 +27336,14 @@ class Solution {
 **Description:** On an infinite chessboard, find the minimum knight moves from `(0,0)` to `(x, y)`.  
 **Variation:** BFS over knight moves (8 jump offsets); exploit symmetry by working in the first quadrant to bound the visited set.
 
+**Variables:** `dr`/`dc` = 8 knight-jump offsets · `queue` = BFS frontier · `visited` = "r,c" strings seen · `moves` = jumps so far
+**Pseudocode:**
+```
+fold target to first quadrant via abs(x), abs(y) (symmetry)
+BFS from (0,0); each level = one knight move
+    if current cell is target return moves
+    push each unvisited jump that stays near the first quadrant (>= -2)
+```
 ```java
 class Solution {
     public int minKnightMoves(int x, int y) {
@@ -20080,6 +27382,14 @@ class Solution {
 **Description:** Given index `pairs` that may be swapped any number of times, return the lexicographically smallest string achievable.  
 **Variation:** Union-Find groups swappable indices into connected components; within each component, sort the characters and place them back in ascending index order.
 
+**Variables:** `parent[]`/`rank[]` = union-find over indices · `groups` = root → indices in that component · `result` = output char array
+**Pseudocode:**
+```
+union every swappable index pair
+group indices by their root
+per group: collect its chars, sort them, write back in ascending index order
+return rebuilt string
+```
 ```java
 class Solution {
     int[] parent, rank;
@@ -20122,6 +27432,13 @@ class Solution {
 **Description:** Given the edges of an undirected tree, return its diameter (the number of edges on the longest path between any two nodes).  
 **Variation:** Two BFS passes — BFS from any node finds the farthest node `u`; a second BFS from `u` gives the diameter as the maximum distance.
 
+**Variables:** `graph` = tree adjacency · `first`/`second` = {farthest node, distance} from each BFS · `farthest`/`distance` = tracked during a BFS
+**Pseudocode:**
+```
+build adjacency (n = edges+1)
+BFS from node 0 → farthest node u
+BFS from u → its distance is the diameter
+```
 ```java
 class Solution {
     public int treeDiameter(int[][] edges) {
@@ -20169,6 +27486,15 @@ class Solution {
 **Description:** Find the shortest path from `(0,0)` to `(m-1,n-1)` in a grid where you may eliminate at most `k` obstacles (`1`s).  
 **Variation:** BFS over states `(row, col, remainingK)`; the visited set tracks the best remaining eliminations per cell so a cell can be revisited with more budget.
 
+**Variables:** `bestK[][]` = best remaining eliminations seen at each cell · `queue` = states {r,c,remainingK} · `steps` = path length · `nextRem` = budget after stepping
+**Pseudocode:**
+```
+if k can cover a straight Manhattan path, return that length
+BFS from (0,0,k), bestK[0][0]=k; each level = one step
+    if at destination return steps
+    for each neighbor: nextRem = rem - cell(0/1)
+    only enqueue if nextRem beats bestK there (revisit with more budget)
+```
 ```java
 class Solution {
     public int shortestPath(int[][] grid, int k) {
@@ -20212,6 +27538,14 @@ class Solution {
 **Description:** Return true if the grid contains a cycle of length ≥ 4 made of the same character.  
 **Variation:** Union-Find over grid cells — for each cell union it with its up and left same-character neighbors; if a union finds them already connected, a cycle exists.
 
+**Variables:** `parent[]`/`rank[]` = union-find over flattened cells · `id` = current cell index
+**Pseudocode:**
+```
+init each cell its own set
+scan cells: union with up neighbor and left neighbor when same character
+    if either union finds them already connected → a cycle exists, return true
+return false if no cycle
+```
 ```java
 class Solution {
     int[] parent, rank;
@@ -20253,6 +27587,14 @@ class Solution {
 **Description:** Given all adjacent pairs of an array (in any order), reconstruct the original array.  
 **Variation:** Build an adjacency graph; the two endpoints have a single neighbor. Start from an endpoint and walk the path, avoiding the previous node.
 
+**Variables:** `graph` = value → its adjacent values · `start` = an endpoint (single neighbor) · `result[]` = reconstructed array
+**Pseudocode:**
+```
+build adjacency from each pair (both directions)
+find an endpoint: a value with exactly one neighbor → result[0]
+result[1] = its only neighbor
+walk forward: each next value is the neighbor that isn't the previous one
+```
 ```java
 class Solution {
     public int[] restoreArray(int[][] adjacentPairs) {
@@ -20345,6 +27687,35 @@ TEMPLATE 2 — Sort by START time, sweep forward, merge when overlapping
              compare with the last merged result
 ```
 
+**Variables:** `intervals` = list of `[start, end]` · `lastEnd` = end of last kept interval · `result` = merged output · `pq` = min-heap of active end times
+**Pseudocode:**
+```
+TEMPLATE 1 (sort by end, count non-overlapping):
+  sort intervals by END time
+  lastEnd = -infinity
+  for each interval:
+    if interval.start >= lastEnd:   # no overlap
+      lastEnd = interval.end
+      keep it (count++ or add)
+    else:
+      skip it (overlap)
+
+TEMPLATE 2 (sort by start, merge):
+  sort intervals by START time
+  for each interval:
+    if result empty OR last kept end < interval.start:
+      add interval as new
+    else:
+      extend last kept end = max(last end, interval.end)
+
+TEMPLATE 3 (sort by start + min-heap of ends):
+  sort intervals by START time
+  for each interval:
+    if heap nonempty AND earliest end <= interval.start:
+      pop heap            # reuse freed resource
+    push interval.end     # occupy a resource
+  heap size = resources needed
+```
 ```java
 // sort to expose a local greedy choice, then sweep once making the locally-best pick.  — WHEN: intervals + "max non-overlapping / min arrows / merge / min rooms", or jump/partition sweeps.
 // TEMPLATE 1: Sort by end, compare start
@@ -20393,6 +27764,18 @@ for (int[] interval : intervals) {
 **Intuition:** Always keep the interval that finishes earliest — it leaves the most room for the rest, so greedily picking by end maximizes how many you keep.  
 **Key:** equivalent to keeping the maximum number of non-overlapping intervals. Sort by end, greedily keep each interval whose start ≥ last kept end.
 
+**Variables:** `intervals` = `[start, end]` pairs · `kept` = count of non-overlapping intervals kept · `lastEnd` = end of last kept interval
+**Pseudocode:**
+```
+sort intervals by END
+kept = 0, lastEnd = -infinity
+for each interval:
+  if interval.start >= lastEnd:   # no overlap with last kept
+    lastEnd = interval.end
+    kept++
+  # else overlap -> skip (it is removed)
+return total intervals - kept
+```
 ```java
 class Solution {
     public int eraseOverlapIntervals(int[][] intervals) {
@@ -20419,6 +27802,18 @@ class Solution {
 **Intuition:** Shoot the arrow at the earliest end point to pop every balloon overlapping it; only start a new arrow when a balloon begins past the current arrow.  
 **Key:** same structure as #435 — sort by end, count groups. One arrow suffices per group. New group starts when `start > current arrow position (= last group's end)`.
 
+**Variables:** `points` = balloon `[start, end]` ranges · `arrows` = arrows used so far · `arrowEnd` = position (end) of current arrow
+**Pseudocode:**
+```
+sort points by END
+arrows = 1, arrowEnd = first balloon's end
+for each point:
+  if point.start > arrowEnd:   # this balloon not popped by current arrow
+    arrows++
+    arrowEnd = point.end       # new arrow at this balloon's end
+  # else same arrow covers it
+return arrows
+```
 ```java
 class Solution {
     public int findMinArrowShots(int[][] points) {
@@ -20445,6 +27840,17 @@ class Solution {
 **Intuition:** Picking the pair that ends earliest each time leaves the most slack for later links, maximizing the chain.  
 **Key:** identical to #435 / #452 — sort by end, greedily pick non-overlapping pairs.
 
+**Variables:** `pairs` = `[a, b]` pairs · `count` = chain length · `lastEnd` = end (`b`) of last chosen pair
+**Pseudocode:**
+```
+sort pairs by END (b)
+count = 0, lastEnd = -infinity
+for each pair:
+  if pair.start > lastEnd:   # strict: chain needs b < c
+    count++
+    lastEnd = pair.end
+return count
+```
 ```java
 class Solution {
     public int findLongestChain(int[][] pairs) {
@@ -20495,6 +27901,20 @@ Why 435 uses >= but 452/646 use >:
 ### Method A — Sort by START, traverse forward
 Compare current `start` to last kept `end`; on overlap, extend the **end**.
 
+**Variables:** `intervals` = `[start, end]` pairs · `result` = merged intervals · `last` = most recently kept interval
+**Pseudocode:**
+```
+sort intervals by START
+for each interval (forward):
+  if result empty:
+    add interval; continue
+  last = last interval in result
+  if last.end < interval.start:   # no overlap
+    add interval
+  else:
+    last.end = max(last.end, interval.end)   # overlap -> extend END
+return result
+```
 ```java
 class Solution {
     public int[][] merge(int[][] intervals) {
@@ -20520,6 +27940,21 @@ class Solution {
 ### Method B — Sort by END, traverse backward
 Mirror image: compare current `end` to last kept `start`; on overlap, extend the **start**.
 
+**Variables:** `intervals` = `[start, end]` pairs · `result` = merged intervals · `last` = most recently kept interval · `current` = interval at index `i`
+**Pseudocode:**
+```
+sort intervals by END
+for i from n-1 down to 0 (backward):
+  if result empty:
+    add intervals[i]; continue
+  last = last interval in result
+  current = intervals[i]
+  if last.start > current.end:   # no overlap
+    add current
+  else:
+    last.start = min(last.start, current.start)   # overlap -> extend START
+return result
+```
 ```java
 class Solution {
     public int[][] merge(int[][] intervals) {
@@ -20552,6 +27987,20 @@ class Solution {
 **Intuition:** Walk the sorted list in three phases — copy everything that ends before the new interval, absorb everything that overlaps it, then copy the rest.  
 **Key:** three phases: (1) add all intervals that end before new starts, (2) merge all overlapping, (3) add remaining.
 
+**Variables:** `intervals` = sorted disjoint `[start, end]` · `newInterval` = interval to insert (grows as it absorbs overlaps) · `result` = output list
+**Pseudocode:**
+```
+for each interval:
+  if interval.end < newInterval.start:   # entirely before new
+    add interval as is
+  else if interval.start > newInterval.end:   # entirely after new
+    flush newInterval; then newInterval = interval
+  else:   # overlap -> absorb into newInterval
+    newInterval.start = min(both starts)
+    newInterval.end   = max(both ends)
+add newInterval (the last pending one)
+return result
+```
 ```java
 class Solution {
     public int[][] insert(int[][] intervals, int[] newInterval) {
@@ -20584,6 +28033,17 @@ class Solution {
 **Intuition:** USE WHEN counting simultaneous/overlapping resources — "minimum rooms", "max concurrent". The heap size at any moment is exactly how many meetings are running at once.  
 **Template:** sort by start. Min-heap tracks end times of active meetings. When a new meeting starts after the earliest-ending meeting finishes, reuse that room.
 
+**Variables:** `intervals` = meeting `[start, end]` · `pq` = min-heap of end times of meetings currently using a room
+**Pseudocode:**
+```
+sort intervals by START
+pq = empty min-heap of end times
+for each interval:
+  if pq nonempty AND earliest end <= interval.start:
+    pop pq                # earliest room freed up -> reuse it
+  push interval.end       # occupy a room until this meeting ends
+return pq size            # rooms in use simultaneously
+```
 ```java
 class Solution {
     public int minMeetingRooms(int[][] intervals) {
@@ -20620,6 +28080,16 @@ Examples:           #435, #452, #646        #253 Meeting Rooms
 **Intuition:** Sweep left to right tracking the farthest index reachable; if you ever stand past that frontier you're stuck.  
 **Key:** track the farthest index reachable so far. If current index exceeds it, you're stuck.
 
+**Variables:** `nums` = max jump length from each index · `maxReach` = farthest index reachable so far
+**Pseudocode:**
+```
+maxReach = 0
+for i from 0 to n-1:
+  if i > maxReach:   # standing past the frontier -> stuck
+    return false
+  maxReach = max(maxReach, i + nums[i])
+return true
+```
 ```java
 class Solution {
     public boolean canJump(int[] nums) {
@@ -20642,6 +28112,17 @@ class Solution {
 **Intuition:** Treat each jump as a BFS layer — extend through the whole current reach before incrementing the jump count.  
 **Key:** BFS layer-by-layer. `currentEnd` = farthest we can reach with current jumps. `farthest` = farthest reachable with one more jump from anywhere in current layer. When we reach `currentEnd`, we must jump.
 
+**Variables:** `nums` = max jump length per index · `jumps` = jump count · `currentEnd` = end of current BFS layer · `farthest` = farthest reachable from this layer
+**Pseudocode:**
+```
+jumps = 0, currentEnd = 0, farthest = 0
+for i from 0 to n-2:
+  farthest = max(farthest, i + nums[i])
+  if i == currentEnd:        # reached end of current layer
+    jumps++
+    currentEnd = farthest    # extend to next layer
+return jumps
+```
 ```java
 class Solution {
     public int jump(int[] nums) {
@@ -20667,6 +28148,18 @@ class Solution {
 **Intuition:** A partition can't close until you pass the last occurrence of every letter seen inside it, so extend `end` to that frontier and cut when you reach it.  
 **Key:** precompute the last occurrence of each character. Extend the current partition's end to `max(end, last[c])` for each character. Close partition when `i == end`.
 
+**Variables:** `s` = input string · `last[c]` = last index where char `c` appears · `start` = current partition start · `end` = farthest last-occurrence seen in current partition
+**Pseudocode:**
+```
+record last[c] = last index of each char in s
+start = 0, end = 0
+for i from 0 to n-1:
+  end = max(end, last[s[i]])   # partition must include this char's last occurrence
+  if i == end:                 # reached partition boundary
+    add (end - start + 1) to result
+    start = i + 1
+return result
+```
 ```java
 class Solution {
     public List<Integer> partitionLabels(String s) {
@@ -20695,6 +28188,15 @@ class Solution {
 **Intuition:** Place tallest first so that inserting a person at index `k` is always correct — only taller/equal people are already placed, and shorter insertions later don't disturb their counts.  
 **Key:** sort descending by height (ties: ascending by k). Insert each person at index `k`. Since taller people are placed first, inserting at position `k` is always valid — there are already exactly k people ≥ this height already placed.
 
+**Variables:** `people` = `[height, k]` pairs · `result` = queue being built by insertion at index `k`
+**Pseudocode:**
+```
+sort people: height DESC, ties by k ASC
+result = empty list
+for each person p (tallest first):
+  insert p at index p.k     # only taller/equal people precede it
+return result
+```
 ```java
 class Solution {
     public int[][] reconstructQueue(int[][] people) {
@@ -20737,6 +28239,15 @@ class Solution {
 
 **Algorithm:** Sort by start time. If any meeting starts before the previous one ends, there is an overlap — return false.
 
+**Variables:** `intervals` = meeting `[start, end]` pairs
+**Pseudocode:**
+```
+sort intervals by START
+for i from 1 to n-1:
+  if intervals[i].start < intervals[i-1].end:   # overlaps previous
+    return false
+return true
+```
 ```java
 class Solution {
     public boolean canAttendMeetings(int[][] intervals) {
@@ -20759,6 +28270,19 @@ class Solution {
 
 **Algorithm:** Greedy. Track cumulative tank. When tank goes negative, reset start to `i+1` and reset tank. If total gas >= total cost, a valid start exists (the last reset start).
 
+**Variables:** `gas`/`cost` = gas at / cost to leave each station · `total` = net gas over whole loop · `tank` = running gas since current `start` · `start` = candidate starting station
+**Pseudocode:**
+```
+total = 0, tank = 0, start = 0
+for i from 0 to n-1:
+  diff = gas[i] - cost[i]
+  total += diff
+  tank  += diff
+  if tank < 0:        # cannot reach i+1 from current start
+    start = i + 1     # next station becomes the candidate
+    tank = 0
+return start if total >= 0 else -1
+```
 ```java
 class Solution {
     public int canCompleteCircuit(int[] gas, int[] cost) {
@@ -20790,6 +28314,19 @@ class Solution {
 
 **Algorithm:** Initialize all candies to 1. Sweep left→right giving `candies[i] = candies[i-1] + 1` when `ratings[i] > ratings[i-1]`. Sweep right→left taking `max(candies[i], candies[i+1] + 1)` when `ratings[i] > ratings[i+1]`. Sum.
 
+**Variables:** `ratings` = child ratings · `candies[i]` = candies given to child `i` · `result` = total candies
+**Pseudocode:**
+```
+candies = all 1s
+left-to-right, i from 1:
+  if ratings[i] > ratings[i-1]:
+    candies[i] = candies[i-1] + 1      # higher than left neighbor
+right-to-left, i from n-2:
+  if ratings[i] > ratings[i+1]:
+    candies[i] = max(candies[i], candies[i+1] + 1)   # higher than right neighbor
+result = sum of candies
+return result
+```
 ```java
 class Solution {
     public int candy(int[] ratings) {
@@ -20826,6 +28363,15 @@ class Solution {
 
 **Algorithm:** Sort ascending. Scan; the first index `i` where `citations[i] >= n - i` gives `h = n - i`, the largest valid h. If none, h is 0.
 
+**Variables:** `citations` = citation counts · `n` = number of papers · `n - i` = papers with at least `citations[i]` citations
+**Pseudocode:**
+```
+sort citations ascending
+for i from 0 to n-1:
+  if citations[i] >= n - i:   # n-i papers each have >= this many citations
+    return n - i
+return 0
+```
 ```java
 class Solution {
     public int hIndex(int[] citations) {
@@ -20852,6 +28398,18 @@ class Solution {
 
 **Algorithm:** Sort `g` and `s`. Two pointers: advance the cookie pointer always; advance the child pointer (counting a satisfied child) only when the current cookie satisfies the current child.
 
+**Variables:** `g` = children greed factors · `s` = cookie sizes · `i` = child pointer · `j` = cookie pointer · `result` = content children count
+**Pseudocode:**
+```
+sort g ascending; sort s ascending
+i = 0, j = 0, result = 0
+while i < g.length and j < s.length:
+  if s[j] >= g[i]:    # cookie j satisfies child i
+    result++
+    i++             # move to next child
+  j++               # always move to next cookie
+return result
+```
 ```java
 class Solution {
     public int findContentChildren(int[] g, int[] s) {
@@ -20881,6 +28439,13 @@ class Solution {
 
 **Algorithm:** Count distinct types with a set. Return `min(distinct types, n/2)`.
 
+**Variables:** `candyType` = candy type per candy · `types` = set of distinct types · `candyType.length / 2` = max candies the holder may eat
+**Pseudocode:**
+```
+types = set()
+for each candy: add its type to types
+return min(number of distinct types, total / 2)
+```
 ```java
 class Solution {
     public int distributeCandies(int[] candyType) {
@@ -20904,6 +28469,18 @@ class Solution {
 
 **Algorithm:** Scan; at each empty plot whose left and right (treating out-of-bounds as empty) are empty, plant it (set to 1) and decrement `n`. Succeed early if `n <= 0`.
 
+**Variables:** `flowerbed` = 0/1 plots · `n` = flowers still to plant · `leftEmpty`/`rightEmpty` = whether neighbors are empty (out-of-bounds counts as empty)
+**Pseudocode:**
+```
+for i from 0 to length-1:
+  leftEmpty  = (i == 0) or flowerbed[i-1] == 0
+  rightEmpty = (i == last) or flowerbed[i+1] == 0
+  if flowerbed[i] == 0 and leftEmpty and rightEmpty:
+    plant: flowerbed[i] = 1
+    n--
+  if n <= 0: return true
+return n <= 0
+```
 ```java
 class Solution {
     public boolean canPlaceFlowers(int[] flowerbed, int n) {
@@ -20934,6 +28511,18 @@ class Solution {
 
 **Algorithm:** Sort by `lastDay`. Maintain a max-heap of taken durations and running `time`. Add each course; if `time > lastDay`, pop the longest course and subtract it. Heap size is the answer.
 
+**Variables:** `courses` = `[duration, lastDay]` · `maxHeap` = durations of taken courses (largest on top) · `time` = total time spent so far
+**Pseudocode:**
+```
+sort courses by lastDay (deadline)
+maxHeap = empty, time = 0
+for each course [duration, lastDay]:
+  time += duration
+  push duration onto maxHeap
+  if time > lastDay:          # overshot deadline
+    time -= pop longest duration   # drop the longest taken course
+return maxHeap size
+```
 ```java
 class Solution {
     public int scheduleCourse(int[][] courses) {
@@ -20963,6 +28552,18 @@ class Solution {
 
 **Algorithm:** Sort ascending. Two pointers from both ends; if `people[i] + people[j] <= limit` the lightest also boards (advance `i`). Always send the heaviest (decrement `j`) and count a boat.
 
+**Variables:** `people` = weights · `limit` = boat weight cap · `i` = lightest pointer · `j` = heaviest pointer · `result` = boat count
+**Pseudocode:**
+```
+sort people ascending
+i = 0, j = n-1, result = 0
+while i <= j:
+  if people[i] + people[j] <= limit:
+    i++              # lightest shares boat with heaviest
+  j--                # heaviest always boards
+  result++           # one boat used
+return result
+```
 ```java
 class Solution {
     public int numRescueBoats(int[] people, int limit) {
@@ -20991,6 +28592,18 @@ class Solution {
 
 **Algorithm:** Two pointers `i`, `j`. Compute `lo = max(starts)`, `hi = min(ends)`; if `lo <= hi`, record `[lo, hi]`. Advance the pointer of the interval with the smaller end.
 
+**Variables:** `firstList`/`secondList` = two sorted disjoint interval lists · `i`/`j` = pointers into each list · `lo` = latest start · `hi` = earliest end
+**Pseudocode:**
+```
+i = 0, j = 0
+while i < firstList.length and j < secondList.length:
+  lo = max(firstList[i].start, secondList[j].start)
+  hi = min(firstList[i].end,   secondList[j].end)
+  if lo <= hi: record [lo, hi]      # valid overlap
+  if firstList[i].end < secondList[j].end: i++   # advance the one ending first
+  else: j++
+return result
+```
 ```java
 class Solution {
     public int[][] intervalIntersection(int[][] firstList, int[][] secondList) {
@@ -21024,6 +28637,19 @@ class Solution {
 
 **Algorithm:** Sort ascending. Flip negatives left to right while `k > 0`. If `k` is still positive and odd, negate the now-smallest absolute value element once. Sum.
 
+**Variables:** `nums` = array · `k` = flips remaining · `sum` = running total · `min` = smallest element after flipping negatives
+**Pseudocode:**
+```
+sort nums ascending
+for i while i < n and k > 0:
+  if nums[i] < 0:        # flip most-negative numbers first
+    nums[i] = -nums[i]
+    k--
+sum = sum of nums; min = smallest element
+if k is odd (leftover flips):
+  sum -= 2 * min         # one extra flip lands on smallest magnitude
+return sum
+```
 ```java
 class Solution {
     public int largestSumAfterKNegations(int[] nums, int k) {
@@ -21058,6 +28684,19 @@ class Solution {
 
 **Algorithm:** Add `num` at `from` and subtract `num` at `to` in a difference array. Prefix-sum across locations; return false if any running total exceeds capacity.
 
+**Variables:** `trips` = `[numPassengers, from, to]` · `capacity` = car cap · `diff` = difference array over locations · `passengers` = running occupancy
+**Pseudocode:**
+```
+diff = array over locations, all 0
+for each trip [num, from, to]:
+  diff[from] += num     # board
+  diff[to]   -= num     # leave
+passengers = 0
+for each location i in order:
+  passengers += diff[i]            # prefix sum = current occupancy
+  if passengers > capacity: return false
+return true
+```
 ```java
 class Solution {
     public boolean carPooling(int[][] trips, int capacity) {
@@ -21089,6 +28728,19 @@ class Solution {
 
 **Algorithm:** For each interval, if it is entirely before or after `toBeRemoved`, keep it. Otherwise keep the left piece `[start, toBeRemoved[0]]` if it has positive length and the right piece `[toBeRemoved[1], end]` if it has positive length.
 
+**Variables:** `intervals` = sorted disjoint intervals · `toBeRemoved` = `[lo, hi]` range to cut out · `result` = surviving pieces
+**Pseudocode:**
+```
+for each interval:
+  if interval.end <= toBeRemoved.lo or interval.start >= toBeRemoved.hi:
+    keep whole interval     # no overlap
+  else:
+    if interval.start < toBeRemoved.lo:
+      keep left sliver [interval.start, toBeRemoved.lo]
+    if interval.end > toBeRemoved.hi:
+      keep right sliver [toBeRemoved.hi, interval.end]
+return result
+```
 ```java
 class Solution {
     public List<List<Integer>> removeInterval(int[][] intervals, int[] toBeRemoved) {
@@ -21121,6 +28773,21 @@ class Solution {
 
 **Algorithm:** Build `maxReach[i]` = farthest right coverage of any tap whose left edge is at or before `i`. Sweep like Jump Game II: track `currentEnd` and `farthest`; when reaching `currentEnd`, increment taps and jump. Fail if `farthest` stalls before `n`.
 
+**Variables:** `n` = garden length · `ranges` = tap reach radius per position · `maxReach[left]` = farthest right covered starting at `left` · `taps` = taps opened · `currentEnd`/`farthest` = jump-game layer bounds
+**Pseudocode:**
+```
+for each position i:
+  left = max(0, i - ranges[i]); right = min(n, i + ranges[i])
+  maxReach[left] = max(maxReach[left], right)
+taps = 0, currentEnd = 0, farthest = 0
+for i from 0 to n:
+  if i > farthest: return -1        # gap in coverage
+  farthest = max(farthest, maxReach[i])
+  if i == currentEnd and i < n:     # end of current layer
+    taps++
+    currentEnd = farthest
+return taps if currentEnd >= n else -1
+```
 ```java
 class Solution {
     public int minTaps(int n, int[] ranges) {
@@ -21157,6 +28824,20 @@ class Solution {
 
 **Algorithm:** Sort events by start. For each day, push all events that have started into a min-heap keyed on end day, discard events whose end day has passed, then attend (poll) one event and count it.
 
+**Variables:** `events` = `[start, end]` · `minHeap` = end days of events available now (earliest on top) · `i` = next event index · `day` = current day · `result` = events attended
+**Pseudocode:**
+```
+sort events by START
+minHeap = empty (end days), i = 0, day = 0, result = 0
+while i < n or minHeap nonempty:
+  if minHeap empty: day = events[i].start    # jump forward to next event
+  while i < n and events[i].start <= day:    # add all events started by today
+    push events[i].end; i++
+  poll minHeap; result++; day++              # attend earliest-ending event
+  while minHeap nonempty and top < day:      # drop expired events
+    poll minHeap
+return result
+```
 ```java
 class Solution {
     public int maxEvents(int[][] events) {
@@ -21194,6 +28875,21 @@ class Solution {
 
 **Algorithm:** Track each full lake's last-rain day in a map and dry-day indices in a TreeSet. On a rain day for an already-full lake, find the smallest dry day after its last rain; if none exists, flooding is unavoidable. Use that dry day for this lake. Leftover dry days dry any lake (default 1).
 
+**Variables:** `rains` = per-day rain (lake id or 0=dry) · `result` = answer array · `fullDay` = lake -> day it was last filled · `dryDays` = TreeSet of available dry-day indices
+**Pseudocode:**
+```
+for i from 0 to n-1:
+  if rains[i] == 0:       # dry day
+    add i to dryDays; result[i] = 1 (default, may overwrite)
+  else:
+    result[i] = -1; lake = rains[i]
+    if lake already full:
+      dry = smallest dry day > lake's last full day
+      if no such dry day: return empty array   # flood
+      result[dry] = lake; remove dry from dryDays
+    fullDay[lake] = i
+return result
+```
 ```java
 class Solution {
     public int[] avoidFlood(int[] rains) {
@@ -21328,6 +29024,17 @@ Six template families. Every problem maps to one loop skeleton and one dp-state 
 
 ## All Six Templates
 
+**Variables:** `dp[i]` = the answer for the subproblem at index/state `i` (meaning varies per family: ways/cost/length/feasibility ending at or reaching `i`) · `n` = problem size · `target`/`j` = knapsack capacity dimension.
+**Pseudocode:**
+```
+LINEAR 1D:   dp[i] = fixed recipe over dp[i-1], dp[i-2] (Kadane: best ending at i = max(start fresh, extend))
+LOOK-BACK:   for each i, scan all earlier j and extend the best valid dp[j]
+KNAPSACK:    collapse item dimension to 1D; descending j = each item once, ascending j = reusable
+2D SEQUENCE: match consumes both strings (diagonal), mismatch drops one side
+INTERVAL:    solve short ranges first, combine via a split point inside the range
+GRID:        each cell accumulates from cells it could arrive from (up / left)
+STATE MACHINE: name a few states, update each from yesterday's states every step
+```
 ```java
 // 1. LINEAR 1D — each cell depends on a fixed number of previous cells
 // the answer at i is a fixed recipe over the last one or two answers.  — WHEN: "ways/cost to reach step i", "can't pick adjacent"
@@ -21387,6 +29094,15 @@ Want count or min/max?
 **Description:** Each step you can climb 1 or 2 steps. How many distinct ways to reach step n?  
 **Intuition:** the last move was a 1-step or a 2-step, so ways to reach n = ways to n-1 + ways to n-2.
 
+**Variables:** `dp[i]` = number of distinct ways to reach step `i`.
+**Pseudocode:**
+```
+if n <= 2: return n
+dp[1] = 1; dp[2] = 2
+for i from 3 to n:
+    dp[i] = dp[i-1] + dp[i-2]   // arrive via a 1-step or a 2-step
+return dp[n]
+```
 ```java
 class Solution {
     public int climbStairs(int n) {
@@ -21408,6 +29124,18 @@ class Solution {
 **Description:** Rob houses on a line — can't rob two adjacent. Maximize total.  
 **Intuition:** at each house, either skip it (keep `dp[i-1]`) or rob it (`dp[i-2] + value`, since i-1 is now off-limits).
 
+**Variables:** `dp[i]` = max money robbable from houses `0..i`; `dp[0]` = first house, `dp[1]` = better of first two.
+**Pseudocode:**
+```
+n = number of houses
+if only one house: return its value
+dp[0] = nums[0]
+dp[1] = max(nums[0], nums[1])
+for i from 2 to n-1:
+    dp[i] = max(dp[i-1],            // skip house i, keep best up to i-1
+                dp[i-2] + nums[i])  // rob house i, add best up to i-2
+return dp[n-1]                       // best over all houses
+```
 ```java
 class Solution {
     public int rob(int[] nums) {
@@ -21431,6 +29159,22 @@ class Solution {
 **Key:** run House Robber on `[0, n-2]` and `[1, n-1]`; take the max. Two passes, exact same helper.  
 **Intuition:** breaking the circle means either the first house is excluded or the last is — solve both lines and keep the better.
 
+**Variables:** in the helper, `prev1` = best rob ending at the previous index (`dp[k-1]`), `prev2` = best two indices back (`dp[k-2]`), `current` = `dp[k]`; two passes over ranges `[0,n-2]` and `[1,n-1]`.
+**Pseudocode:**
+```
+n = number of houses
+if only one house: return its value
+return max( robLine(0, n-2),   // exclude last house
+            robLine(1, n-1) )  // exclude first house
+robLine(i, j):
+    prev2 = 0, prev1 = 0
+    for k from i to j:
+        current = max(prev1,            // skip house k
+                      prev2 + nums[k])  // rob house k
+        prev2 = prev1                    // slide window forward
+        prev1 = current
+    return prev1                         // best over the line
+```
 ```java
 class Solution {
     public int rob(int[] nums) {
@@ -21459,6 +29203,19 @@ class Solution {
 **Template:** Look-back 1D — `dp[i]` depends on all `dp[j]` where `j < i` and `nums[j] < nums[i]`.  
 **Intuition:** the best subsequence ending at i extends the longest earlier one whose last value is still smaller.
 
+**Variables:** `dp[i]` = length of the longest strictly increasing subsequence that *ends* at index `i`; `max` = best `dp[i]` seen so far.
+**Pseudocode:**
+```
+n = length of nums
+dp[i] = 1 for all i        // each element alone is an LIS of length 1
+max = 1
+for i from 1 to n-1:
+    for j from 0 to i-1:
+        if nums[j] < nums[i]:                  // can extend subsequence ending at j
+            dp[i] = max(dp[i], dp[j] + 1)
+    max = max(max, dp[i])                       // track global best
+return max
+```
 ```java
 class Solution {
     public int lengthOfLIS(int[] nums) {
@@ -21486,6 +29243,20 @@ class Solution {
 **Template:** Look-back 1D — `dp[i]` is true if some `dp[j]` is true and `s[j..i)` is a word.  
 **Intuition:** a prefix is breakable if some earlier breakable cut leaves a dictionary word as the final piece.
 
+**Variables:** `dp[i]` = true if the prefix `s[0..i)` (first `i` chars) can be segmented into dictionary words; `dp[0]` = true (empty prefix); `words` = the dictionary as a hash set for O(1) lookup.
+**Pseudocode:**
+```
+words = set of dictionary words
+n = length of s
+dp[i] = false for all i
+dp[0] = true                                   // empty prefix is breakable
+for i from 1 to n:
+    for j from 0 to i-1:
+        if dp[j] and words contains s[j..i):   // breakable cut + word tail
+            dp[i] = true
+            break                              // one valid split is enough
+return dp[n]                                    // whole string breakable?
+```
 ```java
 class Solution {
     public boolean wordBreak(String s, List<String> wordDict) {
@@ -21526,6 +29297,27 @@ answer:             dp[n-1]                  max(dp)                  dp[n]
 
 ## Canonical Templates
 
+**Variables:** `dp[j]` = number of ways to reach sum `j` (count flavor; `dp[0]=1` is the empty selection); `i` = item index, `j` = current capacity/target, `num` = an item's weight/value. Loop *direction* decides reuse: descending j = item used at most once, ascending j = item reusable; target-outer = orderings counted.
+**Pseudocode:**
+```
+0/1 KNAPSACK (each item once):
+    dp[0] = 1
+    for each item i:
+        for j from target DOWN TO nums[i]:     // DESCENDING reads OLD dp (item i not yet used)
+            dp[j] += dp[j - nums[i]]
+
+UNBOUNDED KNAPSACK (item reusable):
+    dp[0] = 1
+    for each item i:
+        for j from nums[i] UP TO target:       // ASCENDING reads NEW dp (item i already used this pass)
+            dp[j] += dp[j - nums[i]]
+
+PERMUTATION COUNT (order matters):
+    dp[0] = 1
+    for j from 1 to target:                     // OUTER = target value
+        for each num in nums:                   // INNER = try every num, so orderings differ
+            if j >= num: dp[j] += dp[j - num]
+```
 ```java
 // ── 0/1 KNAPSACK ── each item at most once
 int[] dp = new int[target + 1];
@@ -21575,6 +29367,17 @@ for (int j = 1; j <= target; j++) {           // OUTER: target
 **Description:** Can the array be partitioned into two subsets with equal sum?  
 **Key:** equivalent to: can we pick a subset summing to `total/2`?
 
+**Variables:** `dp[j]` = can some subset of the items seen so far sum exactly to `j`.
+**Pseudocode:**
+```
+total = sum of nums; if odd, impossible -> return false
+target = total / 2
+dp[0..target] = false; dp[0] = true        // empty subset sums to 0
+for each num:                               // consider item once (0/1)
+    for j from target down to num:          // DESCENDING -> 0/1: dp[j-num] is from before this item
+        dp[j] = dp[j] OR dp[j-num]          // keep j, or add num onto a subset summing to j-num
+return dp[target]
+```
 ```java
 class Solution {
     public boolean canPartition(int[] nums) {
@@ -21599,6 +29402,18 @@ class Solution {
 **Description:** Assign `+` or `-` to each number to reach `target`. How many ways?  
 **Key:** assign `+` to subset P and `-` to subset N. Then `P - N = target` and `P + N = sum`. So `P = (sum + target) / 2`. Count subsets summing to P.
 
+**Variables:** `dp[j]` = number of distinct subsets (of items seen so far) that sum exactly to `j`.
+**Pseudocode:**
+```
+sum = sum of nums
+if (sum+target) is odd or |target| > sum: return 0
+t = (sum + target) / 2                      // P = subset assigned '+'
+dp[0..t] = 0; dp[0] = 1                      // one way to make 0: empty subset
+for each num:                               // consider item once (0/1)
+    for j from t down to num:               // DESCENDING -> 0/1: count each item at most once
+        dp[j] += dp[j-num]                   // add the ways that made j-num, now including num
+return dp[t]
+```
 ```java
 class Solution {
     public int findTargetSumWays(int[] nums, int target) {
@@ -21623,6 +29438,18 @@ class Solution {
 **Description:** Given strings of '0'/'1', find the largest subset using at most `m` zeros and `n` ones.  
 **Key:** 2D 0/1 knapsack — two capacity dimensions. Both must iterate descending.
 
+**Variables:** `dp[i][j]` = max size of a subset of strings seen so far that uses at most `i` zeros and `j` ones.
+**Pseudocode:**
+```
+dp[0..m][0..n] = 0                          // empty subset has size 0
+for each string s:                          // consider item once (0/1)
+    zeros = count of '0' in s; ones = count of '1' in s
+    for i from m down to zeros:             // DESCENDING both dims -> 0/1: each string used once
+        for j from n down to ones:
+            dp[i][j] = max(dp[i][j],         // skip s
+                           dp[i-zeros][j-ones] + 1)   // take s, spend its zeros/ones
+return dp[m][n]
+```
 ```java
 class Solution {
     public int findMaxForm(String[] strs, int m, int n) {
@@ -21646,6 +29473,15 @@ class Solution {
 **Description:** Minimum number of coins to make `amount`. Coins can be reused.  
 **Key:** unbounded knapsack (ascending), but minimize instead of count — seed with INF, take min.
 
+**Variables:** `dp[j]` = minimum number of coins needed to make amount `j` (sentinel `amount+1` = impossible).
+**Pseudocode:**
+```
+dp[0..amount] = amount+1 (impossible sentinel); dp[0] = 0   // 0 coins make amount 0
+for each coin:                              // unbounded: coin reusable
+    for j from coin up to amount:           // ASCENDING -> unbounded: dp[j-coin] may already include this coin
+        dp[j] = min(dp[j], dp[j-coin] + 1)  // reuse best way to make j-coin, add one more coin
+return dp[amount] > amount ? -1 : dp[amount]
+```
 ```java
 class Solution {
     public int coinChange(int[] coins, int amount) {
@@ -21668,6 +29504,15 @@ class Solution {
 **Description:** Number of distinct combinations (order doesn't matter) to make `amount`.  
 **Key:** unbounded knapsack (ascending), count variant — combinations, not permutations.
 
+**Variables:** `dp[j]` = number of distinct combinations (order ignored) of coins that sum to `j`.
+**Pseudocode:**
+```
+dp[0..amount] = 0; dp[0] = 1                // one way to make 0: pick nothing
+for each coin:                              // coin OUTER fixes coin order -> combinations, no duplicates
+    for j from coin up to amount:           // ASCENDING -> unbounded: coin reusable
+        dp[j] += dp[j-coin]                  // add combinations of j-coin extended by this coin
+return dp[amount]
+```
 ```java
 class Solution {
     public int change(int amount, int[] coins) {
@@ -21689,6 +29534,15 @@ class Solution {
 **Description:** Number of ordered sequences (order matters) that sum to `target`.  
 **Key:** permutation count — swap loop order: target outer, nums inner. This tries all nums for each partial sum, so different orderings are counted separately.
 
+**Variables:** `dp[j]` = number of ordered sequences (order matters) of nums that sum to `j`.
+**Pseudocode:**
+```
+dp[0..target] = 0; dp[0] = 1                // one empty sequence sums to 0
+for j from 1 up to target:                  // TARGET OUTER -> permutations: every num retried at each j
+    for each num:                           // num INNER tries all numbers as the LAST element
+        if j >= num: dp[j] += dp[j-num]      // sequences making j-num, each appending num
+return dp[target]
+```
 ```java
 class Solution {
     public int combinationSum4(int[] nums, int target) {
@@ -21720,6 +29574,19 @@ Why:                fixing coin order = no dup  re-trying all nums each j = all 
 
 ## Canonical Template
 
+**Variables:** `dp[i][j]` = the answer for the prefixes `s1[0..i)` (first `i` chars) and `s2[0..j)` (first `j` chars); index `0` = empty prefix.
+**Pseudocode:**
+```
+dp = (m+1) x (n+1) table
+initialize dp[0][*] and dp[*][0] from the empty-prefix base cases
+for i from 1 to m:                          // each char of s1
+    for j from 1 to n:                      // each char of s2
+        if s1[i-1] == s2[j-1]:              // current chars match
+            dp[i][j] = dp[i-1][j-1] + 1     // extend the diagonal (both prefixes shrink by 1)
+        else:
+            dp[i][j] = combine(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])  // drop a char from one/both side
+return dp[m][n]
+```
 ```java
 // i indexes string/array 1 (1-indexed), j indexes string/array 2
 int[][] dp = new int[m + 1][n + 1];
@@ -21742,6 +29609,19 @@ for (int i = 1; i <= m; i++) {
 **Description:** Length of the longest subsequence present in both strings.  
 **Intuition:** if the last chars match, they're part of the LCS (+1 on the diagonal); otherwise drop one char from whichever string and keep the better.
 
+**Variables:** `dp[i][j]` = LCS length of `text1[0..i)` and `text2[0..j)` (prefixes of lengths `i` and `j`); row/col 0 = empty prefix = 0.
+**Pseudocode:**
+```
+m = len(text1); n = len(text2)
+dp = (m+1) x (n+1) table, all zero        // dp[0][*]=dp[*][0]=0 (empty prefix)
+for i from 1 to m:
+    for j from 1 to n:
+        if text1[i-1] == text2[j-1]:       // last chars match
+            dp[i][j] = dp[i-1][j-1] + 1    // extend LCS on the diagonal
+        else:
+            dp[i][j] = max(dp[i-1][j], dp[i][j-1])  // drop one char, keep better
+return dp[m][n]
+```
 ```java
 class Solution {
     public int longestCommonSubsequence(String text1, String text2) {
@@ -21770,6 +29650,23 @@ class Solution {
 **Init:** `dp[i][0] = i` (delete all), `dp[0][j] = j` (insert all).  
 **Intuition:** matched chars cost nothing (diagonal); otherwise take the cheapest of replace/delete/insert and add 1.
 
+**Variables:** `dp[i][j]` = min edits to convert `word1[0..i)` to `word2[0..j)`; init `dp[i][0]=i` (delete all), `dp[0][j]=j` (insert all).
+**Pseudocode:**
+```
+m = len(word1); n = len(word2)
+dp = (m+1) x (n+1) table
+for i from 0 to m: dp[i][0] = i            // delete i chars
+for j from 0 to n: dp[0][j] = j            // insert j chars
+for i from 1 to m:
+    for j from 1 to n:
+        if word1[i-1] == word2[j-1]:        // match: no cost
+            dp[i][j] = dp[i-1][j-1]
+        else:
+            dp[i][j] = 1 + min(dp[i-1][j-1],    // replace
+                               dp[i-1][j],       // delete
+                               dp[i][j-1])       // insert
+return dp[m][n]
+```
 ```java
 class Solution {
     public int minDistance(String word1, String word2) {
@@ -21802,6 +29699,19 @@ class Solution {
 **Init:** `dp[i][0] = 1` (empty t matched by any s prefix).  
 **Intuition:** you can always skip the current char of s; if it matches the current char of t, you may also use it to advance t.
 
+**Variables:** `dp[i][j]` = number of ways `s[0..i)` contains `t[0..j)` as a subsequence; init `dp[i][0]=1` (empty `t` matched by any `s` prefix).
+**Pseudocode:**
+```
+m = len(s); n = len(t)
+dp = (m+1) x (n+1) table
+for i from 0 to m: dp[i][0] = 1            // empty t always matched (1 way)
+for i from 1 to m:
+    for j from 1 to n:
+        dp[i][j] = dp[i-1][j]              // always: skip s[i-1]
+        if s[i-1] == t[j-1]:
+            dp[i][j] += dp[i-1][j-1]       // also: use s[i-1] to match t[j-1]
+return dp[m][n]
+```
 ```java
 class Solution {
     public int numDistinct(String s, String t) {
@@ -21839,6 +29749,16 @@ Init dp[*][0]:      0                  i (delete i chars)       1 (empty t alway
 
 **Rule:** `i` goes right-to-left (ensures shorter/inner intervals are computed first). `j` goes left-to-right from `i+1`. When computing `dp[i][j]`, all `dp[i'][j']` with `i' > i` or `j' < j` are already done.
 
+**Variables:** `dp[i][j]` = the answer for the interval `[i, j]` (left endpoint `i`, right endpoint `j`).
+**Pseudocode:**
+```
+dp = n x n table
+for each i: dp[i][i] = base_case            // length-1 intervals
+for i from n-1 down to 0:                    // i RIGHT-TO-LEFT so dp[i+1][*] (inner) is ready
+    for j from i+1 to n-1:                   // j LEFT-TO-RIGHT from i+1 so dp[i][j-1] is ready
+        // safe to read dp[i+1][j], dp[i][j-1], dp[i+1][j-1] (all strictly smaller intervals)
+        dp[i][j] = ...transition over interval [i,j]...
+```
 ```java
 int[][] dp = new int[n][n];
 for (int i = 0; i < n; i++) dp[i][i] = base_case;   // single elements
@@ -21852,6 +29772,16 @@ for (int i = n - 1; i >= 0; i--) {                   // right-to-left
 
 **Alternative (forward `i`, inner `j` descending):** `i` is the right endpoint going left-to-right; `j` is the left endpoint sweeping back from `i-1`. Inner intervals (larger `j`, smaller `i`) are already filled.
 
+**Variables:** `dp[i][j]` = the answer for the interval `[j, i]` (right endpoint `i`, left endpoint `j`).
+**Pseudocode:**
+```
+dp = n x n table
+for each i: dp[i][i] = base_case            // length-1 intervals
+for i from 0 to n-1:                         // i = RIGHT endpoint, FORWARD left-to-right
+    for j from i-1 down to 0:                // j = LEFT endpoint, DESCENDING from i-1 to 0
+        // safe to read dp[i-1][j], dp[i][j+1], dp[i-1][j+1] (all shorter intervals already filled)
+        dp[i][j] = ...transition over interval [j,i]...
+```
 ```java
 int[][] dp = new int[n][n];
 for (int i = 0; i < n; i++) dp[i][i] = base_case;   // single elements
@@ -21865,6 +29795,16 @@ for (int i = 0; i < n; i++) {                        // i = right endpoint, left
 
 **Alternative (triangular fill, column base case):** used when `dp[i][j]` depends only on the previous row/column (e.g. counting problems). Fill row by row with `j` from `0` to `i`.
 
+**Variables:** `dp[i][j]` = the count/answer for the `(i, j)` subproblem, defined only for `j <= i` (lower-triangular).
+**Pseudocode:**
+```
+dp = n x n table
+for each i: dp[i][0] = 1                     // column base case; dp[0][j>0] = 0
+for i from 1 to n-1:                         // fill ROW BY ROW, top to bottom
+    for j from 1 to i:                       // j from 1 up to i (triangular, j <= i)
+        // safe to read dp[i-1][j], dp[i][j-1], dp[i-1][j-1] (prior row / earlier in row)
+        dp[i][j] = ...transition...
+```
 ```java
 int[][] dp = new int[n][n];
 for (int i = 0; i < n; i++) dp[i][0] = 1;   // base: dp[i][0] = 1; dp[0][j] = 0 for j > 0
@@ -21883,6 +29823,17 @@ for (int i = 1; i < n; i++) {
 **Description:** Count all palindromic substrings of `s`.  
 **Intuition:** `s[i..j]` is a palindrome when its two ends match AND the inside `s[i+1..j-1]` already is.
 
+**Variables:** `dp[i][j]` = whether the substring `s[i..j]` (inclusive) is a palindrome; `count` = running total of palindromic substrings.
+**Pseudocode:**
+```
+dp = n x n boolean table; count = 0
+for i from n-1 down to 0:                    // i RIGHT-TO-LEFT so inner dp[i+1][*] is ready
+    for j from i to n-1:                      // j from i (length >= 1) to n-1
+        dp[i][j] = (s[i] == s[j])             // ends must match
+                   AND (j-i < 2 OR dp[i+1][j-1])   // length <= 2, or inner already palindrome
+        if dp[i][j]: count++                  // every true cell is one palindromic substring
+return count
+```
 ```java
 class Solution {
     public int countSubstrings(String s) {
@@ -21908,6 +29859,20 @@ class Solution {
 **Description:** Length of the longest subsequence of `s` that is a palindrome.  
 **Intuition:** matching ends add 2 to the inner range's best; otherwise drop one end and keep the larger.
 
+**Variables:** `dp[i][j]` = length of the longest palindromic subsequence in `s[i..j]` (inclusive); single chars `dp[i][i]=1`.
+**Pseudocode:**
+```
+n = len(s)
+dp = n x n table
+for each i: dp[i][i] = 1                    // single char is a palindrome of length 1
+for i from n-1 down to 0:                    // i RIGHT-TO-LEFT so inner dp[i+1][*] ready
+    for j from i+1 to n-1:                    // j LEFT-TO-RIGHT from i+1
+        if s[i] == s[j]:                       // matching ends
+            dp[i][j] = dp[i+1][j-1] + 2        // add 2 to inner range's best
+        else:
+            dp[i][j] = max(dp[i+1][j], dp[i][j-1])  // drop one end, keep larger
+return dp[0][n-1]
+```
 ```java
 class Solution {
     public int longestPalindromeSubseq(String s) {
@@ -21937,6 +29902,22 @@ class Solution {
 **Key insight:** think of `k` as the **last** balloon burst in range `(i, j)` (open interval). Adding sentinel `1`s at both ends simplifies boundary cases.  
 **Template:** length-based outer loop; inner loop over last-burst position `k`.
 
+**Variables:** `dp[i][j]` = max coins from bursting all balloons strictly inside the open interval `(i, j)`; `b` = nums padded with sentinel `1`s at both ends; `k` = the LAST balloon burst in `(i, j)`.
+**Pseudocode:**
+```
+n = len(nums)
+b = array of size n+2; b[0] = b[n+1] = 1   // sentinel 1s at both ends
+copy nums into b[1..n]
+size = n+2
+dp = size x size table, all zero
+for len from 2 to size-1:                    // interval length (open), needs >=1 inside
+    for i from 0 while i+len < size:          // i = left open boundary
+        j = i + len                            // j = right open boundary
+        for k from i+1 to j-1:                 // k = LAST balloon burst in (i, j)
+            dp[i][j] = max(dp[i][j],
+                           dp[i][k] + b[i]*b[k]*b[j] + dp[k][j])
+return dp[0][n+1]
+```
 ```java
 class Solution {
     public int maxCoins(int[] nums) {
@@ -21967,6 +29948,24 @@ class Solution {
 
 ## Canonical Template
 
+**Variables:** `dp[i][j]` = best (path count / cost) to reach cell `(i, j)` moving only right/down; `memo[i][j]` = longest path starting from `(i, j)` for the all-direction DFS variant; `dr`/`dc` = 4-direction deltas.
+**Pseudocode:**
+```
+dr = {1,-1,0,0}; dc = {0,0,1,-1}            // DOWN UP RIGHT LEFT
+
+// Standard grid (only right/down — DAG, no cycle):
+dp = rows x cols table
+initialize first row and first column
+for i from 0 to rows-1:
+    for j from 0 to cols-1:
+        dp[i][j] = grid[i][j] + f(dp[i-1][j], dp[i][j-1])   // combine top & left
+
+// All-direction grid (memoized DFS for increasing/decreasing paths):
+memo = rows x cols table
+for i from 0 to rows-1:
+    for j from 0 to cols-1:
+        dfs(grid, i, j, memo, dr, dc)        // each cell caches its longest path
+```
 ```java
 int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};   // DOWN UP RIGHT LEFT
 
@@ -21992,6 +29991,17 @@ for (int i = 0; i < rows; i++)
 **Init:** first row and column are all 1 (only one way to reach any edge cell).  
 **Intuition:** you reach a cell only from above or from the left, so its path count is the sum of those two.
 
+**Variables:** `dp[i][j]` = number of paths to reach cell `(i, j)` moving only right/down; first row and first column all `1`.
+**Pseudocode:**
+```
+dp = m x n table
+for i from 0 to m-1: dp[i][0] = 1          // one way down the first column
+for j from 0 to n-1: dp[0][j] = 1          // one way across the first row
+for i from 1 to m-1:
+    for j from 1 to n-1:
+        dp[i][j] = dp[i-1][j] + dp[i][j-1] // paths from above + paths from left
+return dp[m-1][n-1]
+```
 ```java
 class Solution {
     public int uniquePaths(int m, int n) {
@@ -22015,6 +30025,19 @@ class Solution {
 **Init:** first row/column are cumulative sums (no choice on edges).  
 **Intuition:** the cheapest way into a cell is its own value plus the cheaper of the cell above or to its left.
 
+**Variables:** `dp[i][j]` = minimum path sum to reach cell `(i, j)` moving only right/down; first row/column are cumulative sums.
+**Pseudocode:**
+```
+m = rows; n = cols
+dp = m x n table
+dp[0][0] = grid[0][0]
+for i from 1 to m-1: dp[i][0] = dp[i-1][0] + grid[i][0]   // first column cumulative
+for j from 1 to n-1: dp[0][j] = dp[0][j-1] + grid[0][j]   // first row cumulative
+for i from 1 to m-1:
+    for j from 1 to n-1:
+        dp[i][j] = grid[i][j] + min(dp[i-1][j], dp[i][j-1])  // own value + cheaper of top/left
+return dp[m-1][n-1]
+```
 ```java
 class Solution {
     public int minPathSum(int[][] grid) {
@@ -22039,6 +30062,21 @@ class Solution {
 **Description:** Find the largest all-1 square in a binary matrix. Return its area.  
 **Key insight:** `dp[i][j]` = side length of the largest all-1 square with its bottom-right corner at `(i,j)`. Limited by the minimum of up, left, and diagonal neighbors.
 
+**Variables:** `dp[i][j]` = side length of the largest all-1 square whose bottom-right corner is `(i, j)`; `maxSide` = best side length seen.
+**Pseudocode:**
+```
+m = rows; n = cols; maxSide = 0
+dp = m x n table
+for i from 0 to m-1:
+    for j from 0 to n-1:
+        if matrix[i][j] == '1':
+            if i == 0 or j == 0:
+                dp[i][j] = 1                  // edge cell: square of side 1
+            else:
+                dp[i][j] = min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]) + 1  // limited by 3 neighbors
+            maxSide = max(maxSide, dp[i][j])
+return maxSide * maxSide                       // area
+```
 ```java
 class Solution {
     public int maximalSquare(char[][] matrix) {
@@ -22067,6 +30105,21 @@ class Solution {
 **Template:** DFS + memoization (grid has ordering from values, so no cycle in the recursion DAG).  
 **Intuition:** strictly increasing values forbid revisiting, so each cell's longest path is 1 + the best of its larger neighbors — cache it.
 
+**Variables:** `memo[i][j]` = length of the longest strictly increasing path STARTING at `(i, j)` (0 = uncomputed); `max` = global best; `dr`/`dc` = 4-direction deltas.
+**Pseudocode:**
+```
+m = rows; n = cols
+memo = m x n table, all zero; max = 0
+for each cell (i, j): max = max(max, dfs(i, j))   // try every start
+
+dfs(i, j):
+    if memo[i][j] != 0: return memo[i][j]          // cached
+    memo[i][j] = 1                                  // at least the cell itself
+    for each of 4 directions (ni, nj):
+        if in bounds and matrix[ni][nj] > matrix[i][j]:   // strictly increasing
+            memo[i][j] = max(memo[i][j], dfs(ni, nj) + 1)
+    return memo[i][j]
+```
 ```java
 class Solution {
     int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
@@ -22124,6 +30177,15 @@ cooldown  = max profit right after selling (can't buy today)
 
 **Intuition:** `hold` is the best profit if you currently own a share bought at the lowest price seen; sell whenever today's price beats that.
 
+**Variables:** `cash` = max profit while NOT holding; `hold` = max profit while HOLDING (one buy, no reinvestment of prior profit).
+**Pseudocode:**
+```
+cash = 0; hold = -prices[0]                 // day 0: bought at prices[0]
+for i from 1 to n-1:
+    cash = max(cash, hold + prices[i])      // sell today or stay out
+    hold = max(hold, -prices[i])            // buy today (NO cash added: only 1 buy)
+return cash
+```
 ```java
 class Solution {
     public int maxProfit(int[] prices) {
@@ -22145,6 +30207,15 @@ class Solution {
 **Key difference from #121:** `hold = max(hold, cash - prices[i])` — can reinvest all prior profits.  
 **Intuition:** with unlimited trades, buying can fund itself from accumulated `cash`, so capture every upward move.
 
+**Variables:** `cash` = max profit while NOT holding; `hold` = max profit while HOLDING, where buying reinvests accumulated `cash` (unlimited transactions).
+**Pseudocode:**
+```
+cash = 0; hold = -prices[0]
+for i from 1 to n-1:
+    cash = max(cash, hold + prices[i])      // sell today or stay out
+    hold = max(hold, cash - prices[i])      // buy today funded by prior cash (reinvest)
+return cash
+```
 ```java
 class Solution {
     public int maxProfit(int[] prices) {
@@ -22166,6 +30237,17 @@ class Solution {
 **Key:** 4 named states chained in order: buy1 → sell1 → buy2 → sell2.  
 **Intuition:** the second buy can only spend profit left after the first sell, so chain the states in trade order.
 
+**Variables:** `buy1`/`sell1`/`buy2`/`sell2` = best profit after the 1st buy / 1st sell / 2nd buy / 2nd sell, chained in trade order (at most 2 transactions).
+**Pseudocode:**
+```
+buy1 = -prices[0]; sell1 = 0; buy2 = -prices[0]; sell2 = 0
+for i from 1 to n-1:
+    buy1  = max(buy1,  -prices[i])           // 1st buy
+    sell1 = max(sell1, buy1  + prices[i])    // 1st sell (uses buy1)
+    buy2  = max(buy2,  sell1 - prices[i])    // 2nd buy (spends sell1 profit)
+    sell2 = max(sell2, buy2  + prices[i])    // 2nd sell (uses buy2)
+return sell2
+```
 ```java
 class Solution {
     public int maxProfit(int[] prices) {
@@ -22190,6 +30272,17 @@ class Solution {
 **Key:** `hold` can only use `cooldown` (yesterday's `cash`), not today's `cash`. Save `prevCash` before updating.  
 **Intuition:** the cooldown forces buying to draw from cash that's at least one day old, so carry yesterday's cash forward.
 
+**Variables:** `cash` = max profit not holding; `hold` = max profit holding; `cooldown` = yesterday's `cash` (the only cash a buy may draw from); `prevCash` = today's `cash` saved before it is overwritten.
+**Pseudocode:**
+```
+cash = 0; hold = -prices[0]; cooldown = 0
+for i from 1 to n-1:
+    prevCash = cash                          // save today's cash before update
+    cash     = max(cash, hold + prices[i])   // sell today or stay out
+    hold     = max(hold, cooldown - prices[i])  // buy only from cooldown (>=1 day old cash)
+    cooldown = prevCash                       // tomorrow's cooldown = yesterday's cash
+return cash
+```
 ```java
 class Solution {
     public int maxProfit(int[] prices) {
@@ -22214,6 +30307,15 @@ class Solution {
 **Key:** same as #122 but subtract `fee` when selling.  
 **Intuition:** the fee just shrinks every sale, so a trade is only worth making when the gain clears the fee.
 
+**Variables:** `cash` = max profit not holding; `hold` = max profit holding (reinvests `cash` like #122); selling pays a flat `fee`.
+**Pseudocode:**
+```
+cash = 0; hold = -prices[0]
+for i from 1 to n-1:
+    cash = max(cash, hold + prices[i] - fee) // sell today, pay fee
+    hold = max(hold, cash - prices[i])       // buy today funded by prior cash (reinvest)
+return cash
+```
 ```java
 class Solution {
     public int maxProfit(int[] prices, int fee) {
@@ -22266,6 +30368,15 @@ Problem     hold update                   cash update                 Extra stat
 
 **Algorithm:** 1D DP. `dp[i]` = min cost to reach step `i`. `dp[0] = dp[1] = 0` (can start for free). For `i >= 2`: `dp[i] = min(dp[i-1] + cost[i-1], dp[i-2] + cost[i-2])`.
 
+**Variables:** `dp[i]` = min cost to reach step `i` (with the top being step `n`); `cost[i]` = cost paid to leave step `i`; `n` = number of steps.
+**Pseudocode:**
+```
+n = number of steps
+make dp of size n+1, dp[0] = dp[1] = 0   (free to start at step 0 or 1)
+for i from 2 to n:
+    dp[i] = min(reach i-1 then pay cost[i-1], reach i-2 then pay cost[i-2])
+return dp[n]   (cost to reach the top)
+```
 ```java
 class Solution {
     public int minCostClimbingStairs(int[] cost) {
@@ -22287,6 +30398,19 @@ class Solution {
 
 **Variation:** Two sources at each position. If the current digit is non-zero, it can be decoded alone (`dp[i] += dp[i-1]`). If the previous two digits form a valid two-letter code (10-26), add `dp[i-2]`.
 
+**Variables:** `dp[i]` = number of ways to decode the first `i` digits `s[0..i)`; `oneDigit` = value of the single digit `s[i-1]`; `twoDigit` = value of the two digits `s[i-2..i)`; `n` = length of `s`.
+**Pseudocode:**
+```
+if first char is '0': return 0   (no valid decoding)
+n = length of s
+make dp of size n+1, dp[0] = 1, dp[1] = 1   (empty and first digit)
+for i from 2 to n:
+    oneDigit = value of s[i-1]
+    twoDigit = value of s[i-2..i)
+    if oneDigit != 0: dp[i] += dp[i-1]            (decode last digit alone)
+    if 10 <= twoDigit <= 26: dp[i] += dp[i-2]     (decode last two digits together)
+return dp[n]
+```
 ```java
 class Solution {
     public int numDecodings(String s) {
@@ -22314,6 +30438,16 @@ class Solution {
 
 **Algorithm:** Unbounded knapsack. `dp[i]` = min squares to reach sum `i`. For each `i`, try all squares `j*j <= i`: `dp[i] = min(dp[i], dp[i - j*j] + 1)`.
 
+**Variables:** `dp[i]` = minimum number of perfect squares summing to `i`; `j*j` = the perfect square being subtracted; `n` = target.
+**Pseudocode:**
+```
+make dp of size n+1, fill with infinity (n+1)
+dp[0] = 0   (zero squares sum to 0)
+for i from 1 to n:
+    for each square j*j <= i:
+        dp[i] = min(dp[i], dp[i - j*j] + 1)   (use one square j*j, plus best for remainder)
+return dp[n]
+```
 ```java
 class Solution {
     public int numSquares(int n) {
@@ -22337,6 +30471,15 @@ class Solution {
 
 **Variation:** Catalan number recurrence. `dp[i]` = number of unique BSTs with i nodes. When root = j, left subtree has j-1 nodes, right subtree has i-j nodes: `dp[i] += dp[j-1] * dp[i-j]`.
 
+**Variables:** `dp[i]` = number of structurally unique BSTs holding `i` nodes (i-th Catalan number); `j` = which value is the root; `n` = number of nodes.
+**Pseudocode:**
+```
+make dp of size n+1, dp[0] = dp[1] = 1   (empty tree and single node)
+for i from 2 to n:
+    for each root choice j from 1 to i:
+        dp[i] += dp[j-1] * dp[i-j]   (left subtree has j-1 nodes, right has i-j nodes)
+return dp[n]
+```
 ```java
 class Solution {
     public int numTrees(int n) {
@@ -22359,6 +30502,19 @@ class Solution {
 
 **Variation:** Same as #62 (Unique Paths) but skip cells with obstacles: `dp[i][j] = 0` if blocked, else `dp[i-1][j] + dp[i][j-1]`.
 
+**Variables:** `dp[i][j]` = number of paths from the start to cell `(i,j)` avoiding obstacles; `obstacleGrid[i][j] == 1` marks a blocked cell; `m`,`n` = grid dimensions.
+**Pseudocode:**
+```
+m, n = grid dimensions
+make dp of size m x n
+fill first column with 1 until the first obstacle (then stays 0)
+fill first row with 1 until the first obstacle (then stays 0)
+for i from 1 to m-1:
+    for j from 1 to n-1:
+        if cell (i,j) is not an obstacle:
+            dp[i][j] = dp[i-1][j] + dp[i][j-1]   (paths from above + from left)
+return dp[m-1][n-1]
+```
 ```java
 class Solution {
     public int uniquePathsWithObstacles(int[][] obstacleGrid) {
@@ -22384,6 +30540,19 @@ class Solution {
 
 **Variation:** Reduce to LCS. Minimum deletions = `len(word1) + len(word2) - 2 * LCS(word1, word2)`. Compute LCS using standard 2D DP.
 
+**Variables:** `dp[i][j]` = length of the longest common subsequence of `word1[0..i)` and `word2[0..j)`; `m`,`n` = lengths of the two words; answer = `m + n - 2*dp[m][n]`.
+**Pseudocode:**
+```
+m, n = lengths of word1, word2
+make dp of size (m+1) x (n+1), all zero   (dp[i][j] = LCS length)
+for i from 1 to m:
+    for j from 1 to n:
+        if word1[i-1] == word2[j-1]:
+            dp[i][j] = dp[i-1][j-1] + 1     (extend the common subsequence)
+        else:
+            dp[i][j] = max(dp[i-1][j], dp[i][j-1])   (drop one char from either word)
+return m + n - 2 * dp[m][n]   (delete everything outside the LCS)
+```
 ```java
 class Solution {
     public int minDistance(String word1, String word2) {
@@ -22412,6 +30581,22 @@ class Solution {
 
 **Variation:** Sort first, then apply LIS-style DP. `dp[i]` = size of largest divisible subset ending at `nums[i]`. If `nums[i] % nums[j] == 0`, then `dp[i] = max(dp[i], dp[j] + 1)`. Track parent indices to reconstruct the subset.
 
+**Variables:** `dp[i]` = size of the largest divisible subset ending at sorted `nums[i]`; `parent[i]` = previous element's index in that subset; `maxLen`/`maxIdx` = best subset length and its end index; `n` = count.
+**Pseudocode:**
+```
+sort nums ascending   (so divisibility forms a chain)
+n = length, dp[i] = 1 for all, parent[i] = i for all
+maxLen = 1, maxIdx = 0
+for i from 1 to n-1:
+    for j from 0 to i-1:
+        if nums[i] divisible by nums[j] and dp[j]+1 > dp[i]:
+            dp[i] = dp[j] + 1            (extend chain ending at j)
+            parent[i] = j                (remember predecessor)
+    if dp[i] > maxLen: maxLen = dp[i], maxIdx = i
+walk back from maxIdx via parent, collecting nums until parent points to itself
+reverse the collected list
+return it
+```
 ```java
 class Solution {
     public List<Integer> largestDivisibleSubset(int[] nums) {
@@ -22449,6 +30634,20 @@ class Solution {
 
 **Variation:** Grid DP with three sources from the row above. `dp[i][j] = matrix[i][j] + min(dp[i-1][j-1], dp[i-1][j], dp[i-1][j+1])`.
 
+**Variables:** `dp[i][j]` = minimum falling-path sum that ends at cell `(i,j)`; `best` = cheapest reachable cell in the row above; `n` = matrix size.
+**Pseudocode:**
+```
+n = matrix size
+make dp of size n x n
+copy first row of matrix into dp[0]   (paths start anywhere in row 0)
+for i from 1 to n-1:
+    for j from 0 to n-1:
+        best = dp[i-1][j]                              (straight down)
+        if j > 0:   best = min(best, dp[i-1][j-1])     (diagonal up-left)
+        if j < n-1: best = min(best, dp[i-1][j+1])     (diagonal up-right)
+        dp[i][j] = matrix[i][j] + best
+return the minimum value in the last row of dp
+```
 ```java
 class Solution {
     public int minFallingPathSum(int[][] matrix) {
@@ -22476,6 +30675,24 @@ class Solution {
 ## #10 Regular Expression Matching
 **Description:** Implement regex matching with `.` (any single char) and `*` (zero or more of the preceding element). Match must cover the entire input string.
 **Variation:** 2D DP. `dp[i][j]` = whether `s[0..i)` matches `p[0..j)`. The `*` has two cases: zero occurrences (`dp[i][j-2]`) or one-more occurrence when the preceding pattern char matches `s[i-1]`.
+**Variables:** `dp[i][j]` = true if `s[0..i)` matches pattern `p[0..j)`; `matches(i,j)` = does pattern char `p[j-1]` match string char `s[i-1]` (via `.` or equality); `m`,`n` = lengths of `s`,`p`.
+**Pseudocode:**
+```
+m, n = lengths of s, p
+make dp of size (m+1) x (n+1), all false; dp[0][0] = true   (empty matches empty)
+for j from 1 to n:
+    if p[j-1] is '*': dp[0][j] = dp[0][j-2]   (x* erases itself against empty string)
+for i from 1 to m:
+    for j from 1 to n:
+        if p[j-1] is '*':
+            dp[i][j] = dp[i][j-2]                          (zero copies of preceding element)
+            if preceding pattern char matches s[i-1]:
+                dp[i][j] = dp[i][j] OR dp[i-1][j]          (consume one more s char, keep *)
+        else if p[j-1] matches s[i-1]:
+            dp[i][j] = dp[i-1][j-1]                        (single char/. match)
+return dp[m][n]
+matches(i,j): p[j-1] == '.' or s[i-1] == p[j-1]
+```
 ```java
 class Solution {
     public boolean isMatch(String s, String p) {
@@ -22509,6 +30726,22 @@ class Solution {
 ## #87 Scramble String
 **Description:** Given s1 and s2, return true if s2 is a scrambled string of s1 (formed by recursively partitioning into two non-empty substrings and optionally swapping them).
 **Variation:** memoized recursion over (i1, i2, len). At each length, try every split point both swapped and non-swapped.
+**Variables:** `memo[key]` = cached scramble result keyed by the pair `s1 + "#" + s2`; `count[26]` = character-frequency difference used to prune; `i` = split point; `n` = length of `s1`.
+**Pseudocode:**
+```
+isScramble(s1, s2):
+    if s1 == s2: return true
+    if lengths differ: return false
+    key = s1 + "#" + s2; if memoized, return cached value
+    n = length of s1
+    tally char counts of s1 minus s2; if any count nonzero: memo false, return false (different multiset)
+    for split point i from 1 to n-1:
+        no swap: left s1[0..i) vs s2[0..i) AND right s1[i..) vs s2[i..)
+            if both scramble: memo true, return true
+        swap: left s1[0..i) vs s2[n-i..) AND right s1[i..) vs s2[0..n-i)
+            if both scramble: memo true, return true   (children were swapped)
+    memo false, return false
+```
 ```java
 class Solution {
     private Map<String, Boolean> memo = new HashMap<>();
@@ -22540,6 +30773,19 @@ class Solution {
 ## #1049 Last Stone Weight II
 **Description:** Repeatedly smash the two heaviest stones (result is their difference). Return the smallest possible weight of the remaining stone.
 **Variation:** equivalent to splitting stones into two groups to minimize the difference of their sums. 0/1 knapsack to find the max subset sum ≤ total/2.
+**Variables:** `dp[j]` = true if some subset of stones sums exactly to `j` (0/1 knapsack reachability); `total` = sum of all stones; `target` = total/2; answer minimizes `|S1 - S2| = total - 2j`.
+**Pseudocode:**
+```
+total = sum of all stones
+target = total / 2                       (largest group sum worth aiming for)
+make dp of size target+1, all false; dp[0] = true
+for each stone s:
+    for j from target down to s:         (descending = use each stone once)
+        dp[j] = dp[j] OR dp[j - s]       (reach j by adding stone s)
+for j from target down to 0:
+    if dp[j] is reachable: return total - 2*j   (minimal difference between groups)
+return 0
+```
 ```java
 class Solution {
     public int lastStoneWeightII(int[] stones) {
@@ -22564,6 +30810,20 @@ class Solution {
 ## #1312 Minimum Insertion Steps to Make a String Palindrome
 **Description:** Return the minimum number of insertions needed to make a string a palindrome.
 **Variation:** answer = n − longest palindromic subsequence (LPS). LPS = LCS of the string and its reverse; or solve directly via interval DP.
+**Variables:** `dp[i][j]` = length of the longest palindromic subsequence within `s[i..j]`; `n` = length of `s`; answer = `n - dp[0][n-1]` (chars not in the LPS must be matched by insertions).
+**Pseudocode:**
+```
+n = length of s
+make dp of size n x n   (dp[i][j] = LPS length over s[i..j])
+for i from n-1 down to 0:          (shorter spans computed first)
+    dp[i][i] = 1                   (single char is a palindrome)
+    for j from i+1 to n-1:
+        if s[i] == s[j]:
+            dp[i][j] = dp[i+1][j-1] + 2   (wrap matching ends around inner LPS)
+        else:
+            dp[i][j] = max(dp[i+1][j], dp[i][j-1])   (drop one end)
+return n - dp[0][n-1]             (insertions = chars outside the LPS)
+```
 ```java
 class Solution {
     public int minInsertions(String s) {
@@ -22595,6 +30855,21 @@ class Solution {
 **Intuition:** `*` either consumes one more char of `s` (`dp[i-1][j]`) or matches empty (`dp[i][j-1]`); everything else is a 1-to-1 char/`?` match.
 **Algorithm:** `dp[i][j]` = `s[0..i)` matches `p[0..j)`; init `dp[0][j]` true while pattern is all `*`; answer `dp[m][n]`.
 
+**Variables:** `dp[i][j]` = true if `s[0..i)` matches pattern `p[0..j)` (with `?` = any single char, `*` = any sequence); `m`,`n` = lengths of `s`,`p`.
+**Pseudocode:**
+```
+m, n = lengths of s, p
+make dp of size (m+1) x (n+1), all false; dp[0][0] = true   (empty matches empty)
+for j from 1 to n:
+    if p[j-1] is '*': dp[0][j] = dp[0][j-1]   (leading '*'s match the empty string)
+for i from 1 to m:
+    for j from 1 to n:
+        if p[j-1] is '*':
+            dp[i][j] = dp[i-1][j] OR dp[i][j-1]   (* consumes one s char, or matches empty)
+        else if p[j-1] is '?' or p[j-1] == s[i-1]:
+            dp[i][j] = dp[i-1][j-1]               (single-char match)
+return dp[m][n]
+```
 ```java
 class Solution {
     public boolean isMatch(String s, String p) {
@@ -22629,6 +30904,15 @@ class Solution {
 **Intuition:** the best sum ending at `i` either extends the previous best or restarts at `nums[i]` (Kadane).
 **Algorithm:** `current` = max sum ending at `i` = `max(nums[i], current + nums[i])`; track global `result`.
 
+**Variables:** `current` = maximum subarray sum ending exactly at index `i` (the collapsed `dp[i]`); `result` = best subarray sum seen overall.
+**Pseudocode:**
+```
+current = nums[0], result = nums[0]
+for i from 1 to n-1:
+    current = max(nums[i], current + nums[i])   (start fresh at i vs extend previous)
+    result = max(result, current)               (track global best)
+return result
+```
 ```java
 class Solution {
     public int maxSubArray(int[] nums) {
@@ -22653,6 +30937,20 @@ class Solution {
 **Intuition:** the last char of `s3[0..i+j)` comes from either `s1` or `s2`; reuse the answer for the smaller prefix.
 **Algorithm:** `dp[i][j]` = `s1[0..i)` + `s2[0..j)` interleave to `s3[0..i+j)`; answer `dp[m][n]`.
 
+**Variables:** `dp[i][j]` = true if `s1[0..i)` and `s2[0..j)` interleave to form `s3[0..i+j)`; `m`,`n` = lengths of `s1`,`s2`.
+**Pseudocode:**
+```
+m, n = lengths of s1, s2
+if m + n != length of s3: return false   (lengths must add up)
+make dp of size (m+1) x (n+1), all false; dp[0][0] = true
+fill first column: dp[i][0] true while s1's prefix equals s3's prefix
+fill first row:    dp[0][j] true while s2's prefix equals s3's prefix
+for i from 1 to m:
+    for j from 1 to n:
+        dp[i][j] = (dp[i-1][j] and s1[i-1] == s3[i+j-1])    (take next char from s1)
+                or (dp[i][j-1] and s2[j-1] == s3[i+j-1])    (take next char from s2)
+return dp[m][n]
+```
 ```java
 class Solution {
     public boolean isInterleave(String s1, String s2, String s3) {
@@ -22688,6 +30986,16 @@ class Solution {
 **Intuition:** working bottom-up, each cell's best is its value plus the cheaper of the two children directly below.
 **Algorithm:** `dp[j]` = min path sum from row `i` cell `j` to the bottom; collapse one row at a time; answer `dp[0]`.
 
+**Variables:** `dp[j]` = minimum path sum from the current cell in column `j` down to the bottom (rolling 1D array reused per row); `n` = number of rows.
+**Pseudocode:**
+```
+n = number of rows
+make dp of size n+1, all zero   (one extra slot so dp[j+1] is valid)
+for i from n-1 down to 0:        (process rows bottom-up)
+    for j from 0 to i:
+        dp[j] = triangle[i][j] + min(dp[j], dp[j+1])   (add cheaper of the two cells below)
+return dp[0]   (best total from the apex)
+```
 ```java
 class Solution {
     public int minimumTotal(List<List<Integer>> triangle) {
@@ -22712,6 +31020,24 @@ class Solution {
 **Intuition:** if `s[j..i]` is a palindrome, a cut after `j-1` lets `cuts[i] = cuts[j-1] + 1`; precompute palindromes with interval DP.
 **Algorithm:** `pal[i][j]` palindrome flag; `cuts[i]` = min cuts for `s[0..i]`; answer `cuts[n-1]`.
 
+**Variables:** `pal[i][j]` = true if `s[i..j]` is a palindrome; `cuts[i]` = minimum cuts needed so every piece of `s[0..i]` is a palindrome; `n` = length of `s`.
+**Pseudocode:**
+```
+n = length of s
+make pal of size n x n
+for i from n-1 down to 0:
+    for j from i to n-1:
+        pal[i][j] = (s[i] == s[j]) and (span < 2 or inner pal[i+1][j-1])   (precompute palindromes)
+make cuts of size n
+for i from 0 to n-1:
+    if s[0..i] is itself a palindrome: cuts[i] = 0
+    else:
+        cuts[i] = i                            (worst case: cut between every char)
+        for j from 1 to i:
+            if s[j..i] is a palindrome:
+                cuts[i] = min(cuts[i], cuts[j-1] + 1)   (one cut before this palindromic suffix)
+return cuts[n-1]
+```
 ```java
 class Solution {
     public int minCut(String s) {
@@ -22749,6 +31075,23 @@ class Solution {
 **Intuition:** memoize on each suffix the list of valid segmentations, prepending each matching word to the segmentations of the remainder.
 **Algorithm:** `dfs(start)` returns all sentences for `s[start..]`; cache per `start`; answer `dfs(0)`.
 
+**Variables:** `memo[start]` = cached list of all sentences segmenting the suffix `s[start..]`; `words` = dictionary set; `word` = candidate prefix; `tail` = a segmentation of the remainder.
+**Pseudocode:**
+```
+words = set of dictionary words
+return dfs(s, 0)
+dfs(s, start):
+    if memoized for start: return cached list
+    result = empty list
+    if start == length of s: result = [""], return it   (base: empty suffix gives one empty sentence)
+    for end from start+1 to length of s:
+        word = s[start..end)
+        if word is in dictionary:
+            for each tail in dfs(s, end):               (all segmentations of remainder)
+                add (word, or word + " " + tail) to result
+    memoize result for start
+    return result
+```
 ```java
 class Solution {
     private Map<Integer, List<String>> memo = new HashMap<>();
@@ -22790,6 +31133,17 @@ class Solution {
 **Intuition:** a negative number flips max and min, so track both; the running max product ending at `i` may come from the prior max or min.
 **Algorithm:** maintain `maxEnd` and `minEnd`; swap on negative; track global `result`.
 
+**Variables:** `maxEnd` = maximum product of a subarray ending at index `i`; `minEnd` = minimum (most negative) product ending at `i`; `result` = best product seen overall.
+**Pseudocode:**
+```
+maxEnd = minEnd = result = nums[0]
+for i from 1 to n-1:
+    if nums[i] < 0: swap maxEnd and minEnd   (a negative turns the largest into the smallest)
+    maxEnd = max(nums[i], maxEnd * nums[i])  (extend or restart for the max)
+    minEnd = min(nums[i], minEnd * nums[i])  (extend or restart for the min)
+    result = max(result, maxEnd)
+return result
+```
 ```java
 class Solution {
     public int maxProduct(int[] nums) {
@@ -22818,6 +31172,18 @@ class Solution {
 **Intuition:** health needed depends on the future, so fill from the bottom-right: needed entering a cell = max(1, min child need − cell value).
 **Algorithm:** `dp[i][j]` = min health needed entering `(i,j)`; answer `dp[0][0]`.
 
+**Variables:** `dp[i][j]` = minimum health the knight must have on entering cell `(i,j)` to survive to the end; `need` = required health before applying this cell; `m`,`n` = grid dimensions.
+**Pseudocode:**
+```
+m, n = grid dimensions
+make dp of size (m+1) x (n+1), fill with infinity
+dp[m][n-1] = dp[m-1][n] = 1   (just past the goal needs 1 health)
+for i from m-1 down to 0:       (fill from bottom-right toward start)
+    for j from n-1 down to 0:
+        need = min(dp[i+1][j], dp[i][j+1]) - dungeon[i][j]   (health for cheaper next cell, minus this cell)
+        dp[i][j] = max(1, need)                              (must stay at least 1)
+return dp[0][0]
+```
 ```java
 class Solution {
     public int calculateMinimumHP(int[][] dungeon) {
@@ -22847,6 +31213,17 @@ class Solution {
 **Intuition:** for each allowed transaction count `t`, track best buy and sell; this is #123 generalized to `k` chained state pairs.
 **Algorithm:** `buy[t]` / `sell[t]` for `t` in `1..k`; answer `sell[k]`.
 
+**Variables:** `buy[t]` = max profit so far having opened (but not yet closed) the t-th transaction; `sell[t]` = max profit so far having completed t transactions. `buy` initialized to MIN_VALUE (no transaction open yet), `sell` to 0.
+**Pseudocode:**
+```
+if no prices or k == 0: return 0
+buy[1..k] = -infinity, sell[0..k] = 0
+for each price in prices:
+    for t from 1 to k:
+        buy[t]  = max(buy[t], sell[t-1] - price)   // open t-th by buying now
+        sell[t] = max(sell[t], buy[t] + price)     // close t-th by selling now
+return sell[k]
+```
 ```java
 class Solution {
     public int maxProfit(int k, int[] prices) {
@@ -22875,6 +31252,19 @@ class Solution {
 **Intuition:** every ugly number is a previous ugly number times 2, 3, or 5; merge the three multiples with pointers.
 **Algorithm:** `dp[i]` = i-th ugly number; advance pointers `p2,p3,p5`; answer `dp[n-1]`.
 
+**Variables:** `dp[i]` = the (i+1)-th ugly number (sorted ascending); `p2/p3/p5` = indices into dp of the next ugly number to be multiplied by 2/3/5.
+**Pseudocode:**
+```
+dp[0] = 1
+p2 = p3 = p5 = 0
+for i from 1 to n-1:
+    next2 = dp[p2]*2; next3 = dp[p3]*3; next5 = dp[p5]*5
+    dp[i] = min(next2, next3, next5)
+    if dp[i] == next2: p2++
+    if dp[i] == next3: p3++   // separate ifs dedupe equal candidates
+    if dp[i] == next5: p5++
+return dp[n-1]
+```
 ```java
 class Solution {
     public int nthUglyNumber(int n) {
@@ -22902,6 +31292,19 @@ class Solution {
 **Intuition:** generalize #264 to arbitrary primes — keep one pointer per prime and pick the minimum next candidate.
 **Algorithm:** `dp[i]` = i-th super ugly; `pointers[j]` for each prime; answer `dp[n-1]`.
 
+**Variables:** `dp[i]` = the (i+1)-th super ugly number; `pointers[j]` = index into dp of the next super ugly number to multiply by `primes[j]`; `k` = number of primes.
+**Pseudocode:**
+```
+dp[0] = 1
+pointers[0..k-1] = 0
+for i from 1 to n-1:
+    min = +infinity
+    for each prime j: min = min(min, dp[pointers[j]] * primes[j])
+    dp[i] = min
+    for each prime j:
+        if dp[pointers[j]] * primes[j] == min: pointers[j]++   // advance all that tie
+return dp[n-1]
+```
 ```java
 class Solution {
     public int nthSuperUglyNumber(int n, int[] primes) {
@@ -22934,6 +31337,21 @@ class Solution {
 **Intuition:** each node returns two values — best if it is robbed (skip children) vs not robbed (children free to choose).
 **Algorithm:** `dfs(node)` returns `{notRob, rob}`; answer = `max` of root's pair.
 
+**Variables:** `dfs(node)` returns a 2-element array `{notRob, rob}`: `[0]` = max money from this subtree if `node` is NOT robbed, `[1]` = max money if `node` IS robbed.
+**Pseudocode:**
+```
+rob(root):
+    result = dfs(root)
+    return max(result[notRob], result[rob])
+
+dfs(node):
+    if node == null: return {0, 0}
+    left  = dfs(node.left)
+    right = dfs(node.right)
+    notRob = max(left.notRob, left.rob) + max(right.notRob, right.rob)
+    rob    = node.val + left.notRob + right.notRob   // children must be skipped
+    return {notRob, rob}
+```
 ```java
 class Solution {
     public int rob(TreeNode root) {
@@ -22961,6 +31379,15 @@ class Solution {
 **Intuition:** for each split `j`, the rest can stay as `i-j` or be broken further (`dp[i-j]`); take the best.
 **Algorithm:** `dp[i]` = max product of breaking `i` (into ≥2 parts); answer `dp[n]`.
 
+**Variables:** `dp[i]` = maximum product obtainable by breaking integer `i` into at least two positive parts; `j` = first part, `i-j` = remainder (kept whole or broken further via `dp[i-j]`).
+**Pseudocode:**
+```
+dp[1] = 1
+for i from 2 to n:
+    for j from 1 to i-1:
+        dp[i] = max(dp[i], max(j*(i-j), j*dp[i-j]))   // remainder whole vs broken
+return dp[n]
+```
 ```java
 class Solution {
     public int integerBreak(int n) {
@@ -22985,6 +31412,19 @@ class Solution {
 **Intuition:** for range `[i,j]`, guessing `k` costs `k` plus the worst of the two resulting subranges; minimize over `k`.
 **Algorithm:** `dp[i][j]` = min worst-case cost for `[i,j]` (interval DP); answer `dp[1][n]`.
 
+**Variables:** `dp[i][j]` = minimum money guaranteeing a win when the target is somewhere in `[i,j]`; `len` = current interval length; `k` = guessed number; `cost` = `k` + worst of the two resulting subranges.
+**Pseudocode:**
+```
+dp sized (n+2)x(n+2), all 0
+for len from 2 to n:
+    for i from 1 while i+len-1 <= n:
+        j = i+len-1
+        dp[i][j] = +infinity
+        for k from i to j:
+            cost = k + max(dp[i][k-1], dp[k+1][j])   // worst-case subrange
+            dp[i][j] = min(dp[i][j], cost)
+return dp[1][n]
+```
 ```java
 class Solution {
     public int getMoneyAmount(int n) {
@@ -23013,6 +31453,16 @@ class Solution {
 **Intuition:** track the best subsequence ending with an up-move and with a down-move; each rise extends `down`, each fall extends `up`.
 **Algorithm:** `up` / `down` running lengths; answer `max(up, down)`.
 
+**Variables:** `up` = length of longest wiggle subsequence ending with an upward (rising) difference; `down` = same ending with a downward difference. Both start at 1.
+**Pseudocode:**
+```
+up = down = 1
+for i from 1 to n-1:
+    if nums[i] > nums[i-1]: up = down + 1      // rise extends a down-ending seq
+    else if nums[i] < nums[i-1]: down = up + 1 // fall extends an up-ending seq
+    (equal: change nothing)
+return max(up, down)
+```
 ```java
 class Solution {
     public int wiggleMaxLength(int[] nums) {
@@ -23038,6 +31488,18 @@ class Solution {
 **Intuition:** if `nums[i]` continues the arithmetic run ending at `i-1`, it adds `dp[i-1]+1` new slices ending at `i`.
 **Algorithm:** `current` = arithmetic slices ending at `i`; accumulate into `result`.
 
+**Variables:** `current` = number of arithmetic subarrays ending exactly at index `i`; `result` = running total of all arithmetic slices found.
+**Pseudocode:**
+```
+current = 0, result = 0
+for i from 2 to n-1:
+    if nums[i]-nums[i-1] == nums[i-1]-nums[i-2]:   // run continues
+        current++
+        result += current
+    else:
+        current = 0
+return result
+```
 ```java
 class Solution {
     public int numberOfArithmeticSlices(int[] nums) {
@@ -23064,6 +31526,19 @@ class Solution {
 **Intuition:** for each pair `(j, i)` with difference `d`, weak slices ending at `i` extend those ending at `j`; promote weak to valid when length reaches 3.
 **Algorithm:** `dp[i]` is a map from difference `d` to count of weak arithmetic subsequences ending at `i`; accumulate `result`.
 
+**Variables:** `dp[i]` = map from common difference `d` to the count of "weak" arithmetic subsequences (length >= 2) ending at index `i`; `d` = `nums[i]-nums[j]`; `countJ` = weak subsequences with diff `d` ending at `j` (each becomes a valid length-3+ slice when extended to `i`); `result` = total valid slices.
+**Pseudocode:**
+```
+result = 0
+for i from 0 to n-1:
+    dp[i] = empty map
+    for j from 0 to i-1:
+        d = nums[i] - nums[j]                  // use long
+        countJ = dp[j].getOrDefault(d, 0)
+        result += countJ                       // those weak seqs become valid at i
+        dp[i][d] += countJ + 1                 // +1 for the new pair (j,i)
+return result
+```
 ```java
 class Solution {
     public int numberOfArithmeticSlices(int[] nums) {
@@ -23092,6 +31567,16 @@ class Solution {
 **Intuition:** on range `[i,j]` the current player maximizes value − opponent's best on the remaining range.
 **Algorithm:** `dp[i][j]` = best score difference (current minus opponent) for `[i,j]`; answer `dp[0][n-1] >= 0`.
 
+**Variables:** `dp[i][j]` = best achievable score difference (current player's score minus opponent's) when only `nums[i..j]` remain and it is the current player's turn.
+**Pseudocode:**
+```
+for i: dp[i][i] = nums[i]               // single element: take it
+for i from n-1 down to 0:
+    for j from i+1 to n-1:
+        // take left or right; opponent then plays optimally on the rest
+        dp[i][j] = max(nums[i] - dp[i+1][j], nums[j] - dp[i][j-1])
+return dp[0][n-1] >= 0
+```
 ```java
 class Solution {
     public boolean predictTheWinner(int[] nums) {
@@ -23119,6 +31604,17 @@ class Solution {
 **Intuition:** each term is the sum of the previous two — the canonical linear 1D recurrence.
 **Algorithm:** roll two variables `previous` and `current`; answer after `n` steps.
 
+**Variables:** `previous` = F(i-2), `current` = F(i-1) as the loop builds F(i); rolled forward each step. Conceptually `dp[i] = dp[i-1] + dp[i-2]` reduced to two variables.
+**Pseudocode:**
+```
+if n < 2: return n
+previous = 0, current = 1          // F(0), F(1)
+for i from 2 to n:
+    next = previous + current
+    previous = current
+    current = next
+return current
+```
 ```java
 class Solution {
     public int fib(int n) {
@@ -23145,6 +31641,20 @@ class Solution {
 **Intuition:** state = (number of 'A's so far 0/1, trailing 'L' run 0/1/2); each day append P, A, or L respecting limits.
 **Algorithm:** `dp[a][l]` counts records ending in that state; roll day by day; answer = sum over all states.
 
+**Variables:** `dp[a][l]` = number of valid records built so far that contain `a` total 'A's (0 or 1) and end with a trailing run of exactly `l` consecutive 'L's (0,1,2); `next` = the same table for the following day; `ways` = current state's count being propagated.
+**Pseudocode:**
+```
+dp[0][0] = 1
+repeat n days:
+    next = zeros
+    for a in {0,1}, l in {0,1,2}:
+        ways = dp[a][l]; if 0 skip
+        next[a][0] += ways                 // append 'P' -> L run resets
+        if a == 0: next[1][0] += ways      // append 'A' (only if no A yet)
+        if l < 2:  next[a][l+1] += ways    // append 'L' (run stays < 3)
+    dp = next  (all mod 1e9+7)
+return sum of all dp[a][l] mod
+```
 ```java
 class Solution {
     public int checkRecord(int n) {
@@ -23190,6 +31700,21 @@ class Solution {
 **Intuition:** moving off the boundary counts as one path; otherwise spread current-step counts to 4 neighbors for the next step.
 **Algorithm:** `dp[i][j]` = ways to be at `(i,j)` after `step` moves; sum boundary exits; answer = accumulated `result`.
 
+**Variables:** `dp[i][j]` = number of ways the ball is at cell `(i,j)` after `step` moves; `next` = same grid for the following step; `result` = accumulated count of paths that have already exited the grid; `dr/dc` = the 4 move directions.
+**Pseudocode:**
+```
+dp[startRow][startColumn] = 1
+result = 0
+for step from 0 to maxMove-1:
+    next = zeros
+    for each cell (i,j) with dp[i][j] != 0:
+        for each of 4 directions:
+            (ni,nj) = neighbor
+            if neighbor off grid: result += dp[i][j]       // exiting = one path
+            else: next[ni][nj] += dp[i][j]
+    dp = next  (all mod 1e9+7)
+return result
+```
 ```java
 class Solution {
     int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
@@ -23232,6 +31757,20 @@ class Solution {
 **Intuition:** scan bits high-to-low; precompute Fibonacci-style counts of valid suffixes, adding them when a free bit is `1`, and stop early if two consecutive 1s appear in `n`.
 **Algorithm:** `fib[i]` = valid numbers with `i` free bits; walk bits of `n`; answer = accumulated `result` (+1 for `n` itself if valid).
 
+**Variables:** `fib[i]` = count of binary strings of length `i` with no two adjacent 1s (Fibonacci: `fib[i]=fib[i-1]+fib[i-2]`); `result` = accumulated count of valid numbers strictly below `n` so far; `previousBit` = the previous (higher) bit of `n` seen, to detect two consecutive 1s.
+**Pseudocode:**
+```
+build fib[0..31]: fib[0]=1, fib[1]=2, fib[i]=fib[i-1]+fib[i-2]
+result = 0, previousBit = 0
+for bit i from 30 down to 0:
+    if bit i of n is 1:
+        result += fib[i]                 // count numbers having 0 at this bit
+        if previousBit == 1: return result   // n itself has adjacent 1s; stop
+        previousBit = 1
+    else:
+        previousBit = 0
+return result + 1                        // n itself is valid
+```
 ```java
 class Solution {
     public int findIntegers(int n) {
@@ -23266,6 +31805,17 @@ class Solution {
 **Intuition:** inserting `n` into a permutation of `1..n-1` adds `0..n-1` inversions; this gives a sliding-window sum over the previous row.
 **Algorithm:** `dp[i][j]` = permutations of `i` numbers with `j` inversions, using prefix sums; answer `dp[n][k]`.
 
+**Variables:** `dp[i][j]` = number of permutations of `1..i` having exactly `j` inverse pairs; `prefix[j+1]` = prefix sum of row `dp[i-1]` over `[0..j]`, used to sum the window of allowed contributions; `lo` = window's lower index `max(0, j-(i-1))`.
+**Pseudocode:**
+```
+dp[0][0] = 1
+for i from 1 to n:
+    prefix[0]=0; prefix[j+1] = prefix[j] + dp[i-1][j]   for j in 0..k
+    for j from 0 to k:
+        lo = max(0, j-(i-1))                 // inserting i adds 0..i-1 inversions
+        dp[i][j] = prefix[j+1] - prefix[lo]  (mod)
+return dp[n][k]
+```
 ```java
 class Solution {
     public int kInversePairs(int n, int k) {
@@ -23296,6 +31846,18 @@ class Solution {
 **Intuition:** treat the remaining needs vector as the state; either buy everything at unit price, or apply an affordable offer and recurse.
 **Algorithm:** memoized DFS over the needs list; answer `dfs(needs)`.
 
+**Variables:** state = the `needs` vector (remaining quantity required of each item); `memo` maps a needs vector to its min cost; `best` = best cost for the current needs (baseline = buying everything at unit price); each `offer` reduces needs by its bundle and adds its price.
+**Pseudocode:**
+```
+dfs(needs):
+    if memo has needs: return it
+    best = sum over items of needs[i] * price[i]      // buy all at unit price
+    for each offer:
+        remaining = needs - offer (per item); skip offer if any goes negative
+        if valid: best = min(best, offer.price + dfs(remaining))
+    memo[needs] = best
+    return best
+```
 ```java
 class Solution {
     private Map<List<Integer>, Integer> memo = new HashMap<>();
@@ -23341,6 +31903,18 @@ class Solution {
 **Intuition:** extend #91 — each position can decode one char (count 1-9 options) or two chars (count valid 10-26 combinations); `*` multiplies the options.
 **Algorithm:** `dp[i]` = decodings of `s[0..i)`; answer `dp[n]`.
 
+**Variables:** `dp[i]` = number of ways to decode the prefix `s[0..i)`; `oneDigit(c)` = number of single-digit decodings for char `c` (`*`->9, '0'->0, else 1); `twoDigit(a,b)` = number of two-digit decodings in 10..26 for the pair (handling `*` wildcards).
+**Pseudocode:**
+```
+dp[0] = 1
+dp[1] = oneDigit(s[0])
+for i from 2 to n:
+    current = s[i-1], prev = s[i-2]
+    dp[i] += dp[i-1] * oneDigit(current)        // decode last char alone
+    dp[i] += dp[i-2] * twoDigit(prev, current)  // decode last two chars
+    (mod 1e9+7)
+return dp[n]
+```
 ```java
 class Solution {
     public int numDecodings(String s) {
@@ -23384,6 +31958,17 @@ class Solution {
 **Intuition:** the answer is the sum of `n`'s prime factors — building `i` from a divisor `j` costs `i/j` operations.
 **Algorithm:** `dp[i]` = min operations to reach `i` characters; for each divisor `j`, `dp[i] = dp[j] + i/j`; answer `dp[n]`.
 
+**Variables:** `dp[i]` = minimum operations to produce exactly `i` characters; `j` = largest proper divisor of `i` (building `i` from `j` costs one Copy-All + `(i/j - 1)` Pastes = `i/j` ops).
+**Pseudocode:**
+```
+for i from 2 to n:
+    dp[i] = i                       // upper bound (copy once, paste i-1 times)
+    for j from i/2 down to 1:
+        if i % j == 0:
+            dp[i] = dp[j] + i/j     // largest divisor gives the minimum
+            break
+return dp[n]
+```
 ```java
 class Solution {
     public int minSteps(int n) {
@@ -23411,6 +31996,20 @@ class Solution {
 **Intuition:** alongside LIS length, track how many ways achieve it; a longer extension resets the count, an equal-length extension accumulates it.
 **Algorithm:** `length[i]` and `count[i]` for LIS ending at `i`; sum counts of maximum-length endings; answer `result`.
 
+**Variables:** `length[i]` = length of the longest increasing subsequence ending at index `i`; `count[i]` = number of LIS of that length ending at `i`; `maxLen` = global max LIS length seen; `result` = total count of LIS achieving `maxLen`.
+**Pseudocode:**
+```
+for i from 0 to n-1:
+    length[i] = 1; count[i] = 1
+    for j from 0 to i-1 with nums[j] < nums[i]:
+        if length[j]+1 > length[i]:        // found longer -> reset count
+            length[i] = length[j]+1; count[i] = count[j]
+        else if length[j]+1 == length[i]:  // equal length -> add count
+            count[i] += count[j]
+    if length[i] > maxLen: maxLen = length[i]; result = count[i]
+    else if length[i] == maxLen: result += count[i]
+return result
+```
 ```java
 class Solution {
     public int findNumberOfLIS(int[] nums) {
@@ -23449,6 +32048,16 @@ class Solution {
 **Intuition:** extend the current run while values rise, otherwise restart; a simpler linear scan of #300.
 **Algorithm:** `current` run length; track `result`.
 
+**Variables:** `current` = length of the current contiguous strictly-increasing run ending at `i`; `result` = longest such run seen.
+**Pseudocode:**
+```
+current = 1, result = 1
+for i from 1 to n-1:
+    if nums[i] > nums[i-1]: current++     // run continues
+    else: current = 1                     // reset on non-increase
+    result = max(result, current)
+return result
+```
 ```java
 class Solution {
     public int findLengthOfLCIS(int[] nums) {
@@ -23475,6 +32084,18 @@ class Solution {
 **Intuition:** spread the probability at each cell to its 8 knight-move targets per step; off-board moves lose probability.
 **Algorithm:** `dp[i][j]` = probability of being at `(i,j)` after `step` moves; answer = sum of final grid.
 
+**Variables:** `dp[i][j]` = probability the knight is on cell `(i,j)` after `step` moves; `next` = same grid for the following step; `dr/dc` = the 8 knight-move offsets; each move contributes `dp[i][j]/8`.
+**Pseudocode:**
+```
+dp[row][column] = 1.0
+for step from 0 to k-1:
+    next = zeros
+    for each cell (i,j) with dp[i][j] != 0:
+        for each of 8 knight moves to (ni,nj):
+            if (ni,nj) on board: next[ni][nj] += dp[i][j] / 8.0
+    dp = next
+return sum of all dp[i][j]
+```
 ```java
 class Solution {
     int[] dr = {2,2,-2,-2,1,1,-1,-1}, dc = {1,-1,1,-1,2,-2,2,-2};
@@ -23519,6 +32140,16 @@ class Solution {
 **Intuition:** unlike LCS, the match must be contiguous, so a mismatch resets the running length to 0.
 **Algorithm:** `dp[i][j]` = length of common suffix ending at `nums1[i-1]`, `nums2[j-1]`; track global `result`.
 
+**Variables:** `dp[i][j]` = length of the longest common contiguous subarray ending exactly at `nums1[i-1]` and `nums2[j-1]`; `result` = global maximum over all cells.
+**Pseudocode:**
+```
+for i from 1 to m:
+    for j from 1 to n:
+        if nums1[i-1] == nums2[j-1]:
+            dp[i][j] = dp[i-1][j-1] + 1     // extend match; mismatch leaves 0
+            result = max(result, dp[i][j])
+return result
+```
 ```java
 class Solution {
     public int findLength(int[] nums1, int[] nums2) {
@@ -23546,6 +32177,17 @@ class Solution {
 **Intuition:** bucket points by value, then it becomes House Robber over the value line — you cannot take adjacent values.
 **Algorithm:** `points[v]` = total points for value `v`; `dp[v]` = max earnings up to value `v`; answer `dp[max]`.
 
+**Variables:** `points[v]` = total points earned from deleting all copies of value `v` (= `v * count`); `dp[v]` = max earnings considering only values `0..v` (House Robber over the value line, since taking `v` forbids `v-1`); `max` = largest value present.
+**Pseudocode:**
+```
+max = maximum value in nums
+points[v] += v for each num=v       // bucket points by value
+dp[0] = 0
+dp[1] = points[1]
+for v from 2 to max:
+    dp[v] = max(dp[v-1], dp[v-2] + points[v])   // skip v, or take v + dp[v-2]
+return dp[max]
+```
 ```java
 class Solution {
     public int deleteAndEarn(int[] nums) {
@@ -23577,6 +32219,19 @@ class Solution {
 **Intuition:** a fib-like subseq is determined by its last two elements `(j, i)`; look up whether the required predecessor `arr[i]-arr[j]` exists earlier.
 **Algorithm:** `dp[j][i]` = length of fib seq ending with `arr[j], arr[i]`; answer = max found (≥ 3).
 
+**Variables:** `dp[j][i]` = length of the longest Fibonacci-like subsequence whose last two elements are `arr[j]` then `arr[i]` (j < i); `index` = map from value to its array index; `needed` = the required predecessor `arr[i]-arr[j]`; `result` = best length >= 3.
+**Pseudocode:**
+```
+index = map value -> its index
+for i from 0 to n-1:
+    for j from 0 to i-1:
+        needed = arr[i] - arr[j]
+        k = index.get(needed)
+        if k exists and k < j: dp[j][i] = dp[k][j] + 1   // extend chain ...k,j,i
+        else: dp[j][i] = 2                                // seed pair (j,i)
+        if dp[j][i] > 2: result = max(result, dp[j][i])
+return result
+```
 ```java
 class Solution {
     public int lenLongestFibSubseq(int[] arr) {
@@ -23614,6 +32269,18 @@ class Solution {
 **Intuition:** invert the problem — `dp[m][k]` = highest floor count solvable with `m` moves and `k` eggs; a move either breaks (test below) or survives (test above), plus the current floor.
 **Algorithm:** grow `m` until `dp[m][k] >= n`; answer = that `m`.
 
+**Variables:** `dp[m][eggs]` = the maximum number of floors whose critical floor can be determined with `m` moves and `eggs` eggs; `m` = move count, grown until `dp[m][k] >= n`.
+**Pseudocode:**
+```
+m = 0
+while dp[m][k] < n:
+    m++
+    for eggs from 1 to k:
+        // drop one egg: break -> dp[m-1][eggs-1] floors below,
+        //               survive -> dp[m-1][eggs] floors above, +1 current floor
+        dp[m][eggs] = dp[m-1][eggs-1] + dp[m-1][eggs] + 1
+return m
+```
 ```java
 class Solution {
     public int superEggDrop(int k, int n) {
@@ -23639,6 +32306,17 @@ class Solution {
 **Intuition:** the answer is either a normal max subarray (Kadane) or the total minus the minimum subarray (wrap); guard the all-negative case.
 **Algorithm:** track max and min running subarrays; answer = `max(maxSum, total − minSum)` unless all negative.
 
+**Variables:** `curMax` = Kadane running max-subarray-sum ending here; `maxSum` = best non-wrapping subarray sum; `curMin`/`minSum` = same for minimum subarray (the wrap answer is `total - minSum`); `total` = sum of all elements.
+**Pseudocode:**
+```
+total=0; maxSum=curMax=nums[0]? (curMax starts 0); minSum analog
+for each num:
+    curMax = max(curMax + num, num);  maxSum = max(maxSum, curMax)
+    curMin = min(curMin + num, num);  minSum = min(minSum, curMin)
+    total += num
+if maxSum < 0: return maxSum            // all negative: wrap would be empty
+return max(maxSum, total - minSum)      // non-wrap vs wrap (total minus min)
+```
 ```java
 class Solution {
     public int maxSubarraySumCircular(int[] nums) {
@@ -23667,6 +32345,18 @@ class Solution {
 **Intuition:** from each digit a knight can reach a fixed set of digits; spread counts across the adjacency map each step.
 **Algorithm:** `dp[d]` = count of numbers of current length ending at digit `d`; answer = sum after `n` steps.
 
+**Variables:** `dp[d]` = count of valid numbers of the current length ending at digit `d`; `next` = same array for length+1; `moves[d]` = digits reachable by a knight move from `d`.
+**Pseudocode:**
+```
+moves[d] = knight-reachable digits per keypad digit
+dp[0..9] = 1                         // length 1
+for step from 1 to n-1:
+    next = zeros
+    for d from 0 to 9:
+        for target in moves[d]: next[target] += dp[d]
+    dp = next  (mod 1e9+7)
+return sum of dp mod
+```
 ```java
 class Solution {
     public int knightDialer(int n) {
@@ -23704,6 +32394,17 @@ class Solution {
 **Intuition:** on a travel day choose the cheapest pass covering it by looking back 1, 7, or 30 days; non-travel days inherit the prior cost.
 **Algorithm:** `dp[i]` = min cost through day `i`; answer `dp[lastDay]`.
 
+**Variables:** `dp[i]` = minimum cost to cover all travel up through day `i`; `travel[i]` = whether day `i` is a travel day; `costs[0/1/2]` = price of 1/7/30-day passes; `last` = final travel day.
+**Pseudocode:**
+```
+mark travel[day] = true for each travel day
+for i from 1 to last:
+    if not travel[i]: dp[i] = dp[i-1]            // no travel: carry cost
+    else: dp[i] = min(dp[i-1] + costs[0],        // 1-day pass
+                      dp[max(0,i-7)] + costs[1],  // 7-day pass
+                      dp[max(0,i-30)] + costs[2]) // 30-day pass
+return dp[last]
+```
 ```java
 class Solution {
     public int mincostTickets(int[] days, int[] costs) {
@@ -23736,6 +32437,18 @@ class Solution {
 **Intuition:** for each pair `(j, i)`, the arithmetic subseq ending at `i` with difference `d` extends the one ending at `j`.
 **Algorithm:** `dp[i]` maps difference `d` to subseq length ending at `i`; track global `result`.
 
+**Variables:** `dp[i]` = map from common difference `d` to the length of the longest arithmetic subsequence with that difference ending at index `i`; `d = nums[i]-nums[j]`; `result` = global longest.
+**Pseudocode:**
+```
+for i from 0 to n-1:
+    dp[i] = empty map
+    for j from 0 to i-1:
+        d = nums[i] - nums[j]
+        length = dp[j].getOrDefault(d, 1) + 1   // extend chain ending at j
+        dp[i][d] = length
+        result = max(result, length)
+return result
+```
 ```java
 class Solution {
     public int longestArithSeqLength(int[] nums) {
@@ -23764,6 +32477,19 @@ class Solution {
 **Intuition:** sort by length; for each word, try removing each character to find a shorter predecessor and extend its best chain.
 **Algorithm:** `dp` maps word to longest chain ending at it; answer = max chain length.
 
+**Variables:** `dp` = map from a word to the length of the longest word chain ending at that word; `best` = best chain length for the current word; `predecessor` = the word with one character removed; `result` = global max.
+**Pseudocode:**
+```
+sort words by ascending length
+for each word (shortest first):
+    best = 1
+    for each position i in word:
+        predecessor = word with char i removed
+        if dp has predecessor: best = max(best, dp[predecessor] + 1)
+    dp[word] = best
+    result = max(result, best)
+return result
+```
 ```java
 class Solution {
     public int longestStrChain(String[] words) {
@@ -23797,6 +32523,17 @@ class Solution {
 **Intuition:** the linear 1D recurrence with three rolling variables instead of two.
 **Algorithm:** roll `a`, `b`, `c`; answer after `n` steps.
 
+**Variables:** `a, b, c` = the three rolling Tribonacci terms T(i-3), T(i-2), T(i-1) used to compute T(i); rolled forward each step. Conceptually `dp[i]=dp[i-1]+dp[i-2]+dp[i-3]`.
+**Pseudocode:**
+```
+if n == 0: return 0
+if n <= 2: return 1
+a=0, b=1, c=1                       // T0, T1, T2
+for i from 3 to n:
+    next = a + b + c
+    a = b; b = c; c = next
+return c
+```
 ```java
 class Solution {
     public int tribonacci(int n) {
@@ -23827,6 +32564,16 @@ class Solution {
 **Intuition:** the minimum removals to make `s` a palindrome equals `n − LPS(s)`; check whether that is `≤ k`.
 **Algorithm:** interval DP for longest palindromic subsequence; answer `n − dp[0][n-1] <= k`.
 
+**Variables:** `dp[i][j]` = length of the longest palindromic subsequence within `s[i..j]`; the minimum deletions to make `s` a palindrome is `n - dp[0][n-1]`.
+**Pseudocode:**
+```
+for i from n-1 down to 0:
+    dp[i][i] = 1
+    for j from i+1 to n-1:
+        if s[i] == s[j]: dp[i][j] = dp[i+1][j-1] + 2
+        else: dp[i][j] = max(dp[i+1][j], dp[i][j-1])
+return n - dp[0][n-1] <= k          // deletions needed <= k
+```
 ```java
 class Solution {
     public boolean isValidPalindrome(String s, int k) {
@@ -23856,6 +32603,15 @@ class Solution {
 **Intuition:** with a known difference, the predecessor of `num` must be `num - difference`; one hashmap pass suffices.
 **Algorithm:** `dp` maps value to longest chain ending at it; answer = max length.
 
+**Variables:** `dp` = map from a value to the length of the longest arithmetic subsequence (fixed `difference`) ending at that value; predecessor of `num` is `num - difference`; `result` = global max.
+**Pseudocode:**
+```
+for each num in arr:
+    length = dp.getOrDefault(num - difference, 0) + 1   // extend chain
+    dp[num] = length
+    result = max(result, length)
+return result
+```
 ```java
 class Solution {
     public int longestSubsequence(int[] arr, int difference) {
@@ -23880,6 +32636,20 @@ class Solution {
 **Intuition:** position can never exceed `steps/2`, so cap the reachable range; each step a position spreads to stay/left/right.
 **Algorithm:** `dp[i]` = ways to be at index `i` after `step` moves; answer `dp[0]`.
 
+**Variables:** `dp[i]` = number of ways to be at array index `i` after `step` moves; `next` = same array for the following step; `maxPos` = highest reachable index, capped at `min(arrLen-1, steps/2)`.
+**Pseudocode:**
+```
+maxPos = min(arrLen-1, steps/2)
+dp[0] = 1
+for step from 0 to steps-1:
+    next = zeros
+    for i from 0 to maxPos with dp[i] != 0:
+        next[i]   += dp[i]                 // stay
+        if i > 0:      next[i-1] += dp[i]  // move left
+        if i < maxPos: next[i+1] += dp[i]  // move right
+    dp = next  (mod 1e9+7)
+return dp[0]
+```
 ```java
 class Solution {
     public int numWays(int steps, int arrLen) {
@@ -23917,6 +32687,16 @@ class Solution {
 **Intuition:** fix the middle soldier `j`; the answer is its number of smaller-before × larger-after, plus the mirror case.
 **Algorithm:** for each `j` count smaller/larger on both sides; accumulate `result`.
 
+**Variables:** for each middle index `j`: `lessLeft`/`greaterLeft` = counts of ratings smaller/larger before `j`; `lessRight`/`greaterRight` = counts smaller/larger after `j`; `result` = total valid teams.
+**Pseudocode:**
+```
+for j from 0 to n-1:                        // fix the middle soldier
+    count lessLeft, greaterLeft over i < j
+    count lessRight, greaterRight over k > j
+    // increasing: small-left * large-right; decreasing: large-left * small-right
+    result += lessLeft*greaterRight + greaterLeft*lessRight
+return result
+```
 ```java
 class Solution {
     public int numTeams(int[] rating) {
@@ -23947,6 +32727,22 @@ class Solution {
 **Intuition:** track the lengths of positive-product and negative-product runs ending at `i`; a negative number swaps them, a zero resets both.
 **Algorithm:** `positive` / `negative` running lengths; track `result`.
 
+**Variables:** `positive` = length of the longest subarray ending at `i` with a positive product; `negative` = length of the longest such subarray with a negative product; both reset at a zero; a negative number swaps their roles; `result` = best `positive` seen.
+**Pseudocode:**
+```
+positive = negative = result = 0
+for each num:
+    if num == 0: positive = 0; negative = 0
+    else if num > 0:
+        positive++
+        negative = negative > 0 ? negative + 1 : 0
+    else:  // negative number swaps positive/negative runs
+        newPositive = negative > 0 ? negative + 1 : 0
+        newNegative = positive + 1
+        positive = newPositive; negative = newNegative
+    result = max(result, positive)
+return result
+```
 ```java
 class Solution {
     public int getMaxLen(int[] nums) {
@@ -23980,6 +32776,17 @@ class Solution {
 **Intuition:** `dp[i]` = best score reaching `i` = `nums[i] +` max `dp[j]` in the window `[i-k, i-1]`; a monotonic queue keeps that window max in O(1).
 **Algorithm:** `dp[i]` over a sliding-window-max queue of indices; answer `dp[n-1]`.
 
+**Variables:** `dp[i]` = max score reaching index `i`; `queue` = monotonic deque of indices with decreasing `dp` values within the window `[i-k, i-1]`, so its front always holds the window's max.
+**Pseudocode:**
+```
+dp[0] = nums[0]; push index 0
+for i from 1 to n-1:
+    while queue front index < i-k: pop front      // drop out-of-window indices
+    dp[i] = nums[i] + dp[queue.front]             // best reachable predecessor
+    while queue not empty and dp[queue.back] <= dp[i]: pop back  // keep decreasing
+    push i
+return dp[n-1]
+```
 ```java
 class Solution {
     public int maxResult(int[] nums, int k) {
@@ -24012,6 +32819,15 @@ class Solution {
 **Intuition:** `dp[i]` = min worst-case moves for `i` floors; dropping at floor `j` costs `1 + max(dp[j-1] from break, dp[i-j] from survive)`.
 **Algorithm:** minimize over first-drop floor `j`; answer `dp[n]`.
 
+**Variables:** `dp[i]` = minimum worst-case moves to find the critical floor among `i` floors with 2 eggs; `j` = floor of the first drop (break -> `j-1` floors below with 1 egg = linear search; survive -> `dp[i-j]` floors above with 2 eggs).
+**Pseudocode:**
+```
+for i from 1 to n:
+    dp[i] = i                       // fallback: 1-egg linear behavior
+    for j from 1 to i:              // first drop at floor j
+        dp[i] = min(dp[i], 1 + max(j-1, dp[i-j]))   // break vs survive
+return dp[n]
+```
 ```java
 class Solution {
     public int twoEggDrop(int n) {
@@ -24062,6 +32878,31 @@ class Solution {
 
 ## Canonical Template
 
+**Variables:** `result` = XOR accumulator (lone survivor) · `n` = number being inspected/edited · `i` = bit position · `count` = set-bit counter · `mask` = 26-bit letter-presence set · masks: `1 << i` selects bit i, `n & (n-1)` clears lowest set bit, `n & (-n)` isolates lowest set bit
+**Pseudocode:**
+```
+XOR CANCEL:
+    result = 0
+    for each num in nums: result = result XOR num   (pairs cancel, lone survives)
+
+BIT OPERATIONS on n at position i:
+    isSet  = bit i of n is 1            -> (n >> i) & 1 == 1
+    set    = turn bit i on             -> n | (1 << i)
+    clear  = turn bit i off            -> n & ~(1 << i)
+    toggle = flip bit i                -> n ^ (1 << i)
+    lowest = isolate lowest set bit    -> n & (-n)
+    isPow2 = n > 0 and clearing lowest set bit gives 0
+
+COUNT SET BITS (Brian Kernighan):
+    count = 0
+    while n != 0: count = count + 1; n = n & (n-1)   (each step removes one set bit)
+
+BITMASK AS SET:
+    mask = 0
+    for each char c in word: mask = mask | (1 << (c - 'a'))
+    two words share no letter when (mask[i] & mask[j]) == 0
+```
+
 ```java
 // bits are a set/counter — XOR cancels duplicates, AND/OR/shift edit individual bits.  — WHEN: "appears once/odd among pairs", "count set bits", "no shared letters", "power of 2/4".
 // ── XOR CANCEL ── pairs cancel; lone element survives
@@ -24094,6 +32935,37 @@ if ((mask[i] & mask[j]) == 0) { /* no shared letter */ }
 ---
 
 ## Variations
+
+**Variables:** `ones`/`twos` = bits seen 1 / 2 times mod 3 · `xor` = `a ^ b` of the two uniques · `diff` = lowest differing bit (`xor & -xor`) · `a`/`b` = the two unique values · `dp[]` = set-bit counts by number · `shift` = bits dropped to reach common prefix · `carry` = AND-derived carry bits
+**Pseudocode:**
+```
+VARIATION 1 (mod-3 state machine, Single Number II):
+    ones = 0; twos = 0
+    for each num: ones = (ones XOR num) AND NOT twos; twos = (twos XOR num) AND NOT ones
+    after loop, ones holds the element appearing once
+
+VARIATION 2 (split XOR into two groups, Single Number III):
+    xor = XOR of all nums                 (= a XOR b)
+    diff = xor AND (-xor)                 (lowest bit where a and b differ)
+    a = 0; for each num: if (num AND diff) != 0: a = a XOR num   (XOR one group)
+    b = xor XOR a                         (the other unique)
+
+VARIATION 3 (DP relation, Counting Bits):
+    dp = array of size n+1
+    for i = 1..n: dp[i] = dp[i >> 1] + (i AND 1)   (drop last bit, add it back)
+
+VARIATION 4 (common prefix, Bitwise AND of Range):
+    shift = 0
+    while left != right: left >>= 1; right >>= 1; shift = shift + 1
+    return left << shift                  (shared high-bit prefix restored)
+
+VARIATION 5 (carry loop, Sum of Two Integers):
+    while b != 0:
+        carry = a AND b                   (positions that carry)
+        a = a XOR b                       (sum without carry)
+        b = carry << 1                    (carry moves one bit left)
+    return a
+```
 
 ```java
 // VARIATION 1: mod-3 state machine (Single Number II)
@@ -24156,6 +33028,15 @@ int add(int a, int b) {
 **Intuition:** XOR is its own inverse, so every duplicated pair cancels to 0 and only the lone element is left standing.  
 **Algorithm:** XOR all — every pair cancels (`a ^ a = 0`), leaving the single element.
 
+**Variables:** `result` = XOR accumulator — paired values cancel, the lone value survives · `num` = current element
+**Pseudocode:**
+```
+result = 0
+for each num in nums:
+    result = result XOR num      (a XOR a = 0, so duplicate pairs vanish)
+return result                    (only the single element remains)
+```
+
 ```java
 class Solution {
     public int singleNumber(int[] nums) {
@@ -24174,6 +33055,15 @@ class Solution {
 **Description:** Array of n distinct numbers from [0, n] with one missing. Find it.  
 **Intuition:** XOR-ing every index against every value pairs each present number with its index — the missing number's index has no partner to cancel.  
 **Variation:** XOR each index `i` with `nums[i]`. Indices 0..n XOR'd with the n elements — the missing index has no pair.
+
+**Variables:** `result` = XOR accumulator seeded with n (the absent last index) · `i` = index · `nums[i]` = value at that index
+**Pseudocode:**
+```
+result = n           (start with the largest index, which has no value slot)
+for i = 0..n-1:
+    result = result XOR i XOR nums[i]   (each present value cancels its index)
+return result        (only the missing number's index has no partner)
+```
 
 ```java
 class Solution {
@@ -24194,6 +33084,16 @@ class Solution {
 **Description:** Every element appears three times except one. Find it.  
 **Intuition:** XOR cancels pairs (mod 2); here we need a counter mod 3, so two state bits (`ones`, `twos`) cycle each bit through 1→2→0 and the survivor sits in `ones`.  
 **Variation:** Two-state XOR machine. `ones` tracks bits seen 1 mod 3 times, `twos` tracks bits seen 2 mod 3 times. When a bit reaches 3, it clears from both.
+
+**Variables:** `ones` = bits seen 1 time mod 3 · `twos` = bits seen 2 times mod 3 · `num` = current element (a bit reaching 3 occurrences clears from both)
+**Pseudocode:**
+```
+ones = 0; twos = 0
+for each num in nums:
+    ones = (ones XOR num) AND NOT twos   (add bit to ones unless it is already in twos)
+    twos = (twos XOR num) AND NOT ones   (add bit to twos unless it is now in ones)
+return ones                              (bits at count 0 mod 3 survive here = the single element)
+```
 
 ```java
 class Solution {
@@ -24216,6 +33116,18 @@ class Solution {
 **Description:** Two elements appear exactly once; all others appear twice. Find both.  
 **Intuition:** XOR of all leaves `a ^ b`; any set bit in it is a bit where a and b differ, so it splits the array into two groups each holding one unique.  
 **Variation:** XOR all → get `a ^ b`. Use lowest set bit of `a ^ b` to partition nums into two groups (one containing `a`, one containing `b`). XOR each group independently.
+
+**Variables:** `xor` = XOR of all = `a ^ b` · `diff` = lowest set bit of `xor` (a bit where a and b differ) · `a` = unique value isolated from the group whose `diff` bit is set · `num` = current element
+**Pseudocode:**
+```
+xor = 0
+for each num: xor = xor XOR num          (everything else cancels -> xor = a XOR b)
+diff = xor AND (-xor)                     (isolate one bit where a and b differ)
+a = 0
+for each num:
+    if (num AND diff) != 0: a = a XOR num (XOR only the group with that bit set)
+return [a, xor XOR a]                     (the other unique is xor XOR a)
+```
 
 ```java
 class Solution {
@@ -24243,6 +33155,16 @@ class Solution {
 **Intuition:** Each `n & (n-1)` erases exactly one set bit, so the loop runs once per set bit — no need to scan all 32 positions.  
 **Algorithm:** Brian Kernighan — `n & (n-1)` clears the lowest set bit each iteration.
 
+**Variables:** `n` = number being whittled down · `count` = set bits cleared so far (`n & (n-1)` removes the lowest set bit each step)
+**Pseudocode:**
+```
+count = 0
+while n != 0:
+    count = count + 1
+    n = n AND (n - 1)        (clears the lowest set bit)
+return count                 (loop ran once per set bit)
+```
+
 ```java
 public class Solution {
     public int hammingWeight(int n) {
@@ -24265,6 +33187,15 @@ public class Solution {
 **Intuition:** `i` has the same set bits as `i >> 1` plus possibly its own last bit, so reuse the already-computed smaller answer instead of recounting.  
 **Variation:** DP relation — `i >> 1` is `i` with last bit removed (already computed), plus the last bit `i & 1`.
 
+**Variables:** `dp[]` = set-bit count for each number 0..n · `i` = current number (`i >> 1` is the already-solved smaller number, `i & 1` is its last bit)
+**Pseudocode:**
+```
+dp = array of size n+1 (dp[0] = 0)
+for i = 1..n:
+    dp[i] = dp[i >> 1] + (i AND 1)   (count of i without its last bit, plus that bit)
+return dp
+```
+
 ```java
 class Solution {
     public int[] countBits(int n) {
@@ -24284,6 +33215,16 @@ class Solution {
 **Description:** Reverse the 32 bits of an unsigned integer.  
 **Intuition:** Peel the lowest bit off `n` and stack it onto `result` from the bottom — after 32 shifts the bit order is fully mirrored.  
 **Variation:** Fixed 32 iterations — each time take the LSB of `n`, append it to `result`, then shift both.
+
+**Variables:** `result` = mirrored bits being built from the bottom up · `n` = source bits being peeled from the bottom · `i` = iteration counter (always 32)
+**Pseudocode:**
+```
+result = 0
+repeat 32 times (i = 0..31):
+    result = (result << 1) OR (n AND 1)   (shift result up, drop in n's lowest bit)
+    n = n >> 1                             (advance to next source bit)
+return result
+```
 
 ```java
 public class Solution {
@@ -24310,6 +33251,17 @@ public class Solution {
 **Key insight:** any two adjacent numbers in the range differ in at least the lowest bit. AND of a range clears all bits that differ across any pair in the range. The result is the common high-bit prefix of `left` and `right`.  
 **Variation:** right-shift both until equal to find shared prefix; shift back.
 
+**Variables:** `left`/`right` = range endpoints, shifted right until they match · `shift` = number of low bits dropped (restored at the end)
+**Pseudocode:**
+```
+shift = 0
+while left != right:                  (low bits differ -> they get cleared by AND)
+    left  = left >> 1
+    right = right >> 1
+    shift = shift + 1
+return left << shift                   (shared high-bit prefix, shifted back into place)
+```
+
 ```java
 class Solution {
     public int rangeBitwiseAnd(int left, int right) {
@@ -24332,6 +33284,16 @@ class Solution {
 **Description:** Return `a + b` without using `+` or `-`.  
 **Intuition:** Addition splits into a carry-free sum (XOR) and the carries (AND shifted left); feed the carry back until nothing carries over.  
 **Variation:** XOR computes bit sum without carry; AND shifted left computes carry. Repeat until no carry.
+
+**Variables:** `a` = running partial sum (no carry) · `b` = pending carry to add next · `carry` = bit positions where both currently have 1
+**Pseudocode:**
+```
+while b != 0:                  (still have carry to fold in)
+    carry = a AND b           (positions that generate a carry)
+    a = a XOR b               (sum of the bits ignoring carry)
+    b = carry << 1            (carry takes effect one position to the left)
+return a                       (no carry left -> a is the sum)
+```
 
 ```java
 class Solution {
@@ -24356,6 +33318,18 @@ class Solution {
 **Description:** Given a list of words, find the maximum product `len(a) * len(b)` where `a` and `b` share no common letters.  
 **Intuition:** Compress each word's letter set into a 26-bit integer so "share a letter?" becomes a single AND, replacing slow character-by-character comparison.  
 **Variation:** encode each word as a 26-bit integer where bit `i` = 1 if letter `'a' + i` appears. Two words share a letter iff their bitmasks have any common bit (`mask[i] & mask[j] != 0`).
+
+**Variables:** `masks[]` = 26-bit letter-set per word (bit i set if letter 'a'+i appears) · `i`/`j` = word indices being compared · `max` = best product of lengths so far (disjoint sets have AND == 0)
+**Pseudocode:**
+```
+build masks: for each word i, for each char c, set bit (c - 'a') in masks[i]
+max = 0
+for i = 0..n-1:
+    for j = i+1..n-1:
+        if (masks[i] AND masks[j]) == 0:        (no shared letter)
+            max = larger of (max, len(word i) * len(word j))
+return max
+```
 
 ```java
 class Solution {
@@ -24431,6 +33405,14 @@ i & 1              // last bit (0 = even, 1 = odd)
 
 **Algorithm:** A power of two has exactly one set bit. Check `n > 0` and `n & (n-1) == 0` (clearing the lowest set bit results in 0 only if there was one bit).
 
+**Variables:** `n` = number tested (`n & (n-1)` clears its single set bit, leaving 0 only when exactly one bit was set)
+**Pseudocode:**
+```
+return true when:
+    n > 0                         (must be positive)
+    AND (n AND (n-1)) == 0        (clearing the lone set bit leaves nothing)
+```
+
 ```java
 class Solution {
     public boolean isPowerOfTwo(int n) {
@@ -24449,6 +33431,15 @@ class Solution {
 **Intuition:** Powers of four are powers of two (one set bit) whose bit sits at an even position; masking against the odd-position mask `0xAAAAAAAA` must give 0.
 
 **Variation:** Power of four must be power of two (one set bit) AND that bit must be at an even bit position (0, 2, 4, 6, ...). Mask `0xAAAAAAAA` has bits set at ALL odd positions; if `n & 0xAAAAAAAA == 0`, the set bit is at an even position.
+
+**Variables:** `n` = number tested · mask `0xAAAAAAAA` = all odd bit positions (a power of four's lone bit must sit at an even position, so AND with this mask is 0)
+**Pseudocode:**
+```
+return true when all hold:
+    n > 0
+    (n AND (n-1)) == 0            (exactly one set bit -> power of two)
+    (n AND 0xAAAAAAAA) == 0       (that bit is at an even position -> power of four)
+```
 
 ```java
 class Solution {
@@ -24470,6 +33461,19 @@ class Solution {
 **Intuition:** Following `i → nums[i]` turns the array into a linked list; a duplicate value means two indices point to the same node, forming a cycle whose entry is the duplicate.
 
 **Variation:** Floyd's Cycle Detection. Treat the array as a linked list where `nums[i]` is the next node. Since there's a duplicate, two indices point to the same value → creates a cycle. Find cycle entry = duplicate.
+
+**Variables:** `slow` = single-step pointer · `fast` = double-step pointer (`nums[i]` acts as the "next" link; the cycle entry is the duplicate)
+**Pseudocode:**
+```
+Phase 1 - find a meeting point inside the cycle:
+    slow = nums[0]; fast = nums[0]
+    do: slow = nums[slow]; fast = nums[nums[fast]]   until slow == fast
+
+Phase 2 - find the cycle entrance:
+    slow = nums[0]
+    while slow != fast: slow = nums[slow]; fast = nums[fast]
+    return slow      (cycle entry = the duplicate value)
+```
 
 ```java
 class Solution {
@@ -24504,6 +33508,19 @@ class Solution {
 
 **Algorithm:** Repeatedly take `num & 0xF` to read the lowest nibble, map it to a hex char, then unsigned-right-shift `num >>> 4`. Stop when `num` becomes 0.
 
+**Variables:** `num` = number being consumed 4 bits at a time · `digits` = hex digit lookup table · `nibble` = lowest 4 bits (`num & 15`) = one hex digit · `builder` = digits collected low-to-high (reversed at the end)
+**Pseudocode:**
+```
+if num == 0: return "0"
+digits = "0123456789abcdef"
+builder = empty
+while num != 0:
+    nibble = num AND 15            (lowest 4 bits = one hex digit)
+    append digits[nibble] to builder
+    num = num >>> 4               (unsigned shift fills sign bit with 0)
+return builder reversed           (we appended least-significant digit first)
+```
+
 ```java
 class Solution {
     public String toHex(int num) {
@@ -24533,6 +33550,17 @@ class Solution {
 
 **Algorithm:** Compute `x ^ y`, then count its set bits with Brian Kernighan (`n & (n-1)` clears the lowest set bit each iteration).
 
+**Variables:** `n` = `x ^ y` (1 exactly where the two differ) · `count` = differing bits counted (`n & (n-1)` clears one set bit per step)
+**Pseudocode:**
+```
+n = x XOR y               (set bits mark positions where x and y differ)
+count = 0
+while n != 0:
+    count = count + 1
+    n = n AND (n - 1)     (clear lowest set bit)
+return count
+```
+
 ```java
 class Solution {
     public int hammingDistance(int x, int y) {
@@ -24558,6 +33586,16 @@ class Solution {
 
 **Algorithm:** Grow a mask `1 << i` until it covers all bits of `num` (`mask < num`), forming `(1 << bitLength) - 1`; XOR `num` with that mask to flip only the relevant bits.
 
+**Variables:** `num` = input whose meaningful bits get flipped · `mask` = all-ones mask spanning num's bit width · `i` = bit position being added to the mask
+**Pseudocode:**
+```
+mask = 0; i = 0
+while (1 << i) <= num:          (extend mask up to num's most significant bit)
+    set bit i in mask
+    i = i + 1
+return num XOR mask             (flips every bit within num's width, leaves leading zeros)
+```
+
 ```java
 class Solution {
     public int findComplement(int num) {
@@ -24582,6 +33620,31 @@ class Solution {
 **Intuition:** With only 8 cells the state space is finite, so the configuration must cycle; detect the cycle length and reduce `n` modulo it to avoid simulating huge day counts.
 
 **Algorithm:** Encode the 8 cells as an 8-bit integer. Simulate one day with bit operations (a cell is 1 iff its neighbors match, i.e. their XOR is 0), recording seen states in a map. On the first repeat, reduce remaining days modulo the cycle length, then finish the leftover days.
+
+**Variables:** `state` = 8 cells packed into an 8-bit integer · `n` = remaining days · `seen` = map from state -> the `n` value when first seen (to measure cycle length) · `result[]` = unpacked cells · `nextDay` helper uses `left`/`right` neighbor bits, setting cell i when they are equal
+**Pseudocode:**
+```
+pack cells into state: for i = 0..7, if cells[i]==1 set bit i of state
+seen = empty map
+while n > 0:
+    if state already in seen:
+        n = n mod (seen[state] - n)        (skip whole repeated cycles)
+    else:
+        seen[state] = n
+    if n > 0:
+        state = nextDay(state)
+        n = n - 1
+unpack: for i = 0..7, result[i] = bit i of state
+return result
+
+nextDay(state):
+    next = 0
+    for i = 1..6:                          (end cells 0 and 7 always become 0)
+        left  = bit (i-1) of state
+        right = bit (i+1) of state
+        if (left XOR right) == 0: set bit i of next   (neighbors equal)
+    return next
+```
 
 ```java
 import java.util.HashMap;
@@ -24748,6 +33811,23 @@ public class Solution {
 
 ## Canonical Template — HashMap + Doubly Linked List (LRU)
 
+**Variables:** `map` = key -> CacheNode · `head`/`tail` = sentinels (head side = MRU, tail side = LRU) · `node.previous`/`node.next` = doubly linked neighbors
+**Pseudocode:**
+```
+CacheNode: key, value, previous, next
+init: head <-> tail (head.next = tail; tail.previous = head)
+
+remove(node):
+  node.previous.next = node.next
+  node.next.previous = node.previous
+
+insertAfterHead(node):          # mark as most-recently-used
+  link node between head and head.next
+
+evict LRU:
+  lru = tail.previous           # node just before tail
+  remove(lru); map.remove(lru.key)
+```
 ```java
 // HashMap gives O(1) lookup; the doubly linked list orders by recency so the LRU is always one hop from tail.  — WHEN: "O(1) get/put with eviction by recency or frequency"
 
@@ -24787,6 +33867,17 @@ map.remove(lru.key);
 
 ## Variations
 
+**Variables:** `keyToVal`/`keyToFreq` = key lookups · `freqToKeys` = freq -> ordered keys at that freq · `minFreq` = smallest live frequency · (RandomizedSet) `list` = values array · `map` = val -> index
+**Pseudocode:**
+```
+VARIATION 1 (LFU): maps key->value, key->freq, freq->LinkedHashSet<key>, plus minFreq
+  on access: freq++; move key from freqToKeys[old] to freqToKeys[new]
+  on evict: remove first key (oldest) from freqToKeys[minFreq]
+
+VARIATION 2 (RandomizedSet): ArrayList of values + HashMap val->index
+  remove: swap target with last element, update map, drop last
+  getRandom: list[random index]
+```
 ```java
 // VARIATION 1: LFU — adds a frequency dimension
 // Need: key→value, key→freq, freq→orderedSet<key>, and minFreq
@@ -24812,6 +33903,25 @@ map.remove(lru.key);
 
 **Intuition:** the HashMap answers "where is this key" instantly while the linked list keeps everything ordered by recency, so the victim to evict is always the node next to the tail.
 
+**Variables:** `capacity` = max entries · `map` = key -> CacheNode · `head`/`tail` = sentinels (head = MRU side, tail = LRU side)
+**Pseudocode:**
+```
+get(key):
+  if key not in map: return -1
+  node = map[key]; remove(node); insertAfterHead(node)   # touch -> MRU
+  return node.value
+
+put(key, value):
+  if key in map:
+    node = map[key]; node.value = value
+    remove(node); insertAfterHead(node)                  # update -> MRU
+  else:
+    if map full: evict tail.previous (LRU) and drop from map
+    create node; map[key] = node; insertAfterHead(node)
+
+remove(node): unlink from neighbors
+insertAfterHead(node): splice right after head sentinel
+```
 ```java
 class LRUCache {
     private final int capacity;
@@ -24883,6 +33993,28 @@ class LRUCache {
 
 **Intuition:** bucket keys by how often they're used; the eviction victim is always the oldest key in the lowest-frequency bucket, which `minFreq` points straight at.
 
+**Variables:** `capacity` = max entries · `minFreq` = smallest live frequency · `keyToVal`/`keyToFreq` = per-key lookups · `freqToKeys` = freq -> LinkedHashSet of keys (insertion order = LRU within freq)
+**Pseudocode:**
+```
+get(key):
+  if key absent: return -1
+  increaseFreq(key); return value
+
+put(key, value):
+  if capacity <= 0: return
+  if key present: update value; increaseFreq(key)
+  else:
+    if size >= capacity: removeMinFreqKey()
+    store value; freq = 1; add key to freqToKeys[1]; minFreq = 1
+
+increaseFreq(key):
+  move key from freqToKeys[freq] to freqToKeys[freq+1]
+  if freqToKeys[freq] now empty and freq == minFreq: minFreq++
+
+removeMinFreqKey():
+  evict = first key in freqToKeys[minFreq]   # oldest at lowest freq
+  remove it from all maps
+```
 ```java
 class LFUCache {
     private final int capacity;
@@ -24949,6 +34081,22 @@ class LFUCache {
 
 **Intuition:** an array gives O(1) random indexing but O(n) middle-deletion; swapping the victim with the last element turns deletion into an O(1) pop while staying dense.
 
+**Variables:** `map` = val -> index in `list` · `list` = dense array of values · `rand` = RNG
+**Pseudocode:**
+```
+insert(val):
+  if val in map: return false
+  append val to list; map[val] = last index; return true
+
+remove(val):
+  if val not in map: return false
+  i = map[val]; last = list[last index]
+  list[i] = last; map[last] = i      # move last element into the hole
+  drop last element; remove val from map; return true
+
+getRandom():
+  return list[random index in 0..size-1]
+```
 ```java
 class RandomizedSet {
     private final Map<Integer, Integer> map = new HashMap<>();  // val → index in list
@@ -25011,6 +34159,19 @@ RandomizedSet: list[map[val]] == val at all times (after swap, update the map fo
 
 **Intuition:** the complement check from classic Two Sum, but persisted across calls; the frequency map lets a single number satisfy a pair only when it appears at least twice.
 
+**Variables:** `map` = number -> count stored so far
+**Pseudocode:**
+```
+add(number): map[number]++
+
+find(value):
+  for each key in map:
+    complement = value - key
+    if complement == key: need count[key] >= 2
+    else: need complement in map
+    if satisfied: return true
+  return false
+```
 ```java
 class TwoSum {
     private final Map<Integer, Integer> map = new HashMap<>();
@@ -25046,6 +34207,20 @@ class TwoSum {
 
 **Intuition:** an in-order traversal paused mid-flight — the stack stores exactly the unvisited ancestors, so memory stays proportional to tree height.
 
+**Variables:** `stack` = unvisited ancestors (left spine), top = next smallest
+**Pseudocode:**
+```
+init(root): pushLeft(root)
+
+next():
+  node = pop stack
+  pushLeft(node.right)     # expose successors
+  return node.val
+
+hasNext(): stack not empty
+
+pushLeft(node): while node != null: push node; node = node.left
+```
 ```java
 class BSTIterator {
     private final Deque<TreeNode> stack = new ArrayDeque<>();
@@ -25090,6 +34265,19 @@ class BSTIterator {
 
 **Intuition:** because both index lists are sorted, the closest pair is found by always advancing the pointer at the smaller index — the same merge step as in sorted-list intersection.
 
+**Variables:** `map` = word -> sorted list of its indices · `i`/`j` = pointers into the two index lists · `result` = min distance
+**Pseudocode:**
+```
+init(wordsDict): for each word, append its index to map[word]
+
+shortest(word1, word2):
+  first = map[word1]; second = map[word2]
+  i = 0, j = 0, result = +inf
+  while i < first.size and j < second.size:
+    result = min(result, |first[i] - second[j]|)
+    advance the pointer with the smaller index
+  return result
+```
 ```java
 class WordDistance {
     private final Map<String, List<Integer>> map = new HashMap<>();
@@ -25129,6 +34317,22 @@ class WordDistance {
 
 **Intuition:** one scan suffices for a single query; the equal-word case is just "closest pair of repeated occurrences," handled by remembering the previous match.
 
+**Variables:** `same` = whether word1 == word2 · `i` = last index of word1 · `j` = last index of word2 · `result` = min distance
+**Pseudocode:**
+```
+same = (word1 == word2)
+i = -1, j = -1, result = +inf
+for k, word in wordsDict:
+  if word == word1:
+    if same:                       # equal words: compare with previous occurrence
+      if i >= 0: result = min(result, k - i)
+      i = k
+    else:
+      i = k; if j >= 0: result = min(result, |i - j|)
+  else if word == word2:
+    j = k; if i >= 0: result = min(result, |i - j|)
+return result
+```
 ```java
 class Solution {
     public int shortestWordDistance(String[] wordsDict, String word1, String word2) {
@@ -25171,6 +34375,21 @@ class Solution {
 
 **Intuition:** keep a `(row, col)` cursor and lazily skip empty rows; the skip logic concentrated in one helper keeps both methods correct.
 
+**Variables:** `vec` = 2D array · `row`/`col` = cursor into vec
+**Pseudocode:**
+```
+next():
+  advance()              # skip exhausted/empty rows
+  return vec[row][col++]
+
+hasNext():
+  advance()
+  return row < vec.length
+
+advance():
+  while row in range and col == current row length:
+    row++; col = 0       # move to start of next non-empty row
+```
 ```java
 class Vector2D {
     private final int[][] vec;
@@ -25210,6 +34429,19 @@ class Vector2D {
 
 **Intuition:** a round-robin queue of iterators rotates through the lists; finished iterators simply fall out of the queue.
 
+**Variables:** `queue` = queue of per-list iterators, each still having elements
+**Pseudocode:**
+```
+init(v1, v2): enqueue each list's iterator if non-empty
+
+next():
+  iterator = poll queue
+  value = iterator.next()
+  if iterator.hasNext(): enqueue it again   # round-robin
+  return value
+
+hasNext(): queue not empty
+```
 ```java
 class ZigzagIterator {
     private final Queue<Iterator<Integer>> queue = new ArrayDeque<>();
@@ -25249,6 +34481,20 @@ class ZigzagIterator {
 
 **Intuition:** a stack performs the depth-first unwrap lazily — flattening happens only as far as the next requested integer.
 
+**Variables:** `stack` = NestedIntegers pending, top exposed first
+**Pseudocode:**
+```
+init(nestedList): pushReversed(nestedList)
+
+next(): return pop().getInteger()
+
+hasNext():
+  while top of stack is a list:
+    pop it; pushReversed(its contents)    # unwrap until an integer is on top
+  return stack not empty
+
+pushReversed(list): push elements in reverse so first ends up on top
+```
 ```java
 class NestedIterator implements Iterator<Integer> {
     private final Deque<NestedInteger> stack = new ArrayDeque<>();
@@ -25296,6 +34542,14 @@ class NestedIterator implements Iterator<Integer> {
 
 **Intuition:** the running sum avoids re-summing the window; the queue only tracks which value leaves next.
 
+**Variables:** `queue` = last up-to-`size` values · `size` = window size · `sum` = running sum of queued values
+**Pseudocode:**
+```
+next(val):
+  enqueue val; sum += val
+  if queue size > size: sum -= dequeue()   # drop oldest beyond window
+  return sum / queue size
+```
 ```java
 class MovingAverage {
     private final Queue<Integer> queue = new ArrayDeque<>();
@@ -25328,6 +34582,17 @@ class MovingAverage {
 
 **Intuition:** signing the contributions lets a single counter detect either player — only checking the four lines that the current move touches keeps it O(1).
 
+**Variables:** `rows`/`cols` = signed counters per row/column · `diagonal`/`antiDiagonal` = signed diagonal counters · `n` = board size
+**Pseudocode:**
+```
+move(row, col, player):
+  delta = +1 if player 1 else -1
+  rows[row] += delta; cols[col] += delta
+  if row == col: diagonal += delta
+  if row + col == n-1: antiDiagonal += delta
+  if any touched counter has magnitude n: return player   # filled a line
+  return 0
+```
 ```java
 class TicTacToe {
     private final int[] rows;
@@ -25371,6 +34636,23 @@ class TicTacToe {
 
 **Intuition:** the swap-with-last trick from #380 extends to duplicates by storing a set of indices per value instead of a single index. ← VARIATION: value → set of indices.
 
+**Variables:** `list` = all values (duplicates allowed) · `indices` = val -> set of its positions in `list` · `rand` = RNG
+**Pseudocode:**
+```
+insert(val):
+  absent = val has no current indices
+  add list.size to indices[val]; append val to list
+  return absent
+
+remove(val):
+  if no indices for val: return false
+  i = any index of val; remove i from indices[val]
+  last = list[lastIndex]; list[i] = last        # move last into hole
+  if i != lastIndex: in indices[last] replace lastIndex with i
+  drop last element; return true
+
+getRandom(): list[random index]
+```
 ```java
 class RandomizedCollection {
     private final List<Integer> list = new ArrayList<>();
@@ -25420,6 +34702,17 @@ class RandomizedCollection {
 
 **Intuition:** virtual swap-to-end on a 1D index space gives uniform O(1) flips without materializing the full grid — the map only records cells that were moved.
 
+**Variables:** `rows`/`cols` = grid dims · `remaining` = count of still-zero cells · `map` = flat index -> the value currently living there (virtual swap) · `rand` = RNG
+**Pseudocode:**
+```
+flip():
+  pick = random in [0, remaining); remaining--
+  actual = map.getOrDefault(pick, pick)            # resolve virtual swap
+  map[pick] = map.getOrDefault(remaining, remaining)  # move tail into picked slot
+  return [actual / cols, actual % cols]
+
+reset(): remaining = rows*cols; clear map
+```
 ```java
 class Solution {
     private final int rows, cols;
@@ -25458,6 +34751,16 @@ class Solution {
 
 **Intuition:** tracking `head` and `count` (rather than head/tail pointers) avoids the empty-vs-full ambiguity entirely.
 
+**Variables:** `data` = backing array · `capacity` = max size · `head` = index of front · `count` = current size
+**Pseudocode:**
+```
+enQueue(value): if full return false; data[(head+count) % cap] = value; count++; true
+deQueue(): if empty return false; head = (head+1) % cap; count--; true
+Front(): empty ? -1 : data[head]
+Rear():  empty ? -1 : data[(head+count-1) % cap]
+isEmpty(): count == 0
+isFull():  count == capacity
+```
 ```java
 class MyCircularQueue {
     private final int[] data;
@@ -25516,6 +34819,17 @@ class MyCircularQueue {
 
 **Intuition:** the #622 head/count model extends to both ends — inserting at the front just rotates `head` backward.
 
+**Variables:** `data` = backing array · `capacity` = max size · `head` = index of front · `count` = current size
+**Pseudocode:**
+```
+insertFront(value): if full false; head = (head-1+cap) % cap; data[head] = value; count++; true
+insertLast(value):  if full false; data[(head+count) % cap] = value; count++; true
+deleteFront(): if empty false; head = (head+1) % cap; count--; true
+deleteLast():  if empty false; count--; true
+getFront(): empty ? -1 : data[head]
+getRear():  empty ? -1 : data[(head+count-1) % cap]
+isEmpty(): count == 0 ; isFull(): count == capacity
+```
 ```java
 class MyCircularDeque {
     private final int[] data;
@@ -25592,6 +34906,14 @@ class MyCircularDeque {
 
 **Intuition:** separate chaining is the textbook collision strategy; a fixed prime-ish bucket count keeps chains short for typical inputs.
 
+**Variables:** `buckets` = array of linked-list chains · `SIZE` = fixed bucket count · `hash(key)` = key mod SIZE
+**Pseudocode:**
+```
+add(key):    bucket = buckets[hash(key)]; if key not in bucket: append key
+remove(key): buckets[hash(key)].remove(key)
+contains(key): return key in buckets[hash(key)]
+hash(key): floorMod(key, SIZE)
+```
 ```java
 class MyHashSet {
     private final List<Integer>[] buckets;
@@ -25637,6 +34959,17 @@ class MyHashSet {
 
 **Intuition:** identical structure to #705 but each node carries a value, so collisions are resolved by scanning a short chain of entries.
 
+**Variables:** `buckets` = array of chains of `[key, value]` entries · `SIZE` = fixed bucket count · `hash(key)` = key mod SIZE
+**Pseudocode:**
+```
+put(key, value):
+  bucket = buckets[hash(key)]
+  if entry with key exists: update its value; return
+  append [key, value]
+get(key): scan buckets[hash(key)] for key; return value or -1
+remove(key): scan bucket; remove matching entry
+hash(key): floorMod(key, SIZE)
+```
 ```java
 class MyHashMap {
     private final List<int[]>[] buckets;
@@ -25698,6 +35031,16 @@ class MyHashMap {
 
 **Intuition:** sentinels remove all null-edge cases for head/tail insertion, so every operation is the same splice on interior nodes.
 
+**Variables:** `head`/`tail` = sentinel nodes · `size` = node count · `current`/`previous` = traversal cursors
+**Pseudocode:**
+```
+get(index): if out of range -1; walk index steps from head.next; return val
+addAtHead(val): insertAfter(head, val)
+addAtTail(val): insertAfter(tail.previous, val)
+addAtIndex(index, val): if out of range return; walk to node before index; insertAfter(it, val)
+deleteAtIndex(index): if out of range return; walk to node; unlink it; size--
+insertAfter(previous, val): splice new node after previous; size++
+```
 ```java
 class MyLinkedList {
     private final Node head = new Node(0);
@@ -25780,6 +35123,15 @@ class MyLinkedList {
 
 **Intuition:** the sorted map narrows the conflict check to at most two neighbors, giving O(log n) per booking.
 
+**Variables:** `calendar` = TreeMap start -> end of booked events
+**Pseudocode:**
+```
+book(start, end):
+  previous = floorKey(start); next = ceilingKey(start)
+  if previous exists and calendar[previous] > start: return false   # overlaps left neighbor
+  if next exists and next < end: return false                       # overlaps right neighbor
+  calendar[start] = end; return true
+```
 ```java
 class MyCalendar {
     private final TreeMap<Integer, Integer> calendar = new TreeMap<>();
@@ -25810,6 +35162,19 @@ class MyCalendar {
 
 **Intuition:** the difference array turns "max concurrent events" into a prefix-sum scan, and rolling back keeps the structure clean on rejection.
 
+**Variables:** `delta` = TreeMap of sweep-line deltas (+1 at start, -1 at end) · `active` = running concurrency
+**Pseudocode:**
+```
+book(start, end):
+  delta[start] += 1; delta[end] -= 1     # tentatively add event
+  active = 0
+  for value in delta (sorted by key):
+    active += value
+    if active > 2:                        # would be a triple booking
+      delta[start] -= 1; delta[end] += 1  # roll back
+      return false
+  return true
+```
 ```java
 class MyCalendarTwo {
     private final TreeMap<Integer, Integer> delta = new TreeMap<>();
@@ -25842,6 +35207,17 @@ class MyCalendarTwo {
 
 **Intuition:** the same difference-array sweep as #731, but here we report the peak concurrency rather than reject it.
 
+**Variables:** `delta` = TreeMap of sweep-line deltas · `active` = running concurrency · `result` = peak concurrency
+**Pseudocode:**
+```
+book(start, end):
+  delta[start] += 1; delta[end] -= 1
+  active = 0, result = 0
+  for value in delta (sorted by key):
+    active += value
+    result = max(result, active)   # track peak overlap
+  return result
+```
 ```java
 class MyCalendarThree {
     private final TreeMap<Integer, Integer> delta = new TreeMap<>();
@@ -25870,6 +35246,14 @@ class MyCalendarThree {
 
 **Intuition:** because times arrive sorted, expired pings are always at the front — a sliding window over a queue.
 
+**Variables:** `queue` = timestamps still within the 3000ms window
+**Pseudocode:**
+```
+ping(t):
+  enqueue t
+  while front < t - 3000: dequeue   # drop expired pings
+  return queue size
+```
 ```java
 class RecentCounter {
     private final Queue<Integer> queue = new ArrayDeque<>();
@@ -25898,6 +35282,18 @@ class RecentCounter {
 
 **Intuition:** since most entries are zero, storing and iterating only nonzeros makes the cost proportional to the number of nonzero terms, not the vector length.
 
+**Variables:** `map` = index -> nonzero value · `smaller`/`larger` = the two vectors' maps ordered by size · `result` = dot product
+**Pseudocode:**
+```
+init(nums): store map[i] = nums[i] for every nonzero entry
+
+dotProduct(other):
+  smaller, larger = the two maps, smaller one first   # iterate fewer entries
+  result = 0
+  for (index, value) in smaller:
+    if index in larger: result += value * larger[index]
+  return result
+```
 ```java
 class SparseVector {
     private final Map<Integer, Integer> map = new HashMap<>();
@@ -26009,6 +35405,38 @@ class SparseVector {
 
 ## Canonical Templates
 
+**Variables:** `n` = the number being processed · `digit` = last digit peeled · `x` = base in fast power · `result` = running product/accumulator · `b` = the base for conversion · `composite[]` = sieve marks
+**Pseudocode:**
+```
+DIGIT EXTRACTION:
+  while n is not zero:
+    digit = remainder of n divided by 10
+    drop the last digit of n
+    use digit
+
+FAST POWER (x^n):
+  result starts at 1
+  while exponent n still has bits:
+    if the lowest bit is set, fold the current x into result
+    square x to reach the next power
+    shift n right to consume that bit
+  return result
+
+BASE CONVERSION (number -> digits):
+  while num is positive:
+    append num mod b
+    divide num by b
+  reverse the collected digits
+BASE CONVERSION (digits -> number):
+  value starts at 0
+  for each digit: value = value * b + digit
+
+SIEVE:
+  make a composite[] flag array up to n
+  for i from 2 while i*i < n:
+    if i already marked composite, skip it
+    mark every multiple of i starting at i*i as composite
+```
 ```java
 // MENTAL MODEL: number = sequence of digits in some base; iterate by repeatedly
 //               peeling the last digit (% base) and shifting (/ base).
@@ -26067,6 +35495,17 @@ for (int i = 2; i * i < n; i++) {
 **Intuition:** Peel the last digit with `%10` and push it onto a growing `result` with `*10`. The only hazard is overflow, so check capacity *before* the push.  
 **Variation:** Overflow guard — before `result = result*10 + digit`, verify `result` is not past `Integer.MAX_VALUE/10` (or below `MIN_VALUE/10`).
 
+**Variables:** `x` = remaining digits to consume · `result` = reversed number built so far · `digit` = last digit of `x`
+**Pseudocode:**
+```
+result starts at 0
+while x still has digits:
+  digit = last digit of x
+  drop the last digit of x
+  if pushing one more digit would overflow, return 0
+  push digit onto result (result*10 + digit)
+return result
+```
 ```java
 class Solution {
     public int reverse(int x) {
@@ -26091,6 +35530,16 @@ class Solution {
 **Intuition:** No need to reverse the whole number — build up the reversed second half until it meets or passes the shrinking first half. At the meeting point the two halves should match.  
 **Variation:** Half reverse — loop while `x > reversed`; the middle digit (odd-length case) is dropped via `reversed / 10`.
 
+**Variables:** `x` = shrinking first half · `reversed` = growing reversed second half
+**Pseudocode:**
+```
+if x is negative, or ends in 0 but isn't 0, it can't be a palindrome
+reversed starts at 0
+while x is still larger than reversed:
+  push x's last digit onto reversed
+  drop x's last digit
+return true if x equals reversed (even length) or equals reversed with its last digit dropped (odd length)
+```
 ```java
 class Solution {
     public boolean isPalindrome(int x) {
@@ -26116,6 +35565,18 @@ class Solution {
 **Intuition:** Squaring the base doubles the exponent reach, so each bit of `n` decides whether the current power of `x` joins the product — O(log n) multiplications instead of O(n).  
 **Variation:** Handle negative exponent by inverting `x` and negating `N` (use `long` so `-Integer.MIN_VALUE` doesn't overflow); multiply into `result` only when the current exponent bit is set.
 
+**Variables:** `x` = base, squared each step · `N` = exponent as a long · `result` = accumulated product
+**Pseudocode:**
+```
+copy n into a long N
+if N is negative: invert x and make N positive
+result starts at 1
+while N still has bits:
+  if the lowest bit of N is set, fold current x into result
+  square x for the next bit
+  shift N right to drop that bit
+return result
+```
 ```java
 class Solution {
     public double myPow(double x, int n) {
@@ -26141,6 +35602,16 @@ class Solution {
 **Intuition:** Exponents add when powers multiply, and reading `b` digit by digit means `a^b = (a^(b/10))^10 * a^(b%10)`. Fold left across the digits, applying the modulus at every step to keep numbers small.  
 **Variation:** Digit-by-digit modular exponentiation — at each new digit `d`, raise the running result to the 10th power and multiply by `a^d`, all mod 1337.
 
+**Variables:** `a` = base reduced mod 1337 · `b[]` = exponent digits · `result` = running answer mod 1337 · `digit` = current exponent digit
+**Pseudocode:**
+```
+reduce a modulo 1337
+result starts at 1
+for each digit of b left to right:
+  raise result to the 10th power, then multiply by a^digit, all mod 1337
+return result
+helper powmod(x, k): multiply x into an accumulator k times, taking mod each step
+```
 ```java
 class Solution {
     private static final int MOD = 1337;
@@ -26171,6 +35642,15 @@ class Solution {
 **Intuition:** It's base-26, but Excel has no zero digit — columns start at A=1, so the system is 1-indexed (a "bijective base 26"). Decrement before each digit to shift into the standard 0..25 range.  
 **Variation:** 1-indexed — do `columnNumber--` before extracting each digit so that `% 26` yields 0..25 mapping cleanly onto 'A'..'Z'.
 
+**Variables:** `columnNumber` = remaining column value · `builder` = title letters collected in reverse
+**Pseudocode:**
+```
+while columnNumber is positive:
+  decrement columnNumber to shift from 1-indexed to 0-indexed
+  take columnNumber mod 26 and append the matching letter 'A'..'Z'
+  divide columnNumber by 26
+reverse the collected letters and return as string
+```
 ```java
 class Solution {
     public String convertToTitle(int columnNumber) {
@@ -26194,6 +35674,14 @@ class Solution {
 **Intuition:** Horner's rule for base-26, but each letter contributes `c-'A'+1` (A=1, not 0) because the system is 1-indexed.  
 **Variation:** 1-indexed letters — `(c - 'A' + 1)` so 'A' maps to 1 rather than 0.
 
+**Variables:** `result` = accumulated column number · `c` = current letter
+**Pseudocode:**
+```
+result starts at 0
+for each letter c left to right:
+  result = result * 26 + (value of c, with 'A'=1 .. 'Z'=26)
+return result
+```
 ```java
 class Solution {
     public int titleToNumber(String columnTitle) {
@@ -26216,6 +35704,18 @@ class Solution {
 **Intuition:** Grade-school addition from the rightmost digit, tracking a carry — identical to adding two linked-list numbers (#2), but the base is 2 and the operands are strings.  
 **Variation:** Char arithmetic per column — `(a.charAt(i)-'0') + (b.charAt(j)-'0') + carry`; emit `sum % 2` and carry `sum / 2`.
 
+**Variables:** `i`, `j` = right-to-left cursors in `a` and `b` · `carry` = carry into the next column · `sum` = column total · `builder` = result bits in reverse
+**Pseudocode:**
+```
+start i and j at the last chars of a and b, carry at 0
+while either string has digits left or a carry remains:
+  sum = carry
+  if a still has a digit, add it and step i left
+  if b still has a digit, add it and step j left
+  append sum mod 2 as the output bit
+  carry = sum divided by 2
+reverse the collected bits and return as string
+```
 ```java
 class Solution {
     public String addBinary(String a, String b) {
@@ -26244,6 +35744,18 @@ class Solution {
 **Intuition:** Instead of testing each number for primality, cross out every multiple of each prime once. When you reach an unmarked `i`, it's prime; its multiples below `i*i` were already crossed out by smaller primes, so start marking at `i*i`.  
 **Variation:** Start marking at `i*i` — multiples `k*i` with `k < i` were already handled by the smaller factor `k`.
 
+**Variables:** `composite[]` = marks for non-prime numbers · `count` = primes found so far · `i` = candidate prime · `j` = multiple being crossed out
+**Pseudocode:**
+```
+if n is below 2, there are no primes
+make a composite[] flag array sized n
+count starts at 0
+for i from 2 up to n:
+  if i is already marked composite, skip it
+  i is prime, so count it
+  cross out every multiple of i starting at i*i
+return count
+```
 ```java
 class Solution {
     public int countPrimes(int n) {
@@ -26272,6 +35784,19 @@ class Solution {
 **Intuition:** The count of valid numbers ≤ `x` is monotonic in `x`, so binary-search the smallest `x` whose count reaches `n`. Counting "≤ mid divisible by a, b, or c" is a classic inclusion-exclusion over the three sets, subtracting pairwise LCM overlaps and adding back the triple LCM.  
 **Variation:** Inclusion-exclusion — `count = mid/a + mid/b + mid/c - mid/ab - mid/bc - mid/ac + mid/abc` using LCMs to avoid double counting.
 
+**Variables:** `lo`, `hi` = binary-search bounds on the answer · `mid` = candidate value · `ab/bc/ac/abc` = pairwise and triple LCMs · `count` = how many valid numbers are ≤ mid
+**Pseudocode:**
+```
+set search range lo=1, hi=2e9
+precompute the pairwise LCMs ab, bc, ac and the triple LCM abc
+while lo is below hi:
+  mid = midpoint of lo and hi
+  count = (mid/a + mid/b + mid/c) minus the pairwise overlaps plus the triple overlap
+  if count is below n, the answer is higher: lo = mid + 1
+  else mid might be the answer: hi = mid
+return lo
+helpers gcd and lcm (divide before multiply to avoid overflow)
+```
 ```java
 class Solution {
     public int nthUglyNumber(int n, int a, int b, int c) {
@@ -26338,6 +35863,19 @@ x / gcd(x,y) * y     // LCM without overflow (divide first)
 **Intuition:** Repeated subtraction is too slow, so subtract the largest doubling of the divisor that still fits — this is long division in binary. Work in negatives so `Integer.MIN_VALUE` cannot overflow.  
 **Variation:** Exponential search of the divisor — double `divisor` and the matching quotient bit until it would exceed the remaining dividend.
 
+**Variables:** `negative` = sign of the result · `a` = remaining dividend (abs, long) · `b` = divisor (abs, long) · `temp` = doubled divisor · `multiple` = quotient bits for that doubling · `result` = quotient
+**Pseudocode:**
+```
+handle the single overflow case (MIN_VALUE / -1) by returning MAX_VALUE
+record whether the result is negative (signs differ)
+take absolute values of dividend and divisor in long
+result starts at 0
+while remaining dividend a is at least b:
+  start temp at b and multiple at 1
+  double temp (and multiple) while temp doubled still fits in a
+  subtract temp from a and add multiple to result
+return result with the recorded sign
+```
 ```java
 class Solution {
     public int divide(int dividend, int divisor) {
@@ -26370,6 +35908,17 @@ class Solution {
 **Intuition:** Walk the four borders inward, shrinking the boundary after completing each side, filling a running counter.  
 **Variation:** Layer boundaries — maintain `top/bottom/left/right` and fill right, down, left, up in turn.
 
+**Variables:** `result` = the matrix being filled · `top/bottom/left/right` = current layer boundaries · `value` = running counter 1..n*n
+**Pseudocode:**
+```
+allocate an n x n matrix; boundaries top=0, bottom=n-1, left=0, right=n-1; value=1
+while the boundaries haven't crossed:
+  fill the top row left to right, then move top down
+  fill the right column top to bottom, then move right in
+  fill the bottom row right to left, then move bottom up
+  fill the left column bottom to top, then move left in
+return the matrix
+```
 ```java
 class Solution {
     public int[][] generateMatrix(int n) {
@@ -26407,6 +35956,14 @@ class Solution {
 **Intuition:** Add one from the rightmost digit; a digit below 9 absorbs the carry and we're done, otherwise it becomes 0 and the carry propagates. If every digit was 9 we need one extra leading digit.  
 **Variation:** Early return — the moment a digit is incremented without rolling over, return; only an all-9 array needs a longer result.
 
+**Variables:** `digits[]` = the number's digits · `i` = position being incremented · `result[]` = longer array for the all-nines case
+**Pseudocode:**
+```
+walk digits from the rightmost:
+  if this digit is below 9, increment it and return the array
+  otherwise set it to 0 and carry on to the next digit
+if every digit was 9, make an array one longer with a leading 1 (rest already 0)
+```
 ```java
 class Solution {
     public int[] plusOne(int[] digits) {
@@ -26433,6 +35990,18 @@ class Solution {
 **Intuition:** Each interior entry is the sum of the two entries above it; the edges are always 1.  
 **Variation:** Row-by-row build — `row[j] = previous[j-1] + previous[j]`.
 
+**Variables:** `result` = all rows built so far · `row` = the current row · `i` = row index · `j` = position within the row
+**Pseudocode:**
+```
+result starts empty
+for each row index i:
+  start a new row
+  for each position j in this row:
+    if at an edge (j is 0 or j equals i), the entry is 1
+    otherwise sum the two entries above it from the previous row
+  add the row to result
+return result
+```
 ```java
 class Solution {
     public List<List<Integer>> generate(int numRows) {
@@ -26462,6 +36031,15 @@ class Solution {
 **Intuition:** Update a single row in place; iterating right-to-left lets each entry read its left neighbor before that neighbor is overwritten.  
 **Variation:** In-place reverse update — `row[j] += row[j-1]` scanning from the right.
 
+**Variables:** `row[]` = the single row updated in place · `i` = which row we're building up to · `j` = position being updated
+**Pseudocode:**
+```
+make a row of (rowIndex+1) ones
+for each row level i from 2 up to rowIndex:
+  scan positions j from right to left (so the left neighbor is still old):
+    add the left neighbor into row[j]
+return the row
+```
 ```java
 class Solution {
     public List<Integer> getRow(int rowIndex) {
@@ -26486,6 +36064,20 @@ class Solution {
 **Intuition:** Fix one point as the anchor; every other point defines a slope from it, and collinear points share that slope. Count the most common slope per anchor, using a reduced integer fraction as the key to avoid floating-point error.  
 **Variation:** Slope histogram per anchor — key on `(dy/g, dx/g)` reduced by gcd, with sign normalization.
 
+**Variables:** `n` = point count · `result` = best collinear count · `i` = anchor point · `j` = other point · `dx`,`dy` = vector from anchor · `g` = gcd for reducing the slope · `slopes` = slope-key → count map
+**Pseudocode:**
+```
+if there are 2 or fewer points, they are all collinear
+result starts at 1
+for each anchor point i:
+  start a fresh slopes map
+  for every other point j:
+    compute the vector (dx,dy) from i to j
+    reduce it by its gcd, then normalize its sign for a canonical key
+    bump that slope's count; update result with that count plus the anchor itself
+return result
+helper gcd
+```
 ```java
 class Solution {
     public int maxPoints(int[][] points) {
@@ -26531,6 +36123,15 @@ class Solution {
 **Intuition:** A trailing zero comes from a factor of 10 = 2*5, and factors of 2 are far more plentiful than factors of 5, so just count the factors of 5. Multiples of 25 contribute an extra 5, of 125 another, and so on.  
 **Variation:** Count factors of 5 — sum `n/5 + n/25 + n/125 + ...` via `n /= 5`.
 
+**Variables:** `n` = shrinking value divided by 5 each step · `result` = total factors of 5
+**Pseudocode:**
+```
+result starts at 0
+while n is positive:
+  divide n by 5 (counts multiples of the next power of 5)
+  add the new n to result
+return result
+```
 ```java
 class Solution {
     public int trailingZeroes(int n) {
@@ -26553,6 +36154,17 @@ class Solution {
 **Intuition:** The sequence either hits 1 or enters a cycle, so this is cycle detection — use Floyd's slow/fast pointers over the "sum of digit squares" transformation.  
 **Variation:** Floyd cycle detection on a number transform — `slow = f(slow)`, `fast = f(f(fast))`.
 
+**Variables:** `slow` = pointer advancing one transform step · `fast` = pointer advancing two steps · `digit` = a digit inside the helper
+**Pseudocode:**
+```
+start slow and fast both at n
+repeat:
+  advance slow by one square-of-digits step
+  advance fast by two square-of-digits steps
+until slow and fast meet
+return whether the meeting value is 1 (happy) or a cycle (not)
+helper squareSum(n): sum the squares of n's digits
+```
 ```java
 class Solution {
     public boolean isHappy(int n) {
@@ -26584,6 +36196,15 @@ class Solution {
 **Intuition:** Total area is the sum of both areas minus the overlap; the overlap is itself a rectangle whose width and height are the intersections of the projections onto each axis (zero if they don't intersect).  
 **Variation:** Inclusion-exclusion of areas — overlap width = `min(rights) - max(lefts)` clamped at 0.
 
+**Variables:** `areaA`,`areaB` = each rectangle's area · `overlapWidth`,`overlapHeight` = sides of the intersection (clamped ≥0) · `overlap` = intersection area
+**Pseudocode:**
+```
+compute area of rectangle A and area of rectangle B
+overlap width = (min of right edges) minus (max of left edges), clamped at 0
+overlap height = (min of top edges) minus (max of bottom edges), clamped at 0
+overlap area = width times height
+return areaA + areaB - overlap
+```
 ```java
 class Solution {
     public int computeArea(int ax1, int ay1, int ax2, int ay2, int bx1, int by1, int bx2, int by2) {
@@ -26606,6 +36227,17 @@ class Solution {
 **Intuition:** Count contributions of the digit 1 at each place value separately. For a given place, the count depends on the higher digits, the current digit, and the lower digits, which split cleanly into full cycles plus a partial cycle.  
 **Variation:** Per-place digit counting — for each power-of-ten place, `count += high*place + adjust(cur, low, place)`.
 
+**Variables:** `place` = current digit position (1,10,100,...) · `high` = digits above the current place · `cur` = digit at the current place · `low` = digits below it · `result` = total 1s counted
+**Pseudocode:**
+```
+result starts at 0
+for each decimal place (1, 10, 100, ... up to n):
+  split n into high digits, the current digit cur, and low digits
+  if cur is 0: this place contributes high * place ones
+  if cur is 1: it contributes high*place plus the low digits plus 1
+  if cur is 2 or more: it contributes (high+1) * place
+return result
+```
 ```java
 class Solution {
     public int countDigitOne(int n) {
@@ -26636,6 +36268,16 @@ class Solution {
 **Intuition:** A single pass tracking the most recent index of each target word suffices; whenever both have been seen, the gap between the two latest positions is a candidate minimum.  
 **Variation:** Two latest-index trackers — update `result` whenever both indices are valid.
 
+**Variables:** `index1`,`index2` = most recent positions of word1 and word2 · `result` = smallest gap found · `i` = scan position
+**Pseudocode:**
+```
+index1 and index2 start at -1 (unseen); result starts at +infinity
+scan the array left to right:
+  if the current word is word1, record its index in index1
+  else if it is word2, record its index in index2
+  if both have been seen, update result with the gap between the two indices
+return result
+```
 ```java
 class Solution {
     public int shortestDistance(String[] wordsDict, String word1, String word2) {
@@ -26664,6 +36306,12 @@ class Solution {
 **Intuition:** The digital root has a closed form derived from numbers being congruent to their digit sum modulo 9: the answer is `0` for 0, otherwise `1 + (n-1) % 9`.  
 **Variation:** Digital root formula — no loop, just `1 + (num - 1) % 9`.
 
+**Variables:** `num` = the input number
+**Pseudocode:**
+```
+if num is 0, the digital root is 0
+otherwise return 1 + (num - 1) mod 9
+```
 ```java
 class Solution {
     public int addDigits(int num) {
@@ -26684,6 +36332,14 @@ class Solution {
 **Intuition:** Divide out all factors of 2, 3, and 5; what remains is 1 exactly when no other prime factor exists. Non-positive numbers are never ugly.  
 **Variation:** Factor stripping — repeatedly divide by each of 2, 3, 5 and check the remainder is 1.
 
+**Variables:** `n` = value being stripped of factors · `factor` = each allowed prime (2, 3, 5)
+**Pseudocode:**
+```
+if n is non-positive, it is not ugly
+for each allowed prime factor in {2, 3, 5}:
+  while n divides evenly by it, divide it out
+return whether what remains is exactly 1
+```
 ```java
 class Solution {
     public boolean isUgly(int n) {
@@ -26709,6 +36365,11 @@ class Solution {
 **Intuition:** If `n` is a multiple of 4 you always lose, because whatever you take (1-3) the opponent can complete a group of four, keeping `n` a multiple of 4 on your turn until 0.  
 **Variation:** Multiple-of-four loss — win exactly when `n % 4 != 0`.
 
+**Variables:** `n` = number of stones
+**Pseudocode:**
+```
+return whether n is not a multiple of 4 (those are the only losing positions)
+```
 ```java
 class Solution {
     public boolean canWinNim(int n) {
@@ -26726,6 +36387,11 @@ class Solution {
 **Intuition:** Bulb `k` is toggled once per divisor of `k`, ending on only if it has an odd number of divisors — which happens exactly for perfect squares. The count of perfect squares up to `n` is `floor(sqrt(n))`.  
 **Variation:** Perfect-square count — answer is `(int) sqrt(n)`.
 
+**Variables:** `n` = number of bulbs/rounds
+**Pseudocode:**
+```
+return the integer part of the square root of n (count of perfect squares up to n)
+```
 ```java
 class Solution {
     public int bulbSwitch(int n) {
@@ -26743,6 +36409,11 @@ class Solution {
 **Intuition:** Within the 32-bit range the largest power of three is `3^19 = 1162261467`; any power of three must divide it exactly, so a single divisibility test works.  
 **Variation:** Max-power divisibility — `n > 0 && 1162261467 % n == 0`.
 
+**Variables:** `n` = the candidate number
+**Pseudocode:**
+```
+return true if n is positive and divides 1162261467 (the largest 32-bit power of 3) exactly
+```
 ```java
 class Solution {
     public boolean isPowerOfThree(int n) {
@@ -26760,6 +36431,18 @@ class Solution {
 **Intuition:** Count by length: the first digit has 9 choices (1-9), the next 9 (any but the first), then 8, 7, ..., multiplying as digits are added. Sum these counts across lengths 1 to n, plus the single number 0.  
 **Variation:** Permutation counting per length — `9 * 9 * 8 * ... ` accumulated.
 
+**Variables:** `result` = running total count · `uniqueOfLength` = count of unique-digit numbers of the current length · `availableDigits` = remaining digit choices · `i` = current length
+**Pseudocode:**
+```
+if n is 0, the only number is 0, so return 1
+result starts at 10 (the 10 single-digit numbers including 0)
+track uniqueOfLength=9 and availableDigits=9
+for each length i from 2 up to n while choices remain:
+  multiply uniqueOfLength by the remaining available digits
+  decrement availableDigits
+  add uniqueOfLength to result
+return result
+```
 ```java
 class Solution {
     public int countNumbersWithUniqueDigits(int n) {
@@ -26788,6 +36471,14 @@ class Solution {
 **Intuition:** Any amount measurable is a non-negative integer combination of `x` and `y`, which by Bezout's identity is exactly the multiples of `gcd(x, y)`. So the target must be reachable in total capacity and divisible by the gcd.  
 **Variation:** Bezout / gcd test — `target % gcd(x, y) == 0` with `target <= x + y`.
 
+**Variables:** `x`,`y` = jug capacities · `target` = amount to measure
+**Pseudocode:**
+```
+if target exceeds the combined capacity x + y, it is impossible
+if target is 0, it is trivially achievable
+otherwise return whether target is divisible by gcd(x, y) (Bezout's identity)
+helper gcd
+```
 ```java
 class Solution {
     public boolean canMeasureWater(int x, int y, int target) {
@@ -26814,6 +36505,18 @@ class Solution {
 **Intuition:** The square root lies in `[1, num]` and squaring is monotonic, so binary search the candidate root and compare its square (in `long` to avoid overflow) against `num`.  
 **Variation:** Binary search on the root — midpoint `k = i + (j-i)/2`, compare `k*k` to `num`.
 
+**Variables:** `i`,`j` = search bounds on the root · `k` = candidate root · `square` = k*k in long
+**Pseudocode:**
+```
+search the root in [1, num]
+while i is at most j:
+  k = midpoint of i and j
+  square = k*k (in long to avoid overflow)
+  if square equals num, it's a perfect square
+  if square is too small, search higher: i = k + 1
+  else search lower: j = k - 1
+return false
+```
 ```java
 class Solution {
     public boolean isPerfectSquare(int num) {
@@ -26843,6 +36546,17 @@ class Solution {
 **Intuition:** Halving is always best when possible. For odd `n`, choosing `+1` vs `-1` should expose more trailing zeros to halve next; `n == 3` is the special case where `-1` is better.  
 **Variation:** Greedy on the last two bits — for odd `n != 3`, add 1 when `(n & 2) != 0` else subtract 1.
 
+**Variables:** `value` = current number (long to avoid +1 overflow) · `result` = step count
+**Pseudocode:**
+```
+copy n into a long value; result starts at 0
+while value isn't 1:
+  if value is even, halve it
+  else if value is 3 or its second-lowest bit is 0, subtract 1
+  else add 1 (to create more trailing zeros)
+  count the step
+return result
+```
 ```java
 class Solution {
     public int integerReplacement(int n) {
@@ -26872,6 +36586,17 @@ class Solution {
 **Intuition:** Reservoir sampling lets us pick uniformly in one pass without storing all matching indices: the `k`-th matching element replaces the current pick with probability `1/k`.  
 **Variation:** Reservoir sampling of size 1 — keep the index with probability `1/count` as matches stream by.
 
+**Variables:** `nums` = stored array · `random` = RNG · `result` = chosen index · `count` = matches seen so far · `i` = scan position
+**Pseudocode:**
+```
+constructor: store the array
+pick(target):
+  result=-1, count=0
+  scan the array:
+    when nums[i] equals target, increment count
+    keep this index as result with probability 1/count
+  return result
+```
 ```java
 class Solution {
     private int[] nums;
@@ -26903,6 +36628,17 @@ class Solution {
 **Intuition:** Numbers group by digit-length: there are `9*10^(d-1)` numbers with `d` digits, contributing `d * 9 * 10^(d-1)` digits. Subtract whole groups to find the length, locate the exact number, then index into it.  
 **Variation:** Length-bucket walk — subtract `count * digitLength` until `n` falls inside the current bucket.
 
+**Variables:** `digitLength` = number of digits in the current bucket · `count` = how many numbers have that length · `start` = first number of that length · `number` = number holding the target digit · `indexInNumber` = position within that number
+**Pseudocode:**
+```
+start with 1-digit numbers: digitLength=1, count=9, start=1
+while n is past the current bucket's digit total:
+  subtract this bucket's digits (digitLength*count) from n
+  move to the next bucket: longer length, ten times as many numbers, new start
+locate the exact number = start + (n-1)/digitLength
+find the digit index within it = (n-1) mod digitLength
+return that digit character as an int
+```
 ```java
 class Solution {
     public int findNthDigit(int n) {
@@ -26929,6 +36665,18 @@ class Solution {
 **Intuition:** Build each entry by concatenating "Fizz" and/or "Buzz" based on divisibility; if neither applies, use the number's string.  
 **Variation:** Concatenate divisibility tags — append "Fizz" on `%3`, "Buzz" on `%5`.
 
+**Variables:** `result` = output strings · `i` = current number · `builder` = entry being assembled
+**Pseudocode:**
+```
+result starts empty
+for i from 1 to n:
+  start an empty builder
+  if i is divisible by 3, append "Fizz"
+  if i is divisible by 5, append "Buzz"
+  if builder is still empty, append the number itself
+  add builder's text to result
+return result
+```
 ```java
 class Solution {
     public List<String> fizzBuzz(int n) {
@@ -26960,6 +36708,18 @@ class Solution {
 **Intuition:** After `k` complete rows you've used `k(k+1)/2` coins, so the answer is the largest `k` with `k(k+1)/2 <= n`. Binary search this `k` (or solve the quadratic).  
 **Variation:** Binary search on rows — compare triangular number `k(k+1)/2` against `n` using `long`.
 
+**Variables:** `i`,`j` = search bounds on the row count · `k` = candidate row count · `used` = coins used by k full rows
+**Pseudocode:**
+```
+search the row count in [1, n]
+while i is at most j:
+  k = midpoint of i and j
+  used = k*(k+1)/2 (in long)
+  if used equals n, k is exact
+  if used is too small, search higher: i = k + 1
+  else search lower: j = k - 1
+return j (the largest k whose triangular number fits)
+```
 ```java
 class Solution {
     public int arrangeCoins(int n) {
@@ -26989,6 +36749,12 @@ class Solution {
 **Intuition:** Incrementing all but one is equivalent (for the purpose of equalizing) to decrementing a single element by 1. So the answer is the total amount each element exceeds the minimum: `sum - n * min`.  
 **Variation:** Relative-decrement reframing — total moves = `sum(nums) - n * min(nums)`.
 
+**Variables:** `min` = smallest element · `sum` = total of all elements · `num` = current element
+**Pseudocode:**
+```
+track the minimum element and the sum of all elements in one pass
+return sum minus (count of elements times the minimum)
+```
 ```java
 class Solution {
     public int minMoves(int[] nums) {
@@ -27012,6 +36778,16 @@ class Solution {
 **Intuition:** Each pig can be tested `t = minutesToTest / minutesToDie` times, so it has `t + 1` distinguishable states (died after round 1..t, or survived). With `p` pigs we cover `(t+1)^p` buckets, so we need the smallest `p` with `(t+1)^p >= buckets`.  
 **Variation:** Base-(tests+1) counting — `p = ceil(log_{t+1}(buckets))`.
 
+**Variables:** `statesPerPig` = distinguishable outcomes per pig (rounds + survive) · `result` = pigs needed · `reach` = buckets coverable so far
+**Pseudocode:**
+```
+statesPerPig = (minutesToTest / minutesToDie) + 1
+result=0, reach=1
+while reach is still below buckets:
+  multiply reach by statesPerPig (one more pig)
+  increment result
+return result
+```
 ```java
 class Solution {
     public int poorPigs(int buckets, int minutesToDie, int minutesToTest) {
@@ -27036,6 +36812,15 @@ class Solution {
 **Intuition:** Two calls form a uniform value in [1,49]; reject anything above 40 and map the remaining 40 outcomes evenly onto [1,10]. Rejection keeps the distribution exactly uniform.  
 **Variation:** Rejection sampling on a 7x7 grid — accept index `< 40`, return `index % 10 + 1`.
 
+**Variables:** `row`,`col` = two rand7 results · `index` = combined value in [1,49]
+**Pseudocode:**
+```
+loop forever:
+  take two rand7 calls as row and col
+  combine them into index in [1,49]
+  if index is at most 40, map it onto [1,10] via (index-1) mod 10 + 1 and return
+  otherwise reject and retry
+```
 ```java
 class Solution extends SolBase {
     public int rand10() {
@@ -27060,6 +36845,13 @@ class Solution extends SolBase {
 **Intuition:** The most square-like factor pair minimizes the difference, so start `W` at `floor(sqrt(area))` and walk down until it divides `area`.  
 **Variation:** Search down from sqrt — first divisor `W <= sqrt(area)` gives the closest pair.
 
+**Variables:** `width` = candidate shorter side, starting at floor(sqrt(area))
+**Pseudocode:**
+```
+start width at the integer square root of area
+while width does not divide area evenly, decrement it
+return [area/width, width] (longer side first)
+```
 ```java
 class Solution {
     public int[] constructRectangle(int area) {
@@ -27081,6 +36873,16 @@ class Solution {
 **Intuition:** Each attack would add `duration`, but if the next attack comes before the current poison ends, only the gap between attacks counts. Sum the capped gaps and add a full duration for the last attack.  
 **Variation:** Capped gaps — add `min(gap, duration)` between consecutive attacks.
 
+**Variables:** `timeSeries[]` = sorted attack times · `duration` = poison length · `result` = total poisoned time · `i` = current attack
+**Pseudocode:**
+```
+if there are no attacks, return 0
+result starts at 0
+for each consecutive pair of attacks:
+  add the smaller of (the gap between them) and (duration) to result
+add one full duration for the last attack
+return result
+```
 ```java
 class Solution {
     public int findPoisonedDuration(int[] timeSeries, int duration) {
@@ -27105,6 +36907,17 @@ class Solution {
 **Intuition:** Build prefix sums so the cumulative weights partition `[1, total]` into intervals; draw a random target in that range and binary-search the first prefix sum reaching it.  
 **Variation:** Prefix-sum + binary search — find leftmost prefix `>= target`.
 
+**Variables:** `prefix[]` = cumulative weight sums · `total` = sum of all weights · `target` = random draw in [1,total] · `i`,`j` = binary-search bounds · `k` = midpoint
+**Pseudocode:**
+```
+constructor: build prefix sums of the weights; record the total
+pickIndex():
+  draw a random target in [1, total]
+  binary-search for the leftmost prefix sum that is at least target:
+    if prefix[k] is below target, move left bound past k
+    else keep k as a candidate by setting right bound to k
+  return that index
+```
 ```java
 class Solution {
     private int[] prefix;
@@ -27144,6 +36957,16 @@ class Solution {
 **Intuition:** Among the six pairwise squared distances of a square there are exactly two distinct values: four equal sides and two equal (larger) diagonals, with the diagonal twice the side. Use squared distances to stay in integers.  
 **Variation:** Two-distinct-distance check — collect six squared distances; require exactly two values, the smaller nonzero, the larger double it.
 
+**Variables:** `distances[]` = the six pairwise squared distances, sorted
+**Pseudocode:**
+```
+compute all six pairwise squared distances and sort them
+if the smallest is 0, points coincide -> not a square
+require the four smallest are equal (the sides)
+require the two largest are equal (the diagonals)
+require a diagonal squared equals twice a side squared
+helper dist(a,b): squared Euclidean distance
+```
 ```java
 class Solution {
     public boolean validSquare(int[] p1, int[] p2, int[] p3, int[] p4) {
@@ -27175,6 +36998,13 @@ class Solution {
 **Intuition:** Every operation always covers cell (0,0), so the maximum value sits in the intersection of all operation rectangles — its area is the product of the smallest row bound and smallest column bound.  
 **Variation:** Intersection area of all ops — `min(all a) * min(all b)`.
 
+**Variables:** `minRow`,`minCol` = smallest row/column bounds across all ops · `op` = current operation
+**Pseudocode:**
+```
+start minRow at m and minCol at n
+for each operation, shrink minRow and minCol to its row and column bounds
+return minRow * minCol (area of the common intersection)
+```
 ```java
 class Solution {
     public int maxCount(int m, int n, int[][] ops) {
@@ -27197,6 +37027,17 @@ class Solution {
 **Intuition:** Squeeze two pointers from `0` and `floor(sqrt(c))`: if the squared sum is too small move the low pointer up, too large move the high pointer down.  
 **Variation:** Two pointers on squares — `a` from 0 up, `b` from sqrt(c) down.
 
+**Variables:** `a` = low pointer starting at 0 · `b` = high pointer starting at floor(sqrt(c)) · `sum` = a*a + b*b
+**Pseudocode:**
+```
+a starts at 0, b starts at floor(sqrt(c))
+while a is at most b:
+  sum = a*a + b*b
+  if sum equals c, success
+  if sum is too small, move a up
+  else move b down
+return false
+```
 ```java
 class Solution {
     public boolean judgeSquareSum(int c) {
@@ -27225,6 +37066,20 @@ class Solution {
 **Intuition:** Work backwards with DP: the best cost from index `i` is its cost plus the cheapest reachable next index within `maxJump`. Filling from the right and preferring the smaller next index yields the lexicographically smallest path on ties.  
 **Variation:** Backward DP with path reconstruction — `cost[i] = coins[i] + min over j in (i, i+maxJump]`, tie-break to smaller `j`.
 
+**Variables:** `n` = number of indices · `cost[]` = cheapest cost from each index to the end · `next[]` = best next index from each · `i` = current index · `j` = reachable next index · `candidate` = trial cost
+**Pseudocode:**
+```
+initialize cost[] to infinity and next[] to -1
+seed the last index's cost if it isn't blocked
+fill indices from right to left:
+  skip blocked indices
+  for each reachable index j within maxJump that has a finite cost:
+    candidate = cost[j] + coins[i]
+    if candidate beats cost[i], record it and set next[i]=j (smaller j seen first wins ties)
+if start is unreachable, return empty
+otherwise follow next[] from index 0, collecting 1-indexed positions
+return the path
+```
 ```java
 class Solution {
     public List<Integer> cheapestJump(int[] coins, int maxJump) {
@@ -27272,6 +37127,17 @@ class Solution {
 **Intuition:** Rabbits answering `k` form groups of size `k+1`. For each answer value, every full group of `k+1` such replies fills one color group; partial groups still require a whole `k+1` block.  
 **Variation:** Group-rounding by answer — for count `c` of answer `k`, add `ceil(c/(k+1)) * (k+1)`.
 
+**Variables:** `counts` = map of answer value → how many rabbits gave it · `groupSize` = answer+1 · `count` = rabbits with that answer · `groups` = color groups needed · `result` = total rabbits
+**Pseudocode:**
+```
+tally how many rabbits gave each answer
+result starts at 0
+for each answer value with count c:
+  groupSize = answer + 1
+  groups = ceil(c / groupSize)
+  add groups * groupSize to result
+return result
+```
 ```java
 class Solution {
     public int numRabbits(int[] answers) {
@@ -27300,6 +37166,14 @@ class Solution {
 **Intuition:** You win iff you reach the target strictly before every ghost. Since all move optimally with Manhattan distance, compare your distance from origin to each ghost's distance to the target; if no ghost is at least as close, you escape.  
 **Variation:** Manhattan-distance race — you win when your distance to target < every ghost's distance to target.
 
+**Variables:** `myDist` = your Manhattan distance to target · `ghostDist` = a ghost's Manhattan distance to target
+**Pseudocode:**
+```
+compute your Manhattan distance from origin to target
+for each ghost:
+  if its Manhattan distance to target is no greater than yours, it can intercept -> return false
+return true
+```
 ```java
 class Solution {
     public boolean escapeGhosts(int[][] ghosts, int[] target) {
@@ -27324,6 +37198,19 @@ class Solution {
 **Intuition:** Rather than scan `s` per word, bucket words by their next-needed character. Sweep `s` once; each character releases its waiting words, advancing them to their next character bucket, and any word that runs out of characters is a match.  
 **Variation:** Waiting lists per next-char — advance words bucketed by the character they currently need as `s` streams.
 
+**Variables:** `waiting[26]` = lists of [wordIndex, positionInWord] keyed by next-needed char · `result` = matched words · `current` = words released by the current char · `wordIndex`,`pos` = a waiting word's identity and next position
+**Pseudocode:**
+```
+create 26 empty waiting lists
+place each word in the bucket of its first character (at position 0)
+result starts at 0
+for each character c of s:
+  take and clear the bucket waiting on c
+  for each waiting word, advance its position by one:
+    if it has reached the end of its word, count it as a match
+    else re-bucket it under the next character it needs
+return result
+```
 ```java
 class Solution {
     public int numMatchingSubseq(String s, String[] words) {
@@ -27361,6 +37248,15 @@ class Solution {
 **Intuition:** A run of `k` consecutive integers starting at `a` sums to `k*a + k(k-1)/2`, so `n - k(k-1)/2` must be positive and divisible by `k`. Try each `k` while the triangular offset stays below `n`.  
 **Variation:** Count valid run-lengths — for each `k`, valid iff `(n - k(k-1)/2) % k == 0` and positive.
 
+**Variables:** `result` = count of valid run lengths · `k` = candidate run length · `remainder` = n minus the triangular offset
+**Pseudocode:**
+```
+result starts at 0
+for each run length k while the triangular offset k*(k-1)/2 stays below n:
+  remainder = n - k*(k-1)/2
+  if remainder divides evenly by k, this run length works -> count it
+return result
+```
 ```java
 class Solution {
     public int consecutiveNumbersSum(int n) {
@@ -27385,6 +37281,12 @@ class Solution {
 **Intuition:** Two rectangles overlap iff their projections on both axes overlap; equivalently, neither is entirely to one side of the other on either axis.  
 **Variation:** Separating-axis on both projections — overlap iff `x` ranges and `y` ranges each intersect.
 
+**Variables:** `rec1`,`rec2` = rectangles as [x1,y1,x2,y2]
+**Pseudocode:**
+```
+return true only if the x-ranges overlap (rec1 left < rec2 right and rec2 left < rec1 right)
+and the y-ranges overlap (rec1 bottom < rec2 top and rec2 bottom < rec1 top)
+```
 ```java
 class Solution {
     public boolean isRectangleOverlap(int[] rec1, int[] rec2) {
@@ -27403,6 +37305,16 @@ class Solution {
 **Intuition:** Unfold the reflections so the beam travels straight; it hits a corner after going up a multiple of `p` that is also a multiple of `q`, i.e. `lcm(p,q)`. The parities of how many room-widths and room-heights that represents determine the receptor.  
 **Variation:** Parity of `lcm/p` and `lcm/q` — reduce `p,q` by gcd, then the receptor follows from which is odd/even.
 
+**Variables:** `g` = gcd(p,q) · `rows` = parity of p/g · `cols` = parity of q/g
+**Pseudocode:**
+```
+g = gcd(p, q)
+rows = parity of (p/g); cols = parity of (q/g)
+if both are odd, the beam hits receptor 1
+if rows is odd and cols even, it hits receptor 0
+otherwise it hits receptor 2
+helper gcd
+```
 ```java
 class Solution {
     public int mirrorReflection(int p, int q) {
@@ -27432,6 +37344,15 @@ class Solution {
 **Intuition:** Two numbers are digit-permutations iff they have the same multiset of digits. So compute a digit-count signature of `n` and compare it against the signatures of all powers of 2 within the 32-bit range.  
 **Variation:** Digit-count signature match — compare sorted-digit fingerprint against each power of 2.
 
+**Variables:** `target` = digit-count signature of n · `power` = each power of 2 within int range · `sig` = signature built in the helper
+**Pseudocode:**
+```
+compute target = digit-count signature of n
+for each power of 2 (1, 2, 4, ... while it stays positive):
+  if its digit-count signature equals target, return true
+return false
+helper signature(n): for each digit, add 10^digit to encode digit counts
+```
 ```java
 class Solution {
     public boolean reorderedPowerOf2(int n) {
@@ -27463,6 +37384,17 @@ class Solution {
 **Intuition:** A rectangle is fixed by its diagonal corners; for each pair of points with different x and y, the other two corners are determined, so check whether both exist in a point set.  
 **Variation:** Diagonal-pair lookup — for each pair, test if the complementary corners are present in a hash set.
 
+**Variables:** `seen` = set of encoded point coordinates · `result` = smallest area found · `i`,`j` = the two diagonal corner points · `area` = area of the rectangle they define
+**Pseudocode:**
+```
+encode every point into a hash set
+result starts at infinity
+for each pair of points (i, j):
+  if they differ in both x and y (valid diagonal):
+    if the other two corners both exist in the set:
+      compute the rectangle's area and keep the minimum
+return result, or 0 if none was found
+```
 ```java
 class Solution {
     public int minAreaRect(int[][] points) {
@@ -27496,6 +37428,18 @@ class Solution {
 **Intuition:** A rectangle's diagonals share the same midpoint and the same length. Group point pairs by `(midpoint, diagonal length)`; any two pairs in a group are the two diagonals of a rectangle, whose sides come from the corner vectors.  
 **Variation:** Group diagonals by midpoint+length — within a group, combine pairs and compute area via vectors.
 
+**Variables:** `groups` = map from (2*midpoint, squared length) → list of point-pairs · `cx`,`cy` = doubled midpoint · `len` = squared diagonal length · `result` = smallest area · `p1`,`p2`,`p3` = corners forming two sides
+**Pseudocode:**
+```
+for each pair of points (i, j):
+  key it by their doubled midpoint and squared distance
+  add the pair to that group
+result starts at infinity
+for each group, take every two pairs (they are the two diagonals of a rectangle):
+  pick three corners, measure the two adjacent side lengths
+  update result with their product (the area)
+return result, or 0 if none found
+```
 ```java
 class Solution {
     public double minAreaFreeRect(int[][] points) {
@@ -27536,6 +37480,15 @@ class Solution {
 **Intuition:** After one pass, the robot is bounded iff it returns to the origin, or it no longer faces north — a non-north heading guarantees the net displacement rotates and cancels over at most four cycles.  
 **Variation:** One-cycle check — bounded iff back at origin OR final direction != initial north.
 
+**Variables:** `x`,`y` = position after one pass · `dir` = facing (0=N,1=E,2=S,3=W) · `moves` = direction vectors · `c` = current instruction
+**Pseudocode:**
+```
+start at origin facing north (dir 0); set up the four direction vectors
+for each instruction:
+  'L' turns left (dir-1 mod 4), 'R' turns right (dir+1 mod 4)
+  'G' steps forward along the current direction
+robot is bounded if it returned to the origin, or it is no longer facing north
+```
 ```java
 class Solution {
     public boolean isRobotBounded(String instructions) {
@@ -27565,6 +37518,16 @@ class Solution {
 **Intuition:** Count available letters once; a word is formable iff its own letter counts never exceed the available counts. Sum lengths of formable words.  
 **Variation:** Frequency containment — compare per-word letter counts against the `chars` budget.
 
+**Variables:** `budget[26]` = available letter counts from chars · `need[26]` = a word's letter counts · `formable` = whether the word fits the budget · `result` = total length of formable words
+**Pseudocode:**
+```
+tally the available letter counts from chars into budget
+result starts at 0
+for each word:
+  tally its own letters into need; if any exceeds budget, mark it not formable and stop early
+  if it is formable, add its length to result
+return result
+```
 ```java
 class Solution {
     public int countCharacters(String[] words, String chars) {
@@ -27601,6 +37564,15 @@ class Solution {
 **Intuition:** Pair each positive `i` with its negation `-i`; that cancels to zero, and add a lone 0 if `n` is odd.  
 **Variation:** Symmetric pairs — emit `i` and `-i`, plus a central 0 for odd `n`.
 
+**Variables:** `result[]` = output array · `index` = next slot to fill · `i` = pair magnitude
+**Pseudocode:**
+```
+allocate the result array; index starts at 0
+for i from 1 to n/2:
+  write i, then write -i (a canceling pair)
+if n is odd, fill the last slot with 0
+return result
+```
 ```java
 class Solution {
     public int[] sumZero(int n) {
@@ -27627,6 +37599,14 @@ class Solution {
 **Intuition:** The minute hand moves 6 degrees per minute; the hour hand moves 30 degrees per hour plus 0.5 degree per minute. The answer is the absolute difference, folded to at most 180.  
 **Variation:** Per-hand angular position — minute = `6*m`, hour = `30*(h%12) + 0.5*m`, take `min(diff, 360-diff)`.
 
+**Variables:** `minuteAngle` = minute hand position in degrees · `hourAngle` = hour hand position in degrees · `diff` = absolute difference
+**Pseudocode:**
+```
+minuteAngle = 6 degrees per minute
+hourAngle = 30 degrees per hour plus 0.5 degree per minute
+diff = absolute difference of the two
+return the smaller of diff and 360 - diff
+```
 ```java
 class Solution {
     public double angleClock(int hour, int minutes) {
@@ -27647,6 +37627,18 @@ class Solution {
 **Intuition:** Precompute each friend's preference rank for every other friend. A friend `x` (paired with `y`) is unhappy if some `u` ranks higher than `y` for `x`, and `u` ranks `x` higher than `u`'s own partner. Compare ranks pairwise.  
 **Variation:** Rank-matrix mutual-preference scan — `x` unhappy if exists `u` with `rank[x][u] < rank[x][y]` and `rank[u][x] < rank[u][partner[u]]`.
 
+**Variables:** `rank[x][f]` = how x ranks friend f (lower = more preferred) · `partner[]` = each friend's assigned partner · `x` = friend examined · `y` = x's partner · `u` = a potential better match · `result` = unhappy count
+**Pseudocode:**
+```
+build a rank matrix: rank[i][f] = position of f in i's preference list
+build the partner array from the pairs
+result starts at 0
+for each friend x with partner y:
+  for each other friend u that x prefers over y:
+    if u also prefers x over u's own partner, x is unhappy -> stop scanning
+  if x was found unhappy, count it
+return result
+```
 ```java
 class Solution {
     public int unhappyFriends(int n, int[][] preferences, int[][] pairs) {
@@ -27690,6 +37682,16 @@ class Solution {
 **Intuition:** Instead of enumerating subarrays, count how many odd-length subarrays include each index. With `i+1` choices for the left boundary and `n-i` for the right, the number of odd-length ones is computed in closed form, weighting each element.  
 **Variation:** Per-element contribution — element `i` appears in `ceil(((i+1)*(n-i))/2)` odd-length subarrays.
 
+**Variables:** `n` = array length · `totalSubarrays` = all subarrays through index i · `oddCount` = how many of them have odd length · `result` = weighted sum
+**Pseudocode:**
+```
+result starts at 0
+for each index i:
+  totalSubarrays = (i+1) * (n-i)  (left choices times right choices)
+  oddCount = ceil(totalSubarrays / 2)
+  add oddCount * arr[i] to result
+return result
+```
 ```java
 class Solution {
     public int sumOddLengthSubarrays(int[] arr) {
@@ -27713,6 +37715,17 @@ class Solution {
 **Intuition:** Generate the array directly from the recurrence, tracking the running maximum. Handle the tiny base cases for `n < 2`.  
 **Variation:** Direct recurrence fill — even index copies, odd index sums the two halves.
 
+**Variables:** `nums[]` = generated array · `result` = running maximum · `i` = current index
+**Pseudocode:**
+```
+if n is 0, the array is just [0], so return 0
+allocate nums sized n+1; set nums[1]=1; result starts at 1
+for i from 2 to n:
+  if i is even, nums[i] = nums[i/2]
+  else nums[i] = nums[i/2] + nums[i/2 + 1]
+  update result with nums[i]
+return result
+```
 ```java
 class Solution {
     public int getMaximumGenerated(int n) {
@@ -27744,6 +37757,14 @@ class Solution {
 **Intuition:** The Josephus recurrence builds the survivor's position from a circle of size 1 upward: the winner in a circle of `i` is `(winner_{i-1} + k) % i`. Convert the final 0-indexed answer to 1-indexed.  
 **Variation:** Josephus recurrence — `winner = (winner + k) % i` for `i = 2..n`.
 
+**Variables:** `winner` = 0-indexed survivor position for the current circle size · `i` = circle size being grown
+**Pseudocode:**
+```
+winner starts at 0 (survivor of a circle of size 1)
+for circle size i from 2 up to n:
+  winner = (winner + k) mod i  (Josephus recurrence)
+return winner + 1 (convert to 1-indexed)
+```
 ```java
 class Solution {
     public int findTheWinner(int n, int k) {
@@ -27765,6 +37786,14 @@ class Solution {
 **Intuition:** Pair the largest value `2^p - 1` (kept whole) with the rest: each other pair can be made `(2^p - 2)` and `1`, so the product is `(2^p - 1) * (2^p - 2)^(2^(p-1) - 1)` — compute with modular fast power, but the base of the exponent must use the true (non-reduced) count.  
 **Variation:** Pairing + modular fast power — `(max) * pow(max-1, half-1) mod M`.
 
+**Variables:** `max` = 2^p - 1 (largest value, kept whole) · `exponent` = 2^(p-1) - 1 (number of (max-1) factors) · `result` = product mod M · `base`,`exp` = working values in fast power
+**Pseudocode:**
+```
+max = 2^p - 1; exponent = 2^(p-1) - 1
+result = max * pow(max-1, exponent) all taken mod M
+return result
+helper powmod(base, exp): exponentiation by squaring under MOD
+```
 ```java
 class Solution {
     private static final int MOD = 1_000_000_007;

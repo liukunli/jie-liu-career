@@ -101,6 +101,32 @@ For sliding window string problems (#3, #76, #567, #424), see `sliding_window.md
 
 ## Core Idioms
 
+**Variables:** `count` = frequency vector (index = char/digit bucket) · `ch - 'a'` = 0–25 bucket index · `ch - '0'` = 0–9 digit value · `num` = number built so far · `builder` = encoded/result string · `buckets` = lists indexed by frequency · `expand(i,j)` = palindrome length from a center
+**Pseudocode:**
+```
+idiom 1 — char count for letters:
+  make count of size 26
+  for each char: count[ch-'a'] += 1
+idiom 2 — char count for digits:
+  make count of size 10
+  for each char: count[ch-'0'] += 1
+idiom 3 — char to integer:
+  num = 0
+  for each char left to right: num = num*10 + (char - '0')
+idiom 4 — anagram hash key (frequency-based):
+  count the 26 letters of s
+  build a string from each letter label followed by its count
+  return it (same key for all anagrams)
+  alternative: sort the chars and use the sorted string as key
+idiom 5 — bucket sort by frequency:
+  count all ASCII chars
+  make buckets indexed by frequency
+  for each char with count>0: add it to buckets[its count]
+  walk buckets from highest frequency down, append each char that many times
+idiom 6 — expand from center:
+  while i in bounds and j in bounds and chars at i and j match: move i left, j right
+  return j - i - 1 (length of palindrome found)
+```
 ```java
 // a lowercase string is a length-26 frequency vector; most string problems are vector ops on it.  — WHEN: "anagram", "char count", "group by letters", "first unique", "sort by frequency".
 // 1. CHAR COUNT — lowercase letters
@@ -169,6 +195,16 @@ int expand(String s, int i, int j) {          // i == j: odd length; i+1 == j: e
 **Description:** Return true if `t` is an anagram of `s` (same characters, same counts).  
 **Intuition:** Anagrams have identical letter counts, so add up `s` and subtract `t` in one 26-slot array — all zeros means they match.
 
+**Variables:** `count[ch-'a']` = net frequency of each letter (s adds, t subtracts) · `c` = one slot's net count
+**Pseudocode:**
+```
+if lengths differ: return false
+make count of size 26
+for each char in s: add 1 to count[ch-'a']
+for each char in t: subtract 1 from count[ch-'a']
+for each slot c: if c is non-zero, return false
+return true
+```
 ```java
 class Solution {
     public boolean isAnagram(String s, String t) {
@@ -190,6 +226,14 @@ class Solution {
 **Description:** Can `ransomNote` be constructed from the letters in `magazine` (each letter used at most once)?  
 **Intuition:** Stock the letter counts from the magazine, then draw down for each note letter — if any count goes negative the magazine is short.
 
+**Variables:** `count[ch-'a']` = available copies of each letter from the magazine
+**Pseudocode:**
+```
+make count of size 26
+for each char in magazine: add 1 to count[ch-'a']
+for each char in ransomNote: subtract 1 from count[ch-'a'], and if it drops below 0 return false
+return true
+```
 ```java
 class Solution {
     public boolean canConstruct(String ransomNote, String magazine) {
@@ -209,6 +253,15 @@ class Solution {
 **Description:** Return the index of the first non-repeating character. Return -1 if none exists.  
 **Intuition:** One pass to count every letter, a second pass to return the first whose count is exactly 1.
 
+**Variables:** `count[ch-'a']` = frequency of each letter · `i` = scan index
+**Pseudocode:**
+```
+make count of size 26
+for each char in s: add 1 to count[ch-'a']
+for i from 0 to end of s:
+  if count of the char at i equals 1: return i
+return -1
+```
 ```java
 class Solution {
     public int firstUniqChar(String s) {
@@ -232,6 +285,20 @@ class Solution {
 **Intuition:** Anagrams share identical letter frequencies, so the frequency vector encoded as a string is a unique group key — O(k) to build vs O(k log k) to sort the characters.  
 **Key:** each anagram group shares the same frequency hash key. `computeIfAbsent` cleanly handles first-time group creation.
 
+**Variables:** `map` = key → list of strings sharing that key · `key` = frequency-vector string (same for all anagrams) · `count[ch-'a']` = letter frequency · `builder` = the key being built
+**Pseudocode:**
+```
+make empty map from key to list
+for each string s:
+  key = hashKey(s)
+  add s to map[key] (creating the list if absent)
+return all the lists in the map
+
+hashKey(s):
+  count the 26 letters of s
+  build a string from each letter label followed by its count
+  return that string
+```
 ```java
 class Solution {
     public List<List<String>> groupAnagrams(String[] strs) {
@@ -258,6 +325,14 @@ class Solution {
 ```
 
 **Alternative key (sort-based, simpler but O(k log k)):**
+
+**Variables:** `chars` = the string's characters · `key` = the sorted characters as a string (same for all anagrams)
+**Pseudocode:**
+```
+turn s into a char array
+sort the chars
+the sorted string is the key
+```
 ```java
 char[] chars = s.toCharArray();
 Arrays.sort(chars);
@@ -272,6 +347,17 @@ String key = new String(chars);   // "eat" → "aet", "tea" → "aet"
 **Intuition:** Frequencies are bounded by string length, so bucket chars by their count and read buckets high-to-low — no O(n log n) comparison sort needed.  
 **Key:** bucket sort by frequency — avoids O(n log n) comparison sort. Each bucket holds all chars with that frequency.
 
+**Variables:** `count[ch]` = frequency of each ASCII char · `buckets[freq]` = list of chars that occur exactly `freq` times · `builder` = result string
+**Pseudocode:**
+```
+count the frequency of every ASCII char
+make buckets indexed by frequency (0..length)
+for each char with count>0: add it to buckets[its count]
+for freq from length down to 1:
+  if that bucket is empty, skip
+  for each char in the bucket: append it freq times
+return the result
+```
 ```java
 class Solution {
     public String frequencySort(String s) {
@@ -305,6 +391,17 @@ class Solution {
 
 ## Template
 
+**Variables:** `i` = center index · `(i,i)` = odd-length center · `(i,i+1)` = even-length center · `expand(i,j)` = length of palindrome grown from that center
+**Pseudocode:**
+```
+for each index i in s:
+  process the odd center (i, i)
+  process the even center (i, i+1)
+
+expand(i, j):
+  while i and j are in bounds and the chars match: move i left, j right
+  return j - i - 1 (the palindrome length)
+```
 ```java
 // Call for each center: odd-length palindromes (i == i) and even-length (i, i+1)
 for (int i = 0; i < s.length(); i++) {
@@ -329,6 +426,21 @@ int expand(String s, int i, int j) {
 **Intuition:** Every palindrome has a center; try all 2n-1 centers (each char and each gap) and grow outward while characters mirror.  
 **Key:** expand from every center (odd and even), track the longest found.
 
+**Variables:** `start` = start index of best palindrome · `maxLen` = best length so far · `odd`/`even` = palindrome lengths from the two center types · `len` = best of the two · `expand(i,j)` = palindrome length from a center
+**Pseudocode:**
+```
+start = 0, maxLen = 1
+for each index i:
+  odd = expand from center (i, i)
+  even = expand from center (i, i+1)
+  len = the larger of odd and even
+  if len beats maxLen: update maxLen and back-compute start = i - (len-1)/2
+return the substring from start of length maxLen
+
+expand(i, j):
+  while in bounds and chars match: move i left, j right
+  return j - i - 1
+```
 ```java
 class Solution {
     public String longestPalindrome(String s) {
@@ -360,6 +472,20 @@ class Solution {
 **Intuition:** Same center-expansion, but each successful step outward is itself one more palindrome, so accumulate a count rather than a max.  
 **Key:** same expand helper — count expansions instead of tracking max length.
 
+**Variables:** `count` = total palindromes found · `expandCount(i,j)` = number of palindromes centered there (one per successful expansion step)
+**Pseudocode:**
+```
+count = 0
+for each index i:
+  count += palindromes from odd center (i, i)
+  count += palindromes from even center (i, i+1)
+return count
+
+expandCount(i, j):
+  count = 0
+  while in bounds and chars match: count += 1, move i left, j right
+  return count
+```
 ```java
 class Solution {
     public int countSubstrings(String s) {
@@ -402,6 +528,20 @@ Expand returns:     palindrome length          palindrome count
 **Intuition:** Process the string in strict phases — spaces, then sign, then digits accumulated as `num*10 + digit` — clamping to int bounds the moment overflow would occur.  
 **Key steps in order:** skip spaces → read sign → read digits (`num = num * 10 + (ch - '0')`) → clamp on overflow.
 
+**Variables:** `i` = scan index · `sign` = +1 or -1 · `result` = number built so far (long, to detect overflow)
+**Pseudocode:**
+```
+i = 0
+skip leading spaces
+if reached end: return 0
+sign = +1; if next is '-' set -1 and advance, if '+' just advance
+result = 0
+while next is a digit:
+  result = result*10 + digit
+  if result*sign exceeds int max: return int max
+  if result*sign below int min: return int min
+return result*sign as int
+```
 ```java
 class Solution {
     public int myAtoi(String s) {
@@ -431,6 +571,15 @@ class Solution {
 **Intuition:** Start with the first string as the candidate prefix and trim its tail until every other string starts with it.  
 **Key:** use the first string as the candidate prefix. Shrink it until every string starts with it.
 
+**Variables:** `prefix` = current candidate common prefix
+**Pseudocode:**
+```
+prefix = the first string
+for each other string:
+  while that string does not start with prefix: drop prefix's last char
+  if prefix became empty: return ""
+return prefix
+```
 ```java
 class Solution {
     public String longestCommonPrefix(String[] strs) {
@@ -454,6 +603,17 @@ class Solution {
 **Intuition:** Two pointers — read scans each run while write lays down the compressed `char + count` behind it; write never overtakes read, so it's safe in place.  
 **Key:** write pointer `write` advances independently of read pointer `i`. Count run length, then write char + (count if > 1).
 
+**Variables:** `write` = next position to write the compressed output · `i` = read scan index · `ch` = current run's char · `count` = run length
+**Pseudocode:**
+```
+write = 0, i = 0
+while i < length:
+  ch = chars[i]
+  count consecutive copies of ch, advancing i
+  write ch at the write position and advance write
+  if count > 1: write each digit of count, advancing write
+return write (the new length)
+```
 ```java
 class Solution {
     public int compress(char[] chars) {
@@ -481,6 +641,16 @@ class Solution {
 **Intuition:** A stack mirrors the partially-cleaned string — if the next char equals the top it's an adjacent pair, so pop instead of pushing.  
 **Key:** stack — push each char; if it equals the top, they form a pair → pop instead. Stack holds the result after all removals.
 
+**Variables:** `stack` = chars of the partially-cleaned string · `ch` = current char · `builder` = final result
+**Pseudocode:**
+```
+make empty stack
+for each char ch:
+  if stack not empty and top equals ch: pop (the pair cancels)
+  else: push ch
+pop everything into a builder, then reverse it
+return the result
+```
 ```java
 class Solution {
     public String removeDuplicates(String s) {
@@ -504,6 +674,14 @@ class Solution {
 
 ## String Idioms Cheat Sheet
 
+**Variables:** `ch` = a single char · `i` = an index/offset · `s` = a string · `builder` = a StringBuilder accumulating output · `map` = a grouping map
+**Pseudocode:**
+```
+char/index conversions: 'a'+i makes a letter, ch-'a' makes a letter index, ch-'0' makes a digit; test/convert chars with the Character helpers
+string operations: read a char, convert to/from char array, take a substring, test contains/startsWith, split on whitespace
+building strings: append chars or strings to a builder, delete or reverse, then convert to string, or join a list with a delimiter
+grouping: use computeIfAbsent to fetch-or-create a list for a key, then add the value
+```
 ```java
 // Char ↔ index
 'a' + i             // int → char (i=0→'a', i=25→'z')
@@ -556,6 +734,18 @@ map.computeIfAbsent(key, k -> new ArrayList<>()).add(value);
 **Description:** Convert a string into a zigzag pattern across `numRows` rows and read it row by row.  
 **Intuition:** Walk the string once, appending each char to its current row's builder while bouncing the row index down then up.
 
+**Variables:** `rows[i]` = builder for the i-th zigzag row · `row` = current row index · `step` = +1 going down, -1 going up · `result` = rows concatenated
+**Pseudocode:**
+```
+if there is only one row: return s unchanged
+make one builder per row
+row = 0, step = 1 (downward)
+for each char:
+  append it to the current row's builder
+  if at the top row: step = down; if at the bottom row: step = up
+  move row by step
+concatenate all row builders and return
+```
 ```java
 class Solution {
     public String convert(String s, int numRows) {
@@ -593,6 +783,14 @@ class Solution {
 **Description:** Convert an integer to its Roman numeral representation (values 1–3999).  
 **Intuition:** Greedily subtract the largest possible value (including the 4/9 subtractive pairs) and append its symbol.
 
+**Variables:** `values` = Roman values high to low (incl. 900/400/90/...) · `symbols` = matching symbols · `builder` = result · `num` = remaining amount
+**Pseudocode:**
+```
+list the values high to low and their symbols (including the subtractive pairs)
+for each value/symbol pair:
+  while num is at least this value: append the symbol and subtract the value
+return the result
+```
 ```java
 class Solution {
     public String intToRoman(int num) {
@@ -618,6 +816,17 @@ class Solution {
 **Description:** Convert a Roman numeral string to an integer.  
 **Intuition:** Add each symbol's value, but subtract instead when a smaller value precedes a larger one (subtractive notation).
 
+**Variables:** `map` = symbol → value · `result` = running total · `value` = current symbol's value
+**Pseudocode:**
+```
+map each Roman symbol to its value
+result = 0
+for each index i:
+  value = the value of symbol at i
+  if a larger value follows: subtract value (subtractive pair)
+  else: add value
+return result
+```
 ```java
 class Solution {
     public int romanToInt(String s) {
@@ -646,6 +855,15 @@ class Solution {
 **Description:** Find the first occurrence of `needle` in `haystack`. Return -1 if not found.  
 **Intuition:** Slide a window of needle's length across haystack and compare; the first full match wins.
 
+**Variables:** `n`/`m` = lengths of haystack/needle · `i` = window start in haystack · `j` = match offset within needle
+**Pseudocode:**
+```
+for each start i where the needle still fits:
+  j = 0
+  while j < m and haystack[i+j] equals needle[j]: advance j
+  if j reached m: full match, return i
+return -1
+```
 ```java
 class Solution {
     public int strStr(String haystack, String needle) {
@@ -672,6 +890,19 @@ class Solution {
 **Description:** Generate the nth term of the "count and say" sequence: read digits of the previous term aloud.  
 **Intuition:** Starting from "1", repeatedly scan runs of equal digits and emit count followed by the digit.
 
+**Variables:** `result` = current term · `builder` = next term · `j` = scan index · `ch` = current run's digit · `count` = run length
+**Pseudocode:**
+```
+result = "1"
+repeat n-1 times:
+  j = 0, start a fresh builder
+  while j < length of result:
+    ch = digit at j
+    count consecutive copies of ch, advancing j
+    append count then ch
+  result = builder
+return result
+```
 ```java
 class Solution {
     public String countAndSay(int n) {
@@ -703,6 +934,20 @@ class Solution {
 **Description:** Multiply two non-negative integers given as strings. Return the product as a string.  
 **Intuition:** Schoolbook multiplication: digit i of num1 times digit j of num2 lands in result positions i+j and i+j+1.
 
+**Variables:** `product[k]` = digit accumulator for result position k · `mul` = single-digit product · `sum` = mul plus what's already at i+j+1 · `builder` = trimmed result
+**Pseudocode:**
+```
+if either number is "0": return "0"
+make product array of size n+m
+for i from last digit of num1 down:
+  for j from last digit of num2 down:
+    mul = digit i times digit j
+    sum = mul + product[i+j+1]
+    product[i+j+1] = sum mod 10 (low digit)
+    product[i+j] += sum / 10 (carry up)
+build a string from product, skipping leading zeros
+return it
+```
 ```java
 class Solution {
     public String multiply(String num1, String num2) {
@@ -738,6 +983,15 @@ class Solution {
 **Description:** Return the length of the last word in a string (word = max sequence of non-space chars).  
 **Intuition:** Scan from the right: skip trailing spaces, then count letters until the next space.
 
+**Variables:** `i` = scan index from the right · `length` = length of last word
+**Pseudocode:**
+```
+i = last index
+skip trailing spaces (decrement i while space)
+length = 0
+while i >= 0 and char is not space: length += 1, decrement i
+return length
+```
 ```java
 class Solution {
     public int lengthOfLastWord(String s) {
@@ -763,6 +1017,18 @@ class Solution {
 **Description:** Validate whether a string is a valid decimal number (integers, fractions, exponents).  
 **Intuition:** A single left-to-right scan tracking whether we have seen a digit, a dot, and an exponent enforces all the ordering rules.
 
+**Variables:** `seenDigit` = a digit appeared (resets after `e`) · `seenDot` = a `.` appeared · `seenExp` = an `e`/`E` appeared · `ch` = current char
+**Pseudocode:**
+```
+seenDigit = seenDot = seenExp = false
+for each char ch:
+  if digit: seenDigit = true
+  else if sign: valid only at start or right after e, else fail
+  else if dot: fail if a dot or exponent already seen, else seenDot = true
+  else if e/E: fail if exponent already seen or no digit yet; seenExp = true; seenDigit = false (need digits after e)
+  else: fail
+return seenDigit
+```
 ```java
 class Solution {
     public boolean isNumber(String s) {
@@ -803,6 +1069,21 @@ class Solution {
 **Description:** Format words into lines of `maxWidth`, fully justified (equal spaces, last line left-aligned).  
 **Intuition:** Greedily pack as many words as fit per line, then distribute leftover spaces evenly between gaps (extras to the left); the last line is left-justified.
 
+**Variables:** `i`/`j` = first/after-last word index of the current line · `lineLen` = total word chars on the line · `wordCount` = words on the line · `spaces` = leftover spaces · `gaps` = word gaps · `base`/`extra` = even spaces per gap and remainder · `builder` = the line
+**Pseudocode:**
+```
+i = 0
+while i < number of words:
+  j = i, lineLen = 0
+  greedily add words while they plus the minimum single spaces still fit; track lineLen and advance j
+  wordCount = j - i, spaces = maxWidth - lineLen
+  if this is the last line or only one word: left-justify (single spaces between, pad right to maxWidth)
+  else:
+    gaps = wordCount - 1, base = spaces/gaps, extra = spaces mod gaps
+    for each word but the last: append word, then base spaces plus one extra for the leftmost `extra` gaps
+  add the line; set i = j
+return all lines
+```
 ```java
 class Solution {
     public List<String> fullJustify(String[] words, int maxWidth) {
@@ -856,6 +1137,17 @@ class Solution {
 **Description:** Check if a string is a palindrome, ignoring non-alphanumeric characters and case.  
 **Intuition:** Two pointers move inward, skipping non-alphanumeric chars and comparing lowercased letters.
 
+**Variables:** `i`/`j` = left/right pointers moving inward
+**Pseudocode:**
+```
+i = 0, j = last index
+while i < j:
+  advance i past non-alphanumeric chars
+  retreat j past non-alphanumeric chars
+  if lowercased chars at i and j differ: return false
+  move i right, j left
+return true
+```
 ```java
 class Solution {
     public boolean isPalindrome(String s) {
@@ -886,6 +1178,18 @@ class Solution {
 **Description:** Reverse the order of words in a string (split on spaces, handle multiple spaces).  
 **Intuition:** Scan from the right, extract each word, and append them in reverse order with single spaces.
 
+**Variables:** `result` = reversed sentence being built · `i` = scan index from the right · `j` = end index of the current word
+**Pseudocode:**
+```
+i = last index
+while i >= 0:
+  skip spaces (decrement i)
+  if i < 0: stop
+  j = i; scan left over the word (decrement i) until a space or start
+  if result already has words: append a space
+  append the word spanning i+1..j
+return result
+```
 ```java
 class Solution {
     public String reverseWords(String s) {
@@ -920,6 +1224,17 @@ class Solution {
 **Description:** Determine if two strings are one edit distance apart (insert, delete, or replace one char).  
 **Intuition:** Scan to the first mismatch; equal lengths force a replace, otherwise skip one char in the longer string and require the rest to match.
 
+**Variables:** `n`/`m` = lengths of s/t · `i` = scan index of the first mismatch
+**Pseudocode:**
+```
+if lengths differ by more than 1: return false
+for i over the common prefix:
+  if chars at i differ:
+    if lengths equal: rest after i must match (replace)
+    if s longer: s after i+1 must equal t after i (delete from s)
+    else: s after i must equal t after i+1 (insert into s)
+no mismatch found: true only if lengths differ by exactly 1
+```
 ```java
 class Solution {
     public boolean isOneEditDistance(String s, String t) {
@@ -951,6 +1266,18 @@ class Solution {
 **Description:** Given a sorted array, return missing ranges between `lower` and `upper` bounds.  
 **Intuition:** Walk a running "next expected" value; whenever a number exceeds it, the gap before it is a missing range.
 
+**Variables:** `next` = smallest value not yet covered · `num` = current array element · `format(lo,hi)` = single value or "lo->hi"
+**Pseudocode:**
+```
+next = lower
+for each num:
+  if num > next: record the gap from next to num-1
+  next = num + 1
+if next <= upper: record the final gap from next to upper
+return the ranges
+
+format(lo, hi): if lo equals hi return lo, else return "lo->hi"
+```
 ```java
 class Solution {
     public List<String> findMissingRanges(int[] nums, int lower, int upper) {
@@ -981,6 +1308,16 @@ class Solution {
 **Description:** Compare two version number strings (dot-separated integers). Return -1, 0, or 1.  
 **Intuition:** Parse both revisions position by position, treating missing components as 0, and compare numerically.
 
+**Variables:** `a`/`b` = dot-split components of each version · `x`/`y` = numeric value of each component (0 if missing)
+**Pseudocode:**
+```
+split both versions on '.'
+for i up to the longer length:
+  x = component i of a, or 0 if missing
+  y = component i of b, or 0 if missing
+  if x != y: return -1 or 1
+return 0
+```
 ```java
 class Solution {
     public int compareVersion(String version1, String version2) {
@@ -1007,6 +1344,20 @@ class Solution {
 **Description:** Convert a fraction numerator/denominator to a decimal string, noting repeating parts in parentheses.  
 **Intuition:** Do long division; remember the position of each remainder so a repeat reveals the cycle to wrap in parentheses.
 
+**Variables:** `builder` = result string · `num`/`den` = absolute numerator/denominator · `remainder` = current long-division remainder · `seen` = remainder → position in builder where its digit started
+**Pseudocode:**
+```
+if numerator is 0: return "0"
+append '-' if exactly one of numerator/denominator is negative
+take absolute values; append integer part num/den; remainder = num mod den
+if remainder is 0: return result
+append '.'; make empty seen map
+while remainder != 0:
+  if remainder already in seen: insert '(' at its recorded position, append ')', stop
+  record remainder -> current builder length
+  remainder *= 10; append remainder/den; remainder = remainder mod den
+return result
+```
 ```java
 class Solution {
     public String fractionToDecimal(int numerator, int denominator) {
@@ -1050,6 +1401,14 @@ class Solution {
 **Description:** Arrange numbers so their concatenation forms the largest possible number.  
 **Intuition:** Sort by a custom comparator that prefers the order producing a larger concatenation (a+b vs b+a).
 
+**Variables:** `strs` = numbers as strings · comparator orders by which of `a+b` vs `b+a` is larger · `builder` = concatenated result
+**Pseudocode:**
+```
+convert each number to a string
+sort so that for any pair a,b, whichever of (b+a) vs (a+b) is larger comes first
+if the largest string is "0": all zeros, return "0"
+concatenate all strings and return
+```
 ```java
 class Solution {
     public String largestNumber(int[] nums) {
@@ -1078,6 +1437,16 @@ class Solution {
 **Description:** Reverse words in a character array in-place (words separated by spaces).  
 **Intuition:** Reverse the whole array, then reverse each word back so the order flips but each word reads forward.
 
+**Variables:** `start` = start index of the current word · `i` = scan index marking word boundaries · `reverse(i,j)` = in-place reverse of a range
+**Pseudocode:**
+```
+reverse the entire array
+start = 0
+for i from 0 to length (inclusive):
+  if at end or a space: reverse the word from start to i-1, then set start = i+1
+
+reverse(i, j): swap ends moving inward until i meets j
+```
 ```java
 class Solution {
     public void reverseWords(char[] s) {
@@ -1110,6 +1479,15 @@ class Solution {
 **Description:** Check if two strings follow the same character-substitution pattern (isomorphic).  
 **Intuition:** Maintain a bijective mapping both ways; any conflicting mapping breaks isomorphism.
 
+**Variables:** `mapS[a]` = char that s-char `a` maps to (-1 if unset) · `mapT[b]` = char that t-char `b` maps back to · `a`/`b` = current chars of s/t
+**Pseudocode:**
+```
+make mapS and mapT, all set to -1 (unset)
+for each index i with a = s[i], b = t[i]:
+  if both unset: link a->b and b->a
+  else if existing links disagree (mapS[a] != b or mapT[b] != a): return false
+return true
+```
 ```java
 class Solution {
     public boolean isIsomorphic(String s, String t) {
@@ -1138,6 +1516,17 @@ class Solution {
 **Description:** Find the shortest palindrome by adding characters in front of a string.  
 **Intuition:** Find the longest palindromic prefix via KMP failure on `s + '#' + reverse(s)`; reverse the leftover suffix and prepend it.
 
+**Variables:** `reversed` = s reversed · `combined` = s + '#' + reversed · `lps[i]` = longest prefix-also-suffix length ending at i · `j` = KMP fallback pointer · `palinLen` = longest palindromic prefix length · `suffix` = leftover to prepend
+**Pseudocode:**
+```
+reversed = reverse of s
+combined = s + "#" + reversed
+build KMP lps array over combined:
+  for i from 1: j = lps[i-1]; fall back while mismatch; if match j++; lps[i] = j
+palinLen = lps[last] (length of longest palindromic prefix of s)
+suffix = the first (len(s) - palinLen) chars of reversed
+return suffix + s
+```
 ```java
 class Solution {
     public String shortestPalindrome(String s) {
@@ -1169,6 +1558,18 @@ class Solution {
 **Description:** Given a sorted unique integer array, summarize consecutive runs as ranges.  
 **Intuition:** Track the start of each consecutive run; when the run breaks, emit either a single number or a "start->end" range.
 
+**Variables:** `i` = scan index · `start` = index where the current run began
+**Pseudocode:**
+```
+i = 0
+while i < length:
+  start = i
+  extend i while the next number is exactly one more
+  if start equals i: emit the single number
+  else: emit "nums[start]->nums[i]"
+  advance i past the run
+return ranges
+```
 ```java
 class Solution {
     public List<String> summaryRanges(int[] nums) {
@@ -1199,6 +1600,17 @@ class Solution {
 **Description:** Check if a number reads the same when rotated 180 degrees.  
 **Intuition:** Two pointers move inward; each pair must be a valid strobogrammatic mapping (0-0, 1-1, 6-9, 8-8, 9-6).
 
+**Variables:** `map` = digit → its 180-degree rotation · `i`/`j` = pointers moving inward · `a`/`b` = the paired chars
+**Pseudocode:**
+```
+map the rotatable digits: 0->0, 1->1, 6->9, 8->8, 9->6
+i = 0, j = last index
+while i <= j:
+  a = char at i, b = char at j
+  if a is not rotatable or its rotation is not b: return false
+  move i right, j left
+return true
+```
 ```java
 class Solution {
     public boolean isStrobogrammatic(String num) {
@@ -1227,6 +1639,16 @@ class Solution {
 **Description:** Group strings that follow the same shift sequence (each char shifted by the same amount).  
 **Intuition:** Encode each string by the gaps between consecutive chars (mod 26) so all members of a shift group share the same key.
 
+**Variables:** `map` = key → list of strings · `builder` = the gap-sequence key · `diff` = gap between consecutive chars mod 26 · `key` = finished gap string
+**Pseudocode:**
+```
+make empty map from key to list
+for each string s:
+  for each adjacent pair: diff = (later char - earlier char + 26) mod 26; append diff and a comma
+  key = the gap sequence string
+  add s to map[key]
+return all the lists
+```
 ```java
 class Solution {
     public List<List<String>> groupStrings(String[] strings) {
@@ -1253,6 +1675,15 @@ class Solution {
 **Description:** Check if a string can be rearranged into a palindrome (at most one odd-count char).  
 **Intuition:** A palindrome allows at most one character with an odd count; track parity with a set.
 
+**Variables:** `odd` = set of chars currently seen an odd number of times
+**Pseudocode:**
+```
+make empty set odd
+for each char:
+  if it is in odd: remove it (now even)
+  else: add it (now odd)
+return true if at most one char remains odd
+```
 ```java
 class Solution {
     public boolean canPermutePalindrome(String s) {
@@ -1277,6 +1708,18 @@ class Solution {
 **Description:** Encode a list of strings to a single string and decode it back.  
 **Intuition:** Length-prefix each string ("len#str") so the decoder always knows exactly how many chars to read, regardless of content.
 
+**Variables:** `builder` = encoded output · `i` = decode scan position · `j` = position of the '#' delimiter · `length` = parsed length of the next string
+**Pseudocode:**
+```
+encode: for each string append its length, then '#', then the string; return the buffer
+decode:
+  i = 0
+  while i < length:
+    scan from i to the next '#' to read the length
+    parse the length, then take that many chars after '#' as one string
+    advance i past that string
+  return the list
+```
 ```java
 public class Codec {
     public String encode(List<String> strs) {
@@ -1312,6 +1755,25 @@ public class Codec {
 **Description:** Convert a non-negative integer to its English words representation.  
 **Intuition:** Process the number in groups of three digits, naming each group and appending the right scale word (Thousand, Million, Billion).
 
+**Variables:** `BELOW_20`/`TENS`/`SCALES` = word lookup tables · `scale` = which 1000-group (0=units, 1=Thousand, ...) · `group` = current 3-digit chunk · `builder` = words assembled · `threeDigits(n)` = words for a 0–999 chunk
+**Pseudocode:**
+```
+if num is 0: return "Zero"
+scale = 0
+while num > 0:
+  group = num mod 1000
+  if group != 0:
+    words = threeDigits(group); if scale > 0 append the scale word
+    prepend words to the front of the result
+  num = num / 1000; scale += 1
+return trimmed result
+
+threeDigits(n):
+  if n >= 100: append hundreds word + "Hundred", drop the hundreds
+  if n >= 20: append the tens word, drop the tens
+  if n > 0: append the below-20 word
+  return it
+```
 ```java
 class Solution {
     private static final String[] BELOW_20 = {"", "One", "Two", "Three", "Four", "Five",
@@ -1368,6 +1830,17 @@ class Solution {
 **Description:** Check if a string `s` follows a given pattern (bijective character-to-word mapping).  
 **Intuition:** Maintain a two-way mapping between pattern chars and words; any conflict breaks the bijection.
 
+**Variables:** `words` = s split on spaces · `charToWord` = pattern char → word · `wordToChar` = word → pattern char · `ch`/`word` = current pair
+**Pseudocode:**
+```
+split s into words; if count differs from pattern length: return false
+make both maps empty
+for each index i with ch = pattern[i], word = words[i]:
+  if charToWord has ch but maps to a different word: return false
+  if wordToChar has word but maps to a different char: return false
+  link ch->word and word->ch
+return true
+```
 ```java
 class Solution {
     public boolean wordPattern(String pattern, String s) {
@@ -1402,6 +1875,18 @@ class Solution {
 **Description:** Count bulls (right digit, right place) and cows (right digit, wrong place) in a number guessing game.  
 **Intuition:** Count exact-position matches as bulls; for the rest, use a digit-count array where positive entries (secret surplus) and negative entries (guess surplus) reveal cows.
 
+**Variables:** `bulls`/`cows` = counts · `count[d]` = unmatched balance for digit d (secret adds, guess subtracts) · `s`/`g` = secret/guess char at this index
+**Pseudocode:**
+```
+bulls = cows = 0; make count of size 10
+for each index i with s = secret[i], g = guess[i]:
+  if s equals g: bulls += 1
+  else:
+    if count[s] is negative (guess already had s waiting): cows += 1
+    if count[g] is positive (secret already had g waiting): cows += 1
+    count[s] += 1; count[g] -= 1
+return "<bulls>A<cows>B"
+```
 ```java
 class Solution {
     public String getHint(String secret, String guess) {
@@ -1435,6 +1920,14 @@ class Solution {
 **Description:** Reverse a character array in-place.  
 **Intuition:** Two pointers swap from both ends moving inward.
 
+**Variables:** `i`/`j` = left/right pointers · `tmp` = swap holder
+**Pseudocode:**
+```
+i = 0, j = last index
+while i < j:
+  swap chars at i and j
+  move i right, j left
+```
 ```java
 class Solution {
     public void reverseString(char[] s) {
@@ -1458,6 +1951,17 @@ class Solution {
 **Description:** Reverse only the vowels of a string.  
 **Intuition:** Two pointers advance until each lands on a vowel, then swap those vowels.
 
+**Variables:** `chars` = mutable char array · `vowels` = the vowel set string · `i`/`j` = left/right pointers · `tmp` = swap holder
+**Pseudocode:**
+```
+i = 0, j = last index
+while i < j:
+  advance i until it lands on a vowel
+  retreat j until it lands on a vowel
+  swap chars at i and j
+  move i right, j left
+return the array as a string
+```
 ```java
 class Solution {
     public String reverseVowels(String s) {
@@ -1490,6 +1994,18 @@ class Solution {
 **Description:** Find the length of the longest absolute file path in a file system string.  
 **Intuition:** Tab depth gives the nesting level; keep a stack of path lengths per level and, on hitting a file (has a dot), compute the full path length.
 
+**Variables:** `depthLen` = depth → cumulative length of path up to that depth · `depth` = tab count (nesting level) · `name` = the file/dir name on this line · `length` = path length including this name · `result` = best file path length
+**Pseudocode:**
+```
+depthLen[0] = 0; result = 0
+for each line:
+  depth = number of leading tabs
+  name = the line after the tabs
+  length = depthLen[depth] + length of name
+  if name contains '.' (a file): result = max(result, length + depth for the slashes)
+  else (a directory): depthLen[depth+1] = length (for its children)
+return result
+```
 ```java
 class Solution {
     public int lengthLongestPath(String input) {
@@ -1522,6 +2038,14 @@ class Solution {
 **Description:** Check if string `s` is a subsequence of string `t`.  
 **Intuition:** Walk `t` with one pointer; advance the `s` pointer each time chars match. If `s` is exhausted, it is a subsequence.
 
+**Variables:** `i` = how many chars of s are matched so far · `j` = scan index into t
+**Pseudocode:**
+```
+i = 0
+for j over t (stop early if all of s matched):
+  if s[i] equals t[j]: advance i
+return true if i reached the end of s
+```
 ```java
 class Solution {
     public boolean isSubsequence(String s, String t) {
@@ -1544,6 +2068,19 @@ class Solution {
 **Description:** Check if an abbreviation matches a word (digits represent skipped characters).  
 **Intuition:** Walk both with pointers; on a digit, parse the skip count (no leading zero) and jump the word pointer; otherwise chars must match.
 
+**Variables:** `i` = index into word · `j` = index into abbr · `ch` = current abbr char · `num` = parsed skip count
+**Pseudocode:**
+```
+i = 0, j = 0
+while both have chars left:
+  ch = abbr[j]
+  if ch is a digit:
+    if it is '0': fail (no leading zero)
+    parse the full number, advancing j; jump i forward by that count
+  else:
+    word[i] must equal ch, else fail; advance both i and j
+return true if both i and j reached their ends
+```
 ```java
 class Solution {
     public boolean validWordAbbreviation(String word, String abbr) {
@@ -1581,6 +2118,16 @@ class Solution {
 **Description:** Find the length of the longest palindrome that can be built from the given letters.  
 **Intuition:** Use every pair of each letter; if any letter has a leftover single, one of them can sit in the center.
 
+**Variables:** `count[ch]` = frequency of each char · `length` = palindrome length from full pairs · `hasOdd` = some letter has an odd count
+**Pseudocode:**
+```
+count every char
+length = 0, hasOdd = false
+for each count c:
+  add the largest even part (c/2*2) to length
+  if c is odd: hasOdd = true
+return length plus 1 if any odd char can sit in the center
+```
 ```java
 class Solution {
     public int longestPalindrome(String s) {
@@ -1609,6 +2156,17 @@ class Solution {
 **Description:** Add two non-negative integers given as strings. Return the sum as a string.  
 **Intuition:** Add digit by digit from the right with a carry, exactly like grade-school addition.
 
+**Variables:** `builder` = result digits (reversed) · `i`/`j` = right-to-left indices into num1/num2 · `carry` = carry into the next column · `sum` = column total
+**Pseudocode:**
+```
+i = last of num1, j = last of num2, carry = 0
+while either index valid or carry remains:
+  sum = carry
+  add num1[i] if valid (and decrement i)
+  add num2[j] if valid (and decrement j)
+  append sum mod 10; carry = sum / 10
+reverse the builder and return
+```
 ```java
 class Solution {
     public String addStrings(String num1, String num2) {
@@ -1638,6 +2196,14 @@ class Solution {
 **Description:** Given a sequence of words, check whether they form a valid word square (kth row equals kth column).  
 **Intuition:** For each cell (i,j), the char must equal the char at (j,i); guard against ragged rows by bounds-checking.
 
+**Variables:** `i` = row index · `j` = column index within row i
+**Pseudocode:**
+```
+for each row i:
+  for each column j in that row:
+    if j is out of row range, or i is past word j's length, or char (i,j) != char (j,i): return false
+return true
+```
 ```java
 class Solution {
     public boolean validWordSquare(List<String> words) {
@@ -1662,6 +2228,16 @@ class Solution {
 **Description:** Given a scrambled string of digit-word letters, decode the original digits in order.  
 **Intuition:** Some letters are unique to one digit (z→zero, w→two, u→four, x→six, g→eight); count those first, then peel off the remaining digits using letters that become unique after subtraction.
 
+**Variables:** `freq[ch-'a']` = letter frequencies · `count[d]` = how many times digit d appears · `builder` = digits in order
+**Pseudocode:**
+```
+count all 26 letters
+unique-letter digits first: zero(z), two(w), four(u), six(x), eight(g)
+then digits whose letter is now unique after subtracting: three(h minus eight), five(f minus four), seven(s minus six)
+then one(o minus zero,two,four) and nine(i minus five,six,eight)
+for d from 0 to 9: append d, count[d] times
+return the digits
+```
 ```java
 class Solution {
     public String originalDigits(String s) {
@@ -1699,6 +2275,14 @@ class Solution {
 **Description:** Count the number of segments (maximal runs of non-space chars) in a string.  
 **Intuition:** A new segment starts at each non-space char whose predecessor is a space (or string start).
 
+**Variables:** `count` = number of segments · `i` = scan index
+**Pseudocode:**
+```
+count = 0
+for each index i:
+  if char is not a space and (i is 0 or previous char is a space): count += 1 (new segment starts)
+return count
+```
 ```java
 class Solution {
     public int countSegments(String s) {
@@ -1721,6 +2305,12 @@ class Solution {
 **Description:** Check if a string can be built by repeating one of its substrings multiple times.  
 **Intuition:** If `s` is a repeated pattern, it appears inside `(s+s)` with the first and last char removed.
 
+**Variables:** `doubled` = (s+s) with the first and last char stripped
+**Pseudocode:**
+```
+doubled = s+s with the first and last character removed
+return whether doubled contains s
+```
 ```java
 class Solution {
     public boolean repeatedSubstringPattern(String s) {
@@ -1738,6 +2328,16 @@ class Solution {
 **Description:** Validate whether a string is a valid IPv4 or IPv6 address.  
 **Intuition:** Dispatch on the separator: dots mean IPv4 (four 0–255 octets, no leading zeros), colons mean IPv6 (eight 1–4 hex groups).
 
+**Variables:** `parts` = the address split on its separator · `part` = one octet/group · `isIPv4`/`isIPv6` = validators
+**Pseudocode:**
+```
+if it contains '.': return "IPv4" if isIPv4 else "Neither"
+if it contains ':': return "IPv6" if isIPv6 else "Neither"
+otherwise: "Neither"
+
+isIPv4: split on '.'; need exactly 4 parts; each part: non-empty, <=3 chars, all digits, no leading zero, value <= 255
+isIPv6: split on ':'; need exactly 8 parts; each part: non-empty, <=4 chars, all valid hex digits
+```
 ```java
 class Solution {
     public String validIPAddress(String queryIP) {
@@ -1801,6 +2401,17 @@ class Solution {
 **Description:** Find all words that can be typed on a single row of a QWERTY keyboard.  
 **Intuition:** Map each letter to its row index, then keep words whose letters all share one row.
 
+**Variables:** `rows` = the three keyboard rows · `rowOf[ch-'a']` = which row each letter is on · `row` = the first letter's row · `ok` = all letters share that row
+**Pseudocode:**
+```
+fill rowOf so each letter knows its keyboard row
+for each word:
+  row = row of its first letter (lowercased)
+  ok = true
+  for each letter (lowercased): if its row differs, ok = false, stop
+  if ok: keep the word
+return the kept words
+```
 ```java
 class Solution {
     public String[] findWords(String[] words) {
@@ -1838,6 +2449,13 @@ class Solution {
 **Description:** Check if a word is capitalized correctly (all caps, all lower, or first letter only).  
 **Intuition:** Count uppercase letters: valid only if all are uppercase, none are, or exactly the first one is.
 
+**Variables:** `upper` = number of uppercase letters in the word
+**Pseudocode:**
+```
+upper = count of uppercase letters
+if upper equals the length (all caps) or upper is 0 (all lower): return true
+return true only if upper is exactly 1 and the first letter is uppercase
+```
 ```java
 class Solution {
     public boolean detectCapitalUse(String word) {
@@ -1863,6 +2481,17 @@ class Solution {
 **Description:** Find the longest word in a dictionary that is a subsequence of string `s` (smallest lexicographically on ties).  
 **Intuition:** Check each candidate with the subsequence two-pointer, keeping the best by length then lexicographic order.
 
+**Variables:** `result` = best word found so far · `isSubsequence(word,s)` = two-pointer subsequence check · `i` = matched chars of word
+**Pseudocode:**
+```
+result = ""
+for each word in the dictionary:
+  if word is a subsequence of s:
+    if it is longer, or same length but lexicographically smaller: result = word
+return result
+
+isSubsequence(word, s): walk s; advance a word pointer on each match; true if all of word matched
+```
 ```java
 class Solution {
     public String findLongestWord(String s, List<String> dictionary) {
@@ -1897,6 +2526,14 @@ class Solution {
 **Description:** Reverse the first `k` characters of every `2k`-character block in a string.  
 **Intuition:** Step through the array in `2k` jumps, reversing the first `k` chars of each block (or all that remain).
 
+**Variables:** `chars` = mutable array · `i` = start of each 2k block · `left`/`right` = bounds of the first k chars to reverse · `tmp` = swap holder
+**Pseudocode:**
+```
+for i stepping by 2k through the array:
+  left = i, right = min(i+k-1, last index) (first k of this block)
+  swap inward from left/right until they meet
+return the array as a string
+```
 ```java
 class Solution {
     public String reverseStr(String s, int k) {
@@ -1924,6 +2561,16 @@ class Solution {
 **Description:** Check if a record is award-eligible (fewer than 2 absences total, no 3 consecutive lates).  
 **Intuition:** Count total absences and track the current run of lates; fail on the second absence or third consecutive late.
 
+**Variables:** `absent` = total absences · `lateStreak` = current run of consecutive lates
+**Pseudocode:**
+```
+absent = 0, lateStreak = 0
+for each char:
+  if 'A': absent += 1; fail if it reaches 2
+  if 'L': lateStreak += 1; fail if it reaches 3
+  else: reset lateStreak to 0
+return true
+```
 ```java
 class Solution {
     public boolean checkRecord(String s) {
@@ -1957,6 +2604,16 @@ class Solution {
 **Description:** Find the next greater number by rearranging the digits of `n`. Return -1 if none or on overflow.  
 **Intuition:** Standard next-permutation on digits: find the rightmost ascending pair, swap with the next larger digit to its right, reverse the suffix.
 
+**Variables:** `digits` = digits of n as a char array · `i` = pivot (rightmost digit smaller than its right neighbor) · `j` = next larger digit to the right · `value` = parsed result (long, for overflow)
+**Pseudocode:**
+```
+i = second-to-last; move left while digits[i] >= digits[i+1] (find the pivot)
+if no pivot (i < 0): return -1
+j = last; move left while digits[j] <= digits[i] (next larger digit)
+swap digits at i and j
+reverse the suffix after i (smallest arrangement)
+parse as a long; return -1 if it overflows int, else the int
+```
 ```java
 class Solution {
     public int nextGreaterElement(int n) {
@@ -1998,6 +2655,15 @@ class Solution {
 **Description:** Reverse individual words in a string while preserving word order.  
 **Intuition:** Split on spaces, reverse each word, and rejoin with single spaces.
 
+**Variables:** `words` = s split on spaces · `builder` = result · `i` = word index
+**Pseudocode:**
+```
+split s into words
+for each word index i:
+  if not the first word: append a space
+  append the reversed word
+return the result
+```
 ```java
 class Solution {
     public String reverseWords(String s) {
@@ -2022,6 +2688,19 @@ class Solution {
 **Description:** Add or subtract a sequence of fractions, returning the result in lowest terms.  
 **Intuition:** Parse each signed fraction, accumulate over a common denominator, then reduce by the GCD.
 
+**Variables:** `num`/`den` = running result fraction · `i` = scan index · `sign` = +1/-1 of the current fraction · `a`/`b` = current numerator/denominator · `g` = GCD for reducing
+**Pseudocode:**
+```
+num = 0, den = 1, i = 0
+while i < length:
+  read an optional sign
+  parse numerator a (digits)
+  skip the '/'
+  parse denominator b (digits)
+  num = num*b + sign*a*den; den = den*b (add over a common denominator)
+g = gcd(|num|, den)
+return (num/g) + "/" + (den/g)
+```
 ```java
 class Solution {
     public String fractionAddition(String expression) {
@@ -2064,6 +2743,19 @@ class Solution {
 **Description:** Wrap every substring of `s` that matches a word in the dictionary with `<b>...</b>`, merging overlaps.  
 **Intuition:** Mark every covered index in a boolean array, then emit bold tags around maximal marked runs.
 
+**Variables:** `bold[i]` = whether index i is covered by some word · `start` = each match position · `builder` = tagged result
+**Pseudocode:**
+```
+make bold array all false
+for each dictionary word:
+  find every occurrence in s; mark all its indices bold
+build the result:
+  for each index i:
+    if bold[i] and (i is 0 or previous not bold): open "<b>"
+    append the char
+    if bold[i] and (i is last or next not bold): close "</b>"
+return the result
+```
 ```java
 class Solution {
     public String addBoldTag(String s, String[] words) {
@@ -2100,6 +2792,13 @@ class Solution {
 **Description:** Check if a robot following an instruction string (UDLR) returns to the origin.  
 **Intuition:** Track net horizontal and vertical displacement; the robot returns only if both are zero.
 
+**Variables:** `x`/`y` = net horizontal/vertical displacement
+**Pseudocode:**
+```
+x = 0, y = 0
+for each move: U adds to y, D subtracts from y, L subtracts from x, R adds to x
+return true if both x and y are 0
+```
 ```java
 class Solution {
     public boolean judgeCircle(String moves) {
@@ -2128,6 +2827,15 @@ class Solution {
 **Description:** Swap two digits at most once to get the maximum possible value.  
 **Intuition:** Record the last index of each digit; scanning left to right, swap the first digit with the largest later digit that exceeds it.
 
+**Variables:** `digits` = digits of num as a char array · `last[d]` = last index where digit d appears · `i` = scan index · `d` = a candidate larger digit
+**Pseudocode:**
+```
+record the last position of each digit 0–9
+for each index i left to right:
+  for d from 9 down to (digits[i]+1):
+    if d appears after i: swap digits[i] with that later d, return the new number
+return num unchanged
+```
 ```java
 class Solution {
     public int maximumSwap(int num) {
@@ -2159,6 +2867,17 @@ class Solution {
 **Description:** Check if a string is a palindrome after deleting at most one character.  
 **Intuition:** Two pointers inward; at the first mismatch, try skipping either the left or right char and check the remainder.
 
+**Variables:** `i`/`j` = pointers moving inward · `isPalindrome(i,j)` = plain palindrome check on a range
+**Pseudocode:**
+```
+i = 0, j = last index
+while i < j:
+  if chars at i and j differ: return true if skipping the left char OR the right char leaves a palindrome
+  move i right, j left
+return true
+
+isPalindrome(i, j): move inward; false on any mismatch
+```
 ```java
 class Solution {
     public boolean validPalindrome(String s) {
@@ -2193,6 +2912,16 @@ class Solution {
 **Description:** Find the next closest valid time using only the digits present in a given time string.  
 **Intuition:** From the current minute, advance one minute at a time and return the first time whose digits are all in the allowed set.
 
+**Variables:** `allowed` = set of digit chars present in the input · `minutes` = current time in minutes since midnight · `candidate` = formatted next time · `ok` = all its digits allowed
+**Pseudocode:**
+```
+collect the allowed digit chars (skip ':')
+minutes = hours*60 + minutes of the input
+loop:
+  minutes = (minutes + 1) mod (24*60) (advance one minute)
+  format as HH:MM
+  if every digit of it is allowed: return it
+```
 ```java
 class Solution {
     public String nextClosestTime(String time) {
@@ -2230,6 +2959,15 @@ class Solution {
 **Description:** Find the minimum number of times string `a` must repeat so `b` is a substring. Return -1 if impossible.  
 **Intuition:** Repeat `a` until its length covers `b`, then check one extra copy to handle offset overlap.
 
+**Variables:** `builder` = repeated copies of a · `count` = number of copies so far
+**Pseudocode:**
+```
+repeat a (counting copies) until the buffer is at least as long as b
+if the buffer contains b: return count
+append one more copy of a (for offset overlap)
+if it now contains b: return count + 1
+return -1
+```
 ```java
 class Solution {
     public int repeatedStringMatch(String a, String b) {
@@ -2259,6 +2997,13 @@ class Solution {
 **Description:** Convert a string to lowercase.  
 **Intuition:** Uppercase ASCII letters differ from lowercase by 32, so shift any A–Z char.
 
+**Variables:** `chars` = mutable char array · `i` = scan index
+**Pseudocode:**
+```
+turn s into a char array
+for each char: if it is A–Z, add 32 to shift it to lowercase
+return the array as a string
+```
 ```java
 class Solution {
     public String toLowerCase(String s) {
@@ -2281,6 +3026,21 @@ class Solution {
 **Description:** Parse a chemical formula string and return atom counts in sorted order.  
 **Intuition:** Recursive-descent style parse with a stack of count maps for parentheses; multiply a group's counts by the number following its closing paren.
 
+**Variables:** `i` = global parse position · `formula` = the string · `counts` = atom → count for the current scope · `parse()` = parse one group · `parseName()` = read an element name · `parseNumber()` = read a count (default 1) · `mult` = multiplier after a ')'
+**Pseudocode:**
+```
+countOfAtoms: parse the whole formula, sort atoms (TreeMap), build name + count (omit count 1)
+
+parse():
+  make empty counts
+  while not at end and not at ')':
+    if '(': skip '(', recurse into parse(), skip ')', read the multiplier, add inner counts times the multiplier
+    else: read an element name, read its number, add to counts
+  return counts
+
+parseName(): take the uppercase letter then following lowercase letters
+parseNumber(): read digits into a number; return 1 if there were none
+```
 ```java
 class Solution {
     private int i = 0;
@@ -2347,6 +3107,17 @@ class Solution {
 **Description:** Find the shortest word in a list that contains all letters of a license plate (case-insensitive, with multiplicity).  
 **Intuition:** Build the plate's letter-count vector, then keep the shortest word whose own counts cover it.
 
+**Variables:** `target[ch-'a']` = required count of each letter from the plate · `count[ch-'a']` = a word's letter counts · `covers` = word has enough of every letter · `result` = shortest covering word so far
+**Pseudocode:**
+```
+build target counts from the plate's letters (lowercased, letters only)
+result = none
+for each word:
+  count its letters
+  covers = true; if any letter's count is below target, covers = false
+  if covers and (no result yet or this word is shorter): result = word
+return result
+```
 ```java
 class Solution {
     public String shortestCompletingWord(String licensePlate, String[] words) {
@@ -2386,6 +3157,20 @@ class Solution {
 **Description:** Count numbers in `[1, n]` that become a different valid number when each digit is rotated 180 degrees.  
 **Intuition:** A number is "good" if all digits are valid rotations and at least one digit (2,5,6,9) actually changes.
 
+**Variables:** `count` = how many good numbers · `isGood(num)` = valid + actually changed · `d` = a digit · `changed` = some digit flips to a different one
+**Pseudocode:**
+```
+count = 0
+for i from 1 to n: if isGood(i): count += 1
+return count
+
+isGood(num):
+  changed = false
+  for each digit d of num:
+    if d is 3, 4, or 7: invalid rotation, return false
+    if d is 2, 5, 6, or 9: changed = true
+  return changed
+```
 ```java
 class Solution {
     public int rotatedDigits(int n) {
@@ -2422,6 +3207,14 @@ class Solution {
 **Description:** Sort string `s` so its characters appear in the order given by string `order`.  
 **Intuition:** Count chars in `s`, emit them in `order`'s sequence, then append any chars not mentioned in `order`.
 
+**Variables:** `count[ch-'a']` = remaining copies of each char in s · `builder` = result
+**Pseudocode:**
+```
+count every char of s
+for each char in order: append it count[ch] times and zero that count
+for each remaining letter still counted: append it count times
+return the result
+```
 ```java
 class Solution {
     public String customSortString(String order, String s) {
@@ -2455,6 +3248,19 @@ class Solution {
 **Description:** Decide whether the given tic-tac-toe board is reachable from valid play.  
 **Intuition:** Count X and O; X count must equal O or be one more, and if a player has won the move counts must be consistent (both can't win).
 
+**Variables:** `xCount`/`oCount` = piece counts · `xWin`/`oWin` = whether each player has three in a row · `wins(board,p)` = three-in-a-row check for player p
+**Pseudocode:**
+```
+count X and O across the board
+if oCount is not equal to xCount and not xCount-1: invalid (turn order)
+xWin = X has a line, oWin = O has a line
+if both win: invalid
+if X wins but xCount != oCount+1: invalid (X must have just moved)
+if O wins but xCount != oCount: invalid (O must have just moved)
+otherwise valid
+
+wins(board, p): check all rows, columns, and both diagonals for three p's
+```
 ```java
 class Solution {
     public boolean validTicTacToe(String[] board) {
@@ -2511,6 +3317,11 @@ class Solution {
 **Description:** Check if string `t` is a rotation of string `s`.  
 **Intuition:** Every rotation of `s` is a substring of `s+s`, so check containment after a length match.
 
+**Variables:** `s+s` = s concatenated with itself (contains every rotation)
+**Pseudocode:**
+```
+return true if s and goal have the same length and (s+s) contains goal
+```
 ```java
 class Solution {
     public boolean rotateString(String s, String goal) {
@@ -2527,6 +3338,23 @@ class Solution {
 **Description:** Determine how many query words match a stretched version of `s` (groups stretched to length ≥ 3).  
 **Intuition:** Compare run lengths group by group: the stretched group must be ≥ 3, or equal to the original run length.
 
+**Variables:** `count` = matching words · `stretchy(s,word)` = group-by-group match · `i`/`j` = positions in s/word · `lenS`/`lenW` = run lengths at each position · `runLength(s,i)` = length of the run starting at i
+**Pseudocode:**
+```
+count = 0
+for each word: if stretchy(s, word): count += 1
+return count
+
+stretchy(s, word):
+  walk both with i, j:
+    if the chars differ: return false
+    lenS = run length in s, lenW = run length in word
+    if lenS < lenW, or (they differ and lenS < 3): return false (can't stretch to match)
+    advance i by lenS, j by lenW
+  return true only if both fully consumed
+
+runLength(s, i): count chars equal to s[i] starting at i
+```
 ```java
 class Solution {
     public int expressiveWords(String s, String[] words) {
@@ -2571,6 +3399,18 @@ class Solution {
 **Description:** Convert words to Goat Latin: append "ma" (plus per-word index of 'a's); move leading consonants to the end for non-vowel words.  
 **Intuition:** For each word, decide vowel vs consonant start, transform, then append "ma" and i+1 trailing 'a's.
 
+**Variables:** `vowels` = vowel set · `words` = the sentence split · `i` = word index · `builder` = one transformed word · `result` = full output
+**Pseudocode:**
+```
+make the vowel set; split the sentence into words
+for each word index i:
+  if it starts with a vowel: keep it
+  else: move the first letter to the end
+  append "ma"
+  append i+1 trailing 'a's
+  separate words with single spaces
+return the result
+```
 ```java
 class Solution {
     public String toGoatLatin(String sentence) {
@@ -2608,6 +3448,16 @@ class Solution {
 **Description:** Apply non-overlapping indexed replacements: at each index, if `sources[k]` matches, replace it with `targets[k]`.  
 **Intuition:** Map each start index to its replacement; rebuild the string, jumping over matched sources and copying unmatched chars verbatim.
 
+**Variables:** `indexToOp` = start index → operation number k (only for matching sources) · `i` = rebuild scan position · `k` = the operation at index i · `builder` = result
+**Pseudocode:**
+```
+for each operation k: if sources[k] matches s at indices[k], record indices[k] -> k
+i = 0
+while i < length of s:
+  if i has a recorded op k: append targets[k], jump i past sources[k]
+  else: copy s[i], advance i
+return the result
+```
 ```java
 class Solution {
     public String findReplaceString(String s, int[] indices, String[] sources, String[] targets) {
@@ -2642,6 +3492,15 @@ class Solution {
 **Description:** Check if two strings are "buddy strings": swapping exactly one pair of chars makes them equal.  
 **Intuition:** Equal length is required; if the strings are identical, you need a duplicate char to swap; otherwise exactly two positions must differ and be mirror images.
 
+**Variables:** `count[ch-'a']` = letter counts (for the equal case) · `first`/`second` = the two differing positions
+**Pseudocode:**
+```
+if lengths differ: return false
+if s equals goal:
+  return true only if some letter appears twice (a swap of equals)
+find the differing positions; record first then second; more than two -> false
+return true only if there are exactly two and they are mirror images (s[first]=goal[second] and s[second]=goal[first])
+```
 ```java
 class Solution {
     public boolean buddyStrings(String s, String goal) {
@@ -2683,6 +3542,18 @@ class Solution {
 **Description:** Check if words are sorted in a given alien language's alphabetical order.  
 **Intuition:** Map each letter to its rank, then verify each adjacent pair is in non-decreasing order under that ranking.
 
+**Variables:** `rank[ch-'a']` = position of each letter in the alien order · `inOrder(a,b,rank)` = whether a comes before-or-equal b · `ra`/`rb` = ranks of the compared chars
+**Pseudocode:**
+```
+build rank from the alien order
+for each adjacent pair of words: if not inOrder, return false
+return true
+
+inOrder(a, b):
+  compare char by char up to the shorter length:
+    if ranks differ: a is in order iff its rank is smaller
+  if all equal: a must be no longer than b (prefix comes first)
+```
 ```java
 class Solution {
     public boolean isAlienSorted(String[] words, String order) {
@@ -2718,6 +3589,17 @@ class Solution {
 **Description:** Find the minimum number of subsequences of `source` whose concatenation equals `target`. Return -1 if impossible.  
 **Intuition:** Greedily consume as much of `target` as possible from each pass over `source`; if a pass makes no progress, a needed char is missing.
 
+**Variables:** `count` = passes over source (subsequences) used · `i` = how much of target is consumed · `prev` = i at the start of the pass · `j` = scan index into source
+**Pseudocode:**
+```
+count = 0, i = 0
+while i < length of target:
+  prev = i
+  scan source once; each time source[j] matches target[i], advance i
+  if i did not move (i equals prev): a needed char is missing, return -1
+  count += 1
+return count
+```
 ```java
 class Solution {
     public int shortestWay(String source, String target) {
@@ -2747,6 +3629,12 @@ class Solution {
 **Description:** Defang an IP address by replacing each '.' with '[.]'.  
 **Intuition:** Append each char, expanding dots into the bracketed form.
 
+**Variables:** `builder` = defanged result
+**Pseudocode:**
+```
+for each char: if it is '.', append "[.]"; else append the char
+return the result
+```
 ```java
 class Solution {
     public String defangIPaddr(String address) {
@@ -2771,6 +3659,14 @@ class Solution {
 **Description:** Find the maximum number of balanced strings ('R' count == 'L' count) to split into.  
 **Intuition:** Track a running balance; every time it returns to zero a balanced piece has closed.
 
+**Variables:** `count` = balanced pieces closed · `balance` = R count minus L count so far
+**Pseudocode:**
+```
+count = 0, balance = 0
+for each char: add 1 for 'R', subtract 1 for 'L'
+  whenever balance returns to 0: a balanced piece closed, count += 1
+return count
+```
 ```java
 class Solution {
     public int balancedStringSplit(String s) {
@@ -2794,6 +3690,13 @@ class Solution {
 **Description:** Break a palindrome by changing one character to get the lexicographically smallest non-palindrome.  
 **Intuition:** Change the first non-'a' in the first half to 'a'; if all are 'a', change the last char to 'b'. Single-char strings can't be broken.
 
+**Variables:** `n` = length · `chars` = mutable char array · `i` = scan index over the first half
+**Pseudocode:**
+```
+if length is 1: return "" (can't break)
+scan the first half: at the first non-'a', change it to 'a' and return
+if the whole first half is 'a': change the last char to 'b' and return
+```
 ```java
 class Solution {
     public String breakPalindrome(String palindrome) {
@@ -2822,6 +3725,13 @@ class Solution {
 **Description:** Find the longest happy prefix (a non-empty prefix that is also a suffix).  
 **Intuition:** The KMP failure value at the last index is exactly the length of the longest proper prefix that is also a suffix.
 
+**Variables:** `n` = length · `lps[i]` = longest prefix-also-suffix length ending at i · `j` = KMP fallback pointer
+**Pseudocode:**
+```
+build the KMP lps array over s:
+  for i from 1: j = lps[i-1]; fall back while mismatch; if s[i] matches s[j], j++; lps[i] = j
+return the prefix of s of length lps[last] (the longest prefix that is also a suffix)
+```
 ```java
 class Solution {
     public String longestPrefix(String s) {
@@ -2850,6 +3760,16 @@ class Solution {
 **Description:** Find the maximum number of consecutive same characters in a string (the "power" of the string).  
 **Intuition:** Track the current run length, resetting on a change, and keep the maximum seen.
 
+**Variables:** `max` = longest run seen · `run` = current run length
+**Pseudocode:**
+```
+max = 1, run = 1
+for each index i from 1:
+  if same as previous char: run += 1
+  else: run = 1
+  max = max(max, run)
+return max
+```
 ```java
 class Solution {
     public int maxPower(String s) {
@@ -2875,6 +3795,15 @@ class Solution {
 **Description:** Check if any two strings in a list differ by exactly one character (same length, same position).  
 **Intuition:** For each position, hash each word with that position wildcarded; a collision among same-length words means they differ in only that spot.
 
+**Variables:** `m` = word length · `seen` = set of masked words for the current position · `j` = wildcarded position · `masked` = word with position j replaced by '*'
+**Pseudocode:**
+```
+for each position j from 0 to m-1:
+  clear the seen set
+  for each word: build masked = word with char j replaced by '*'
+    if masked is already in seen: two words differ only at j, return true
+return false
+```
 ```java
 class Solution {
     public boolean differByOne(String[] dict) {
@@ -2902,6 +3831,15 @@ class Solution {
 **Description:** Format an integer with a dot as the thousands separator.  
 **Intuition:** Build the result from the right, inserting a separator after every three digits.
 
+**Variables:** `s` = n as a string · `builder` = result (built reversed) · `count` = digits appended since the last separator · `i` = scan index from the right
+**Pseudocode:**
+```
+s = n as a string; count = 0
+for i from the last digit down to 0:
+  append s[i]; count += 1
+  if count is a multiple of 3 and i is not the first digit: append '.'
+reverse the builder and return
+```
 ```java
 class Solution {
     public String thousandSeparator(int n) {
@@ -2928,6 +3866,15 @@ class Solution {
 **Description:** Find the latest valid time by replacing each '?' with an appropriate digit.  
 **Intuition:** Greedily choose the largest valid digit at each '?' position, respecting hour (≤ 23) and minute (≤ 59) constraints.
 
+**Variables:** `chars` = mutable HH:MM array · positions 0,1 = hour digits, 3,4 = minute digits
+**Pseudocode:**
+```
+if hour tens is '?': set '2' if hour ones is '?' or <= 3, else '1'
+if hour ones is '?': set '3' if hour tens is '2', else '9'
+if minute tens is '?': set '5'
+if minute ones is '?': set '9'
+return the assembled time
+```
 ```java
 class Solution {
     public String maximumTime(String time) {
@@ -2957,6 +3904,14 @@ class Solution {
 **Description:** Truncate a sentence to its first `k` words.  
 **Intuition:** Copy chars until the (k)th space is reached.
 
+**Variables:** `builder` = truncated result · `k` = words still allowed (decremented at each space) · `i` = scan index
+**Pseudocode:**
+```
+for each char:
+  if it is a space and decrementing k hits 0: stop (reached the k-th boundary)
+  append the char
+return the result
+```
 ```java
 class Solution {
     public String truncateSentence(String s, int k) {
@@ -2980,6 +3935,13 @@ class Solution {
 **Description:** Replace each digit at an odd index with the letter shifted from the preceding char by that digit.  
 **Intuition:** Even indices are letters; for each odd index, shift the previous letter forward by the digit's value.
 
+**Variables:** `chars` = mutable char array · `i` = odd index holding a digit · `chars[i-1]` = the preceding letter to shift
+**Pseudocode:**
+```
+for each odd index i:
+  replace chars[i] with the previous letter shifted forward by chars[i]'s digit value
+return the array as a string
+```
 ```java
 class Solution {
     public String replaceDigits(String s) {

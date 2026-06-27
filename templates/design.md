@@ -113,6 +113,23 @@ public class Solution {
 
 ## Canonical Template — HashMap + Doubly Linked List (LRU)
 
+**Variables:** `map` = key -> CacheNode · `head`/`tail` = sentinels (head side = MRU, tail side = LRU) · `node.previous`/`node.next` = doubly linked neighbors
+**Pseudocode:**
+```
+CacheNode: key, value, previous, next
+init: head <-> tail (head.next = tail; tail.previous = head)
+
+remove(node):
+  node.previous.next = node.next
+  node.next.previous = node.previous
+
+insertAfterHead(node):          # mark as most-recently-used
+  link node between head and head.next
+
+evict LRU:
+  lru = tail.previous           # node just before tail
+  remove(lru); map.remove(lru.key)
+```
 ```java
 // HashMap gives O(1) lookup; the doubly linked list orders by recency so the LRU is always one hop from tail.  — WHEN: "O(1) get/put with eviction by recency or frequency"
 
@@ -152,6 +169,17 @@ map.remove(lru.key);
 
 ## Variations
 
+**Variables:** `keyToVal`/`keyToFreq` = key lookups · `freqToKeys` = freq -> ordered keys at that freq · `minFreq` = smallest live frequency · (RandomizedSet) `list` = values array · `map` = val -> index
+**Pseudocode:**
+```
+VARIATION 1 (LFU): maps key->value, key->freq, freq->LinkedHashSet<key>, plus minFreq
+  on access: freq++; move key from freqToKeys[old] to freqToKeys[new]
+  on evict: remove first key (oldest) from freqToKeys[minFreq]
+
+VARIATION 2 (RandomizedSet): ArrayList of values + HashMap val->index
+  remove: swap target with last element, update map, drop last
+  getRandom: list[random index]
+```
 ```java
 // VARIATION 1: LFU — adds a frequency dimension
 // Need: key→value, key→freq, freq→orderedSet<key>, and minFreq
@@ -177,6 +205,25 @@ map.remove(lru.key);
 
 **Intuition:** the HashMap answers "where is this key" instantly while the linked list keeps everything ordered by recency, so the victim to evict is always the node next to the tail.
 
+**Variables:** `capacity` = max entries · `map` = key -> CacheNode · `head`/`tail` = sentinels (head = MRU side, tail = LRU side)
+**Pseudocode:**
+```
+get(key):
+  if key not in map: return -1
+  node = map[key]; remove(node); insertAfterHead(node)   # touch -> MRU
+  return node.value
+
+put(key, value):
+  if key in map:
+    node = map[key]; node.value = value
+    remove(node); insertAfterHead(node)                  # update -> MRU
+  else:
+    if map full: evict tail.previous (LRU) and drop from map
+    create node; map[key] = node; insertAfterHead(node)
+
+remove(node): unlink from neighbors
+insertAfterHead(node): splice right after head sentinel
+```
 ```java
 class LRUCache {
     private final int capacity;
@@ -248,6 +295,28 @@ class LRUCache {
 
 **Intuition:** bucket keys by how often they're used; the eviction victim is always the oldest key in the lowest-frequency bucket, which `minFreq` points straight at.
 
+**Variables:** `capacity` = max entries · `minFreq` = smallest live frequency · `keyToVal`/`keyToFreq` = per-key lookups · `freqToKeys` = freq -> LinkedHashSet of keys (insertion order = LRU within freq)
+**Pseudocode:**
+```
+get(key):
+  if key absent: return -1
+  increaseFreq(key); return value
+
+put(key, value):
+  if capacity <= 0: return
+  if key present: update value; increaseFreq(key)
+  else:
+    if size >= capacity: removeMinFreqKey()
+    store value; freq = 1; add key to freqToKeys[1]; minFreq = 1
+
+increaseFreq(key):
+  move key from freqToKeys[freq] to freqToKeys[freq+1]
+  if freqToKeys[freq] now empty and freq == minFreq: minFreq++
+
+removeMinFreqKey():
+  evict = first key in freqToKeys[minFreq]   # oldest at lowest freq
+  remove it from all maps
+```
 ```java
 class LFUCache {
     private final int capacity;
@@ -314,6 +383,22 @@ class LFUCache {
 
 **Intuition:** an array gives O(1) random indexing but O(n) middle-deletion; swapping the victim with the last element turns deletion into an O(1) pop while staying dense.
 
+**Variables:** `map` = val -> index in `list` · `list` = dense array of values · `rand` = RNG
+**Pseudocode:**
+```
+insert(val):
+  if val in map: return false
+  append val to list; map[val] = last index; return true
+
+remove(val):
+  if val not in map: return false
+  i = map[val]; last = list[last index]
+  list[i] = last; map[last] = i      # move last element into the hole
+  drop last element; remove val from map; return true
+
+getRandom():
+  return list[random index in 0..size-1]
+```
 ```java
 class RandomizedSet {
     private final Map<Integer, Integer> map = new HashMap<>();  // val → index in list
@@ -376,6 +461,19 @@ RandomizedSet: list[map[val]] == val at all times (after swap, update the map fo
 
 **Intuition:** the complement check from classic Two Sum, but persisted across calls; the frequency map lets a single number satisfy a pair only when it appears at least twice.
 
+**Variables:** `map` = number -> count stored so far
+**Pseudocode:**
+```
+add(number): map[number]++
+
+find(value):
+  for each key in map:
+    complement = value - key
+    if complement == key: need count[key] >= 2
+    else: need complement in map
+    if satisfied: return true
+  return false
+```
 ```java
 class TwoSum {
     private final Map<Integer, Integer> map = new HashMap<>();
@@ -411,6 +509,20 @@ class TwoSum {
 
 **Intuition:** an in-order traversal paused mid-flight — the stack stores exactly the unvisited ancestors, so memory stays proportional to tree height.
 
+**Variables:** `stack` = unvisited ancestors (left spine), top = next smallest
+**Pseudocode:**
+```
+init(root): pushLeft(root)
+
+next():
+  node = pop stack
+  pushLeft(node.right)     # expose successors
+  return node.val
+
+hasNext(): stack not empty
+
+pushLeft(node): while node != null: push node; node = node.left
+```
 ```java
 class BSTIterator {
     private final Deque<TreeNode> stack = new ArrayDeque<>();
@@ -455,6 +567,19 @@ class BSTIterator {
 
 **Intuition:** because both index lists are sorted, the closest pair is found by always advancing the pointer at the smaller index — the same merge step as in sorted-list intersection.
 
+**Variables:** `map` = word -> sorted list of its indices · `i`/`j` = pointers into the two index lists · `result` = min distance
+**Pseudocode:**
+```
+init(wordsDict): for each word, append its index to map[word]
+
+shortest(word1, word2):
+  first = map[word1]; second = map[word2]
+  i = 0, j = 0, result = +inf
+  while i < first.size and j < second.size:
+    result = min(result, |first[i] - second[j]|)
+    advance the pointer with the smaller index
+  return result
+```
 ```java
 class WordDistance {
     private final Map<String, List<Integer>> map = new HashMap<>();
@@ -494,6 +619,22 @@ class WordDistance {
 
 **Intuition:** one scan suffices for a single query; the equal-word case is just "closest pair of repeated occurrences," handled by remembering the previous match.
 
+**Variables:** `same` = whether word1 == word2 · `i` = last index of word1 · `j` = last index of word2 · `result` = min distance
+**Pseudocode:**
+```
+same = (word1 == word2)
+i = -1, j = -1, result = +inf
+for k, word in wordsDict:
+  if word == word1:
+    if same:                       # equal words: compare with previous occurrence
+      if i >= 0: result = min(result, k - i)
+      i = k
+    else:
+      i = k; if j >= 0: result = min(result, |i - j|)
+  else if word == word2:
+    j = k; if i >= 0: result = min(result, |i - j|)
+return result
+```
 ```java
 class Solution {
     public int shortestWordDistance(String[] wordsDict, String word1, String word2) {
@@ -536,6 +677,21 @@ class Solution {
 
 **Intuition:** keep a `(row, col)` cursor and lazily skip empty rows; the skip logic concentrated in one helper keeps both methods correct.
 
+**Variables:** `vec` = 2D array · `row`/`col` = cursor into vec
+**Pseudocode:**
+```
+next():
+  advance()              # skip exhausted/empty rows
+  return vec[row][col++]
+
+hasNext():
+  advance()
+  return row < vec.length
+
+advance():
+  while row in range and col == current row length:
+    row++; col = 0       # move to start of next non-empty row
+```
 ```java
 class Vector2D {
     private final int[][] vec;
@@ -575,6 +731,19 @@ class Vector2D {
 
 **Intuition:** a round-robin queue of iterators rotates through the lists; finished iterators simply fall out of the queue.
 
+**Variables:** `queue` = queue of per-list iterators, each still having elements
+**Pseudocode:**
+```
+init(v1, v2): enqueue each list's iterator if non-empty
+
+next():
+  iterator = poll queue
+  value = iterator.next()
+  if iterator.hasNext(): enqueue it again   # round-robin
+  return value
+
+hasNext(): queue not empty
+```
 ```java
 class ZigzagIterator {
     private final Queue<Iterator<Integer>> queue = new ArrayDeque<>();
@@ -614,6 +783,20 @@ class ZigzagIterator {
 
 **Intuition:** a stack performs the depth-first unwrap lazily — flattening happens only as far as the next requested integer.
 
+**Variables:** `stack` = NestedIntegers pending, top exposed first
+**Pseudocode:**
+```
+init(nestedList): pushReversed(nestedList)
+
+next(): return pop().getInteger()
+
+hasNext():
+  while top of stack is a list:
+    pop it; pushReversed(its contents)    # unwrap until an integer is on top
+  return stack not empty
+
+pushReversed(list): push elements in reverse so first ends up on top
+```
 ```java
 class NestedIterator implements Iterator<Integer> {
     private final Deque<NestedInteger> stack = new ArrayDeque<>();
@@ -661,6 +844,14 @@ class NestedIterator implements Iterator<Integer> {
 
 **Intuition:** the running sum avoids re-summing the window; the queue only tracks which value leaves next.
 
+**Variables:** `queue` = last up-to-`size` values · `size` = window size · `sum` = running sum of queued values
+**Pseudocode:**
+```
+next(val):
+  enqueue val; sum += val
+  if queue size > size: sum -= dequeue()   # drop oldest beyond window
+  return sum / queue size
+```
 ```java
 class MovingAverage {
     private final Queue<Integer> queue = new ArrayDeque<>();
@@ -693,6 +884,17 @@ class MovingAverage {
 
 **Intuition:** signing the contributions lets a single counter detect either player — only checking the four lines that the current move touches keeps it O(1).
 
+**Variables:** `rows`/`cols` = signed counters per row/column · `diagonal`/`antiDiagonal` = signed diagonal counters · `n` = board size
+**Pseudocode:**
+```
+move(row, col, player):
+  delta = +1 if player 1 else -1
+  rows[row] += delta; cols[col] += delta
+  if row == col: diagonal += delta
+  if row + col == n-1: antiDiagonal += delta
+  if any touched counter has magnitude n: return player   # filled a line
+  return 0
+```
 ```java
 class TicTacToe {
     private final int[] rows;
@@ -736,6 +938,23 @@ class TicTacToe {
 
 **Intuition:** the swap-with-last trick from #380 extends to duplicates by storing a set of indices per value instead of a single index. ← VARIATION: value → set of indices.
 
+**Variables:** `list` = all values (duplicates allowed) · `indices` = val -> set of its positions in `list` · `rand` = RNG
+**Pseudocode:**
+```
+insert(val):
+  absent = val has no current indices
+  add list.size to indices[val]; append val to list
+  return absent
+
+remove(val):
+  if no indices for val: return false
+  i = any index of val; remove i from indices[val]
+  last = list[lastIndex]; list[i] = last        # move last into hole
+  if i != lastIndex: in indices[last] replace lastIndex with i
+  drop last element; return true
+
+getRandom(): list[random index]
+```
 ```java
 class RandomizedCollection {
     private final List<Integer> list = new ArrayList<>();
@@ -785,6 +1004,17 @@ class RandomizedCollection {
 
 **Intuition:** virtual swap-to-end on a 1D index space gives uniform O(1) flips without materializing the full grid — the map only records cells that were moved.
 
+**Variables:** `rows`/`cols` = grid dims · `remaining` = count of still-zero cells · `map` = flat index -> the value currently living there (virtual swap) · `rand` = RNG
+**Pseudocode:**
+```
+flip():
+  pick = random in [0, remaining); remaining--
+  actual = map.getOrDefault(pick, pick)            # resolve virtual swap
+  map[pick] = map.getOrDefault(remaining, remaining)  # move tail into picked slot
+  return [actual / cols, actual % cols]
+
+reset(): remaining = rows*cols; clear map
+```
 ```java
 class Solution {
     private final int rows, cols;
@@ -823,6 +1053,16 @@ class Solution {
 
 **Intuition:** tracking `head` and `count` (rather than head/tail pointers) avoids the empty-vs-full ambiguity entirely.
 
+**Variables:** `data` = backing array · `capacity` = max size · `head` = index of front · `count` = current size
+**Pseudocode:**
+```
+enQueue(value): if full return false; data[(head+count) % cap] = value; count++; true
+deQueue(): if empty return false; head = (head+1) % cap; count--; true
+Front(): empty ? -1 : data[head]
+Rear():  empty ? -1 : data[(head+count-1) % cap]
+isEmpty(): count == 0
+isFull():  count == capacity
+```
 ```java
 class MyCircularQueue {
     private final int[] data;
@@ -881,6 +1121,17 @@ class MyCircularQueue {
 
 **Intuition:** the #622 head/count model extends to both ends — inserting at the front just rotates `head` backward.
 
+**Variables:** `data` = backing array · `capacity` = max size · `head` = index of front · `count` = current size
+**Pseudocode:**
+```
+insertFront(value): if full false; head = (head-1+cap) % cap; data[head] = value; count++; true
+insertLast(value):  if full false; data[(head+count) % cap] = value; count++; true
+deleteFront(): if empty false; head = (head+1) % cap; count--; true
+deleteLast():  if empty false; count--; true
+getFront(): empty ? -1 : data[head]
+getRear():  empty ? -1 : data[(head+count-1) % cap]
+isEmpty(): count == 0 ; isFull(): count == capacity
+```
 ```java
 class MyCircularDeque {
     private final int[] data;
@@ -957,6 +1208,14 @@ class MyCircularDeque {
 
 **Intuition:** separate chaining is the textbook collision strategy; a fixed prime-ish bucket count keeps chains short for typical inputs.
 
+**Variables:** `buckets` = array of linked-list chains · `SIZE` = fixed bucket count · `hash(key)` = key mod SIZE
+**Pseudocode:**
+```
+add(key):    bucket = buckets[hash(key)]; if key not in bucket: append key
+remove(key): buckets[hash(key)].remove(key)
+contains(key): return key in buckets[hash(key)]
+hash(key): floorMod(key, SIZE)
+```
 ```java
 class MyHashSet {
     private final List<Integer>[] buckets;
@@ -1002,6 +1261,17 @@ class MyHashSet {
 
 **Intuition:** identical structure to #705 but each node carries a value, so collisions are resolved by scanning a short chain of entries.
 
+**Variables:** `buckets` = array of chains of `[key, value]` entries · `SIZE` = fixed bucket count · `hash(key)` = key mod SIZE
+**Pseudocode:**
+```
+put(key, value):
+  bucket = buckets[hash(key)]
+  if entry with key exists: update its value; return
+  append [key, value]
+get(key): scan buckets[hash(key)] for key; return value or -1
+remove(key): scan bucket; remove matching entry
+hash(key): floorMod(key, SIZE)
+```
 ```java
 class MyHashMap {
     private final List<int[]>[] buckets;
@@ -1063,6 +1333,16 @@ class MyHashMap {
 
 **Intuition:** sentinels remove all null-edge cases for head/tail insertion, so every operation is the same splice on interior nodes.
 
+**Variables:** `head`/`tail` = sentinel nodes · `size` = node count · `current`/`previous` = traversal cursors
+**Pseudocode:**
+```
+get(index): if out of range -1; walk index steps from head.next; return val
+addAtHead(val): insertAfter(head, val)
+addAtTail(val): insertAfter(tail.previous, val)
+addAtIndex(index, val): if out of range return; walk to node before index; insertAfter(it, val)
+deleteAtIndex(index): if out of range return; walk to node; unlink it; size--
+insertAfter(previous, val): splice new node after previous; size++
+```
 ```java
 class MyLinkedList {
     private final Node head = new Node(0);
@@ -1145,6 +1425,15 @@ class MyLinkedList {
 
 **Intuition:** the sorted map narrows the conflict check to at most two neighbors, giving O(log n) per booking.
 
+**Variables:** `calendar` = TreeMap start -> end of booked events
+**Pseudocode:**
+```
+book(start, end):
+  previous = floorKey(start); next = ceilingKey(start)
+  if previous exists and calendar[previous] > start: return false   # overlaps left neighbor
+  if next exists and next < end: return false                       # overlaps right neighbor
+  calendar[start] = end; return true
+```
 ```java
 class MyCalendar {
     private final TreeMap<Integer, Integer> calendar = new TreeMap<>();
@@ -1175,6 +1464,19 @@ class MyCalendar {
 
 **Intuition:** the difference array turns "max concurrent events" into a prefix-sum scan, and rolling back keeps the structure clean on rejection.
 
+**Variables:** `delta` = TreeMap of sweep-line deltas (+1 at start, -1 at end) · `active` = running concurrency
+**Pseudocode:**
+```
+book(start, end):
+  delta[start] += 1; delta[end] -= 1     # tentatively add event
+  active = 0
+  for value in delta (sorted by key):
+    active += value
+    if active > 2:                        # would be a triple booking
+      delta[start] -= 1; delta[end] += 1  # roll back
+      return false
+  return true
+```
 ```java
 class MyCalendarTwo {
     private final TreeMap<Integer, Integer> delta = new TreeMap<>();
@@ -1207,6 +1509,17 @@ class MyCalendarTwo {
 
 **Intuition:** the same difference-array sweep as #731, but here we report the peak concurrency rather than reject it.
 
+**Variables:** `delta` = TreeMap of sweep-line deltas · `active` = running concurrency · `result` = peak concurrency
+**Pseudocode:**
+```
+book(start, end):
+  delta[start] += 1; delta[end] -= 1
+  active = 0, result = 0
+  for value in delta (sorted by key):
+    active += value
+    result = max(result, active)   # track peak overlap
+  return result
+```
 ```java
 class MyCalendarThree {
     private final TreeMap<Integer, Integer> delta = new TreeMap<>();
@@ -1235,6 +1548,14 @@ class MyCalendarThree {
 
 **Intuition:** because times arrive sorted, expired pings are always at the front — a sliding window over a queue.
 
+**Variables:** `queue` = timestamps still within the 3000ms window
+**Pseudocode:**
+```
+ping(t):
+  enqueue t
+  while front < t - 3000: dequeue   # drop expired pings
+  return queue size
+```
 ```java
 class RecentCounter {
     private final Queue<Integer> queue = new ArrayDeque<>();
@@ -1263,6 +1584,18 @@ class RecentCounter {
 
 **Intuition:** since most entries are zero, storing and iterating only nonzeros makes the cost proportional to the number of nonzero terms, not the vector length.
 
+**Variables:** `map` = index -> nonzero value · `smaller`/`larger` = the two vectors' maps ordered by size · `result` = dot product
+**Pseudocode:**
+```
+init(nums): store map[i] = nums[i] for every nonzero entry
+
+dotProduct(other):
+  smaller, larger = the two maps, smaller one first   # iterate fewer entries
+  result = 0
+  for (index, value) in smaller:
+    if index in larger: result += value * larger[index]
+  return result
+```
 ```java
 class SparseVector {
     private final Map<Integer, Integer> map = new HashMap<>();

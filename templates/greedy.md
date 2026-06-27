@@ -57,6 +57,35 @@ TEMPLATE 2 — Sort by START time, sweep forward, merge when overlapping
              compare with the last merged result
 ```
 
+**Variables:** `intervals` = list of `[start, end]` · `lastEnd` = end of last kept interval · `result` = merged output · `pq` = min-heap of active end times
+**Pseudocode:**
+```
+TEMPLATE 1 (sort by end, count non-overlapping):
+  sort intervals by END time
+  lastEnd = -infinity
+  for each interval:
+    if interval.start >= lastEnd:   # no overlap
+      lastEnd = interval.end
+      keep it (count++ or add)
+    else:
+      skip it (overlap)
+
+TEMPLATE 2 (sort by start, merge):
+  sort intervals by START time
+  for each interval:
+    if result empty OR last kept end < interval.start:
+      add interval as new
+    else:
+      extend last kept end = max(last end, interval.end)
+
+TEMPLATE 3 (sort by start + min-heap of ends):
+  sort intervals by START time
+  for each interval:
+    if heap nonempty AND earliest end <= interval.start:
+      pop heap            # reuse freed resource
+    push interval.end     # occupy a resource
+  heap size = resources needed
+```
 ```java
 // sort to expose a local greedy choice, then sweep once making the locally-best pick.  — WHEN: intervals + "max non-overlapping / min arrows / merge / min rooms", or jump/partition sweeps.
 // TEMPLATE 1: Sort by end, compare start
@@ -105,6 +134,18 @@ for (int[] interval : intervals) {
 **Intuition:** Always keep the interval that finishes earliest — it leaves the most room for the rest, so greedily picking by end maximizes how many you keep.  
 **Key:** equivalent to keeping the maximum number of non-overlapping intervals. Sort by end, greedily keep each interval whose start ≥ last kept end.
 
+**Variables:** `intervals` = `[start, end]` pairs · `kept` = count of non-overlapping intervals kept · `lastEnd` = end of last kept interval
+**Pseudocode:**
+```
+sort intervals by END
+kept = 0, lastEnd = -infinity
+for each interval:
+  if interval.start >= lastEnd:   # no overlap with last kept
+    lastEnd = interval.end
+    kept++
+  # else overlap -> skip (it is removed)
+return total intervals - kept
+```
 ```java
 class Solution {
     public int eraseOverlapIntervals(int[][] intervals) {
@@ -131,6 +172,18 @@ class Solution {
 **Intuition:** Shoot the arrow at the earliest end point to pop every balloon overlapping it; only start a new arrow when a balloon begins past the current arrow.  
 **Key:** same structure as #435 — sort by end, count groups. One arrow suffices per group. New group starts when `start > current arrow position (= last group's end)`.
 
+**Variables:** `points` = balloon `[start, end]` ranges · `arrows` = arrows used so far · `arrowEnd` = position (end) of current arrow
+**Pseudocode:**
+```
+sort points by END
+arrows = 1, arrowEnd = first balloon's end
+for each point:
+  if point.start > arrowEnd:   # this balloon not popped by current arrow
+    arrows++
+    arrowEnd = point.end       # new arrow at this balloon's end
+  # else same arrow covers it
+return arrows
+```
 ```java
 class Solution {
     public int findMinArrowShots(int[][] points) {
@@ -157,6 +210,17 @@ class Solution {
 **Intuition:** Picking the pair that ends earliest each time leaves the most slack for later links, maximizing the chain.  
 **Key:** identical to #435 / #452 — sort by end, greedily pick non-overlapping pairs.
 
+**Variables:** `pairs` = `[a, b]` pairs · `count` = chain length · `lastEnd` = end (`b`) of last chosen pair
+**Pseudocode:**
+```
+sort pairs by END (b)
+count = 0, lastEnd = -infinity
+for each pair:
+  if pair.start > lastEnd:   # strict: chain needs b < c
+    count++
+    lastEnd = pair.end
+return count
+```
 ```java
 class Solution {
     public int findLongestChain(int[][] pairs) {
@@ -207,6 +271,20 @@ Why 435 uses >= but 452/646 use >:
 ### Method A — Sort by START, traverse forward
 Compare current `start` to last kept `end`; on overlap, extend the **end**.
 
+**Variables:** `intervals` = `[start, end]` pairs · `result` = merged intervals · `last` = most recently kept interval
+**Pseudocode:**
+```
+sort intervals by START
+for each interval (forward):
+  if result empty:
+    add interval; continue
+  last = last interval in result
+  if last.end < interval.start:   # no overlap
+    add interval
+  else:
+    last.end = max(last.end, interval.end)   # overlap -> extend END
+return result
+```
 ```java
 class Solution {
     public int[][] merge(int[][] intervals) {
@@ -232,6 +310,21 @@ class Solution {
 ### Method B — Sort by END, traverse backward
 Mirror image: compare current `end` to last kept `start`; on overlap, extend the **start**.
 
+**Variables:** `intervals` = `[start, end]` pairs · `result` = merged intervals · `last` = most recently kept interval · `current` = interval at index `i`
+**Pseudocode:**
+```
+sort intervals by END
+for i from n-1 down to 0 (backward):
+  if result empty:
+    add intervals[i]; continue
+  last = last interval in result
+  current = intervals[i]
+  if last.start > current.end:   # no overlap
+    add current
+  else:
+    last.start = min(last.start, current.start)   # overlap -> extend START
+return result
+```
 ```java
 class Solution {
     public int[][] merge(int[][] intervals) {
@@ -264,6 +357,20 @@ class Solution {
 **Intuition:** Walk the sorted list in three phases — copy everything that ends before the new interval, absorb everything that overlaps it, then copy the rest.  
 **Key:** three phases: (1) add all intervals that end before new starts, (2) merge all overlapping, (3) add remaining.
 
+**Variables:** `intervals` = sorted disjoint `[start, end]` · `newInterval` = interval to insert (grows as it absorbs overlaps) · `result` = output list
+**Pseudocode:**
+```
+for each interval:
+  if interval.end < newInterval.start:   # entirely before new
+    add interval as is
+  else if interval.start > newInterval.end:   # entirely after new
+    flush newInterval; then newInterval = interval
+  else:   # overlap -> absorb into newInterval
+    newInterval.start = min(both starts)
+    newInterval.end   = max(both ends)
+add newInterval (the last pending one)
+return result
+```
 ```java
 class Solution {
     public int[][] insert(int[][] intervals, int[] newInterval) {
@@ -296,6 +403,17 @@ class Solution {
 **Intuition:** USE WHEN counting simultaneous/overlapping resources — "minimum rooms", "max concurrent". The heap size at any moment is exactly how many meetings are running at once.  
 **Template:** sort by start. Min-heap tracks end times of active meetings. When a new meeting starts after the earliest-ending meeting finishes, reuse that room.
 
+**Variables:** `intervals` = meeting `[start, end]` · `pq` = min-heap of end times of meetings currently using a room
+**Pseudocode:**
+```
+sort intervals by START
+pq = empty min-heap of end times
+for each interval:
+  if pq nonempty AND earliest end <= interval.start:
+    pop pq                # earliest room freed up -> reuse it
+  push interval.end       # occupy a room until this meeting ends
+return pq size            # rooms in use simultaneously
+```
 ```java
 class Solution {
     public int minMeetingRooms(int[][] intervals) {
@@ -332,6 +450,16 @@ Examples:           #435, #452, #646        #253 Meeting Rooms
 **Intuition:** Sweep left to right tracking the farthest index reachable; if you ever stand past that frontier you're stuck.  
 **Key:** track the farthest index reachable so far. If current index exceeds it, you're stuck.
 
+**Variables:** `nums` = max jump length from each index · `maxReach` = farthest index reachable so far
+**Pseudocode:**
+```
+maxReach = 0
+for i from 0 to n-1:
+  if i > maxReach:   # standing past the frontier -> stuck
+    return false
+  maxReach = max(maxReach, i + nums[i])
+return true
+```
 ```java
 class Solution {
     public boolean canJump(int[] nums) {
@@ -354,6 +482,17 @@ class Solution {
 **Intuition:** Treat each jump as a BFS layer — extend through the whole current reach before incrementing the jump count.  
 **Key:** BFS layer-by-layer. `currentEnd` = farthest we can reach with current jumps. `farthest` = farthest reachable with one more jump from anywhere in current layer. When we reach `currentEnd`, we must jump.
 
+**Variables:** `nums` = max jump length per index · `jumps` = jump count · `currentEnd` = end of current BFS layer · `farthest` = farthest reachable from this layer
+**Pseudocode:**
+```
+jumps = 0, currentEnd = 0, farthest = 0
+for i from 0 to n-2:
+  farthest = max(farthest, i + nums[i])
+  if i == currentEnd:        # reached end of current layer
+    jumps++
+    currentEnd = farthest    # extend to next layer
+return jumps
+```
 ```java
 class Solution {
     public int jump(int[] nums) {
@@ -379,6 +518,18 @@ class Solution {
 **Intuition:** A partition can't close until you pass the last occurrence of every letter seen inside it, so extend `end` to that frontier and cut when you reach it.  
 **Key:** precompute the last occurrence of each character. Extend the current partition's end to `max(end, last[c])` for each character. Close partition when `i == end`.
 
+**Variables:** `s` = input string · `last[c]` = last index where char `c` appears · `start` = current partition start · `end` = farthest last-occurrence seen in current partition
+**Pseudocode:**
+```
+record last[c] = last index of each char in s
+start = 0, end = 0
+for i from 0 to n-1:
+  end = max(end, last[s[i]])   # partition must include this char's last occurrence
+  if i == end:                 # reached partition boundary
+    add (end - start + 1) to result
+    start = i + 1
+return result
+```
 ```java
 class Solution {
     public List<Integer> partitionLabels(String s) {
@@ -407,6 +558,15 @@ class Solution {
 **Intuition:** Place tallest first so that inserting a person at index `k` is always correct — only taller/equal people are already placed, and shorter insertions later don't disturb their counts.  
 **Key:** sort descending by height (ties: ascending by k). Insert each person at index `k`. Since taller people are placed first, inserting at position `k` is always valid — there are already exactly k people ≥ this height already placed.
 
+**Variables:** `people` = `[height, k]` pairs · `result` = queue being built by insertion at index `k`
+**Pseudocode:**
+```
+sort people: height DESC, ties by k ASC
+result = empty list
+for each person p (tallest first):
+  insert p at index p.k     # only taller/equal people precede it
+return result
+```
 ```java
 class Solution {
     public int[][] reconstructQueue(int[][] people) {
@@ -449,6 +609,15 @@ class Solution {
 
 **Algorithm:** Sort by start time. If any meeting starts before the previous one ends, there is an overlap — return false.
 
+**Variables:** `intervals` = meeting `[start, end]` pairs
+**Pseudocode:**
+```
+sort intervals by START
+for i from 1 to n-1:
+  if intervals[i].start < intervals[i-1].end:   # overlaps previous
+    return false
+return true
+```
 ```java
 class Solution {
     public boolean canAttendMeetings(int[][] intervals) {
@@ -471,6 +640,19 @@ class Solution {
 
 **Algorithm:** Greedy. Track cumulative tank. When tank goes negative, reset start to `i+1` and reset tank. If total gas >= total cost, a valid start exists (the last reset start).
 
+**Variables:** `gas`/`cost` = gas at / cost to leave each station · `total` = net gas over whole loop · `tank` = running gas since current `start` · `start` = candidate starting station
+**Pseudocode:**
+```
+total = 0, tank = 0, start = 0
+for i from 0 to n-1:
+  diff = gas[i] - cost[i]
+  total += diff
+  tank  += diff
+  if tank < 0:        # cannot reach i+1 from current start
+    start = i + 1     # next station becomes the candidate
+    tank = 0
+return start if total >= 0 else -1
+```
 ```java
 class Solution {
     public int canCompleteCircuit(int[] gas, int[] cost) {
@@ -502,6 +684,19 @@ class Solution {
 
 **Algorithm:** Initialize all candies to 1. Sweep left→right giving `candies[i] = candies[i-1] + 1` when `ratings[i] > ratings[i-1]`. Sweep right→left taking `max(candies[i], candies[i+1] + 1)` when `ratings[i] > ratings[i+1]`. Sum.
 
+**Variables:** `ratings` = child ratings · `candies[i]` = candies given to child `i` · `result` = total candies
+**Pseudocode:**
+```
+candies = all 1s
+left-to-right, i from 1:
+  if ratings[i] > ratings[i-1]:
+    candies[i] = candies[i-1] + 1      # higher than left neighbor
+right-to-left, i from n-2:
+  if ratings[i] > ratings[i+1]:
+    candies[i] = max(candies[i], candies[i+1] + 1)   # higher than right neighbor
+result = sum of candies
+return result
+```
 ```java
 class Solution {
     public int candy(int[] ratings) {
@@ -538,6 +733,15 @@ class Solution {
 
 **Algorithm:** Sort ascending. Scan; the first index `i` where `citations[i] >= n - i` gives `h = n - i`, the largest valid h. If none, h is 0.
 
+**Variables:** `citations` = citation counts · `n` = number of papers · `n - i` = papers with at least `citations[i]` citations
+**Pseudocode:**
+```
+sort citations ascending
+for i from 0 to n-1:
+  if citations[i] >= n - i:   # n-i papers each have >= this many citations
+    return n - i
+return 0
+```
 ```java
 class Solution {
     public int hIndex(int[] citations) {
@@ -564,6 +768,18 @@ class Solution {
 
 **Algorithm:** Sort `g` and `s`. Two pointers: advance the cookie pointer always; advance the child pointer (counting a satisfied child) only when the current cookie satisfies the current child.
 
+**Variables:** `g` = children greed factors · `s` = cookie sizes · `i` = child pointer · `j` = cookie pointer · `result` = content children count
+**Pseudocode:**
+```
+sort g ascending; sort s ascending
+i = 0, j = 0, result = 0
+while i < g.length and j < s.length:
+  if s[j] >= g[i]:    # cookie j satisfies child i
+    result++
+    i++             # move to next child
+  j++               # always move to next cookie
+return result
+```
 ```java
 class Solution {
     public int findContentChildren(int[] g, int[] s) {
@@ -593,6 +809,13 @@ class Solution {
 
 **Algorithm:** Count distinct types with a set. Return `min(distinct types, n/2)`.
 
+**Variables:** `candyType` = candy type per candy · `types` = set of distinct types · `candyType.length / 2` = max candies the holder may eat
+**Pseudocode:**
+```
+types = set()
+for each candy: add its type to types
+return min(number of distinct types, total / 2)
+```
 ```java
 class Solution {
     public int distributeCandies(int[] candyType) {
@@ -616,6 +839,18 @@ class Solution {
 
 **Algorithm:** Scan; at each empty plot whose left and right (treating out-of-bounds as empty) are empty, plant it (set to 1) and decrement `n`. Succeed early if `n <= 0`.
 
+**Variables:** `flowerbed` = 0/1 plots · `n` = flowers still to plant · `leftEmpty`/`rightEmpty` = whether neighbors are empty (out-of-bounds counts as empty)
+**Pseudocode:**
+```
+for i from 0 to length-1:
+  leftEmpty  = (i == 0) or flowerbed[i-1] == 0
+  rightEmpty = (i == last) or flowerbed[i+1] == 0
+  if flowerbed[i] == 0 and leftEmpty and rightEmpty:
+    plant: flowerbed[i] = 1
+    n--
+  if n <= 0: return true
+return n <= 0
+```
 ```java
 class Solution {
     public boolean canPlaceFlowers(int[] flowerbed, int n) {
@@ -646,6 +881,18 @@ class Solution {
 
 **Algorithm:** Sort by `lastDay`. Maintain a max-heap of taken durations and running `time`. Add each course; if `time > lastDay`, pop the longest course and subtract it. Heap size is the answer.
 
+**Variables:** `courses` = `[duration, lastDay]` · `maxHeap` = durations of taken courses (largest on top) · `time` = total time spent so far
+**Pseudocode:**
+```
+sort courses by lastDay (deadline)
+maxHeap = empty, time = 0
+for each course [duration, lastDay]:
+  time += duration
+  push duration onto maxHeap
+  if time > lastDay:          # overshot deadline
+    time -= pop longest duration   # drop the longest taken course
+return maxHeap size
+```
 ```java
 class Solution {
     public int scheduleCourse(int[][] courses) {
@@ -675,6 +922,18 @@ class Solution {
 
 **Algorithm:** Sort ascending. Two pointers from both ends; if `people[i] + people[j] <= limit` the lightest also boards (advance `i`). Always send the heaviest (decrement `j`) and count a boat.
 
+**Variables:** `people` = weights · `limit` = boat weight cap · `i` = lightest pointer · `j` = heaviest pointer · `result` = boat count
+**Pseudocode:**
+```
+sort people ascending
+i = 0, j = n-1, result = 0
+while i <= j:
+  if people[i] + people[j] <= limit:
+    i++              # lightest shares boat with heaviest
+  j--                # heaviest always boards
+  result++           # one boat used
+return result
+```
 ```java
 class Solution {
     public int numRescueBoats(int[] people, int limit) {
@@ -703,6 +962,18 @@ class Solution {
 
 **Algorithm:** Two pointers `i`, `j`. Compute `lo = max(starts)`, `hi = min(ends)`; if `lo <= hi`, record `[lo, hi]`. Advance the pointer of the interval with the smaller end.
 
+**Variables:** `firstList`/`secondList` = two sorted disjoint interval lists · `i`/`j` = pointers into each list · `lo` = latest start · `hi` = earliest end
+**Pseudocode:**
+```
+i = 0, j = 0
+while i < firstList.length and j < secondList.length:
+  lo = max(firstList[i].start, secondList[j].start)
+  hi = min(firstList[i].end,   secondList[j].end)
+  if lo <= hi: record [lo, hi]      # valid overlap
+  if firstList[i].end < secondList[j].end: i++   # advance the one ending first
+  else: j++
+return result
+```
 ```java
 class Solution {
     public int[][] intervalIntersection(int[][] firstList, int[][] secondList) {
@@ -736,6 +1007,19 @@ class Solution {
 
 **Algorithm:** Sort ascending. Flip negatives left to right while `k > 0`. If `k` is still positive and odd, negate the now-smallest absolute value element once. Sum.
 
+**Variables:** `nums` = array · `k` = flips remaining · `sum` = running total · `min` = smallest element after flipping negatives
+**Pseudocode:**
+```
+sort nums ascending
+for i while i < n and k > 0:
+  if nums[i] < 0:        # flip most-negative numbers first
+    nums[i] = -nums[i]
+    k--
+sum = sum of nums; min = smallest element
+if k is odd (leftover flips):
+  sum -= 2 * min         # one extra flip lands on smallest magnitude
+return sum
+```
 ```java
 class Solution {
     public int largestSumAfterKNegations(int[] nums, int k) {
@@ -770,6 +1054,19 @@ class Solution {
 
 **Algorithm:** Add `num` at `from` and subtract `num` at `to` in a difference array. Prefix-sum across locations; return false if any running total exceeds capacity.
 
+**Variables:** `trips` = `[numPassengers, from, to]` · `capacity` = car cap · `diff` = difference array over locations · `passengers` = running occupancy
+**Pseudocode:**
+```
+diff = array over locations, all 0
+for each trip [num, from, to]:
+  diff[from] += num     # board
+  diff[to]   -= num     # leave
+passengers = 0
+for each location i in order:
+  passengers += diff[i]            # prefix sum = current occupancy
+  if passengers > capacity: return false
+return true
+```
 ```java
 class Solution {
     public boolean carPooling(int[][] trips, int capacity) {
@@ -801,6 +1098,19 @@ class Solution {
 
 **Algorithm:** For each interval, if it is entirely before or after `toBeRemoved`, keep it. Otherwise keep the left piece `[start, toBeRemoved[0]]` if it has positive length and the right piece `[toBeRemoved[1], end]` if it has positive length.
 
+**Variables:** `intervals` = sorted disjoint intervals · `toBeRemoved` = `[lo, hi]` range to cut out · `result` = surviving pieces
+**Pseudocode:**
+```
+for each interval:
+  if interval.end <= toBeRemoved.lo or interval.start >= toBeRemoved.hi:
+    keep whole interval     # no overlap
+  else:
+    if interval.start < toBeRemoved.lo:
+      keep left sliver [interval.start, toBeRemoved.lo]
+    if interval.end > toBeRemoved.hi:
+      keep right sliver [toBeRemoved.hi, interval.end]
+return result
+```
 ```java
 class Solution {
     public List<List<Integer>> removeInterval(int[][] intervals, int[] toBeRemoved) {
@@ -833,6 +1143,21 @@ class Solution {
 
 **Algorithm:** Build `maxReach[i]` = farthest right coverage of any tap whose left edge is at or before `i`. Sweep like Jump Game II: track `currentEnd` and `farthest`; when reaching `currentEnd`, increment taps and jump. Fail if `farthest` stalls before `n`.
 
+**Variables:** `n` = garden length · `ranges` = tap reach radius per position · `maxReach[left]` = farthest right covered starting at `left` · `taps` = taps opened · `currentEnd`/`farthest` = jump-game layer bounds
+**Pseudocode:**
+```
+for each position i:
+  left = max(0, i - ranges[i]); right = min(n, i + ranges[i])
+  maxReach[left] = max(maxReach[left], right)
+taps = 0, currentEnd = 0, farthest = 0
+for i from 0 to n:
+  if i > farthest: return -1        # gap in coverage
+  farthest = max(farthest, maxReach[i])
+  if i == currentEnd and i < n:     # end of current layer
+    taps++
+    currentEnd = farthest
+return taps if currentEnd >= n else -1
+```
 ```java
 class Solution {
     public int minTaps(int n, int[] ranges) {
@@ -869,6 +1194,20 @@ class Solution {
 
 **Algorithm:** Sort events by start. For each day, push all events that have started into a min-heap keyed on end day, discard events whose end day has passed, then attend (poll) one event and count it.
 
+**Variables:** `events` = `[start, end]` · `minHeap` = end days of events available now (earliest on top) · `i` = next event index · `day` = current day · `result` = events attended
+**Pseudocode:**
+```
+sort events by START
+minHeap = empty (end days), i = 0, day = 0, result = 0
+while i < n or minHeap nonempty:
+  if minHeap empty: day = events[i].start    # jump forward to next event
+  while i < n and events[i].start <= day:    # add all events started by today
+    push events[i].end; i++
+  poll minHeap; result++; day++              # attend earliest-ending event
+  while minHeap nonempty and top < day:      # drop expired events
+    poll minHeap
+return result
+```
 ```java
 class Solution {
     public int maxEvents(int[][] events) {
@@ -906,6 +1245,21 @@ class Solution {
 
 **Algorithm:** Track each full lake's last-rain day in a map and dry-day indices in a TreeSet. On a rain day for an already-full lake, find the smallest dry day after its last rain; if none exists, flooding is unavoidable. Use that dry day for this lake. Leftover dry days dry any lake (default 1).
 
+**Variables:** `rains` = per-day rain (lake id or 0=dry) · `result` = answer array · `fullDay` = lake -> day it was last filled · `dryDays` = TreeSet of available dry-day indices
+**Pseudocode:**
+```
+for i from 0 to n-1:
+  if rains[i] == 0:       # dry day
+    add i to dryDays; result[i] = 1 (default, may overwrite)
+  else:
+    result[i] = -1; lake = rains[i]
+    if lake already full:
+      dry = smallest dry day > lake's last full day
+      if no such dry day: return empty array   # flood
+      result[dry] = lake; remove dry from dryDays
+    fullDay[lake] = i
+return result
+```
 ```java
 class Solution {
     public int[] avoidFlood(int[] rains) {

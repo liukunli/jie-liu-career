@@ -8,6 +8,19 @@ Store that X in a HashMap for O(1) lookup.
 
 ## Core Template
 
+**Variables:** `map` = prefixSum→count or index seen so far · `sum` = running prefix sum · `lookup` = the complement prefix we search for · `i` = current scan position
+**Pseudocode:**
+```
+create empty map of prefix → (count or index)
+seed map with prefix 0 (count=1 for counting, index=-1 for length)
+sum = 0
+for each index i:
+    add nums[i] to sum
+    lookup = transform(sum)        // sum-k, sum%k, etc.
+    use map.get(lookup) to update result
+    store sum (or sum%k) into map with count or index i
+```
+
 ```java
 // a subarray is the difference of two prefixes; remember prefixes seen so far and look up the complement.  — WHEN: "subarray sum equals/divisible by k", "longest subarray with sum X" — anything reducible to prefix[r]-prefix[l]
 Map<Long, Integer> map = new HashMap<>();
@@ -60,6 +73,19 @@ Read the two map-value modes first: **count** problems store `prefix sum → how
 
 **Intuition:** A subarray summing to k ends here for every earlier prefix equal to `sum - k`; count those prefixes.
 
+**Variables:** `map` = prefixSum→count of times seen · `sum` = running prefix sum · `count` = answer (subarrays summing to k) · `num` = current element
+**Pseudocode:**
+```
+create empty map of prefixSum → count
+seed map with (0 → 1)            // empty prefix counts once
+sum = 0, count = 0
+for each num in nums:
+    add num to sum
+    count += how many earlier prefixes equal sum-k
+    increment map count for sum
+return count
+```
+
 ```java
 class Solution {
     public int subarraySum(int[] nums, int k) {
@@ -87,6 +113,21 @@ class Solution {
 **Lookup:** if `sum - k` was seen at index `p`, length = `i - p`. Only keep first occurrence (maximizes length).
 
 **Intuition:** Same complement as #560, but store the earliest index so `i - p` gives the longest subarray summing to k.
+
+**Variables:** `map` = prefixSum→first index seen · `sum` = running prefix sum · `maxLen` = longest subarray length found · `i` = current index
+**Pseudocode:**
+```
+create empty map of prefixSum → first index
+seed map with (0 → -1)           // empty prefix at virtual index -1
+sum = 0, maxLen = 0
+for i from 0 to n-1:
+    add nums[i] to sum
+    if sum-k was seen before:
+        maxLen = max(maxLen, i - index where sum-k was first seen)
+    if sum not in map:
+        store sum → i          // keep earliest only
+return maxLen
+```
 
 ```java
 class Solution {
@@ -119,6 +160,19 @@ class Solution {
 
 **Intuition:** Two prefixes with the same remainder bracket a subarray divisible by k; count how many share each remainder.
 
+**Variables:** `map` = remainder(sum%k)→count of times seen · `sum` = running prefix sum mod k (normalized non-negative) · `count` = answer · `num` = current element
+**Pseudocode:**
+```
+create empty map of remainder → count
+seed map with (0 → 1)            // empty prefix has remainder 0
+sum = 0, count = 0
+for each num in nums:
+    sum = (sum + num) mod k, normalized to be non-negative
+    count += how many earlier prefixes share this remainder
+    increment map count for sum
+return count
+```
+
 ```java
 class Solution {
     public int subarraysDivByK(int[] nums, int k) {
@@ -146,6 +200,21 @@ class Solution {
 **Key difference from #974:** store first index (not count), check gap, return on first hit.
 
 **Intuition:** Same-remainder pair means a divisible subarray; store the earliest index so the gap `i - p >= 2` proves length ≥ 2.
+
+**Variables:** `map` = remainder(sum%k)→first index seen · `sum` = running prefix sum mod k (normalized non-negative) · `i` = current index
+**Pseudocode:**
+```
+create empty map of remainder → first index
+seed map with (0 → -1)           // empty prefix at virtual index -1
+sum = 0
+for i from 0 to n-1:
+    sum = (sum + nums[i]) mod k, normalized to be non-negative
+    if remainder sum was seen before:
+        if i - first index of sum >= 2: return true
+    else:
+        store sum → i            // keep earliest only
+return false
+```
 
 ```java
 class Solution {
@@ -176,6 +245,20 @@ class Solution {
 **Key difference:** tree DFS — must **backtrack** (decrement count) when leaving a node, so sibling subtrees don't share state.
 
 **Intuition:** Apply the #560 prefix-count idea along each root-to-node path; undo the prefix on the way back up so branches stay independent.
+
+**Variables:** `map` = path prefixSum→count seen on current root-to-node path · `sum` = running prefix sum down the path · `node` = current tree node · `count` = paths ending at/below this node
+**Pseudocode:**
+```
+create map of prefixSum → count, seeded with (0 → 1)
+dfs(root, sum=0):
+    if node is null: return 0
+    add node value to sum
+    count = how many path prefixes equal sum-target
+    increment map count for sum            // add this node's prefix
+    count += dfs(left) + dfs(right)
+    decrement map count for sum            // backtrack before returning
+    return count
+```
 
 ```java
 class Solution {
@@ -253,6 +336,18 @@ map.put(0, 1);      // ✗ compile error: int boxes to Integer, not Long
 **Intuition:** Same "have I seen the complement before?" idea as prefix-sum, but the key is the raw value, so one pass finds the pair.
 
 **Algorithm:** HashMap complement lookup. As you scan, for each `nums[i]` check whether its complement `target - nums[i]` was already seen. This is the same "has a value been seen before?" idea as prefix-sum problems, but the key is the raw value (not a running sum).
+
+**Variables:** `map` = value→index seen so far · `complement` = the partner value `target - nums[i]` we need · `i` = current index
+**Pseudocode:**
+```
+create empty map of value → index
+for i from 0 to n-1:
+    complement = target - nums[i]
+    if complement already in map:
+        return [index of complement, i]
+    store nums[i] → i             // after the check, so we never pair with self
+return [-1, -1]
+```
 
 ```java
 class Solution {

@@ -7,6 +7,22 @@ One template: snapshot the level size, then drain exactly that many nodes per le
 
 ## The Template — Level-Aware BFS
 
+**Variables:** `queue` = nodes waiting to be processed · `size` = level snapshot (count of nodes in the current level) · `level` = current depth counter · `node` = node polled this step · `i` = index within the level
+**Pseudocode:**
+```
+make an empty queue
+put root in the queue
+level = 0
+while the queue is not empty:
+    size = how many nodes are in the queue right now (one whole level)
+    level = level + 1
+    repeat size times (index i = 0..size-1):
+        node = take the front of the queue
+        process node (level known; i==0 -> first, i==size-1 -> last)
+        if node has a left child, add it to the queue
+        if node has a right child, add it to the queue
+```
+
 ```java
 // LEVEL-AWARE PROCESSING — snapshot size to make per-level decisions
 // the queue holds exactly one full level; freeze its size, then drain just that many.  — WHEN: "level by level", "per row", "rightmost/leftmost in level", "min depth"
@@ -78,6 +94,24 @@ and i == size-1 / i == 0 checks become meaningless.
 
 **Description:** Return all node values level by level, left to right.
 
+**Variables:** `result` = list of levels · `queue` = BFS queue · `size` = level snapshot · `level` = values collected for this level · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+result = empty list
+if root is null, return result
+queue = new queue, put root in it
+while queue not empty:
+    size = current queue size (this whole level)
+    level = empty list
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        append node value to level
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+    append level to result
+return result
+```
+
 ```java
 class Solution {
     public List<List<Integer>> levelOrder(TreeNode root) {
@@ -109,6 +143,24 @@ class Solution {
 **Description:** Same as #102 but return levels from bottom to top.  
 **Key:** `LinkedList` as result — `addFirst` prepends each level, producing bottom-up order without a final reverse.
 
+**Variables:** `result` = LinkedList of levels (prepended) · `queue` = BFS queue · `size` = level snapshot · `level` = values for this level · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+result = empty linked list
+if root is null, return result
+queue = new queue, put root in it
+while queue not empty:
+    size = current queue size (this whole level)
+    level = empty list
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        append node value to level
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+    prepend level to result (addFirst -> bottom-up order)
+return result
+```
+
 ```java
 class Solution {
     public List<List<Integer>> levelOrderBottom(TreeNode root) {
@@ -139,6 +191,27 @@ class Solution {
 
 **Description:** Level 1 left-to-right, level 2 right-to-left, alternating.  
 **Key:** `LinkedList<Integer>` per level as a deque — `addLast` for left-to-right, `addFirst` for right-to-left. Flip flag after each level.
+
+**Variables:** `result` = list of levels · `queue` = BFS queue · `leftToRight` = direction flag for this level · `size` = level snapshot · `level` = deque of values for this level · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+result = empty list
+if root is null, return result
+queue = new queue, put root in it
+leftToRight = true
+while queue not empty:
+    size = current queue size (this whole level)
+    level = empty deque
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        if leftToRight: append node value to back of level
+        else:           append node value to front of level
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+    append level to result
+    flip leftToRight
+return result
+```
 
 ```java
 class Solution {
@@ -176,6 +249,23 @@ class Solution {
 
 **Description:** Return the average value of nodes at each level.
 
+**Variables:** `result` = list of per-level averages · `queue` = BFS queue · `size` = level snapshot (also the divisor) · `sum` = running sum of this level · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+result = empty list
+queue = new queue, put root in it
+while queue not empty:
+    size = current queue size (this whole level)
+    sum = 0
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        sum = sum + node value
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+    append sum / size to result
+return result
+```
+
 ```java
 class Solution {
     public List<Double> averageOfLevels(TreeNode root) {
@@ -210,6 +300,22 @@ All share the same outer loop. Only the `if` inside the `for` changes.
 **Description:** Return the value of the rightmost node at each level.  
 **Key:** record when `i == size - 1`.
 
+**Variables:** `result` = rightmost value per level · `queue` = BFS queue · `size` = level snapshot · `node` = node polled · `i` = index within level (record when `i == size-1`, the last node)
+**Pseudocode:**
+```
+result = empty list
+if root is null, return result
+queue = new queue, put root in it
+while queue not empty:
+    size = current queue size (this whole level)
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        if i == size-1: append node value to result   (last in level)
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+return result
+```
+
 ```java
 class Solution {
     public List<Integer> rightSideView(TreeNode root) {
@@ -239,6 +345,21 @@ class Solution {
 **Description:** Return the leftmost value in the last level (deepest row).  
 **Key:** record when `i == 0` every level — after the loop, `bottomLeft` holds the first node of the final level.
 
+**Variables:** `queue` = BFS queue · `bottomLeft` = first value of the latest level seen (overwritten each level) · `size` = level snapshot · `node` = node polled · `i` = index within level (record when `i == 0`, the first node)
+**Pseudocode:**
+```
+queue = new queue, put root in it
+bottomLeft = root value
+while queue not empty:
+    size = current queue size (this whole level)
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        if i == 0: bottomLeft = node value   (first in level, overwritten each level)
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+return bottomLeft   (first node of the last level)
+```
+
 ```java
 class Solution {
     public int findBottomLeftValue(TreeNode root) {
@@ -265,6 +386,24 @@ class Solution {
 ### #515 Find Largest Value in Each Tree Row
 
 **Description:** Return the maximum value found at each level.
+
+**Variables:** `result` = max value per level · `queue` = BFS queue · `size` = level snapshot · `max` = running maximum for this level · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+result = empty list
+if root is null, return result
+queue = new queue, put root in it
+while queue not empty:
+    size = current queue size (this whole level)
+    max = negative infinity
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        max = larger of (max, node value)
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+    append max to result
+return result
+```
 
 ```java
 class Solution {
@@ -295,6 +434,24 @@ class Solution {
 ### #1161 Maximum Level Sum of a Binary Tree
 
 **Description:** Return the smallest level number (1-indexed) whose node sum is maximum.
+
+**Variables:** `queue` = BFS queue · `maxSum` = best level sum so far · `maxLevel` = level number of that best sum · `level` = current level (1-indexed) · `size` = level snapshot · `sum` = sum of this level · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+queue = new queue, put root in it
+maxSum = negative infinity; maxLevel = 1; level = 0
+while queue not empty:
+    size = current queue size (this whole level)
+    level = level + 1
+    sum = 0
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        sum = sum + node value
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+    if sum > maxSum: maxSum = sum; maxLevel = level
+return maxLevel
+```
 
 ```java
 class Solution {
@@ -330,6 +487,23 @@ class Solution {
 **Key:** BFS is optimal here (DFS must visit the whole tree). Return `depth` the moment the first leaf is dequeued — that is guaranteed to be the shallowest.  
 **Intuition:** BFS reaches nodes in depth order, so the first leaf it dequeues is necessarily the shallowest.
 
+**Variables:** `queue` = BFS queue · `depth` = current level depth (1-indexed) · `size` = level snapshot · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+if root is null, return 0
+queue = new queue, put root in it
+depth = 0
+while queue not empty:
+    size = current queue size (this whole level)
+    depth = depth + 1
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        if node has no children: return depth   (first leaf = shallowest)
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+return depth
+```
+
 ```java
 class Solution {
     public int minDepth(TreeNode root) {
@@ -363,6 +537,23 @@ class Solution {
 **Key:** `previous` tracks the last node seen in the current level — wire `previous.next = node` before advancing. Reset `previous = null` at each level start.  
 **Intuition:** BFS already visits a level left to right, so just chain each node to the one polled before it.
 
+**Variables:** `queue` = BFS queue · `size` = level snapshot · `previous` = last node seen in this level (reset to null each level) · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+if root is null, return null
+queue = new queue, put root in it
+while queue not empty:
+    size = current queue size (this whole level)
+    previous = null
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        if previous is not null: previous.next = node   (chain within level)
+        previous = node
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+return root
+```
+
 ```java
 class Solution {
     public Node connect(Node root) {
@@ -392,6 +583,23 @@ class Solution {
 
 **Description:** Same as #116 but the tree can be any binary tree (not necessarily perfect).  
 **Key:** the BFS solution is **identical** to #116 — the `size` snapshot handles uneven levels automatically.
+
+**Variables:** `queue` = BFS queue · `size` = level snapshot (handles uneven levels) · `previous` = last node seen in this level (reset to null each level) · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+if root is null, return null
+queue = new queue, put root in it
+while queue not empty:
+    size = current queue size (this whole level)
+    previous = null
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        if previous is not null: previous.next = node   (chain within level)
+        previous = node
+        if node.left  exists, add to queue
+        if node.right exists, add to queue
+return root
+```
 
 ```java
 class Solution {
@@ -425,6 +633,28 @@ class Solution {
 **Description:** Two nodes `x` and `y` are cousins if they are at the same depth but have different parents. Return true if `x` and `y` are cousins.  
 **Key:** for each node polled, check if its children are `x` or `y`. After each full level, if both parents found → check `xParent != yParent`. If only one found → different depths → false.  
 **Intuition:** cousins must surface in the *same* BFS level; if only one shows up per level, their depths differ.
+
+**Variables:** `queue` = BFS queue · `size` = level snapshot · `xParent`/`yParent` = parents of x/y found in this level (null if not yet) · `node` = node polled · `i` = index within level
+**Pseudocode:**
+```
+queue = new queue, put root in it
+while queue not empty:
+    size = current queue size (this whole level)
+    xParent = null; yParent = null
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        if node.left exists:
+            add node.left to queue
+            if node.left value == x: xParent = node
+            if node.left value == y: yParent = node
+        if node.right exists:
+            add node.right to queue
+            if node.right value == x: xParent = node
+            if node.right value == y: yParent = node
+    if both parents found: return xParent != yParent   (same depth -> cousins iff different parent)
+    if exactly one parent found: return false           (different depths)
+return false
+```
 
 ```java
 class Solution {
@@ -505,6 +735,25 @@ Snapshot the level size **before** the inner `for` loop — see "The One Rule" a
 **Description:** Return the maximum width of any level of a binary tree. Width is defined as the length between the leftmost and rightmost non-null nodes, including all the null nodes in between.
 
 **Variation:** BFS with position tracking. Assign each node a position: root=1, left child of node at pos `p` gets `2*p`, right child gets `2*p+1`. Width of level = `lastPos - firstPos + 1`. Normalize by subtracting `firstPos` of each level to prevent overflow.
+
+**Variables:** `maxWidth` = best width found · `queue` = BFS queue of nodes · `indices` = parallel queue of heap-style positions · `size` = level snapshot · `first` = leftmost position of this level (normalize against it) · `last` = rightmost normalized position seen · `node` = node polled · `pos` = normalized position of node · `i` = index within level
+**Pseudocode:**
+```
+if root is null, return 0
+maxWidth = 0
+queue = new queue with root; indices = new queue with position 0
+while queue not empty:
+    size = current queue size (this whole level)
+    first = front position in indices; last = 0
+    repeat size times (i = 0..size-1):
+        node = poll front of queue
+        pos = poll front of indices minus first   (normalize to avoid overflow)
+        last = pos
+        if node.left  exists: add node.left to queue, add 2*pos     to indices
+        if node.right exists: add node.right to queue, add 2*pos+1 to indices
+    maxWidth = larger of (maxWidth, last + 1)   (width = last - first(0) + 1)
+return maxWidth
+```
 
 ```java
 class Solution {

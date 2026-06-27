@@ -97,6 +97,17 @@ Six template families. Every problem maps to one loop skeleton and one dp-state 
 
 ## All Six Templates
 
+**Variables:** `dp[i]` = the answer for the subproblem at index/state `i` (meaning varies per family: ways/cost/length/feasibility ending at or reaching `i`) · `n` = problem size · `target`/`j` = knapsack capacity dimension.
+**Pseudocode:**
+```
+LINEAR 1D:   dp[i] = fixed recipe over dp[i-1], dp[i-2] (Kadane: best ending at i = max(start fresh, extend))
+LOOK-BACK:   for each i, scan all earlier j and extend the best valid dp[j]
+KNAPSACK:    collapse item dimension to 1D; descending j = each item once, ascending j = reusable
+2D SEQUENCE: match consumes both strings (diagonal), mismatch drops one side
+INTERVAL:    solve short ranges first, combine via a split point inside the range
+GRID:        each cell accumulates from cells it could arrive from (up / left)
+STATE MACHINE: name a few states, update each from yesterday's states every step
+```
 ```java
 // 1. LINEAR 1D — each cell depends on a fixed number of previous cells
 // the answer at i is a fixed recipe over the last one or two answers.  — WHEN: "ways/cost to reach step i", "can't pick adjacent"
@@ -156,6 +167,15 @@ Want count or min/max?
 **Description:** Each step you can climb 1 or 2 steps. How many distinct ways to reach step n?  
 **Intuition:** the last move was a 1-step or a 2-step, so ways to reach n = ways to n-1 + ways to n-2.
 
+**Variables:** `dp[i]` = number of distinct ways to reach step `i`.
+**Pseudocode:**
+```
+if n <= 2: return n
+dp[1] = 1; dp[2] = 2
+for i from 3 to n:
+    dp[i] = dp[i-1] + dp[i-2]   // arrive via a 1-step or a 2-step
+return dp[n]
+```
 ```java
 class Solution {
     public int climbStairs(int n) {
@@ -177,6 +197,18 @@ class Solution {
 **Description:** Rob houses on a line — can't rob two adjacent. Maximize total.  
 **Intuition:** at each house, either skip it (keep `dp[i-1]`) or rob it (`dp[i-2] + value`, since i-1 is now off-limits).
 
+**Variables:** `dp[i]` = max money robbable from houses `0..i`; `dp[0]` = first house, `dp[1]` = better of first two.
+**Pseudocode:**
+```
+n = number of houses
+if only one house: return its value
+dp[0] = nums[0]
+dp[1] = max(nums[0], nums[1])
+for i from 2 to n-1:
+    dp[i] = max(dp[i-1],            // skip house i, keep best up to i-1
+                dp[i-2] + nums[i])  // rob house i, add best up to i-2
+return dp[n-1]                       // best over all houses
+```
 ```java
 class Solution {
     public int rob(int[] nums) {
@@ -200,6 +232,22 @@ class Solution {
 **Key:** run House Robber on `[0, n-2]` and `[1, n-1]`; take the max. Two passes, exact same helper.  
 **Intuition:** breaking the circle means either the first house is excluded or the last is — solve both lines and keep the better.
 
+**Variables:** in the helper, `prev1` = best rob ending at the previous index (`dp[k-1]`), `prev2` = best two indices back (`dp[k-2]`), `current` = `dp[k]`; two passes over ranges `[0,n-2]` and `[1,n-1]`.
+**Pseudocode:**
+```
+n = number of houses
+if only one house: return its value
+return max( robLine(0, n-2),   // exclude last house
+            robLine(1, n-1) )  // exclude first house
+robLine(i, j):
+    prev2 = 0, prev1 = 0
+    for k from i to j:
+        current = max(prev1,            // skip house k
+                      prev2 + nums[k])  // rob house k
+        prev2 = prev1                    // slide window forward
+        prev1 = current
+    return prev1                         // best over the line
+```
 ```java
 class Solution {
     public int rob(int[] nums) {
@@ -228,6 +276,19 @@ class Solution {
 **Template:** Look-back 1D — `dp[i]` depends on all `dp[j]` where `j < i` and `nums[j] < nums[i]`.  
 **Intuition:** the best subsequence ending at i extends the longest earlier one whose last value is still smaller.
 
+**Variables:** `dp[i]` = length of the longest strictly increasing subsequence that *ends* at index `i`; `max` = best `dp[i]` seen so far.
+**Pseudocode:**
+```
+n = length of nums
+dp[i] = 1 for all i        // each element alone is an LIS of length 1
+max = 1
+for i from 1 to n-1:
+    for j from 0 to i-1:
+        if nums[j] < nums[i]:                  // can extend subsequence ending at j
+            dp[i] = max(dp[i], dp[j] + 1)
+    max = max(max, dp[i])                       // track global best
+return max
+```
 ```java
 class Solution {
     public int lengthOfLIS(int[] nums) {
@@ -255,6 +316,20 @@ class Solution {
 **Template:** Look-back 1D — `dp[i]` is true if some `dp[j]` is true and `s[j..i)` is a word.  
 **Intuition:** a prefix is breakable if some earlier breakable cut leaves a dictionary word as the final piece.
 
+**Variables:** `dp[i]` = true if the prefix `s[0..i)` (first `i` chars) can be segmented into dictionary words; `dp[0]` = true (empty prefix); `words` = the dictionary as a hash set for O(1) lookup.
+**Pseudocode:**
+```
+words = set of dictionary words
+n = length of s
+dp[i] = false for all i
+dp[0] = true                                   // empty prefix is breakable
+for i from 1 to n:
+    for j from 0 to i-1:
+        if dp[j] and words contains s[j..i):   // breakable cut + word tail
+            dp[i] = true
+            break                              // one valid split is enough
+return dp[n]                                    // whole string breakable?
+```
 ```java
 class Solution {
     public boolean wordBreak(String s, List<String> wordDict) {
@@ -295,6 +370,27 @@ answer:             dp[n-1]                  max(dp)                  dp[n]
 
 ## Canonical Templates
 
+**Variables:** `dp[j]` = number of ways to reach sum `j` (count flavor; `dp[0]=1` is the empty selection); `i` = item index, `j` = current capacity/target, `num` = an item's weight/value. Loop *direction* decides reuse: descending j = item used at most once, ascending j = item reusable; target-outer = orderings counted.
+**Pseudocode:**
+```
+0/1 KNAPSACK (each item once):
+    dp[0] = 1
+    for each item i:
+        for j from target DOWN TO nums[i]:     // DESCENDING reads OLD dp (item i not yet used)
+            dp[j] += dp[j - nums[i]]
+
+UNBOUNDED KNAPSACK (item reusable):
+    dp[0] = 1
+    for each item i:
+        for j from nums[i] UP TO target:       // ASCENDING reads NEW dp (item i already used this pass)
+            dp[j] += dp[j - nums[i]]
+
+PERMUTATION COUNT (order matters):
+    dp[0] = 1
+    for j from 1 to target:                     // OUTER = target value
+        for each num in nums:                   // INNER = try every num, so orderings differ
+            if j >= num: dp[j] += dp[j - num]
+```
 ```java
 // ── 0/1 KNAPSACK ── each item at most once
 int[] dp = new int[target + 1];
@@ -344,6 +440,17 @@ for (int j = 1; j <= target; j++) {           // OUTER: target
 **Description:** Can the array be partitioned into two subsets with equal sum?  
 **Key:** equivalent to: can we pick a subset summing to `total/2`?
 
+**Variables:** `dp[j]` = can some subset of the items seen so far sum exactly to `j`.
+**Pseudocode:**
+```
+total = sum of nums; if odd, impossible -> return false
+target = total / 2
+dp[0..target] = false; dp[0] = true        // empty subset sums to 0
+for each num:                               // consider item once (0/1)
+    for j from target down to num:          // DESCENDING -> 0/1: dp[j-num] is from before this item
+        dp[j] = dp[j] OR dp[j-num]          // keep j, or add num onto a subset summing to j-num
+return dp[target]
+```
 ```java
 class Solution {
     public boolean canPartition(int[] nums) {
@@ -368,6 +475,18 @@ class Solution {
 **Description:** Assign `+` or `-` to each number to reach `target`. How many ways?  
 **Key:** assign `+` to subset P and `-` to subset N. Then `P - N = target` and `P + N = sum`. So `P = (sum + target) / 2`. Count subsets summing to P.
 
+**Variables:** `dp[j]` = number of distinct subsets (of items seen so far) that sum exactly to `j`.
+**Pseudocode:**
+```
+sum = sum of nums
+if (sum+target) is odd or |target| > sum: return 0
+t = (sum + target) / 2                      // P = subset assigned '+'
+dp[0..t] = 0; dp[0] = 1                      // one way to make 0: empty subset
+for each num:                               // consider item once (0/1)
+    for j from t down to num:               // DESCENDING -> 0/1: count each item at most once
+        dp[j] += dp[j-num]                   // add the ways that made j-num, now including num
+return dp[t]
+```
 ```java
 class Solution {
     public int findTargetSumWays(int[] nums, int target) {
@@ -392,6 +511,18 @@ class Solution {
 **Description:** Given strings of '0'/'1', find the largest subset using at most `m` zeros and `n` ones.  
 **Key:** 2D 0/1 knapsack — two capacity dimensions. Both must iterate descending.
 
+**Variables:** `dp[i][j]` = max size of a subset of strings seen so far that uses at most `i` zeros and `j` ones.
+**Pseudocode:**
+```
+dp[0..m][0..n] = 0                          // empty subset has size 0
+for each string s:                          // consider item once (0/1)
+    zeros = count of '0' in s; ones = count of '1' in s
+    for i from m down to zeros:             // DESCENDING both dims -> 0/1: each string used once
+        for j from n down to ones:
+            dp[i][j] = max(dp[i][j],         // skip s
+                           dp[i-zeros][j-ones] + 1)   // take s, spend its zeros/ones
+return dp[m][n]
+```
 ```java
 class Solution {
     public int findMaxForm(String[] strs, int m, int n) {
@@ -415,6 +546,15 @@ class Solution {
 **Description:** Minimum number of coins to make `amount`. Coins can be reused.  
 **Key:** unbounded knapsack (ascending), but minimize instead of count — seed with INF, take min.
 
+**Variables:** `dp[j]` = minimum number of coins needed to make amount `j` (sentinel `amount+1` = impossible).
+**Pseudocode:**
+```
+dp[0..amount] = amount+1 (impossible sentinel); dp[0] = 0   // 0 coins make amount 0
+for each coin:                              // unbounded: coin reusable
+    for j from coin up to amount:           // ASCENDING -> unbounded: dp[j-coin] may already include this coin
+        dp[j] = min(dp[j], dp[j-coin] + 1)  // reuse best way to make j-coin, add one more coin
+return dp[amount] > amount ? -1 : dp[amount]
+```
 ```java
 class Solution {
     public int coinChange(int[] coins, int amount) {
@@ -437,6 +577,15 @@ class Solution {
 **Description:** Number of distinct combinations (order doesn't matter) to make `amount`.  
 **Key:** unbounded knapsack (ascending), count variant — combinations, not permutations.
 
+**Variables:** `dp[j]` = number of distinct combinations (order ignored) of coins that sum to `j`.
+**Pseudocode:**
+```
+dp[0..amount] = 0; dp[0] = 1                // one way to make 0: pick nothing
+for each coin:                              // coin OUTER fixes coin order -> combinations, no duplicates
+    for j from coin up to amount:           // ASCENDING -> unbounded: coin reusable
+        dp[j] += dp[j-coin]                  // add combinations of j-coin extended by this coin
+return dp[amount]
+```
 ```java
 class Solution {
     public int change(int amount, int[] coins) {
@@ -458,6 +607,15 @@ class Solution {
 **Description:** Number of ordered sequences (order matters) that sum to `target`.  
 **Key:** permutation count — swap loop order: target outer, nums inner. This tries all nums for each partial sum, so different orderings are counted separately.
 
+**Variables:** `dp[j]` = number of ordered sequences (order matters) of nums that sum to `j`.
+**Pseudocode:**
+```
+dp[0..target] = 0; dp[0] = 1                // one empty sequence sums to 0
+for j from 1 up to target:                  // TARGET OUTER -> permutations: every num retried at each j
+    for each num:                           // num INNER tries all numbers as the LAST element
+        if j >= num: dp[j] += dp[j-num]      // sequences making j-num, each appending num
+return dp[target]
+```
 ```java
 class Solution {
     public int combinationSum4(int[] nums, int target) {
@@ -489,6 +647,19 @@ Why:                fixing coin order = no dup  re-trying all nums each j = all 
 
 ## Canonical Template
 
+**Variables:** `dp[i][j]` = the answer for the prefixes `s1[0..i)` (first `i` chars) and `s2[0..j)` (first `j` chars); index `0` = empty prefix.
+**Pseudocode:**
+```
+dp = (m+1) x (n+1) table
+initialize dp[0][*] and dp[*][0] from the empty-prefix base cases
+for i from 1 to m:                          // each char of s1
+    for j from 1 to n:                      // each char of s2
+        if s1[i-1] == s2[j-1]:              // current chars match
+            dp[i][j] = dp[i-1][j-1] + 1     // extend the diagonal (both prefixes shrink by 1)
+        else:
+            dp[i][j] = combine(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])  // drop a char from one/both side
+return dp[m][n]
+```
 ```java
 // i indexes string/array 1 (1-indexed), j indexes string/array 2
 int[][] dp = new int[m + 1][n + 1];
@@ -511,6 +682,19 @@ for (int i = 1; i <= m; i++) {
 **Description:** Length of the longest subsequence present in both strings.  
 **Intuition:** if the last chars match, they're part of the LCS (+1 on the diagonal); otherwise drop one char from whichever string and keep the better.
 
+**Variables:** `dp[i][j]` = LCS length of `text1[0..i)` and `text2[0..j)` (prefixes of lengths `i` and `j`); row/col 0 = empty prefix = 0.
+**Pseudocode:**
+```
+m = len(text1); n = len(text2)
+dp = (m+1) x (n+1) table, all zero        // dp[0][*]=dp[*][0]=0 (empty prefix)
+for i from 1 to m:
+    for j from 1 to n:
+        if text1[i-1] == text2[j-1]:       // last chars match
+            dp[i][j] = dp[i-1][j-1] + 1    // extend LCS on the diagonal
+        else:
+            dp[i][j] = max(dp[i-1][j], dp[i][j-1])  // drop one char, keep better
+return dp[m][n]
+```
 ```java
 class Solution {
     public int longestCommonSubsequence(String text1, String text2) {
@@ -539,6 +723,23 @@ class Solution {
 **Init:** `dp[i][0] = i` (delete all), `dp[0][j] = j` (insert all).  
 **Intuition:** matched chars cost nothing (diagonal); otherwise take the cheapest of replace/delete/insert and add 1.
 
+**Variables:** `dp[i][j]` = min edits to convert `word1[0..i)` to `word2[0..j)`; init `dp[i][0]=i` (delete all), `dp[0][j]=j` (insert all).
+**Pseudocode:**
+```
+m = len(word1); n = len(word2)
+dp = (m+1) x (n+1) table
+for i from 0 to m: dp[i][0] = i            // delete i chars
+for j from 0 to n: dp[0][j] = j            // insert j chars
+for i from 1 to m:
+    for j from 1 to n:
+        if word1[i-1] == word2[j-1]:        // match: no cost
+            dp[i][j] = dp[i-1][j-1]
+        else:
+            dp[i][j] = 1 + min(dp[i-1][j-1],    // replace
+                               dp[i-1][j],       // delete
+                               dp[i][j-1])       // insert
+return dp[m][n]
+```
 ```java
 class Solution {
     public int minDistance(String word1, String word2) {
@@ -571,6 +772,19 @@ class Solution {
 **Init:** `dp[i][0] = 1` (empty t matched by any s prefix).  
 **Intuition:** you can always skip the current char of s; if it matches the current char of t, you may also use it to advance t.
 
+**Variables:** `dp[i][j]` = number of ways `s[0..i)` contains `t[0..j)` as a subsequence; init `dp[i][0]=1` (empty `t` matched by any `s` prefix).
+**Pseudocode:**
+```
+m = len(s); n = len(t)
+dp = (m+1) x (n+1) table
+for i from 0 to m: dp[i][0] = 1            // empty t always matched (1 way)
+for i from 1 to m:
+    for j from 1 to n:
+        dp[i][j] = dp[i-1][j]              // always: skip s[i-1]
+        if s[i-1] == t[j-1]:
+            dp[i][j] += dp[i-1][j-1]       // also: use s[i-1] to match t[j-1]
+return dp[m][n]
+```
 ```java
 class Solution {
     public int numDistinct(String s, String t) {
@@ -608,6 +822,16 @@ Init dp[*][0]:      0                  i (delete i chars)       1 (empty t alway
 
 **Rule:** `i` goes right-to-left (ensures shorter/inner intervals are computed first). `j` goes left-to-right from `i+1`. When computing `dp[i][j]`, all `dp[i'][j']` with `i' > i` or `j' < j` are already done.
 
+**Variables:** `dp[i][j]` = the answer for the interval `[i, j]` (left endpoint `i`, right endpoint `j`).
+**Pseudocode:**
+```
+dp = n x n table
+for each i: dp[i][i] = base_case            // length-1 intervals
+for i from n-1 down to 0:                    // i RIGHT-TO-LEFT so dp[i+1][*] (inner) is ready
+    for j from i+1 to n-1:                   // j LEFT-TO-RIGHT from i+1 so dp[i][j-1] is ready
+        // safe to read dp[i+1][j], dp[i][j-1], dp[i+1][j-1] (all strictly smaller intervals)
+        dp[i][j] = ...transition over interval [i,j]...
+```
 ```java
 int[][] dp = new int[n][n];
 for (int i = 0; i < n; i++) dp[i][i] = base_case;   // single elements
@@ -621,6 +845,16 @@ for (int i = n - 1; i >= 0; i--) {                   // right-to-left
 
 **Alternative (forward `i`, inner `j` descending):** `i` is the right endpoint going left-to-right; `j` is the left endpoint sweeping back from `i-1`. Inner intervals (larger `j`, smaller `i`) are already filled.
 
+**Variables:** `dp[i][j]` = the answer for the interval `[j, i]` (right endpoint `i`, left endpoint `j`).
+**Pseudocode:**
+```
+dp = n x n table
+for each i: dp[i][i] = base_case            // length-1 intervals
+for i from 0 to n-1:                         // i = RIGHT endpoint, FORWARD left-to-right
+    for j from i-1 down to 0:                // j = LEFT endpoint, DESCENDING from i-1 to 0
+        // safe to read dp[i-1][j], dp[i][j+1], dp[i-1][j+1] (all shorter intervals already filled)
+        dp[i][j] = ...transition over interval [j,i]...
+```
 ```java
 int[][] dp = new int[n][n];
 for (int i = 0; i < n; i++) dp[i][i] = base_case;   // single elements
@@ -634,6 +868,16 @@ for (int i = 0; i < n; i++) {                        // i = right endpoint, left
 
 **Alternative (triangular fill, column base case):** used when `dp[i][j]` depends only on the previous row/column (e.g. counting problems). Fill row by row with `j` from `0` to `i`.
 
+**Variables:** `dp[i][j]` = the count/answer for the `(i, j)` subproblem, defined only for `j <= i` (lower-triangular).
+**Pseudocode:**
+```
+dp = n x n table
+for each i: dp[i][0] = 1                     // column base case; dp[0][j>0] = 0
+for i from 1 to n-1:                         // fill ROW BY ROW, top to bottom
+    for j from 1 to i:                       // j from 1 up to i (triangular, j <= i)
+        // safe to read dp[i-1][j], dp[i][j-1], dp[i-1][j-1] (prior row / earlier in row)
+        dp[i][j] = ...transition...
+```
 ```java
 int[][] dp = new int[n][n];
 for (int i = 0; i < n; i++) dp[i][0] = 1;   // base: dp[i][0] = 1; dp[0][j] = 0 for j > 0
@@ -652,6 +896,17 @@ for (int i = 1; i < n; i++) {
 **Description:** Count all palindromic substrings of `s`.  
 **Intuition:** `s[i..j]` is a palindrome when its two ends match AND the inside `s[i+1..j-1]` already is.
 
+**Variables:** `dp[i][j]` = whether the substring `s[i..j]` (inclusive) is a palindrome; `count` = running total of palindromic substrings.
+**Pseudocode:**
+```
+dp = n x n boolean table; count = 0
+for i from n-1 down to 0:                    // i RIGHT-TO-LEFT so inner dp[i+1][*] is ready
+    for j from i to n-1:                      // j from i (length >= 1) to n-1
+        dp[i][j] = (s[i] == s[j])             // ends must match
+                   AND (j-i < 2 OR dp[i+1][j-1])   // length <= 2, or inner already palindrome
+        if dp[i][j]: count++                  // every true cell is one palindromic substring
+return count
+```
 ```java
 class Solution {
     public int countSubstrings(String s) {
@@ -677,6 +932,20 @@ class Solution {
 **Description:** Length of the longest subsequence of `s` that is a palindrome.  
 **Intuition:** matching ends add 2 to the inner range's best; otherwise drop one end and keep the larger.
 
+**Variables:** `dp[i][j]` = length of the longest palindromic subsequence in `s[i..j]` (inclusive); single chars `dp[i][i]=1`.
+**Pseudocode:**
+```
+n = len(s)
+dp = n x n table
+for each i: dp[i][i] = 1                    // single char is a palindrome of length 1
+for i from n-1 down to 0:                    // i RIGHT-TO-LEFT so inner dp[i+1][*] ready
+    for j from i+1 to n-1:                    // j LEFT-TO-RIGHT from i+1
+        if s[i] == s[j]:                       // matching ends
+            dp[i][j] = dp[i+1][j-1] + 2        // add 2 to inner range's best
+        else:
+            dp[i][j] = max(dp[i+1][j], dp[i][j-1])  // drop one end, keep larger
+return dp[0][n-1]
+```
 ```java
 class Solution {
     public int longestPalindromeSubseq(String s) {
@@ -706,6 +975,22 @@ class Solution {
 **Key insight:** think of `k` as the **last** balloon burst in range `(i, j)` (open interval). Adding sentinel `1`s at both ends simplifies boundary cases.  
 **Template:** length-based outer loop; inner loop over last-burst position `k`.
 
+**Variables:** `dp[i][j]` = max coins from bursting all balloons strictly inside the open interval `(i, j)`; `b` = nums padded with sentinel `1`s at both ends; `k` = the LAST balloon burst in `(i, j)`.
+**Pseudocode:**
+```
+n = len(nums)
+b = array of size n+2; b[0] = b[n+1] = 1   // sentinel 1s at both ends
+copy nums into b[1..n]
+size = n+2
+dp = size x size table, all zero
+for len from 2 to size-1:                    // interval length (open), needs >=1 inside
+    for i from 0 while i+len < size:          // i = left open boundary
+        j = i + len                            // j = right open boundary
+        for k from i+1 to j-1:                 // k = LAST balloon burst in (i, j)
+            dp[i][j] = max(dp[i][j],
+                           dp[i][k] + b[i]*b[k]*b[j] + dp[k][j])
+return dp[0][n+1]
+```
 ```java
 class Solution {
     public int maxCoins(int[] nums) {
@@ -736,6 +1021,24 @@ class Solution {
 
 ## Canonical Template
 
+**Variables:** `dp[i][j]` = best (path count / cost) to reach cell `(i, j)` moving only right/down; `memo[i][j]` = longest path starting from `(i, j)` for the all-direction DFS variant; `dr`/`dc` = 4-direction deltas.
+**Pseudocode:**
+```
+dr = {1,-1,0,0}; dc = {0,0,1,-1}            // DOWN UP RIGHT LEFT
+
+// Standard grid (only right/down — DAG, no cycle):
+dp = rows x cols table
+initialize first row and first column
+for i from 0 to rows-1:
+    for j from 0 to cols-1:
+        dp[i][j] = grid[i][j] + f(dp[i-1][j], dp[i][j-1])   // combine top & left
+
+// All-direction grid (memoized DFS for increasing/decreasing paths):
+memo = rows x cols table
+for i from 0 to rows-1:
+    for j from 0 to cols-1:
+        dfs(grid, i, j, memo, dr, dc)        // each cell caches its longest path
+```
 ```java
 int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};   // DOWN UP RIGHT LEFT
 
@@ -761,6 +1064,17 @@ for (int i = 0; i < rows; i++)
 **Init:** first row and column are all 1 (only one way to reach any edge cell).  
 **Intuition:** you reach a cell only from above or from the left, so its path count is the sum of those two.
 
+**Variables:** `dp[i][j]` = number of paths to reach cell `(i, j)` moving only right/down; first row and first column all `1`.
+**Pseudocode:**
+```
+dp = m x n table
+for i from 0 to m-1: dp[i][0] = 1          // one way down the first column
+for j from 0 to n-1: dp[0][j] = 1          // one way across the first row
+for i from 1 to m-1:
+    for j from 1 to n-1:
+        dp[i][j] = dp[i-1][j] + dp[i][j-1] // paths from above + paths from left
+return dp[m-1][n-1]
+```
 ```java
 class Solution {
     public int uniquePaths(int m, int n) {
@@ -784,6 +1098,19 @@ class Solution {
 **Init:** first row/column are cumulative sums (no choice on edges).  
 **Intuition:** the cheapest way into a cell is its own value plus the cheaper of the cell above or to its left.
 
+**Variables:** `dp[i][j]` = minimum path sum to reach cell `(i, j)` moving only right/down; first row/column are cumulative sums.
+**Pseudocode:**
+```
+m = rows; n = cols
+dp = m x n table
+dp[0][0] = grid[0][0]
+for i from 1 to m-1: dp[i][0] = dp[i-1][0] + grid[i][0]   // first column cumulative
+for j from 1 to n-1: dp[0][j] = dp[0][j-1] + grid[0][j]   // first row cumulative
+for i from 1 to m-1:
+    for j from 1 to n-1:
+        dp[i][j] = grid[i][j] + min(dp[i-1][j], dp[i][j-1])  // own value + cheaper of top/left
+return dp[m-1][n-1]
+```
 ```java
 class Solution {
     public int minPathSum(int[][] grid) {
@@ -808,6 +1135,21 @@ class Solution {
 **Description:** Find the largest all-1 square in a binary matrix. Return its area.  
 **Key insight:** `dp[i][j]` = side length of the largest all-1 square with its bottom-right corner at `(i,j)`. Limited by the minimum of up, left, and diagonal neighbors.
 
+**Variables:** `dp[i][j]` = side length of the largest all-1 square whose bottom-right corner is `(i, j)`; `maxSide` = best side length seen.
+**Pseudocode:**
+```
+m = rows; n = cols; maxSide = 0
+dp = m x n table
+for i from 0 to m-1:
+    for j from 0 to n-1:
+        if matrix[i][j] == '1':
+            if i == 0 or j == 0:
+                dp[i][j] = 1                  // edge cell: square of side 1
+            else:
+                dp[i][j] = min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]) + 1  // limited by 3 neighbors
+            maxSide = max(maxSide, dp[i][j])
+return maxSide * maxSide                       // area
+```
 ```java
 class Solution {
     public int maximalSquare(char[][] matrix) {
@@ -836,6 +1178,21 @@ class Solution {
 **Template:** DFS + memoization (grid has ordering from values, so no cycle in the recursion DAG).  
 **Intuition:** strictly increasing values forbid revisiting, so each cell's longest path is 1 + the best of its larger neighbors — cache it.
 
+**Variables:** `memo[i][j]` = length of the longest strictly increasing path STARTING at `(i, j)` (0 = uncomputed); `max` = global best; `dr`/`dc` = 4-direction deltas.
+**Pseudocode:**
+```
+m = rows; n = cols
+memo = m x n table, all zero; max = 0
+for each cell (i, j): max = max(max, dfs(i, j))   // try every start
+
+dfs(i, j):
+    if memo[i][j] != 0: return memo[i][j]          // cached
+    memo[i][j] = 1                                  // at least the cell itself
+    for each of 4 directions (ni, nj):
+        if in bounds and matrix[ni][nj] > matrix[i][j]:   // strictly increasing
+            memo[i][j] = max(memo[i][j], dfs(ni, nj) + 1)
+    return memo[i][j]
+```
 ```java
 class Solution {
     int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
@@ -893,6 +1250,15 @@ cooldown  = max profit right after selling (can't buy today)
 
 **Intuition:** `hold` is the best profit if you currently own a share bought at the lowest price seen; sell whenever today's price beats that.
 
+**Variables:** `cash` = max profit while NOT holding; `hold` = max profit while HOLDING (one buy, no reinvestment of prior profit).
+**Pseudocode:**
+```
+cash = 0; hold = -prices[0]                 // day 0: bought at prices[0]
+for i from 1 to n-1:
+    cash = max(cash, hold + prices[i])      // sell today or stay out
+    hold = max(hold, -prices[i])            // buy today (NO cash added: only 1 buy)
+return cash
+```
 ```java
 class Solution {
     public int maxProfit(int[] prices) {
@@ -914,6 +1280,15 @@ class Solution {
 **Key difference from #121:** `hold = max(hold, cash - prices[i])` — can reinvest all prior profits.  
 **Intuition:** with unlimited trades, buying can fund itself from accumulated `cash`, so capture every upward move.
 
+**Variables:** `cash` = max profit while NOT holding; `hold` = max profit while HOLDING, where buying reinvests accumulated `cash` (unlimited transactions).
+**Pseudocode:**
+```
+cash = 0; hold = -prices[0]
+for i from 1 to n-1:
+    cash = max(cash, hold + prices[i])      // sell today or stay out
+    hold = max(hold, cash - prices[i])      // buy today funded by prior cash (reinvest)
+return cash
+```
 ```java
 class Solution {
     public int maxProfit(int[] prices) {
@@ -935,6 +1310,17 @@ class Solution {
 **Key:** 4 named states chained in order: buy1 → sell1 → buy2 → sell2.  
 **Intuition:** the second buy can only spend profit left after the first sell, so chain the states in trade order.
 
+**Variables:** `buy1`/`sell1`/`buy2`/`sell2` = best profit after the 1st buy / 1st sell / 2nd buy / 2nd sell, chained in trade order (at most 2 transactions).
+**Pseudocode:**
+```
+buy1 = -prices[0]; sell1 = 0; buy2 = -prices[0]; sell2 = 0
+for i from 1 to n-1:
+    buy1  = max(buy1,  -prices[i])           // 1st buy
+    sell1 = max(sell1, buy1  + prices[i])    // 1st sell (uses buy1)
+    buy2  = max(buy2,  sell1 - prices[i])    // 2nd buy (spends sell1 profit)
+    sell2 = max(sell2, buy2  + prices[i])    // 2nd sell (uses buy2)
+return sell2
+```
 ```java
 class Solution {
     public int maxProfit(int[] prices) {
@@ -959,6 +1345,17 @@ class Solution {
 **Key:** `hold` can only use `cooldown` (yesterday's `cash`), not today's `cash`. Save `prevCash` before updating.  
 **Intuition:** the cooldown forces buying to draw from cash that's at least one day old, so carry yesterday's cash forward.
 
+**Variables:** `cash` = max profit not holding; `hold` = max profit holding; `cooldown` = yesterday's `cash` (the only cash a buy may draw from); `prevCash` = today's `cash` saved before it is overwritten.
+**Pseudocode:**
+```
+cash = 0; hold = -prices[0]; cooldown = 0
+for i from 1 to n-1:
+    prevCash = cash                          // save today's cash before update
+    cash     = max(cash, hold + prices[i])   // sell today or stay out
+    hold     = max(hold, cooldown - prices[i])  // buy only from cooldown (>=1 day old cash)
+    cooldown = prevCash                       // tomorrow's cooldown = yesterday's cash
+return cash
+```
 ```java
 class Solution {
     public int maxProfit(int[] prices) {
@@ -983,6 +1380,15 @@ class Solution {
 **Key:** same as #122 but subtract `fee` when selling.  
 **Intuition:** the fee just shrinks every sale, so a trade is only worth making when the gain clears the fee.
 
+**Variables:** `cash` = max profit not holding; `hold` = max profit holding (reinvests `cash` like #122); selling pays a flat `fee`.
+**Pseudocode:**
+```
+cash = 0; hold = -prices[0]
+for i from 1 to n-1:
+    cash = max(cash, hold + prices[i] - fee) // sell today, pay fee
+    hold = max(hold, cash - prices[i])       // buy today funded by prior cash (reinvest)
+return cash
+```
 ```java
 class Solution {
     public int maxProfit(int[] prices, int fee) {
@@ -1035,6 +1441,15 @@ Problem     hold update                   cash update                 Extra stat
 
 **Algorithm:** 1D DP. `dp[i]` = min cost to reach step `i`. `dp[0] = dp[1] = 0` (can start for free). For `i >= 2`: `dp[i] = min(dp[i-1] + cost[i-1], dp[i-2] + cost[i-2])`.
 
+**Variables:** `dp[i]` = min cost to reach step `i` (with the top being step `n`); `cost[i]` = cost paid to leave step `i`; `n` = number of steps.
+**Pseudocode:**
+```
+n = number of steps
+make dp of size n+1, dp[0] = dp[1] = 0   (free to start at step 0 or 1)
+for i from 2 to n:
+    dp[i] = min(reach i-1 then pay cost[i-1], reach i-2 then pay cost[i-2])
+return dp[n]   (cost to reach the top)
+```
 ```java
 class Solution {
     public int minCostClimbingStairs(int[] cost) {
@@ -1056,6 +1471,19 @@ class Solution {
 
 **Variation:** Two sources at each position. If the current digit is non-zero, it can be decoded alone (`dp[i] += dp[i-1]`). If the previous two digits form a valid two-letter code (10-26), add `dp[i-2]`.
 
+**Variables:** `dp[i]` = number of ways to decode the first `i` digits `s[0..i)`; `oneDigit` = value of the single digit `s[i-1]`; `twoDigit` = value of the two digits `s[i-2..i)`; `n` = length of `s`.
+**Pseudocode:**
+```
+if first char is '0': return 0   (no valid decoding)
+n = length of s
+make dp of size n+1, dp[0] = 1, dp[1] = 1   (empty and first digit)
+for i from 2 to n:
+    oneDigit = value of s[i-1]
+    twoDigit = value of s[i-2..i)
+    if oneDigit != 0: dp[i] += dp[i-1]            (decode last digit alone)
+    if 10 <= twoDigit <= 26: dp[i] += dp[i-2]     (decode last two digits together)
+return dp[n]
+```
 ```java
 class Solution {
     public int numDecodings(String s) {
@@ -1083,6 +1511,16 @@ class Solution {
 
 **Algorithm:** Unbounded knapsack. `dp[i]` = min squares to reach sum `i`. For each `i`, try all squares `j*j <= i`: `dp[i] = min(dp[i], dp[i - j*j] + 1)`.
 
+**Variables:** `dp[i]` = minimum number of perfect squares summing to `i`; `j*j` = the perfect square being subtracted; `n` = target.
+**Pseudocode:**
+```
+make dp of size n+1, fill with infinity (n+1)
+dp[0] = 0   (zero squares sum to 0)
+for i from 1 to n:
+    for each square j*j <= i:
+        dp[i] = min(dp[i], dp[i - j*j] + 1)   (use one square j*j, plus best for remainder)
+return dp[n]
+```
 ```java
 class Solution {
     public int numSquares(int n) {
@@ -1106,6 +1544,15 @@ class Solution {
 
 **Variation:** Catalan number recurrence. `dp[i]` = number of unique BSTs with i nodes. When root = j, left subtree has j-1 nodes, right subtree has i-j nodes: `dp[i] += dp[j-1] * dp[i-j]`.
 
+**Variables:** `dp[i]` = number of structurally unique BSTs holding `i` nodes (i-th Catalan number); `j` = which value is the root; `n` = number of nodes.
+**Pseudocode:**
+```
+make dp of size n+1, dp[0] = dp[1] = 1   (empty tree and single node)
+for i from 2 to n:
+    for each root choice j from 1 to i:
+        dp[i] += dp[j-1] * dp[i-j]   (left subtree has j-1 nodes, right has i-j nodes)
+return dp[n]
+```
 ```java
 class Solution {
     public int numTrees(int n) {
@@ -1128,6 +1575,19 @@ class Solution {
 
 **Variation:** Same as #62 (Unique Paths) but skip cells with obstacles: `dp[i][j] = 0` if blocked, else `dp[i-1][j] + dp[i][j-1]`.
 
+**Variables:** `dp[i][j]` = number of paths from the start to cell `(i,j)` avoiding obstacles; `obstacleGrid[i][j] == 1` marks a blocked cell; `m`,`n` = grid dimensions.
+**Pseudocode:**
+```
+m, n = grid dimensions
+make dp of size m x n
+fill first column with 1 until the first obstacle (then stays 0)
+fill first row with 1 until the first obstacle (then stays 0)
+for i from 1 to m-1:
+    for j from 1 to n-1:
+        if cell (i,j) is not an obstacle:
+            dp[i][j] = dp[i-1][j] + dp[i][j-1]   (paths from above + from left)
+return dp[m-1][n-1]
+```
 ```java
 class Solution {
     public int uniquePathsWithObstacles(int[][] obstacleGrid) {
@@ -1153,6 +1613,19 @@ class Solution {
 
 **Variation:** Reduce to LCS. Minimum deletions = `len(word1) + len(word2) - 2 * LCS(word1, word2)`. Compute LCS using standard 2D DP.
 
+**Variables:** `dp[i][j]` = length of the longest common subsequence of `word1[0..i)` and `word2[0..j)`; `m`,`n` = lengths of the two words; answer = `m + n - 2*dp[m][n]`.
+**Pseudocode:**
+```
+m, n = lengths of word1, word2
+make dp of size (m+1) x (n+1), all zero   (dp[i][j] = LCS length)
+for i from 1 to m:
+    for j from 1 to n:
+        if word1[i-1] == word2[j-1]:
+            dp[i][j] = dp[i-1][j-1] + 1     (extend the common subsequence)
+        else:
+            dp[i][j] = max(dp[i-1][j], dp[i][j-1])   (drop one char from either word)
+return m + n - 2 * dp[m][n]   (delete everything outside the LCS)
+```
 ```java
 class Solution {
     public int minDistance(String word1, String word2) {
@@ -1181,6 +1654,22 @@ class Solution {
 
 **Variation:** Sort first, then apply LIS-style DP. `dp[i]` = size of largest divisible subset ending at `nums[i]`. If `nums[i] % nums[j] == 0`, then `dp[i] = max(dp[i], dp[j] + 1)`. Track parent indices to reconstruct the subset.
 
+**Variables:** `dp[i]` = size of the largest divisible subset ending at sorted `nums[i]`; `parent[i]` = previous element's index in that subset; `maxLen`/`maxIdx` = best subset length and its end index; `n` = count.
+**Pseudocode:**
+```
+sort nums ascending   (so divisibility forms a chain)
+n = length, dp[i] = 1 for all, parent[i] = i for all
+maxLen = 1, maxIdx = 0
+for i from 1 to n-1:
+    for j from 0 to i-1:
+        if nums[i] divisible by nums[j] and dp[j]+1 > dp[i]:
+            dp[i] = dp[j] + 1            (extend chain ending at j)
+            parent[i] = j                (remember predecessor)
+    if dp[i] > maxLen: maxLen = dp[i], maxIdx = i
+walk back from maxIdx via parent, collecting nums until parent points to itself
+reverse the collected list
+return it
+```
 ```java
 class Solution {
     public List<Integer> largestDivisibleSubset(int[] nums) {
@@ -1218,6 +1707,20 @@ class Solution {
 
 **Variation:** Grid DP with three sources from the row above. `dp[i][j] = matrix[i][j] + min(dp[i-1][j-1], dp[i-1][j], dp[i-1][j+1])`.
 
+**Variables:** `dp[i][j]` = minimum falling-path sum that ends at cell `(i,j)`; `best` = cheapest reachable cell in the row above; `n` = matrix size.
+**Pseudocode:**
+```
+n = matrix size
+make dp of size n x n
+copy first row of matrix into dp[0]   (paths start anywhere in row 0)
+for i from 1 to n-1:
+    for j from 0 to n-1:
+        best = dp[i-1][j]                              (straight down)
+        if j > 0:   best = min(best, dp[i-1][j-1])     (diagonal up-left)
+        if j < n-1: best = min(best, dp[i-1][j+1])     (diagonal up-right)
+        dp[i][j] = matrix[i][j] + best
+return the minimum value in the last row of dp
+```
 ```java
 class Solution {
     public int minFallingPathSum(int[][] matrix) {
@@ -1245,6 +1748,24 @@ class Solution {
 ## #10 Regular Expression Matching
 **Description:** Implement regex matching with `.` (any single char) and `*` (zero or more of the preceding element). Match must cover the entire input string.
 **Variation:** 2D DP. `dp[i][j]` = whether `s[0..i)` matches `p[0..j)`. The `*` has two cases: zero occurrences (`dp[i][j-2]`) or one-more occurrence when the preceding pattern char matches `s[i-1]`.
+**Variables:** `dp[i][j]` = true if `s[0..i)` matches pattern `p[0..j)`; `matches(i,j)` = does pattern char `p[j-1]` match string char `s[i-1]` (via `.` or equality); `m`,`n` = lengths of `s`,`p`.
+**Pseudocode:**
+```
+m, n = lengths of s, p
+make dp of size (m+1) x (n+1), all false; dp[0][0] = true   (empty matches empty)
+for j from 1 to n:
+    if p[j-1] is '*': dp[0][j] = dp[0][j-2]   (x* erases itself against empty string)
+for i from 1 to m:
+    for j from 1 to n:
+        if p[j-1] is '*':
+            dp[i][j] = dp[i][j-2]                          (zero copies of preceding element)
+            if preceding pattern char matches s[i-1]:
+                dp[i][j] = dp[i][j] OR dp[i-1][j]          (consume one more s char, keep *)
+        else if p[j-1] matches s[i-1]:
+            dp[i][j] = dp[i-1][j-1]                        (single char/. match)
+return dp[m][n]
+matches(i,j): p[j-1] == '.' or s[i-1] == p[j-1]
+```
 ```java
 class Solution {
     public boolean isMatch(String s, String p) {
@@ -1278,6 +1799,22 @@ class Solution {
 ## #87 Scramble String
 **Description:** Given s1 and s2, return true if s2 is a scrambled string of s1 (formed by recursively partitioning into two non-empty substrings and optionally swapping them).
 **Variation:** memoized recursion over (i1, i2, len). At each length, try every split point both swapped and non-swapped.
+**Variables:** `memo[key]` = cached scramble result keyed by the pair `s1 + "#" + s2`; `count[26]` = character-frequency difference used to prune; `i` = split point; `n` = length of `s1`.
+**Pseudocode:**
+```
+isScramble(s1, s2):
+    if s1 == s2: return true
+    if lengths differ: return false
+    key = s1 + "#" + s2; if memoized, return cached value
+    n = length of s1
+    tally char counts of s1 minus s2; if any count nonzero: memo false, return false (different multiset)
+    for split point i from 1 to n-1:
+        no swap: left s1[0..i) vs s2[0..i) AND right s1[i..) vs s2[i..)
+            if both scramble: memo true, return true
+        swap: left s1[0..i) vs s2[n-i..) AND right s1[i..) vs s2[0..n-i)
+            if both scramble: memo true, return true   (children were swapped)
+    memo false, return false
+```
 ```java
 class Solution {
     private Map<String, Boolean> memo = new HashMap<>();
@@ -1309,6 +1846,19 @@ class Solution {
 ## #1049 Last Stone Weight II
 **Description:** Repeatedly smash the two heaviest stones (result is their difference). Return the smallest possible weight of the remaining stone.
 **Variation:** equivalent to splitting stones into two groups to minimize the difference of their sums. 0/1 knapsack to find the max subset sum ≤ total/2.
+**Variables:** `dp[j]` = true if some subset of stones sums exactly to `j` (0/1 knapsack reachability); `total` = sum of all stones; `target` = total/2; answer minimizes `|S1 - S2| = total - 2j`.
+**Pseudocode:**
+```
+total = sum of all stones
+target = total / 2                       (largest group sum worth aiming for)
+make dp of size target+1, all false; dp[0] = true
+for each stone s:
+    for j from target down to s:         (descending = use each stone once)
+        dp[j] = dp[j] OR dp[j - s]       (reach j by adding stone s)
+for j from target down to 0:
+    if dp[j] is reachable: return total - 2*j   (minimal difference between groups)
+return 0
+```
 ```java
 class Solution {
     public int lastStoneWeightII(int[] stones) {
@@ -1333,6 +1883,20 @@ class Solution {
 ## #1312 Minimum Insertion Steps to Make a String Palindrome
 **Description:** Return the minimum number of insertions needed to make a string a palindrome.
 **Variation:** answer = n − longest palindromic subsequence (LPS). LPS = LCS of the string and its reverse; or solve directly via interval DP.
+**Variables:** `dp[i][j]` = length of the longest palindromic subsequence within `s[i..j]`; `n` = length of `s`; answer = `n - dp[0][n-1]` (chars not in the LPS must be matched by insertions).
+**Pseudocode:**
+```
+n = length of s
+make dp of size n x n   (dp[i][j] = LPS length over s[i..j])
+for i from n-1 down to 0:          (shorter spans computed first)
+    dp[i][i] = 1                   (single char is a palindrome)
+    for j from i+1 to n-1:
+        if s[i] == s[j]:
+            dp[i][j] = dp[i+1][j-1] + 2   (wrap matching ends around inner LPS)
+        else:
+            dp[i][j] = max(dp[i+1][j], dp[i][j-1])   (drop one end)
+return n - dp[0][n-1]             (insertions = chars outside the LPS)
+```
 ```java
 class Solution {
     public int minInsertions(String s) {
@@ -1364,6 +1928,21 @@ class Solution {
 **Intuition:** `*` either consumes one more char of `s` (`dp[i-1][j]`) or matches empty (`dp[i][j-1]`); everything else is a 1-to-1 char/`?` match.
 **Algorithm:** `dp[i][j]` = `s[0..i)` matches `p[0..j)`; init `dp[0][j]` true while pattern is all `*`; answer `dp[m][n]`.
 
+**Variables:** `dp[i][j]` = true if `s[0..i)` matches pattern `p[0..j)` (with `?` = any single char, `*` = any sequence); `m`,`n` = lengths of `s`,`p`.
+**Pseudocode:**
+```
+m, n = lengths of s, p
+make dp of size (m+1) x (n+1), all false; dp[0][0] = true   (empty matches empty)
+for j from 1 to n:
+    if p[j-1] is '*': dp[0][j] = dp[0][j-1]   (leading '*'s match the empty string)
+for i from 1 to m:
+    for j from 1 to n:
+        if p[j-1] is '*':
+            dp[i][j] = dp[i-1][j] OR dp[i][j-1]   (* consumes one s char, or matches empty)
+        else if p[j-1] is '?' or p[j-1] == s[i-1]:
+            dp[i][j] = dp[i-1][j-1]               (single-char match)
+return dp[m][n]
+```
 ```java
 class Solution {
     public boolean isMatch(String s, String p) {
@@ -1398,6 +1977,15 @@ class Solution {
 **Intuition:** the best sum ending at `i` either extends the previous best or restarts at `nums[i]` (Kadane).
 **Algorithm:** `current` = max sum ending at `i` = `max(nums[i], current + nums[i])`; track global `result`.
 
+**Variables:** `current` = maximum subarray sum ending exactly at index `i` (the collapsed `dp[i]`); `result` = best subarray sum seen overall.
+**Pseudocode:**
+```
+current = nums[0], result = nums[0]
+for i from 1 to n-1:
+    current = max(nums[i], current + nums[i])   (start fresh at i vs extend previous)
+    result = max(result, current)               (track global best)
+return result
+```
 ```java
 class Solution {
     public int maxSubArray(int[] nums) {
@@ -1422,6 +2010,20 @@ class Solution {
 **Intuition:** the last char of `s3[0..i+j)` comes from either `s1` or `s2`; reuse the answer for the smaller prefix.
 **Algorithm:** `dp[i][j]` = `s1[0..i)` + `s2[0..j)` interleave to `s3[0..i+j)`; answer `dp[m][n]`.
 
+**Variables:** `dp[i][j]` = true if `s1[0..i)` and `s2[0..j)` interleave to form `s3[0..i+j)`; `m`,`n` = lengths of `s1`,`s2`.
+**Pseudocode:**
+```
+m, n = lengths of s1, s2
+if m + n != length of s3: return false   (lengths must add up)
+make dp of size (m+1) x (n+1), all false; dp[0][0] = true
+fill first column: dp[i][0] true while s1's prefix equals s3's prefix
+fill first row:    dp[0][j] true while s2's prefix equals s3's prefix
+for i from 1 to m:
+    for j from 1 to n:
+        dp[i][j] = (dp[i-1][j] and s1[i-1] == s3[i+j-1])    (take next char from s1)
+                or (dp[i][j-1] and s2[j-1] == s3[i+j-1])    (take next char from s2)
+return dp[m][n]
+```
 ```java
 class Solution {
     public boolean isInterleave(String s1, String s2, String s3) {
@@ -1457,6 +2059,16 @@ class Solution {
 **Intuition:** working bottom-up, each cell's best is its value plus the cheaper of the two children directly below.
 **Algorithm:** `dp[j]` = min path sum from row `i` cell `j` to the bottom; collapse one row at a time; answer `dp[0]`.
 
+**Variables:** `dp[j]` = minimum path sum from the current cell in column `j` down to the bottom (rolling 1D array reused per row); `n` = number of rows.
+**Pseudocode:**
+```
+n = number of rows
+make dp of size n+1, all zero   (one extra slot so dp[j+1] is valid)
+for i from n-1 down to 0:        (process rows bottom-up)
+    for j from 0 to i:
+        dp[j] = triangle[i][j] + min(dp[j], dp[j+1])   (add cheaper of the two cells below)
+return dp[0]   (best total from the apex)
+```
 ```java
 class Solution {
     public int minimumTotal(List<List<Integer>> triangle) {
@@ -1481,6 +2093,24 @@ class Solution {
 **Intuition:** if `s[j..i]` is a palindrome, a cut after `j-1` lets `cuts[i] = cuts[j-1] + 1`; precompute palindromes with interval DP.
 **Algorithm:** `pal[i][j]` palindrome flag; `cuts[i]` = min cuts for `s[0..i]`; answer `cuts[n-1]`.
 
+**Variables:** `pal[i][j]` = true if `s[i..j]` is a palindrome; `cuts[i]` = minimum cuts needed so every piece of `s[0..i]` is a palindrome; `n` = length of `s`.
+**Pseudocode:**
+```
+n = length of s
+make pal of size n x n
+for i from n-1 down to 0:
+    for j from i to n-1:
+        pal[i][j] = (s[i] == s[j]) and (span < 2 or inner pal[i+1][j-1])   (precompute palindromes)
+make cuts of size n
+for i from 0 to n-1:
+    if s[0..i] is itself a palindrome: cuts[i] = 0
+    else:
+        cuts[i] = i                            (worst case: cut between every char)
+        for j from 1 to i:
+            if s[j..i] is a palindrome:
+                cuts[i] = min(cuts[i], cuts[j-1] + 1)   (one cut before this palindromic suffix)
+return cuts[n-1]
+```
 ```java
 class Solution {
     public int minCut(String s) {
@@ -1518,6 +2148,23 @@ class Solution {
 **Intuition:** memoize on each suffix the list of valid segmentations, prepending each matching word to the segmentations of the remainder.
 **Algorithm:** `dfs(start)` returns all sentences for `s[start..]`; cache per `start`; answer `dfs(0)`.
 
+**Variables:** `memo[start]` = cached list of all sentences segmenting the suffix `s[start..]`; `words` = dictionary set; `word` = candidate prefix; `tail` = a segmentation of the remainder.
+**Pseudocode:**
+```
+words = set of dictionary words
+return dfs(s, 0)
+dfs(s, start):
+    if memoized for start: return cached list
+    result = empty list
+    if start == length of s: result = [""], return it   (base: empty suffix gives one empty sentence)
+    for end from start+1 to length of s:
+        word = s[start..end)
+        if word is in dictionary:
+            for each tail in dfs(s, end):               (all segmentations of remainder)
+                add (word, or word + " " + tail) to result
+    memoize result for start
+    return result
+```
 ```java
 class Solution {
     private Map<Integer, List<String>> memo = new HashMap<>();
@@ -1559,6 +2206,17 @@ class Solution {
 **Intuition:** a negative number flips max and min, so track both; the running max product ending at `i` may come from the prior max or min.
 **Algorithm:** maintain `maxEnd` and `minEnd`; swap on negative; track global `result`.
 
+**Variables:** `maxEnd` = maximum product of a subarray ending at index `i`; `minEnd` = minimum (most negative) product ending at `i`; `result` = best product seen overall.
+**Pseudocode:**
+```
+maxEnd = minEnd = result = nums[0]
+for i from 1 to n-1:
+    if nums[i] < 0: swap maxEnd and minEnd   (a negative turns the largest into the smallest)
+    maxEnd = max(nums[i], maxEnd * nums[i])  (extend or restart for the max)
+    minEnd = min(nums[i], minEnd * nums[i])  (extend or restart for the min)
+    result = max(result, maxEnd)
+return result
+```
 ```java
 class Solution {
     public int maxProduct(int[] nums) {
@@ -1587,6 +2245,18 @@ class Solution {
 **Intuition:** health needed depends on the future, so fill from the bottom-right: needed entering a cell = max(1, min child need − cell value).
 **Algorithm:** `dp[i][j]` = min health needed entering `(i,j)`; answer `dp[0][0]`.
 
+**Variables:** `dp[i][j]` = minimum health the knight must have on entering cell `(i,j)` to survive to the end; `need` = required health before applying this cell; `m`,`n` = grid dimensions.
+**Pseudocode:**
+```
+m, n = grid dimensions
+make dp of size (m+1) x (n+1), fill with infinity
+dp[m][n-1] = dp[m-1][n] = 1   (just past the goal needs 1 health)
+for i from m-1 down to 0:       (fill from bottom-right toward start)
+    for j from n-1 down to 0:
+        need = min(dp[i+1][j], dp[i][j+1]) - dungeon[i][j]   (health for cheaper next cell, minus this cell)
+        dp[i][j] = max(1, need)                              (must stay at least 1)
+return dp[0][0]
+```
 ```java
 class Solution {
     public int calculateMinimumHP(int[][] dungeon) {
@@ -1616,6 +2286,17 @@ class Solution {
 **Intuition:** for each allowed transaction count `t`, track best buy and sell; this is #123 generalized to `k` chained state pairs.
 **Algorithm:** `buy[t]` / `sell[t]` for `t` in `1..k`; answer `sell[k]`.
 
+**Variables:** `buy[t]` = max profit so far having opened (but not yet closed) the t-th transaction; `sell[t]` = max profit so far having completed t transactions. `buy` initialized to MIN_VALUE (no transaction open yet), `sell` to 0.
+**Pseudocode:**
+```
+if no prices or k == 0: return 0
+buy[1..k] = -infinity, sell[0..k] = 0
+for each price in prices:
+    for t from 1 to k:
+        buy[t]  = max(buy[t], sell[t-1] - price)   // open t-th by buying now
+        sell[t] = max(sell[t], buy[t] + price)     // close t-th by selling now
+return sell[k]
+```
 ```java
 class Solution {
     public int maxProfit(int k, int[] prices) {
@@ -1644,6 +2325,19 @@ class Solution {
 **Intuition:** every ugly number is a previous ugly number times 2, 3, or 5; merge the three multiples with pointers.
 **Algorithm:** `dp[i]` = i-th ugly number; advance pointers `p2,p3,p5`; answer `dp[n-1]`.
 
+**Variables:** `dp[i]` = the (i+1)-th ugly number (sorted ascending); `p2/p3/p5` = indices into dp of the next ugly number to be multiplied by 2/3/5.
+**Pseudocode:**
+```
+dp[0] = 1
+p2 = p3 = p5 = 0
+for i from 1 to n-1:
+    next2 = dp[p2]*2; next3 = dp[p3]*3; next5 = dp[p5]*5
+    dp[i] = min(next2, next3, next5)
+    if dp[i] == next2: p2++
+    if dp[i] == next3: p3++   // separate ifs dedupe equal candidates
+    if dp[i] == next5: p5++
+return dp[n-1]
+```
 ```java
 class Solution {
     public int nthUglyNumber(int n) {
@@ -1671,6 +2365,19 @@ class Solution {
 **Intuition:** generalize #264 to arbitrary primes — keep one pointer per prime and pick the minimum next candidate.
 **Algorithm:** `dp[i]` = i-th super ugly; `pointers[j]` for each prime; answer `dp[n-1]`.
 
+**Variables:** `dp[i]` = the (i+1)-th super ugly number; `pointers[j]` = index into dp of the next super ugly number to multiply by `primes[j]`; `k` = number of primes.
+**Pseudocode:**
+```
+dp[0] = 1
+pointers[0..k-1] = 0
+for i from 1 to n-1:
+    min = +infinity
+    for each prime j: min = min(min, dp[pointers[j]] * primes[j])
+    dp[i] = min
+    for each prime j:
+        if dp[pointers[j]] * primes[j] == min: pointers[j]++   // advance all that tie
+return dp[n-1]
+```
 ```java
 class Solution {
     public int nthSuperUglyNumber(int n, int[] primes) {
@@ -1703,6 +2410,21 @@ class Solution {
 **Intuition:** each node returns two values — best if it is robbed (skip children) vs not robbed (children free to choose).
 **Algorithm:** `dfs(node)` returns `{notRob, rob}`; answer = `max` of root's pair.
 
+**Variables:** `dfs(node)` returns a 2-element array `{notRob, rob}`: `[0]` = max money from this subtree if `node` is NOT robbed, `[1]` = max money if `node` IS robbed.
+**Pseudocode:**
+```
+rob(root):
+    result = dfs(root)
+    return max(result[notRob], result[rob])
+
+dfs(node):
+    if node == null: return {0, 0}
+    left  = dfs(node.left)
+    right = dfs(node.right)
+    notRob = max(left.notRob, left.rob) + max(right.notRob, right.rob)
+    rob    = node.val + left.notRob + right.notRob   // children must be skipped
+    return {notRob, rob}
+```
 ```java
 class Solution {
     public int rob(TreeNode root) {
@@ -1730,6 +2452,15 @@ class Solution {
 **Intuition:** for each split `j`, the rest can stay as `i-j` or be broken further (`dp[i-j]`); take the best.
 **Algorithm:** `dp[i]` = max product of breaking `i` (into ≥2 parts); answer `dp[n]`.
 
+**Variables:** `dp[i]` = maximum product obtainable by breaking integer `i` into at least two positive parts; `j` = first part, `i-j` = remainder (kept whole or broken further via `dp[i-j]`).
+**Pseudocode:**
+```
+dp[1] = 1
+for i from 2 to n:
+    for j from 1 to i-1:
+        dp[i] = max(dp[i], max(j*(i-j), j*dp[i-j]))   // remainder whole vs broken
+return dp[n]
+```
 ```java
 class Solution {
     public int integerBreak(int n) {
@@ -1754,6 +2485,19 @@ class Solution {
 **Intuition:** for range `[i,j]`, guessing `k` costs `k` plus the worst of the two resulting subranges; minimize over `k`.
 **Algorithm:** `dp[i][j]` = min worst-case cost for `[i,j]` (interval DP); answer `dp[1][n]`.
 
+**Variables:** `dp[i][j]` = minimum money guaranteeing a win when the target is somewhere in `[i,j]`; `len` = current interval length; `k` = guessed number; `cost` = `k` + worst of the two resulting subranges.
+**Pseudocode:**
+```
+dp sized (n+2)x(n+2), all 0
+for len from 2 to n:
+    for i from 1 while i+len-1 <= n:
+        j = i+len-1
+        dp[i][j] = +infinity
+        for k from i to j:
+            cost = k + max(dp[i][k-1], dp[k+1][j])   // worst-case subrange
+            dp[i][j] = min(dp[i][j], cost)
+return dp[1][n]
+```
 ```java
 class Solution {
     public int getMoneyAmount(int n) {
@@ -1782,6 +2526,16 @@ class Solution {
 **Intuition:** track the best subsequence ending with an up-move and with a down-move; each rise extends `down`, each fall extends `up`.
 **Algorithm:** `up` / `down` running lengths; answer `max(up, down)`.
 
+**Variables:** `up` = length of longest wiggle subsequence ending with an upward (rising) difference; `down` = same ending with a downward difference. Both start at 1.
+**Pseudocode:**
+```
+up = down = 1
+for i from 1 to n-1:
+    if nums[i] > nums[i-1]: up = down + 1      // rise extends a down-ending seq
+    else if nums[i] < nums[i-1]: down = up + 1 // fall extends an up-ending seq
+    (equal: change nothing)
+return max(up, down)
+```
 ```java
 class Solution {
     public int wiggleMaxLength(int[] nums) {
@@ -1807,6 +2561,18 @@ class Solution {
 **Intuition:** if `nums[i]` continues the arithmetic run ending at `i-1`, it adds `dp[i-1]+1` new slices ending at `i`.
 **Algorithm:** `current` = arithmetic slices ending at `i`; accumulate into `result`.
 
+**Variables:** `current` = number of arithmetic subarrays ending exactly at index `i`; `result` = running total of all arithmetic slices found.
+**Pseudocode:**
+```
+current = 0, result = 0
+for i from 2 to n-1:
+    if nums[i]-nums[i-1] == nums[i-1]-nums[i-2]:   // run continues
+        current++
+        result += current
+    else:
+        current = 0
+return result
+```
 ```java
 class Solution {
     public int numberOfArithmeticSlices(int[] nums) {
@@ -1833,6 +2599,19 @@ class Solution {
 **Intuition:** for each pair `(j, i)` with difference `d`, weak slices ending at `i` extend those ending at `j`; promote weak to valid when length reaches 3.
 **Algorithm:** `dp[i]` is a map from difference `d` to count of weak arithmetic subsequences ending at `i`; accumulate `result`.
 
+**Variables:** `dp[i]` = map from common difference `d` to the count of "weak" arithmetic subsequences (length >= 2) ending at index `i`; `d` = `nums[i]-nums[j]`; `countJ` = weak subsequences with diff `d` ending at `j` (each becomes a valid length-3+ slice when extended to `i`); `result` = total valid slices.
+**Pseudocode:**
+```
+result = 0
+for i from 0 to n-1:
+    dp[i] = empty map
+    for j from 0 to i-1:
+        d = nums[i] - nums[j]                  // use long
+        countJ = dp[j].getOrDefault(d, 0)
+        result += countJ                       // those weak seqs become valid at i
+        dp[i][d] += countJ + 1                 // +1 for the new pair (j,i)
+return result
+```
 ```java
 class Solution {
     public int numberOfArithmeticSlices(int[] nums) {
@@ -1861,6 +2640,16 @@ class Solution {
 **Intuition:** on range `[i,j]` the current player maximizes value − opponent's best on the remaining range.
 **Algorithm:** `dp[i][j]` = best score difference (current minus opponent) for `[i,j]`; answer `dp[0][n-1] >= 0`.
 
+**Variables:** `dp[i][j]` = best achievable score difference (current player's score minus opponent's) when only `nums[i..j]` remain and it is the current player's turn.
+**Pseudocode:**
+```
+for i: dp[i][i] = nums[i]               // single element: take it
+for i from n-1 down to 0:
+    for j from i+1 to n-1:
+        // take left or right; opponent then plays optimally on the rest
+        dp[i][j] = max(nums[i] - dp[i+1][j], nums[j] - dp[i][j-1])
+return dp[0][n-1] >= 0
+```
 ```java
 class Solution {
     public boolean predictTheWinner(int[] nums) {
@@ -1888,6 +2677,17 @@ class Solution {
 **Intuition:** each term is the sum of the previous two — the canonical linear 1D recurrence.
 **Algorithm:** roll two variables `previous` and `current`; answer after `n` steps.
 
+**Variables:** `previous` = F(i-2), `current` = F(i-1) as the loop builds F(i); rolled forward each step. Conceptually `dp[i] = dp[i-1] + dp[i-2]` reduced to two variables.
+**Pseudocode:**
+```
+if n < 2: return n
+previous = 0, current = 1          // F(0), F(1)
+for i from 2 to n:
+    next = previous + current
+    previous = current
+    current = next
+return current
+```
 ```java
 class Solution {
     public int fib(int n) {
@@ -1914,6 +2714,20 @@ class Solution {
 **Intuition:** state = (number of 'A's so far 0/1, trailing 'L' run 0/1/2); each day append P, A, or L respecting limits.
 **Algorithm:** `dp[a][l]` counts records ending in that state; roll day by day; answer = sum over all states.
 
+**Variables:** `dp[a][l]` = number of valid records built so far that contain `a` total 'A's (0 or 1) and end with a trailing run of exactly `l` consecutive 'L's (0,1,2); `next` = the same table for the following day; `ways` = current state's count being propagated.
+**Pseudocode:**
+```
+dp[0][0] = 1
+repeat n days:
+    next = zeros
+    for a in {0,1}, l in {0,1,2}:
+        ways = dp[a][l]; if 0 skip
+        next[a][0] += ways                 // append 'P' -> L run resets
+        if a == 0: next[1][0] += ways      // append 'A' (only if no A yet)
+        if l < 2:  next[a][l+1] += ways    // append 'L' (run stays < 3)
+    dp = next  (all mod 1e9+7)
+return sum of all dp[a][l] mod
+```
 ```java
 class Solution {
     public int checkRecord(int n) {
@@ -1959,6 +2773,21 @@ class Solution {
 **Intuition:** moving off the boundary counts as one path; otherwise spread current-step counts to 4 neighbors for the next step.
 **Algorithm:** `dp[i][j]` = ways to be at `(i,j)` after `step` moves; sum boundary exits; answer = accumulated `result`.
 
+**Variables:** `dp[i][j]` = number of ways the ball is at cell `(i,j)` after `step` moves; `next` = same grid for the following step; `result` = accumulated count of paths that have already exited the grid; `dr/dc` = the 4 move directions.
+**Pseudocode:**
+```
+dp[startRow][startColumn] = 1
+result = 0
+for step from 0 to maxMove-1:
+    next = zeros
+    for each cell (i,j) with dp[i][j] != 0:
+        for each of 4 directions:
+            (ni,nj) = neighbor
+            if neighbor off grid: result += dp[i][j]       // exiting = one path
+            else: next[ni][nj] += dp[i][j]
+    dp = next  (all mod 1e9+7)
+return result
+```
 ```java
 class Solution {
     int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
@@ -2001,6 +2830,20 @@ class Solution {
 **Intuition:** scan bits high-to-low; precompute Fibonacci-style counts of valid suffixes, adding them when a free bit is `1`, and stop early if two consecutive 1s appear in `n`.
 **Algorithm:** `fib[i]` = valid numbers with `i` free bits; walk bits of `n`; answer = accumulated `result` (+1 for `n` itself if valid).
 
+**Variables:** `fib[i]` = count of binary strings of length `i` with no two adjacent 1s (Fibonacci: `fib[i]=fib[i-1]+fib[i-2]`); `result` = accumulated count of valid numbers strictly below `n` so far; `previousBit` = the previous (higher) bit of `n` seen, to detect two consecutive 1s.
+**Pseudocode:**
+```
+build fib[0..31]: fib[0]=1, fib[1]=2, fib[i]=fib[i-1]+fib[i-2]
+result = 0, previousBit = 0
+for bit i from 30 down to 0:
+    if bit i of n is 1:
+        result += fib[i]                 // count numbers having 0 at this bit
+        if previousBit == 1: return result   // n itself has adjacent 1s; stop
+        previousBit = 1
+    else:
+        previousBit = 0
+return result + 1                        // n itself is valid
+```
 ```java
 class Solution {
     public int findIntegers(int n) {
@@ -2035,6 +2878,17 @@ class Solution {
 **Intuition:** inserting `n` into a permutation of `1..n-1` adds `0..n-1` inversions; this gives a sliding-window sum over the previous row.
 **Algorithm:** `dp[i][j]` = permutations of `i` numbers with `j` inversions, using prefix sums; answer `dp[n][k]`.
 
+**Variables:** `dp[i][j]` = number of permutations of `1..i` having exactly `j` inverse pairs; `prefix[j+1]` = prefix sum of row `dp[i-1]` over `[0..j]`, used to sum the window of allowed contributions; `lo` = window's lower index `max(0, j-(i-1))`.
+**Pseudocode:**
+```
+dp[0][0] = 1
+for i from 1 to n:
+    prefix[0]=0; prefix[j+1] = prefix[j] + dp[i-1][j]   for j in 0..k
+    for j from 0 to k:
+        lo = max(0, j-(i-1))                 // inserting i adds 0..i-1 inversions
+        dp[i][j] = prefix[j+1] - prefix[lo]  (mod)
+return dp[n][k]
+```
 ```java
 class Solution {
     public int kInversePairs(int n, int k) {
@@ -2065,6 +2919,18 @@ class Solution {
 **Intuition:** treat the remaining needs vector as the state; either buy everything at unit price, or apply an affordable offer and recurse.
 **Algorithm:** memoized DFS over the needs list; answer `dfs(needs)`.
 
+**Variables:** state = the `needs` vector (remaining quantity required of each item); `memo` maps a needs vector to its min cost; `best` = best cost for the current needs (baseline = buying everything at unit price); each `offer` reduces needs by its bundle and adds its price.
+**Pseudocode:**
+```
+dfs(needs):
+    if memo has needs: return it
+    best = sum over items of needs[i] * price[i]      // buy all at unit price
+    for each offer:
+        remaining = needs - offer (per item); skip offer if any goes negative
+        if valid: best = min(best, offer.price + dfs(remaining))
+    memo[needs] = best
+    return best
+```
 ```java
 class Solution {
     private Map<List<Integer>, Integer> memo = new HashMap<>();
@@ -2110,6 +2976,18 @@ class Solution {
 **Intuition:** extend #91 — each position can decode one char (count 1-9 options) or two chars (count valid 10-26 combinations); `*` multiplies the options.
 **Algorithm:** `dp[i]` = decodings of `s[0..i)`; answer `dp[n]`.
 
+**Variables:** `dp[i]` = number of ways to decode the prefix `s[0..i)`; `oneDigit(c)` = number of single-digit decodings for char `c` (`*`->9, '0'->0, else 1); `twoDigit(a,b)` = number of two-digit decodings in 10..26 for the pair (handling `*` wildcards).
+**Pseudocode:**
+```
+dp[0] = 1
+dp[1] = oneDigit(s[0])
+for i from 2 to n:
+    current = s[i-1], prev = s[i-2]
+    dp[i] += dp[i-1] * oneDigit(current)        // decode last char alone
+    dp[i] += dp[i-2] * twoDigit(prev, current)  // decode last two chars
+    (mod 1e9+7)
+return dp[n]
+```
 ```java
 class Solution {
     public int numDecodings(String s) {
@@ -2153,6 +3031,17 @@ class Solution {
 **Intuition:** the answer is the sum of `n`'s prime factors — building `i` from a divisor `j` costs `i/j` operations.
 **Algorithm:** `dp[i]` = min operations to reach `i` characters; for each divisor `j`, `dp[i] = dp[j] + i/j`; answer `dp[n]`.
 
+**Variables:** `dp[i]` = minimum operations to produce exactly `i` characters; `j` = largest proper divisor of `i` (building `i` from `j` costs one Copy-All + `(i/j - 1)` Pastes = `i/j` ops).
+**Pseudocode:**
+```
+for i from 2 to n:
+    dp[i] = i                       // upper bound (copy once, paste i-1 times)
+    for j from i/2 down to 1:
+        if i % j == 0:
+            dp[i] = dp[j] + i/j     // largest divisor gives the minimum
+            break
+return dp[n]
+```
 ```java
 class Solution {
     public int minSteps(int n) {
@@ -2180,6 +3069,20 @@ class Solution {
 **Intuition:** alongside LIS length, track how many ways achieve it; a longer extension resets the count, an equal-length extension accumulates it.
 **Algorithm:** `length[i]` and `count[i]` for LIS ending at `i`; sum counts of maximum-length endings; answer `result`.
 
+**Variables:** `length[i]` = length of the longest increasing subsequence ending at index `i`; `count[i]` = number of LIS of that length ending at `i`; `maxLen` = global max LIS length seen; `result` = total count of LIS achieving `maxLen`.
+**Pseudocode:**
+```
+for i from 0 to n-1:
+    length[i] = 1; count[i] = 1
+    for j from 0 to i-1 with nums[j] < nums[i]:
+        if length[j]+1 > length[i]:        // found longer -> reset count
+            length[i] = length[j]+1; count[i] = count[j]
+        else if length[j]+1 == length[i]:  // equal length -> add count
+            count[i] += count[j]
+    if length[i] > maxLen: maxLen = length[i]; result = count[i]
+    else if length[i] == maxLen: result += count[i]
+return result
+```
 ```java
 class Solution {
     public int findNumberOfLIS(int[] nums) {
@@ -2218,6 +3121,16 @@ class Solution {
 **Intuition:** extend the current run while values rise, otherwise restart; a simpler linear scan of #300.
 **Algorithm:** `current` run length; track `result`.
 
+**Variables:** `current` = length of the current contiguous strictly-increasing run ending at `i`; `result` = longest such run seen.
+**Pseudocode:**
+```
+current = 1, result = 1
+for i from 1 to n-1:
+    if nums[i] > nums[i-1]: current++     // run continues
+    else: current = 1                     // reset on non-increase
+    result = max(result, current)
+return result
+```
 ```java
 class Solution {
     public int findLengthOfLCIS(int[] nums) {
@@ -2244,6 +3157,18 @@ class Solution {
 **Intuition:** spread the probability at each cell to its 8 knight-move targets per step; off-board moves lose probability.
 **Algorithm:** `dp[i][j]` = probability of being at `(i,j)` after `step` moves; answer = sum of final grid.
 
+**Variables:** `dp[i][j]` = probability the knight is on cell `(i,j)` after `step` moves; `next` = same grid for the following step; `dr/dc` = the 8 knight-move offsets; each move contributes `dp[i][j]/8`.
+**Pseudocode:**
+```
+dp[row][column] = 1.0
+for step from 0 to k-1:
+    next = zeros
+    for each cell (i,j) with dp[i][j] != 0:
+        for each of 8 knight moves to (ni,nj):
+            if (ni,nj) on board: next[ni][nj] += dp[i][j] / 8.0
+    dp = next
+return sum of all dp[i][j]
+```
 ```java
 class Solution {
     int[] dr = {2,2,-2,-2,1,1,-1,-1}, dc = {1,-1,1,-1,2,-2,2,-2};
@@ -2288,6 +3213,16 @@ class Solution {
 **Intuition:** unlike LCS, the match must be contiguous, so a mismatch resets the running length to 0.
 **Algorithm:** `dp[i][j]` = length of common suffix ending at `nums1[i-1]`, `nums2[j-1]`; track global `result`.
 
+**Variables:** `dp[i][j]` = length of the longest common contiguous subarray ending exactly at `nums1[i-1]` and `nums2[j-1]`; `result` = global maximum over all cells.
+**Pseudocode:**
+```
+for i from 1 to m:
+    for j from 1 to n:
+        if nums1[i-1] == nums2[j-1]:
+            dp[i][j] = dp[i-1][j-1] + 1     // extend match; mismatch leaves 0
+            result = max(result, dp[i][j])
+return result
+```
 ```java
 class Solution {
     public int findLength(int[] nums1, int[] nums2) {
@@ -2315,6 +3250,17 @@ class Solution {
 **Intuition:** bucket points by value, then it becomes House Robber over the value line — you cannot take adjacent values.
 **Algorithm:** `points[v]` = total points for value `v`; `dp[v]` = max earnings up to value `v`; answer `dp[max]`.
 
+**Variables:** `points[v]` = total points earned from deleting all copies of value `v` (= `v * count`); `dp[v]` = max earnings considering only values `0..v` (House Robber over the value line, since taking `v` forbids `v-1`); `max` = largest value present.
+**Pseudocode:**
+```
+max = maximum value in nums
+points[v] += v for each num=v       // bucket points by value
+dp[0] = 0
+dp[1] = points[1]
+for v from 2 to max:
+    dp[v] = max(dp[v-1], dp[v-2] + points[v])   // skip v, or take v + dp[v-2]
+return dp[max]
+```
 ```java
 class Solution {
     public int deleteAndEarn(int[] nums) {
@@ -2346,6 +3292,19 @@ class Solution {
 **Intuition:** a fib-like subseq is determined by its last two elements `(j, i)`; look up whether the required predecessor `arr[i]-arr[j]` exists earlier.
 **Algorithm:** `dp[j][i]` = length of fib seq ending with `arr[j], arr[i]`; answer = max found (≥ 3).
 
+**Variables:** `dp[j][i]` = length of the longest Fibonacci-like subsequence whose last two elements are `arr[j]` then `arr[i]` (j < i); `index` = map from value to its array index; `needed` = the required predecessor `arr[i]-arr[j]`; `result` = best length >= 3.
+**Pseudocode:**
+```
+index = map value -> its index
+for i from 0 to n-1:
+    for j from 0 to i-1:
+        needed = arr[i] - arr[j]
+        k = index.get(needed)
+        if k exists and k < j: dp[j][i] = dp[k][j] + 1   // extend chain ...k,j,i
+        else: dp[j][i] = 2                                // seed pair (j,i)
+        if dp[j][i] > 2: result = max(result, dp[j][i])
+return result
+```
 ```java
 class Solution {
     public int lenLongestFibSubseq(int[] arr) {
@@ -2383,6 +3342,18 @@ class Solution {
 **Intuition:** invert the problem — `dp[m][k]` = highest floor count solvable with `m` moves and `k` eggs; a move either breaks (test below) or survives (test above), plus the current floor.
 **Algorithm:** grow `m` until `dp[m][k] >= n`; answer = that `m`.
 
+**Variables:** `dp[m][eggs]` = the maximum number of floors whose critical floor can be determined with `m` moves and `eggs` eggs; `m` = move count, grown until `dp[m][k] >= n`.
+**Pseudocode:**
+```
+m = 0
+while dp[m][k] < n:
+    m++
+    for eggs from 1 to k:
+        // drop one egg: break -> dp[m-1][eggs-1] floors below,
+        //               survive -> dp[m-1][eggs] floors above, +1 current floor
+        dp[m][eggs] = dp[m-1][eggs-1] + dp[m-1][eggs] + 1
+return m
+```
 ```java
 class Solution {
     public int superEggDrop(int k, int n) {
@@ -2408,6 +3379,17 @@ class Solution {
 **Intuition:** the answer is either a normal max subarray (Kadane) or the total minus the minimum subarray (wrap); guard the all-negative case.
 **Algorithm:** track max and min running subarrays; answer = `max(maxSum, total − minSum)` unless all negative.
 
+**Variables:** `curMax` = Kadane running max-subarray-sum ending here; `maxSum` = best non-wrapping subarray sum; `curMin`/`minSum` = same for minimum subarray (the wrap answer is `total - minSum`); `total` = sum of all elements.
+**Pseudocode:**
+```
+total=0; maxSum=curMax=nums[0]? (curMax starts 0); minSum analog
+for each num:
+    curMax = max(curMax + num, num);  maxSum = max(maxSum, curMax)
+    curMin = min(curMin + num, num);  minSum = min(minSum, curMin)
+    total += num
+if maxSum < 0: return maxSum            // all negative: wrap would be empty
+return max(maxSum, total - minSum)      // non-wrap vs wrap (total minus min)
+```
 ```java
 class Solution {
     public int maxSubarraySumCircular(int[] nums) {
@@ -2436,6 +3418,18 @@ class Solution {
 **Intuition:** from each digit a knight can reach a fixed set of digits; spread counts across the adjacency map each step.
 **Algorithm:** `dp[d]` = count of numbers of current length ending at digit `d`; answer = sum after `n` steps.
 
+**Variables:** `dp[d]` = count of valid numbers of the current length ending at digit `d`; `next` = same array for length+1; `moves[d]` = digits reachable by a knight move from `d`.
+**Pseudocode:**
+```
+moves[d] = knight-reachable digits per keypad digit
+dp[0..9] = 1                         // length 1
+for step from 1 to n-1:
+    next = zeros
+    for d from 0 to 9:
+        for target in moves[d]: next[target] += dp[d]
+    dp = next  (mod 1e9+7)
+return sum of dp mod
+```
 ```java
 class Solution {
     public int knightDialer(int n) {
@@ -2473,6 +3467,17 @@ class Solution {
 **Intuition:** on a travel day choose the cheapest pass covering it by looking back 1, 7, or 30 days; non-travel days inherit the prior cost.
 **Algorithm:** `dp[i]` = min cost through day `i`; answer `dp[lastDay]`.
 
+**Variables:** `dp[i]` = minimum cost to cover all travel up through day `i`; `travel[i]` = whether day `i` is a travel day; `costs[0/1/2]` = price of 1/7/30-day passes; `last` = final travel day.
+**Pseudocode:**
+```
+mark travel[day] = true for each travel day
+for i from 1 to last:
+    if not travel[i]: dp[i] = dp[i-1]            // no travel: carry cost
+    else: dp[i] = min(dp[i-1] + costs[0],        // 1-day pass
+                      dp[max(0,i-7)] + costs[1],  // 7-day pass
+                      dp[max(0,i-30)] + costs[2]) // 30-day pass
+return dp[last]
+```
 ```java
 class Solution {
     public int mincostTickets(int[] days, int[] costs) {
@@ -2505,6 +3510,18 @@ class Solution {
 **Intuition:** for each pair `(j, i)`, the arithmetic subseq ending at `i` with difference `d` extends the one ending at `j`.
 **Algorithm:** `dp[i]` maps difference `d` to subseq length ending at `i`; track global `result`.
 
+**Variables:** `dp[i]` = map from common difference `d` to the length of the longest arithmetic subsequence with that difference ending at index `i`; `d = nums[i]-nums[j]`; `result` = global longest.
+**Pseudocode:**
+```
+for i from 0 to n-1:
+    dp[i] = empty map
+    for j from 0 to i-1:
+        d = nums[i] - nums[j]
+        length = dp[j].getOrDefault(d, 1) + 1   // extend chain ending at j
+        dp[i][d] = length
+        result = max(result, length)
+return result
+```
 ```java
 class Solution {
     public int longestArithSeqLength(int[] nums) {
@@ -2533,6 +3550,19 @@ class Solution {
 **Intuition:** sort by length; for each word, try removing each character to find a shorter predecessor and extend its best chain.
 **Algorithm:** `dp` maps word to longest chain ending at it; answer = max chain length.
 
+**Variables:** `dp` = map from a word to the length of the longest word chain ending at that word; `best` = best chain length for the current word; `predecessor` = the word with one character removed; `result` = global max.
+**Pseudocode:**
+```
+sort words by ascending length
+for each word (shortest first):
+    best = 1
+    for each position i in word:
+        predecessor = word with char i removed
+        if dp has predecessor: best = max(best, dp[predecessor] + 1)
+    dp[word] = best
+    result = max(result, best)
+return result
+```
 ```java
 class Solution {
     public int longestStrChain(String[] words) {
@@ -2566,6 +3596,17 @@ class Solution {
 **Intuition:** the linear 1D recurrence with three rolling variables instead of two.
 **Algorithm:** roll `a`, `b`, `c`; answer after `n` steps.
 
+**Variables:** `a, b, c` = the three rolling Tribonacci terms T(i-3), T(i-2), T(i-1) used to compute T(i); rolled forward each step. Conceptually `dp[i]=dp[i-1]+dp[i-2]+dp[i-3]`.
+**Pseudocode:**
+```
+if n == 0: return 0
+if n <= 2: return 1
+a=0, b=1, c=1                       // T0, T1, T2
+for i from 3 to n:
+    next = a + b + c
+    a = b; b = c; c = next
+return c
+```
 ```java
 class Solution {
     public int tribonacci(int n) {
@@ -2596,6 +3637,16 @@ class Solution {
 **Intuition:** the minimum removals to make `s` a palindrome equals `n − LPS(s)`; check whether that is `≤ k`.
 **Algorithm:** interval DP for longest palindromic subsequence; answer `n − dp[0][n-1] <= k`.
 
+**Variables:** `dp[i][j]` = length of the longest palindromic subsequence within `s[i..j]`; the minimum deletions to make `s` a palindrome is `n - dp[0][n-1]`.
+**Pseudocode:**
+```
+for i from n-1 down to 0:
+    dp[i][i] = 1
+    for j from i+1 to n-1:
+        if s[i] == s[j]: dp[i][j] = dp[i+1][j-1] + 2
+        else: dp[i][j] = max(dp[i+1][j], dp[i][j-1])
+return n - dp[0][n-1] <= k          // deletions needed <= k
+```
 ```java
 class Solution {
     public boolean isValidPalindrome(String s, int k) {
@@ -2625,6 +3676,15 @@ class Solution {
 **Intuition:** with a known difference, the predecessor of `num` must be `num - difference`; one hashmap pass suffices.
 **Algorithm:** `dp` maps value to longest chain ending at it; answer = max length.
 
+**Variables:** `dp` = map from a value to the length of the longest arithmetic subsequence (fixed `difference`) ending at that value; predecessor of `num` is `num - difference`; `result` = global max.
+**Pseudocode:**
+```
+for each num in arr:
+    length = dp.getOrDefault(num - difference, 0) + 1   // extend chain
+    dp[num] = length
+    result = max(result, length)
+return result
+```
 ```java
 class Solution {
     public int longestSubsequence(int[] arr, int difference) {
@@ -2649,6 +3709,20 @@ class Solution {
 **Intuition:** position can never exceed `steps/2`, so cap the reachable range; each step a position spreads to stay/left/right.
 **Algorithm:** `dp[i]` = ways to be at index `i` after `step` moves; answer `dp[0]`.
 
+**Variables:** `dp[i]` = number of ways to be at array index `i` after `step` moves; `next` = same array for the following step; `maxPos` = highest reachable index, capped at `min(arrLen-1, steps/2)`.
+**Pseudocode:**
+```
+maxPos = min(arrLen-1, steps/2)
+dp[0] = 1
+for step from 0 to steps-1:
+    next = zeros
+    for i from 0 to maxPos with dp[i] != 0:
+        next[i]   += dp[i]                 // stay
+        if i > 0:      next[i-1] += dp[i]  // move left
+        if i < maxPos: next[i+1] += dp[i]  // move right
+    dp = next  (mod 1e9+7)
+return dp[0]
+```
 ```java
 class Solution {
     public int numWays(int steps, int arrLen) {
@@ -2686,6 +3760,16 @@ class Solution {
 **Intuition:** fix the middle soldier `j`; the answer is its number of smaller-before × larger-after, plus the mirror case.
 **Algorithm:** for each `j` count smaller/larger on both sides; accumulate `result`.
 
+**Variables:** for each middle index `j`: `lessLeft`/`greaterLeft` = counts of ratings smaller/larger before `j`; `lessRight`/`greaterRight` = counts smaller/larger after `j`; `result` = total valid teams.
+**Pseudocode:**
+```
+for j from 0 to n-1:                        // fix the middle soldier
+    count lessLeft, greaterLeft over i < j
+    count lessRight, greaterRight over k > j
+    // increasing: small-left * large-right; decreasing: large-left * small-right
+    result += lessLeft*greaterRight + greaterLeft*lessRight
+return result
+```
 ```java
 class Solution {
     public int numTeams(int[] rating) {
@@ -2716,6 +3800,22 @@ class Solution {
 **Intuition:** track the lengths of positive-product and negative-product runs ending at `i`; a negative number swaps them, a zero resets both.
 **Algorithm:** `positive` / `negative` running lengths; track `result`.
 
+**Variables:** `positive` = length of the longest subarray ending at `i` with a positive product; `negative` = length of the longest such subarray with a negative product; both reset at a zero; a negative number swaps their roles; `result` = best `positive` seen.
+**Pseudocode:**
+```
+positive = negative = result = 0
+for each num:
+    if num == 0: positive = 0; negative = 0
+    else if num > 0:
+        positive++
+        negative = negative > 0 ? negative + 1 : 0
+    else:  // negative number swaps positive/negative runs
+        newPositive = negative > 0 ? negative + 1 : 0
+        newNegative = positive + 1
+        positive = newPositive; negative = newNegative
+    result = max(result, positive)
+return result
+```
 ```java
 class Solution {
     public int getMaxLen(int[] nums) {
@@ -2749,6 +3849,17 @@ class Solution {
 **Intuition:** `dp[i]` = best score reaching `i` = `nums[i] +` max `dp[j]` in the window `[i-k, i-1]`; a monotonic queue keeps that window max in O(1).
 **Algorithm:** `dp[i]` over a sliding-window-max queue of indices; answer `dp[n-1]`.
 
+**Variables:** `dp[i]` = max score reaching index `i`; `queue` = monotonic deque of indices with decreasing `dp` values within the window `[i-k, i-1]`, so its front always holds the window's max.
+**Pseudocode:**
+```
+dp[0] = nums[0]; push index 0
+for i from 1 to n-1:
+    while queue front index < i-k: pop front      // drop out-of-window indices
+    dp[i] = nums[i] + dp[queue.front]             // best reachable predecessor
+    while queue not empty and dp[queue.back] <= dp[i]: pop back  // keep decreasing
+    push i
+return dp[n-1]
+```
 ```java
 class Solution {
     public int maxResult(int[] nums, int k) {
@@ -2781,6 +3892,15 @@ class Solution {
 **Intuition:** `dp[i]` = min worst-case moves for `i` floors; dropping at floor `j` costs `1 + max(dp[j-1] from break, dp[i-j] from survive)`.
 **Algorithm:** minimize over first-drop floor `j`; answer `dp[n]`.
 
+**Variables:** `dp[i]` = minimum worst-case moves to find the critical floor among `i` floors with 2 eggs; `j` = floor of the first drop (break -> `j-1` floors below with 1 egg = linear search; survive -> `dp[i-j]` floors above with 2 eggs).
+**Pseudocode:**
+```
+for i from 1 to n:
+    dp[i] = i                       // fallback: 1-egg linear behavior
+    for j from 1 to i:              // first drop at floor j
+        dp[i] = min(dp[i], 1 + max(j-1, dp[i-j]))   // break vs survive
+return dp[n]
+```
 ```java
 class Solution {
     public int twoEggDrop(int n) {

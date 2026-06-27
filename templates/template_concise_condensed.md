@@ -504,13 +504,6 @@ while (!queue.isEmpty()) {
 ```
 **When to Use — Signal → Pattern**
 **The One Rule — Snapshot Level Size First**
-```java
-Always snapshot the level size BEFORE the inner for loop:
-    int size = queue.size();
-    for (int i = 0; i < size; i++) { ... }
-Without the snapshot, newly added children mix with the current level
-and i == size-1 / i == 0 checks become meaningless.
-```
 ### DFS / Backtracking
 **When to Use — Signal → Pattern**
 **All Templates**
@@ -571,12 +564,6 @@ private void backtrack(int start, List<Integer> current) {
 ```
 ### Graph
 **Complexity Legend**
-```java
-BFS / DFS         O(V + E)            visit each vertex and edge once
-Topo sort (Kahn)  O(V + E)            each node enqueued once, each edge relaxed once
-Union-Find        ~O(n·α(n)) ≈ O(n)   α = inverse Ackermann, effectively constant
-Dijkstra          O((V + E) log V)    non-negative weights ONLY
-```
 **Graph Representation**
 ```java
 List<List<Integer>> graph = new ArrayList<>();
@@ -682,21 +669,6 @@ return true;
 ### Greedy
 **Two Interval Templates**
 ```java
-MERGE DIRECTION RULE (for merge-style problems like #56, where both keys work):
-    Sort by START  →  traverse FORWARD  (i = 0 → n-1), extend the END of last kept
-    Sort by END    →  traverse BACKWARD (i = n-1 → 0), extend the START of last kept
-    These two are exact mirror images. See #56 for both written out side by side.
-    (NOTE: this mirror only applies to merging. Template 1 below sorts by end but
-     still sweeps FORWARD — there the goal is counting, not merging.)
-TEMPLATE 1 — Sort by END time, sweep forward, track end of last kept interval
-             Use when: maximizing count of non-overlapping intervals
-             Greedy insight: earliest-finishing interval leaves most room for future ones
-TEMPLATE 2 — Sort by START time, sweep forward, merge when overlapping
-             Use when: merging/counting overlapping intervals
-             Greedy insight: processing in start order → each interval only needs to
-             compare with the last merged result
-```
-```java
 Arrays.sort(intervals, (a, b) -> a[1] - b[1]);
 int lastEnd = Integer.MIN_VALUE;
 for (int[] interval : intervals) {
@@ -743,16 +715,6 @@ for (int i = 0; i < n; i++) {
 // 4. INTERVAL DP — short ranges first (i right-to-left, j from i+1; dp[i+1][*] ready).
 // 5. GRID DP — each cell accumulates from cells it could arrive from (up/left).
 // 6. STATE MACHINE — named states updated from yesterday's states each step.
-```
-```java
-Want count or min/max?
-├── Count (dp[j] += dp[j - num])
-│   ├── 0/1 (each item once):    j descending → #416, #494
-│   └── Unbounded (reuse):       j ascending  → #518
-│       └── Ordered (permuts):   target outer, nums inner → #377
-└── Min/Max (dp[j] = min/max(...))
-    ├── 0/1 minimize:            j descending → #474 (maximize)
-    └── Unbounded minimize:      j ascending  → #322
 ```
 ```java
 // ── 0/1 KNAPSACK ── each item at most once
@@ -827,19 +789,6 @@ int[][] memo = new int[rows][cols];
 for (int i = 0; i < rows; i++)
     for (int j = 0; j < cols; j++)
         dfs(grid, i, j, memo, dr, dc);
-```
-```java
-cash      = max profit when NOT holding (free to buy or idle)
-hold      = max profit when HOLDING stock (bought it at some cost)
-cooldown  = max profit right after selling (can't buy today)
-```
-```java
-                    buy                 sell                re-buy condition
-#121 (1 tx):        hold = max(hold, -price)                no re-buy (ignore cash)
-#122 (unlimited):   hold = max(hold, cash - price)          re-buy with full cash
-#123 (2 tx):        chain: buy2 uses sell1 cash             4 states chained
-#309 (cooldown):    hold = max(hold, cooldown - price)      must wait 1 day
-#714 (fee):         hold = max(hold, cash - price)          pay fee on sell
 ```
 ### Bit Manipulation
 **Canonical Template**

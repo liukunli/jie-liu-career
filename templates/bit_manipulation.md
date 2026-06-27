@@ -28,6 +28,31 @@
 
 ## Canonical Template
 
+**Variables:** `result` = XOR accumulator (lone survivor) · `n` = number being inspected/edited · `i` = bit position · `count` = set-bit counter · `mask` = 26-bit letter-presence set · masks: `1 << i` selects bit i, `n & (n-1)` clears lowest set bit, `n & (-n)` isolates lowest set bit
+**Pseudocode:**
+```
+XOR CANCEL:
+    result = 0
+    for each num in nums: result = result XOR num   (pairs cancel, lone survives)
+
+BIT OPERATIONS on n at position i:
+    isSet  = bit i of n is 1            -> (n >> i) & 1 == 1
+    set    = turn bit i on             -> n | (1 << i)
+    clear  = turn bit i off            -> n & ~(1 << i)
+    toggle = flip bit i                -> n ^ (1 << i)
+    lowest = isolate lowest set bit    -> n & (-n)
+    isPow2 = n > 0 and clearing lowest set bit gives 0
+
+COUNT SET BITS (Brian Kernighan):
+    count = 0
+    while n != 0: count = count + 1; n = n & (n-1)   (each step removes one set bit)
+
+BITMASK AS SET:
+    mask = 0
+    for each char c in word: mask = mask | (1 << (c - 'a'))
+    two words share no letter when (mask[i] & mask[j]) == 0
+```
+
 ```java
 // bits are a set/counter — XOR cancels duplicates, AND/OR/shift edit individual bits.  — WHEN: "appears once/odd among pairs", "count set bits", "no shared letters", "power of 2/4".
 // ── XOR CANCEL ── pairs cancel; lone element survives
@@ -60,6 +85,37 @@ if ((mask[i] & mask[j]) == 0) { /* no shared letter */ }
 ---
 
 ## Variations
+
+**Variables:** `ones`/`twos` = bits seen 1 / 2 times mod 3 · `xor` = `a ^ b` of the two uniques · `diff` = lowest differing bit (`xor & -xor`) · `a`/`b` = the two unique values · `dp[]` = set-bit counts by number · `shift` = bits dropped to reach common prefix · `carry` = AND-derived carry bits
+**Pseudocode:**
+```
+VARIATION 1 (mod-3 state machine, Single Number II):
+    ones = 0; twos = 0
+    for each num: ones = (ones XOR num) AND NOT twos; twos = (twos XOR num) AND NOT ones
+    after loop, ones holds the element appearing once
+
+VARIATION 2 (split XOR into two groups, Single Number III):
+    xor = XOR of all nums                 (= a XOR b)
+    diff = xor AND (-xor)                 (lowest bit where a and b differ)
+    a = 0; for each num: if (num AND diff) != 0: a = a XOR num   (XOR one group)
+    b = xor XOR a                         (the other unique)
+
+VARIATION 3 (DP relation, Counting Bits):
+    dp = array of size n+1
+    for i = 1..n: dp[i] = dp[i >> 1] + (i AND 1)   (drop last bit, add it back)
+
+VARIATION 4 (common prefix, Bitwise AND of Range):
+    shift = 0
+    while left != right: left >>= 1; right >>= 1; shift = shift + 1
+    return left << shift                  (shared high-bit prefix restored)
+
+VARIATION 5 (carry loop, Sum of Two Integers):
+    while b != 0:
+        carry = a AND b                   (positions that carry)
+        a = a XOR b                       (sum without carry)
+        b = carry << 1                    (carry moves one bit left)
+    return a
+```
 
 ```java
 // VARIATION 1: mod-3 state machine (Single Number II)
@@ -122,6 +178,15 @@ int add(int a, int b) {
 **Intuition:** XOR is its own inverse, so every duplicated pair cancels to 0 and only the lone element is left standing.  
 **Algorithm:** XOR all — every pair cancels (`a ^ a = 0`), leaving the single element.
 
+**Variables:** `result` = XOR accumulator — paired values cancel, the lone value survives · `num` = current element
+**Pseudocode:**
+```
+result = 0
+for each num in nums:
+    result = result XOR num      (a XOR a = 0, so duplicate pairs vanish)
+return result                    (only the single element remains)
+```
+
 ```java
 class Solution {
     public int singleNumber(int[] nums) {
@@ -140,6 +205,15 @@ class Solution {
 **Description:** Array of n distinct numbers from [0, n] with one missing. Find it.  
 **Intuition:** XOR-ing every index against every value pairs each present number with its index — the missing number's index has no partner to cancel.  
 **Variation:** XOR each index `i` with `nums[i]`. Indices 0..n XOR'd with the n elements — the missing index has no pair.
+
+**Variables:** `result` = XOR accumulator seeded with n (the absent last index) · `i` = index · `nums[i]` = value at that index
+**Pseudocode:**
+```
+result = n           (start with the largest index, which has no value slot)
+for i = 0..n-1:
+    result = result XOR i XOR nums[i]   (each present value cancels its index)
+return result        (only the missing number's index has no partner)
+```
 
 ```java
 class Solution {
@@ -160,6 +234,16 @@ class Solution {
 **Description:** Every element appears three times except one. Find it.  
 **Intuition:** XOR cancels pairs (mod 2); here we need a counter mod 3, so two state bits (`ones`, `twos`) cycle each bit through 1→2→0 and the survivor sits in `ones`.  
 **Variation:** Two-state XOR machine. `ones` tracks bits seen 1 mod 3 times, `twos` tracks bits seen 2 mod 3 times. When a bit reaches 3, it clears from both.
+
+**Variables:** `ones` = bits seen 1 time mod 3 · `twos` = bits seen 2 times mod 3 · `num` = current element (a bit reaching 3 occurrences clears from both)
+**Pseudocode:**
+```
+ones = 0; twos = 0
+for each num in nums:
+    ones = (ones XOR num) AND NOT twos   (add bit to ones unless it is already in twos)
+    twos = (twos XOR num) AND NOT ones   (add bit to twos unless it is now in ones)
+return ones                              (bits at count 0 mod 3 survive here = the single element)
+```
 
 ```java
 class Solution {
@@ -182,6 +266,18 @@ class Solution {
 **Description:** Two elements appear exactly once; all others appear twice. Find both.  
 **Intuition:** XOR of all leaves `a ^ b`; any set bit in it is a bit where a and b differ, so it splits the array into two groups each holding one unique.  
 **Variation:** XOR all → get `a ^ b`. Use lowest set bit of `a ^ b` to partition nums into two groups (one containing `a`, one containing `b`). XOR each group independently.
+
+**Variables:** `xor` = XOR of all = `a ^ b` · `diff` = lowest set bit of `xor` (a bit where a and b differ) · `a` = unique value isolated from the group whose `diff` bit is set · `num` = current element
+**Pseudocode:**
+```
+xor = 0
+for each num: xor = xor XOR num          (everything else cancels -> xor = a XOR b)
+diff = xor AND (-xor)                     (isolate one bit where a and b differ)
+a = 0
+for each num:
+    if (num AND diff) != 0: a = a XOR num (XOR only the group with that bit set)
+return [a, xor XOR a]                     (the other unique is xor XOR a)
+```
 
 ```java
 class Solution {
@@ -209,6 +305,16 @@ class Solution {
 **Intuition:** Each `n & (n-1)` erases exactly one set bit, so the loop runs once per set bit — no need to scan all 32 positions.  
 **Algorithm:** Brian Kernighan — `n & (n-1)` clears the lowest set bit each iteration.
 
+**Variables:** `n` = number being whittled down · `count` = set bits cleared so far (`n & (n-1)` removes the lowest set bit each step)
+**Pseudocode:**
+```
+count = 0
+while n != 0:
+    count = count + 1
+    n = n AND (n - 1)        (clears the lowest set bit)
+return count                 (loop ran once per set bit)
+```
+
 ```java
 public class Solution {
     public int hammingWeight(int n) {
@@ -231,6 +337,15 @@ public class Solution {
 **Intuition:** `i` has the same set bits as `i >> 1` plus possibly its own last bit, so reuse the already-computed smaller answer instead of recounting.  
 **Variation:** DP relation — `i >> 1` is `i` with last bit removed (already computed), plus the last bit `i & 1`.
 
+**Variables:** `dp[]` = set-bit count for each number 0..n · `i` = current number (`i >> 1` is the already-solved smaller number, `i & 1` is its last bit)
+**Pseudocode:**
+```
+dp = array of size n+1 (dp[0] = 0)
+for i = 1..n:
+    dp[i] = dp[i >> 1] + (i AND 1)   (count of i without its last bit, plus that bit)
+return dp
+```
+
 ```java
 class Solution {
     public int[] countBits(int n) {
@@ -250,6 +365,16 @@ class Solution {
 **Description:** Reverse the 32 bits of an unsigned integer.  
 **Intuition:** Peel the lowest bit off `n` and stack it onto `result` from the bottom — after 32 shifts the bit order is fully mirrored.  
 **Variation:** Fixed 32 iterations — each time take the LSB of `n`, append it to `result`, then shift both.
+
+**Variables:** `result` = mirrored bits being built from the bottom up · `n` = source bits being peeled from the bottom · `i` = iteration counter (always 32)
+**Pseudocode:**
+```
+result = 0
+repeat 32 times (i = 0..31):
+    result = (result << 1) OR (n AND 1)   (shift result up, drop in n's lowest bit)
+    n = n >> 1                             (advance to next source bit)
+return result
+```
 
 ```java
 public class Solution {
@@ -276,6 +401,17 @@ public class Solution {
 **Key insight:** any two adjacent numbers in the range differ in at least the lowest bit. AND of a range clears all bits that differ across any pair in the range. The result is the common high-bit prefix of `left` and `right`.  
 **Variation:** right-shift both until equal to find shared prefix; shift back.
 
+**Variables:** `left`/`right` = range endpoints, shifted right until they match · `shift` = number of low bits dropped (restored at the end)
+**Pseudocode:**
+```
+shift = 0
+while left != right:                  (low bits differ -> they get cleared by AND)
+    left  = left >> 1
+    right = right >> 1
+    shift = shift + 1
+return left << shift                   (shared high-bit prefix, shifted back into place)
+```
+
 ```java
 class Solution {
     public int rangeBitwiseAnd(int left, int right) {
@@ -298,6 +434,16 @@ class Solution {
 **Description:** Return `a + b` without using `+` or `-`.  
 **Intuition:** Addition splits into a carry-free sum (XOR) and the carries (AND shifted left); feed the carry back until nothing carries over.  
 **Variation:** XOR computes bit sum without carry; AND shifted left computes carry. Repeat until no carry.
+
+**Variables:** `a` = running partial sum (no carry) · `b` = pending carry to add next · `carry` = bit positions where both currently have 1
+**Pseudocode:**
+```
+while b != 0:                  (still have carry to fold in)
+    carry = a AND b           (positions that generate a carry)
+    a = a XOR b               (sum of the bits ignoring carry)
+    b = carry << 1            (carry takes effect one position to the left)
+return a                       (no carry left -> a is the sum)
+```
 
 ```java
 class Solution {
@@ -322,6 +468,18 @@ class Solution {
 **Description:** Given a list of words, find the maximum product `len(a) * len(b)` where `a` and `b` share no common letters.  
 **Intuition:** Compress each word's letter set into a 26-bit integer so "share a letter?" becomes a single AND, replacing slow character-by-character comparison.  
 **Variation:** encode each word as a 26-bit integer where bit `i` = 1 if letter `'a' + i` appears. Two words share a letter iff their bitmasks have any common bit (`mask[i] & mask[j] != 0`).
+
+**Variables:** `masks[]` = 26-bit letter-set per word (bit i set if letter 'a'+i appears) · `i`/`j` = word indices being compared · `max` = best product of lengths so far (disjoint sets have AND == 0)
+**Pseudocode:**
+```
+build masks: for each word i, for each char c, set bit (c - 'a') in masks[i]
+max = 0
+for i = 0..n-1:
+    for j = i+1..n-1:
+        if (masks[i] AND masks[j]) == 0:        (no shared letter)
+            max = larger of (max, len(word i) * len(word j))
+return max
+```
 
 ```java
 class Solution {
@@ -397,6 +555,14 @@ i & 1              // last bit (0 = even, 1 = odd)
 
 **Algorithm:** A power of two has exactly one set bit. Check `n > 0` and `n & (n-1) == 0` (clearing the lowest set bit results in 0 only if there was one bit).
 
+**Variables:** `n` = number tested (`n & (n-1)` clears its single set bit, leaving 0 only when exactly one bit was set)
+**Pseudocode:**
+```
+return true when:
+    n > 0                         (must be positive)
+    AND (n AND (n-1)) == 0        (clearing the lone set bit leaves nothing)
+```
+
 ```java
 class Solution {
     public boolean isPowerOfTwo(int n) {
@@ -415,6 +581,15 @@ class Solution {
 **Intuition:** Powers of four are powers of two (one set bit) whose bit sits at an even position; masking against the odd-position mask `0xAAAAAAAA` must give 0.
 
 **Variation:** Power of four must be power of two (one set bit) AND that bit must be at an even bit position (0, 2, 4, 6, ...). Mask `0xAAAAAAAA` has bits set at ALL odd positions; if `n & 0xAAAAAAAA == 0`, the set bit is at an even position.
+
+**Variables:** `n` = number tested · mask `0xAAAAAAAA` = all odd bit positions (a power of four's lone bit must sit at an even position, so AND with this mask is 0)
+**Pseudocode:**
+```
+return true when all hold:
+    n > 0
+    (n AND (n-1)) == 0            (exactly one set bit -> power of two)
+    (n AND 0xAAAAAAAA) == 0       (that bit is at an even position -> power of four)
+```
 
 ```java
 class Solution {
@@ -436,6 +611,19 @@ class Solution {
 **Intuition:** Following `i → nums[i]` turns the array into a linked list; a duplicate value means two indices point to the same node, forming a cycle whose entry is the duplicate.
 
 **Variation:** Floyd's Cycle Detection. Treat the array as a linked list where `nums[i]` is the next node. Since there's a duplicate, two indices point to the same value → creates a cycle. Find cycle entry = duplicate.
+
+**Variables:** `slow` = single-step pointer · `fast` = double-step pointer (`nums[i]` acts as the "next" link; the cycle entry is the duplicate)
+**Pseudocode:**
+```
+Phase 1 - find a meeting point inside the cycle:
+    slow = nums[0]; fast = nums[0]
+    do: slow = nums[slow]; fast = nums[nums[fast]]   until slow == fast
+
+Phase 2 - find the cycle entrance:
+    slow = nums[0]
+    while slow != fast: slow = nums[slow]; fast = nums[fast]
+    return slow      (cycle entry = the duplicate value)
+```
 
 ```java
 class Solution {
@@ -470,6 +658,19 @@ class Solution {
 
 **Algorithm:** Repeatedly take `num & 0xF` to read the lowest nibble, map it to a hex char, then unsigned-right-shift `num >>> 4`. Stop when `num` becomes 0.
 
+**Variables:** `num` = number being consumed 4 bits at a time · `digits` = hex digit lookup table · `nibble` = lowest 4 bits (`num & 15`) = one hex digit · `builder` = digits collected low-to-high (reversed at the end)
+**Pseudocode:**
+```
+if num == 0: return "0"
+digits = "0123456789abcdef"
+builder = empty
+while num != 0:
+    nibble = num AND 15            (lowest 4 bits = one hex digit)
+    append digits[nibble] to builder
+    num = num >>> 4               (unsigned shift fills sign bit with 0)
+return builder reversed           (we appended least-significant digit first)
+```
+
 ```java
 class Solution {
     public String toHex(int num) {
@@ -499,6 +700,17 @@ class Solution {
 
 **Algorithm:** Compute `x ^ y`, then count its set bits with Brian Kernighan (`n & (n-1)` clears the lowest set bit each iteration).
 
+**Variables:** `n` = `x ^ y` (1 exactly where the two differ) · `count` = differing bits counted (`n & (n-1)` clears one set bit per step)
+**Pseudocode:**
+```
+n = x XOR y               (set bits mark positions where x and y differ)
+count = 0
+while n != 0:
+    count = count + 1
+    n = n AND (n - 1)     (clear lowest set bit)
+return count
+```
+
 ```java
 class Solution {
     public int hammingDistance(int x, int y) {
@@ -524,6 +736,16 @@ class Solution {
 
 **Algorithm:** Grow a mask `1 << i` until it covers all bits of `num` (`mask < num`), forming `(1 << bitLength) - 1`; XOR `num` with that mask to flip only the relevant bits.
 
+**Variables:** `num` = input whose meaningful bits get flipped · `mask` = all-ones mask spanning num's bit width · `i` = bit position being added to the mask
+**Pseudocode:**
+```
+mask = 0; i = 0
+while (1 << i) <= num:          (extend mask up to num's most significant bit)
+    set bit i in mask
+    i = i + 1
+return num XOR mask             (flips every bit within num's width, leaves leading zeros)
+```
+
 ```java
 class Solution {
     public int findComplement(int num) {
@@ -548,6 +770,31 @@ class Solution {
 **Intuition:** With only 8 cells the state space is finite, so the configuration must cycle; detect the cycle length and reduce `n` modulo it to avoid simulating huge day counts.
 
 **Algorithm:** Encode the 8 cells as an 8-bit integer. Simulate one day with bit operations (a cell is 1 iff its neighbors match, i.e. their XOR is 0), recording seen states in a map. On the first repeat, reduce remaining days modulo the cycle length, then finish the leftover days.
+
+**Variables:** `state` = 8 cells packed into an 8-bit integer · `n` = remaining days · `seen` = map from state -> the `n` value when first seen (to measure cycle length) · `result[]` = unpacked cells · `nextDay` helper uses `left`/`right` neighbor bits, setting cell i when they are equal
+**Pseudocode:**
+```
+pack cells into state: for i = 0..7, if cells[i]==1 set bit i of state
+seen = empty map
+while n > 0:
+    if state already in seen:
+        n = n mod (seen[state] - n)        (skip whole repeated cycles)
+    else:
+        seen[state] = n
+    if n > 0:
+        state = nextDay(state)
+        n = n - 1
+unpack: for i = 0..7, result[i] = bit i of state
+return result
+
+nextDay(state):
+    next = 0
+    for i = 1..6:                          (end cells 0 and 7 always become 0)
+        left  = bit (i-1) of state
+        right = bit (i+1) of state
+        if (left XOR right) == 0: set bit i of next   (neighbors equal)
+    return next
+```
 
 ```java
 import java.util.HashMap;

@@ -172,6 +172,23 @@ DFS appears in five forms. The pattern determines naming, return type, and where
 
 ## All Templates
 
+**Variables:** `node` = current tree node · `accumulated`/`current` = state carried down a path · `answer`/global = best cross-node result · `grid[r][c]` = cell at row `r`, col `c` · `state[node]` = 0 unseen / 1 in-stack / 2 done · `start` = first eligible index · `current` = in-progress candidate · `nums[i]` = element being chosen
+**Pseudocode:**
+```
+# 1. post-order (combine children):
+if node null: return BASE; left=dfs(left); right=dfs(right); return combine(left,right,node.val)
+# 2. pre-order (pass state down):
+if node null: return; accumulated+=node.val; if leaf: record; dfs(left,accumulated); dfs(right,accumulated)
+# 3. tree global answer:
+if node null: return 0; left=max(0,dfs(left)); right=max(0,dfs(right)); answer=max(answer,left+right+node.val); return max(left,right)+node.val
+# 4. grid flood fill:
+if out of bounds or not TARGET: return; mark VISITED; recurse into 4 neighbors
+# 5. graph 3-color cycle:
+if state==1: cycle; if state==2: safe; mark in-stack; recurse neighbors (cycle? return); mark done
+# 6. backtracking:
+if base: record copy; for i from start: skip dups; choose nums[i]; recurse(next); undo
+```
+
 ```java
 // 1. PROCESS CHILDREN FIRST, COMBINE AT NODE (post-order)
 // each node trusts its children to return a finished answer, then merges them.  — WHEN: "what is the height/sum/property OF the subtree rooted here"
@@ -254,6 +271,17 @@ Recurse into children first, then combine results at the current node. Answer pr
 **Description:** Maximum number of nodes along the longest root-to-leaf path.  
 **Intuition:** my depth is just one more than my deeper child's depth.
 
+**Variables:** `node` = current subtree root · `left`/`right` = depths of child subtrees
+**Pseudocode:**
+```
+maxDepth(root): return dfs(root)
+dfs(node):
+  if node null: return 0
+  left = dfs(node.left)
+  right = dfs(node.right)
+  return max(left, right) + 1
+```
+
 ```java
 class Solution {
     public int maxDepth(TreeNode root) {
@@ -276,6 +304,18 @@ class Solution {
 **Description:** Length of the longest path between any two nodes (path does not need to pass through root).  
 **Key:** the path through a node = `left height + right height`. Track global max; return only the single best arm up.  
 **Intuition:** the longest path bends at some node using both arms, but only one arm can extend to its parent.
+
+**Variables:** `node` = current subtree root · `left`/`right` = heights of child subtrees · `diameter` = global longest cross-node path length
+**Pseudocode:**
+```
+diameterOfBinaryTree(root): dfs(root); return diameter
+dfs(node):
+  if node null: return 0
+  left = dfs(node.left)
+  right = dfs(node.right)
+  diameter = max(diameter, left + right)   # path bending here
+  return max(left, right) + 1              # single arm up
+```
 
 ```java
 class Solution {
@@ -303,6 +343,18 @@ class Solution {
 **Key:** clamp negative arms to 0 (`Math.max(0, ...)`). Global tracks the best `left + right + node.val`; return only `max(left, right) + node.val` upward.  
 **Intuition:** a negative arm is worse than taking nothing, so clamp it to 0 before adding.
 
+**Variables:** `node` = current subtree root · `left`/`right` = best non-negative arm sums (clamped to 0) · `maxSum` = global best path sum
+**Pseudocode:**
+```
+maxPathSum(root): dfs(root); return maxSum
+dfs(node):
+  if node null: return 0
+  left = max(0, dfs(node.left))
+  right = max(0, dfs(node.right))
+  maxSum = max(maxSum, left + right + node.val)   # path bending here
+  return max(left, right) + node.val              # single arm up
+```
+
 ```java
 class Solution {
     int maxSum = Integer.MIN_VALUE;
@@ -329,6 +381,20 @@ class Solution {
 **Key:** return -1 as a sentinel for "unbalanced"; short-circuit immediately on -1.  
 **Intuition:** fold "is it balanced" into the height return — a poisoned -1 bubbles up and stops the work.
 
+**Variables:** `node` = current subtree root · `left`/`right` = child heights, or -1 sentinel meaning unbalanced
+**Pseudocode:**
+```
+isBalanced(root): return dfs(root) != -1
+dfs(node):
+  if node null: return 0
+  left = dfs(node.left)
+  if left == -1: return -1            # propagate unbalanced
+  right = dfs(node.right)
+  if right == -1: return -1
+  if abs(left - right) > 1: return -1
+  return max(left, right) + 1
+```
+
 ```java
 class Solution {
     public boolean isBalanced(TreeNode root) {
@@ -353,6 +419,18 @@ class Solution {
 
 **Description:** Mirror a binary tree — swap left and right subtrees at every node.  
 **Intuition:** invert both children, then swap the pointers at this node.
+
+**Variables:** `root` = current node · `left`/`right` = already-inverted child subtrees
+**Pseudocode:**
+```
+invertTree(root):
+  if root null: return null
+  left = invertTree(root.left)
+  right = invertTree(root.right)
+  root.left = right          # swap pointers
+  root.right = left
+  return root
+```
 
 ```java
 class Solution {
@@ -379,6 +457,17 @@ State is built on the way **down** and consumed at leaves. Use backtracking when
 **Description:** Does any root-to-leaf path sum to `targetSum`?  
 **Intuition:** subtract each node from the target on the way down; a leaf with remaining 0 is a hit.
 
+**Variables:** `node` = current node · `remaining` = target minus values seen so far on this path
+**Pseudocode:**
+```
+hasPathSum(root, targetSum): return dfs(root, targetSum)
+dfs(node, remaining):
+  if node null: return false
+  remaining -= node.val
+  if node is leaf: return remaining == 0
+  return dfs(node.left, remaining) OR dfs(node.right, remaining)
+```
+
 ```java
 class Solution {
     public boolean hasPathSum(TreeNode root, int targetSum) {
@@ -401,6 +490,20 @@ class Solution {
 **Description:** Return all root-to-leaf paths that sum to `targetSum`.  
 **Key:** pass a mutable `path` list down. **Backtrack** (remove last element) after returning from each child.  
 **Intuition:** the same `path` list is reused for every branch, so undo your add as you unwind.
+
+**Variables:** `node` = current node · `remaining` = target minus values seen on this path · `path` = shared list of current root-to-node values · `result` = collected matching paths
+**Pseudocode:**
+```
+pathSum(root, targetSum): dfs(root, targetSum, [], result); return result
+dfs(node, remaining, path, result):
+  if node null: return
+  path.add(node.val)
+  remaining -= node.val
+  if node is leaf and remaining == 0: result.add(copy of path)
+  dfs(node.left, remaining, path, result)
+  dfs(node.right, remaining, path, result)
+  path.remove last        # backtrack
+```
 
 ```java
 class Solution {
@@ -430,6 +533,21 @@ class Solution {
 **Description:** Return all root-to-leaf paths as strings (`"1->2->5"`).  
 **Intuition:** append to a shared StringBuilder, then truncate back to your entry length to undo.
 
+**Variables:** `node` = current node · `path` = shared StringBuilder of the current path · `len` = path length before this node (restore point) · `result` = collected path strings
+**Pseudocode:**
+```
+binaryTreePaths(root): dfs(root, "", result); return result
+dfs(node, path, result):
+  if node null: return
+  len = path.length()
+  if len > 0: path.append("->")
+  path.append(node.val)
+  if node is leaf: result.add(path.toString())
+  dfs(node.left, path, result)
+  dfs(node.right, path, result)
+  path.setLength(len)     # backtrack to before this node
+```
+
 ```java
 class Solution {
     public List<String> binaryTreePaths(TreeNode root) {
@@ -458,6 +576,17 @@ class Solution {
 
 **Description:** Each root-to-leaf path represents a number (e.g., 1→2→3 = 123). Return the total sum.  
 **Intuition:** build the number digit by digit on the way down (`current*10 + val`); add it up at each leaf.
+
+**Variables:** `node` = current node · `current` = number built from root down to this node
+**Pseudocode:**
+```
+sumNumbers(root): return dfs(root, 0)
+dfs(node, current):
+  if node null: return 0
+  current = current * 10 + node.val
+  if node is leaf: return current
+  return dfs(node.left, current) + dfs(node.right, current)
+```
 
 ```java
 class Solution {
@@ -501,6 +630,21 @@ Mark visited by overwriting the cell value. Return the accumulated property (cou
 **Description:** Count the number of islands (connected groups of `'1'`) in a binary grid.  
 **Intuition:** each unvisited land cell starts a new island; flood-fill sinks the whole island so it's counted once.
 
+**Variables:** `grid[r][c]` = cell at row `r`, col `c` ('1' land / '0' water-or-visited) · `count` = number of islands found
+**Pseudocode:**
+```
+numIslands(grid):
+  count = 0
+  for each cell (r, c):
+    if grid[r][c] == '1': dfs(grid, r, c); count++
+  return count
+dfs(grid, r, c):
+  if (r,c) out of bounds: return
+  if grid[r][c] != '1': return
+  grid[r][c] = '0'           # mark visited
+  recurse into 4 neighbors
+```
+
 ```java
 class Solution {
     public int numIslands(char[][] grid) {
@@ -528,6 +672,20 @@ class Solution {
 **Description:** Return the area of the largest island.  
 **Key:** same flood fill but DFS returns the area of the connected component.  
 **Intuition:** an island's area is 1 (this cell) plus the areas its four neighbors flood back.
+
+**Variables:** `grid[r][c]` = cell at row `r`, col `c` (1 land / 0 water-or-visited) · `max` = largest island area seen
+**Pseudocode:**
+```
+maxAreaOfIsland(grid):
+  max = 0
+  for each cell (r, c): max = max(max, dfs(grid, r, c))
+  return max
+dfs(grid, r, c):
+  if (r,c) out of bounds: return 0
+  if grid[r][c] != 1: return 0
+  grid[r][c] = 0             # mark visited
+  return 1 + sum of dfs over 4 neighbors
+```
 
 ```java
 class Solution {
@@ -560,6 +718,23 @@ A back edge (reaching a node with state `1`) means a cycle.
 
 **Description:** Can you finish all courses given prerequisites? Return false if there is a cycle.  
 **Intuition:** re-entering a node still on the current DFS stack means you looped back to a prerequisite → cycle.
+
+**Variables:** `state[node]` = 0 unseen / 1 in-stack / 2 done · `graph` = adjacency list (prereq → dependent courses) · `node`/`neighbor` = course indices
+**Pseudocode:**
+```
+canFinish(numCourses, prerequisites):
+  init state[], build empty graph
+  for each [a, b] in prerequisites: graph[b].add(a)
+  for each course i: if hasCycle(i): return false
+  return true
+hasCycle(node):
+  if state[node] == 1: return true        # back edge → cycle
+  if state[node] == 2: return false       # already safe
+  state[node] = 1
+  for each neighbor: if hasCycle(neighbor): return true
+  state[node] = 2
+  return false
+```
 
 ```java
 class Solution {
@@ -595,6 +770,25 @@ class Solution {
 **Description:** Return a valid order to take all courses. Return `[]` if a cycle exists.  
 **Key:** same 3-color DFS. Add node to `order` in **post-order** (after all neighbors done). Reverse at the end → topological order.  
 **Intuition:** a node finishes only after all it depends on do, so post-order reversed is a valid prerequisite order.
+
+**Variables:** `state[node]` = 0 unseen / 1 in-stack / 2 done · `graph` = adjacency list (prereq → dependent courses) · `order` = post-order finish list · `node`/`neighbor` = course indices
+**Pseudocode:**
+```
+findOrder(numCourses, prerequisites):
+  init state[], order[], build empty graph
+  for each [a, b] in prerequisites: graph[b].add(a)
+  for each course i: if not dfs(i): return []   # cycle
+  reverse(order)
+  return order as int array
+dfs(node):
+  if state[node] == 1: return false       # cycle
+  if state[node] == 2: return true        # already done
+  state[node] = 1
+  for each neighbor: if not dfs(neighbor): return false
+  state[node] = 2
+  order.add(node)                          # post-order
+  return true
+```
 
 ```java
 class Solution {
@@ -645,6 +839,18 @@ Post-process:       —                          Collections.reverse(order)
 **Template:** choose → recurse → undo.  
 `start` controls which elements are eligible at each level. `current` is the in-progress candidate.
 
+**Variables:** `start` = first eligible index at this level · `current` = in-progress candidate list · `nums[i]` = element being chosen · `result` = collected candidates · `nextStart` = `i` to reuse element or `i+1` to forbid reuse
+**Pseudocode:**
+```
+backtrack(start, current):
+  if base case: result.add(copy of current); return
+  for i from start to n-1:
+    if skipCondition: continue        # prune duplicates
+    current.add(nums[i])              # choose
+    backtrack(nextStart, current)     # nextStart = i (reuse) or i+1 (no reuse)
+    current.remove last              # undo
+```
+
 ```java
 // MENTAL MODEL: grow one candidate by picking an element, recurse, then undo to try the next branch.
 private void backtrack(int start, List<Integer> current) {
@@ -676,6 +882,18 @@ private void backtrack(int start, List<Integer> current) {
 **Key:** loop always from 0; use `boolean[] used` to avoid reusing elements within one permutation.  
 **Intuition:** order matters, so every position considers all unused elements (no `start` index).
 
+**Variables:** `nums` = input array of distinct ints · `used[i]` = whether `nums[i]` is already in current permutation · `current` = permutation being built · `result` = all permutations
+**Pseudocode:**
+```
+backtrack(used, current):
+  if current has n elements: add copy to result, return
+  for each index i in nums:
+    if used[i]: skip
+    mark i used, append nums[i]
+    recurse
+    remove last, unmark i
+```
+
 ```java
 class Solution {
     public List<List<Integer>> permute(int[] nums) {
@@ -706,6 +924,17 @@ class Solution {
 **Key:** record at every node (not just leaves). Pass `i+1` — each element used at most once, order enforced by `start`.  
 **Intuition:** every prefix on the way down is itself a valid subset, so record at every node.
 
+**Variables:** `nums` = input distinct ints · `start` = first index allowed to pick · `current` = subset being built · `result` = all subsets
+**Pseudocode:**
+```
+backtrack(start, current):
+  record copy of current (every node is a subset)
+  for i from start to end:
+    append nums[i]
+    recurse with start = i+1
+    remove last
+```
+
 ```java
 class Solution {
     public List<List<Integer>> subsets(int[] nums) {
@@ -732,6 +961,19 @@ class Solution {
 **Description:** All combinations summing to target. Same element may be used unlimited times. No duplicate combos.  
 **Key:** pass `i` (not `i+1`) to allow reuse. Sort + prune when `candidates[i] > remaining`.  
 **Intuition:** passing `i` (not `i+1`) lets you pick the same element again; `start` still forbids going backward, so no reordered dups.
+
+**Variables:** `candidates` = sorted distinct ints · `start` = first index allowed · `remaining` = target minus sum so far · `current` = combo being built · `result` = all combos
+**Pseudocode:**
+```
+sort candidates
+backtrack(start, remaining, current):
+  if remaining == 0: add copy, return
+  for i from start to end:
+    if candidates[i] > remaining: break (pruning)
+    append candidates[i]
+    recurse with start = i (allow reuse), remaining - candidates[i]
+    remove last
+```
 
 ```java
 class Solution {
@@ -761,6 +1003,20 @@ class Solution {
 **Description:** Each element used at most once. Input may have duplicates. No duplicate combos in output.  
 **Key:** sort first. Skip `candidates[i] == candidates[i-1]` when `i > start` — avoids duplicate combos at the same recursion level. Pass `i+1` — no reuse.  
 **Intuition:** after sorting, equal values sit together; skipping a repeat at the *same level* prevents producing the same combo twice.
+
+**Variables:** `candidates` = sorted ints (may have dups) · `start` = first index allowed · `remaining` = target minus sum so far · `current` = combo being built · `result` = all combos
+**Pseudocode:**
+```
+sort candidates
+backtrack(start, remaining, current):
+  if remaining == 0: add copy, return
+  for i from start to end:
+    if candidates[i] > remaining: break (pruning)
+    if i > start and candidates[i] == candidates[i-1]: skip dup at same level
+    append candidates[i]
+    recurse with start = i+1 (no reuse), remaining - candidates[i]
+    remove last
+```
 
 ```java
 class Solution {
@@ -792,6 +1048,22 @@ class Solution {
 **Key:** mark cell as visited by overwriting, then restore after recursion (backtrack).  
 **Intuition:** the grid itself is the state — temporarily blank a cell so the same path can't reuse it, then restore on the way back.
 
+**Variables:** `board` = grid of chars · `word` = target string · `r`,`c` = current cell · `idx` = index into word being matched · `temp` = saved cell char for restore
+**Pseudocode:**
+```
+for each cell (r,c): if dfs(r,c,0) return true
+return false
+
+dfs(r, c, idx):
+  if idx == word length: return true
+  if out of bounds: return false
+  if board[r][c] != word[idx]: return false
+  save char, blank cell with '#'
+  found = dfs any of 4 neighbors with idx+1
+  restore char
+  return found
+```
+
 ```java
 class Solution {
     public boolean exist(char[][] board, String word) {
@@ -821,6 +1093,22 @@ class Solution {
 
 **Description:** Partition string `s` such that every substring is a palindrome. Return all such partitions.  
 **Intuition:** try every prefix as the first cut; only recurse on the rest when that prefix is a palindrome.
+
+**Variables:** `s` = input string · `start` = index where next substring begins · `end` = exclusive end of candidate substring · `sub` = `s[start, end)` · `current` = list of palindrome pieces so far · `result` = all partitions
+**Pseudocode:**
+```
+backtrack(start, current):
+  if start == length: add copy, return
+  for end from start+1 to length:
+    sub = s[start, end)
+    if sub not palindrome: skip
+    append sub
+    recurse with start = end
+    remove last
+
+isPalindrome(s):
+  two pointers i,j move inward; mismatch -> false
+```
 
 ```java
 class Solution {
@@ -876,6 +1164,17 @@ BST key property: `left subtree values < node.val < right subtree values`. This 
 
 ## BST Template: Pass Bounds Down
 
+**Variables:** `node` = current node · `min`/`max` = exclusive value bounds valid for this subtree
+**Pseudocode:**
+```
+validate(node, min, max):
+  if node null: return true
+  if node.val <= min OR node.val >= max: return false      # bounds check
+  return validate(node.left, min, node.val)                # left tightens max
+     AND validate(node.right, node.val, max)               # right tightens min
+# call: validate(root, LONG_MIN, LONG_MAX)
+```
+
 ```java
 // Validate BST by passing min/max constraints down the tree
 boolean validate(TreeNode node, long min, long max) {
@@ -891,6 +1190,16 @@ boolean validate(TreeNode node, long min, long max) {
 
 ## BST Template: Inorder Traversal = Sorted Order
 
+**Variables:** `node` = current node (visited in ascending value order)
+**Pseudocode:**
+```
+inorder(node):
+  if node null: return
+  inorder(node.left)
+  process node            # e.g. kth smallest: count, return at k
+  inorder(node.right)
+```
+
 ```java
 // BST inorder (left → node → right) visits nodes in ascending order
 void inorder(TreeNode node) {
@@ -902,6 +1211,17 @@ void inorder(TreeNode node) {
 ```
 
 ## BST Template: Binary Search on Tree
+
+**Variables:** `root` = current node being examined · `target` = value searched for
+**Pseudocode:**
+```
+search(root, target):
+  while root not null:
+    if root.val == target: return root
+    else if root.val < target: root = root.right   # go right
+    else: root = root.left                          # go left
+  return null
+```
 
 ```java
 // Navigate BST like binary search: go left or right based on comparison
@@ -927,6 +1247,18 @@ TreeNode search(TreeNode root, int target) {
 
 **Variation:** Pass min/max bounds down — each call tightens the valid range. Use `long` to handle `Integer.MIN_VALUE` and `Integer.MAX_VALUE` edge cases.
 
+**Variables:** `root` = tree root · `node` = current node · `min`,`max` = exclusive valid value bounds (as `long`) for this subtree
+**Pseudocode:**
+```
+return validate(root, -inf, +inf)
+
+validate(node, min, max):
+  if node is null: return true
+  if node.val <= min or node.val >= max: return false
+  return validate(left, min, node.val)
+     and validate(right, node.val, max)
+```
+
 ```java
 class Solution {
     public boolean isValidBST(TreeNode root) {
@@ -950,6 +1282,18 @@ class Solution {
 **Description:** Find the kth smallest element in a BST (1-indexed).
 
 **Variation:** BST inorder traversal visits nodes in ascending order. Count nodes visited; when count reaches k, record the answer and stop early.
+
+**Variables:** `root` = tree root · `k` = target rank (1-indexed) · `count` = nodes visited so far in inorder · `result` = value of kth node · `node` = current node
+**Pseudocode:**
+```
+inorder(root, k); return result
+
+inorder(node, k):
+  if node is null: return
+  inorder(left, k)
+  count++; if count == k: result = node.val, return
+  inorder(right, k)
+```
 
 ```java
 class Solution {
@@ -978,6 +1322,16 @@ class Solution {
 
 **Variation:** Use BST structure to navigate in O(h). At each node, compare distance to closest seen so far, then binary-search left or right.
 
+**Variables:** `root` = tree root / current node · `target` = double to approach · `closest` = best value seen so far
+**Pseudocode:**
+```
+closest = root.val
+while root not null:
+  if |root.val - target| < |closest - target|: closest = root.val
+  go right if root.val < target else go left
+return closest
+```
+
 ```java
 class Solution {
     public int closestValue(TreeNode root, double target) {
@@ -1000,6 +1354,16 @@ class Solution {
 **Description:** Given a node `p` in a BST, return its inorder successor (the smallest node with value greater than `p.val`). Return null if no such node exists.
 
 **Variation:** Navigate the BST. When `root.val > p.val`, this root is a candidate — save it and go left (to find a smaller valid candidate). When `root.val <= p.val`, go right (must find something larger).
+
+**Variables:** `root` = tree root / current node · `p` = node whose successor we want · `result` = best candidate (smallest value > p.val) so far
+**Pseudocode:**
+```
+result = null
+while root not null:
+  if root.val > p.val: result = root; go left (seek closer)
+  else: go right (need larger)
+return result
+```
 
 ```java
 class Solution {
@@ -1026,6 +1390,20 @@ class Solution {
 **Description:** Return the length of the longest path in a binary tree where every node along the path has the same value. The path does not need to pass through the root.
 
 **Variation:** Post-order DFS. At each node, extend the left or right path only if the child's value matches. The path through the current node = leftPath + rightPath. Return the max single-direction extension upward.
+
+**Variables:** `root` = tree root · `node` = current node · `max` = global longest univalue path (edge count) · `left`,`right` = child dfs results · `leftPath`,`rightPath` = matching-value extension toward each child
+**Pseudocode:**
+```
+dfs(root); return max
+
+dfs(node):
+  if node is null: return 0
+  left = dfs(node.left); right = dfs(node.right)
+  leftPath  = left+1  if left child exists and equals node.val else 0
+  rightPath = right+1 if right child exists and equals node.val else 0
+  max = max(max, leftPath + rightPath)   // path through node
+  return max(leftPath, rightPath)        // single direction up
+```
 
 ```java
 class Solution {
@@ -1055,6 +1433,26 @@ class Solution {
 ## #37 Sudoku Solver
 **Description:** Fill a partially filled 9×9 Sudoku so every row, column, and 3×3 box contains digits 1-9.
 **Variation:** backtracking that tries digits 1-9 in each empty cell, validating against row, column, and box constraints before recursing.
+**Variables:** `board` = 9x9 grid · `i`,`j` = current cell · `c` = digit being tried · `row`,`col` = cell coords in isValid
+**Pseudocode:**
+```
+solve(board):
+  for each cell (i,j):
+    if cell empty:
+      for c from '1' to '9':
+        if isValid(board,i,j,c):
+          place c
+          if solve(board): return true
+          erase c (backtrack)
+      return false   // no digit fits
+  return true        // all filled
+
+isValid(board, row, col, c):
+  for i in 0..8:
+    if c in row, in column, or in 3x3 box: return false
+  return true
+```
+
 ```java
 class Solution {
     public void solveSudoku(char[][] board) { solve(board); }
@@ -1088,6 +1486,20 @@ class Solution {
 ## #47 Permutations II
 **Description:** Return all unique permutations of an array that may contain duplicates.
 **Variation:** sort first; use a `used[]` array; skip a value if the previous equal value at the same tree level has not been used (prevents duplicate permutations).
+**Variables:** `nums` = sorted input (may have dups) · `used[i]` = whether `nums[i]` is in current path · `path` = permutation being built · `result` = all unique permutations
+**Pseudocode:**
+```
+sort nums
+backtrack(used, path):
+  if path full: add copy, return
+  for i in 0..n-1:
+    if used[i]: skip
+    if i>0 and nums[i]==nums[i-1] and prev not used: skip dup at this level
+    mark used, append nums[i]
+    recurse
+    unmark, remove last
+```
+
 ```java
 class Solution {
     public List<List<Integer>> permuteUnique(int[] nums) {
@@ -1113,6 +1525,20 @@ class Solution {
 ## #51 N-Queens
 **Description:** Place n queens on an n×n board so no two attack each other; return all distinct solutions.
 **Variation:** backtrack row by row; track occupied columns and both diagonals. Cells on the same `\` diagonal share `r-c`; cells on the same `/` diagonal share `r+c`.
+**Variables:** `n` = board size · `row` = current row · `c` = candidate column · `queens[row]` = chosen column for that row · `cols` = occupied columns · `diag1` = occupied `\` diagonals (`row-c`) · `diag2` = occupied `/` diagonals (`row+c`) · `result` = all boards
+**Pseudocode:**
+```
+backtrack(row):
+  if row == n: build board from queens, add, return
+  for c in 0..n-1:
+    if c in cols or row-c in diag1 or row+c in diag2: skip
+    place queen: queens[row]=c, add to cols/diag1/diag2
+    recurse(row+1)
+    remove queen from cols/diag1/diag2
+
+build(queens): make each row '.'*n with 'Q' at queens[r]
+```
+
 ```java
 class Solution {
     public List<List<String>> solveNQueens(int n) {
@@ -1149,6 +1575,18 @@ class Solution {
 ## #60 Permutation Sequence
 **Description:** Return the kth permutation (1-indexed) of the sequence 1..n.
 **Variation:** no backtracking — use the factorial number system. Each position's digit is determined directly by `(k-1) / (remaining-1)!`.
+**Variables:** `n` = sequence size · `k` = target permutation (made 0-indexed) · `digits` = remaining available digits 1..n · `factorial[i]` = i! · `index` = position of next digit to pick · `result` = answer string
+**Pseudocode:**
+```
+build factorial[] and digits list 1..n
+k--   // 0-indexed
+for i from n down to 1:
+  index = k / factorial[i-1]
+  k = k % factorial[i-1]
+  append and remove digits[index]
+return result
+```
+
 ```java
 class Solution {
     public String getPermutation(int n, int k) {
@@ -1172,6 +1610,19 @@ class Solution {
 ## #90 Subsets II
 **Description:** Return all possible unique subsets of an array that may contain duplicates.
 **Variation:** sort first; within a recursion level, skip a value equal to its predecessor to avoid duplicate subsets.
+**Variables:** `nums` = sorted input (may have dups) · `start` = first index allowed · `path` = subset being built · `result` = all unique subsets
+**Pseudocode:**
+```
+sort nums
+backtrack(start, path):
+  record copy of path
+  for i from start to end:
+    if i > start and nums[i] == nums[i-1]: skip dup at same depth
+    append nums[i]
+    recurse with start = i+1
+    remove last
+```
+
 ```java
 class Solution {
     public List<List<Integer>> subsetsWithDup(int[] nums) {
@@ -1196,6 +1647,18 @@ class Solution {
 ## #216 Combination Sum III
 **Description:** Find all combinations of k numbers from 1-9 (each used at most once) that sum to n.
 **Variation:** standard combination backtracking with start index `i+1` (no reuse), but with two stopping constraints — count and remaining sum.
+**Variables:** `k` = required count of numbers · `remain` = n minus sum so far · `start` = smallest number allowed next · `path` = combo being built · `result` = all combos
+**Pseudocode:**
+```
+backtrack(remain, start, path):
+  if path size == k and remain == 0: add copy, return
+  if path size == k or remain < 0: return
+  for i from start to 9:
+    append i
+    recurse with remain-i, start = i+1 (no reuse)
+    remove last
+```
+
 ```java
 class Solution {
     public List<List<Integer>> combinationSum3(int k, int n) {
@@ -1219,6 +1682,23 @@ class Solution {
 ## #549 Binary Tree Longest Consecutive Sequence II
 **Description:** Find the length of the longest consecutive path in a binary tree. The path can be increasing or decreasing and may go through a node (child-parent-child).
 **Variation:** post-order DFS returns a pair `{increasing, decreasing}` for each node. A path through the node combines an increasing run from one child with a decreasing run from the other.
+**Variables:** `root` = tree root · `node` = current node · `max` = global longest consecutive path (node count) · `inc`/`dec` = longest increasing/decreasing run ending at node · `left`,`right` = child `{inc,dec}` pairs
+**Pseudocode:**
+```
+dfs(root); return max
+
+dfs(node):
+  if node null: return {0,0}
+  inc=1, dec=1
+  left=dfs(left); right=dfs(right)
+  if left child val+1==node.val: inc = left.inc+1
+  elif left child val-1==node.val: dec = left.dec+1
+  if right child val+1==node.val: inc = max(inc, right.inc+1)
+  elif right child val-1==node.val: dec = max(dec, right.dec+1)
+  max = max(max, inc+dec-1)   // through node
+  return {inc, dec}
+```
+
 ```java
 class Solution {
     private int max = 0;
@@ -1254,6 +1734,22 @@ class Solution {
 **Description:** Given a string of digits 2-9, return all letter combinations the phone keypad could represent.
 **Intuition:** backtrack one digit at a time, appending each candidate letter and undoing it.
 
+**Variables:** `MAP[d]` = letters for digit `d` · `start` = current digit index · `builder` = current letter prefix · `letters` = candidate letters for digit at `start`
+**Pseudocode:**
+```
+if digits empty: return []
+backtrack(start=0, empty builder)
+return result
+
+backtrack(start, builder):
+  if start == length: record builder; return
+  letters = MAP[digit at start]
+  for each ch in letters:
+    append ch
+    backtrack(start+1, builder)
+    remove last char
+```
+
 ```java
 class Solution {
     private static final String[] MAP = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
@@ -1282,6 +1778,20 @@ class Solution {
 
 **Description:** Generate all combinations of n pairs of well-formed parentheses.
 **Intuition:** add `(` while opens remain; add `)` only while closes outstanding; backtrack each choice.
+
+**Variables:** `open` = remaining `(` to place · `close` = remaining `)` to place · `builder` = current parenthesis string
+**Pseudocode:**
+```
+backtrack(open=n, close=n, empty builder)
+return result
+
+backtrack(open, close, builder):
+  if open == 0 and close == 0: record builder; return
+  if open > 0:
+    append '('; backtrack(open-1, close); remove last
+  if close > open:
+    append ')'; backtrack(open, close-1); remove last
+```
 
 ```java
 class Solution {
@@ -1314,6 +1824,17 @@ class Solution {
 **Description:** Determine if a filled-in 9×9 Sudoku board is valid (no repeats in any row, column, or 3×3 box).
 **Intuition:** encode each digit's row/column/box membership into a HashSet of unique keys; a collision means invalid.
 
+**Variables:** `board` = 9x9 grid · `seen` = set of membership keys · `c` = current digit · `row`/`col`/`box` = unique keys encoding c's row, column, and 3x3 box
+**Pseudocode:**
+```
+seen = empty set
+for each cell (i,j):
+  c = board[i][j]; if '.' skip
+  build keys: c+"r"+i, c+"c"+j, c+"b"+(i/3)+(j/3)
+  if any key already in seen: return false
+return true
+```
+
 ```java
 class Solution {
     public boolean isValidSudoku(char[][] board) {
@@ -1343,6 +1864,20 @@ class Solution {
 **Description:** Return all combinations of k numbers chosen from 1 to n.
 **Intuition:** standard backtracking with start index advancing to i+1; record when path reaches size k.
 
+**Variables:** `n` = range upper bound · `k` = target size · `start` = next candidate number · `path` = current combination
+**Pseudocode:**
+```
+backtrack(start=1, empty path)
+return result
+
+backtrack(start, path):
+  if path.size == k: record copy of path; return
+  for i = start..n:
+    add i to path
+    backtrack(i+1, path)
+    remove last from path
+```
+
 ```java
 class Solution {
     public List<List<Integer>> combine(int n, int k) {
@@ -1368,6 +1903,26 @@ class Solution {
 
 **Description:** Return all valid IP addresses formable by inserting dots into a digit string.
 **Intuition:** backtrack choosing 1-3 digit segments; each segment must be 0-255 and have no leading zero.
+
+**Variables:** `start` = index into `s` · `parts` = segments placed so far · `builder` = IP being built (with trailing dots) · `len` = current segment length · `segment` = candidate `s[start, start+len)` · `mark` = builder length before append
+**Pseudocode:**
+```
+backtrack(start=0, parts=0, empty builder)
+return result
+
+backtrack(start, parts, builder):
+  if parts == 4:
+    if start == length: record builder without trailing dot
+    return
+  for len = 1..3 while start+len <= length:
+    segment = s[start, start+len)
+    if leading zero: break
+    if value > 255: break
+    mark = builder length
+    append segment + '.'
+    backtrack(start+len, parts+1, builder)
+    truncate builder to mark
+```
 
 ```java
 class Solution {
@@ -1402,6 +1957,18 @@ class Solution {
 **Description:** Return the inorder traversal (left → root → right) of a binary tree.
 **Intuition:** recurse left, visit node, recurse right.
 
+**Variables:** `node` = current subtree root · `result` = inorder values
+**Pseudocode:**
+```
+dfs(root); return result
+
+dfs(node):
+  if node null: return
+  dfs(node.left)
+  add node.val
+  dfs(node.right)
+```
+
 ```java
 class Solution {
     public List<Integer> inorderTraversal(TreeNode root) {
@@ -1425,6 +1992,22 @@ class Solution {
 
 **Description:** Generate all structurally unique BSTs storing values 1..n.
 **Intuition:** pick each value as root; recursively build all left subtrees from the smaller range and all right subtrees from the larger range, then combine.
+
+**Variables:** `[lo, hi]` = inclusive value range for subtree · `i` = chosen root value · `left` = all left subtrees from `[lo, i-1]` · `right` = all right subtrees from `[i+1, hi]`
+**Pseudocode:**
+```
+if n == 0: return []
+return build(1, n)
+
+build(lo, hi):
+  if lo > hi: return [null]
+  for i = lo..hi:
+    left = build(lo, i-1)
+    right = build(i+1, hi)
+    for each l in left, each r in right:
+      make root i with children l, r; add to result
+  return result
+```
 
 ```java
 class Solution {
@@ -1460,6 +2043,22 @@ class Solution {
 **Description:** Two nodes of a BST were swapped by mistake; recover the tree without changing its structure.
 **Intuition:** an inorder traversal of a valid BST is ascending; the swapped pair shows up as one or two descents. Track them and swap their values.
 
+**Variables:** `first`, `second` = the two swapped nodes · `prev` = previous node in inorder order · `node` = current node
+**Pseudocode:**
+```
+inorder(root)
+swap first.val and second.val
+
+inorder(node):
+  if node null: return
+  inorder(node.left)
+  if prev exists and prev.val > node.val:
+    if first not set: first = prev
+    second = node
+  prev = node
+  inorder(node.right)
+```
+
 ```java
 class Solution {
     private TreeNode first = null, second = null, prev = null;
@@ -1490,6 +2089,16 @@ class Solution {
 **Description:** Check if two binary trees are structurally identical with the same node values.
 **Intuition:** both null is equal; one null or differing values is not; otherwise recurse on both children.
 
+**Variables:** `p`, `q` = corresponding nodes in the two trees
+**Pseudocode:**
+```
+isSameTree(p, q):
+  if both null: return true
+  if exactly one null: return false
+  if p.val != q.val: return false
+  return isSameTree(p.left, q.left) and isSameTree(p.right, q.right)
+```
+
 ```java
 class Solution {
     public boolean isSameTree(TreeNode p, TreeNode q) {
@@ -1508,6 +2117,19 @@ class Solution {
 
 **Description:** Check if a binary tree is a mirror image of itself.
 **Intuition:** compare the outer pairs and inner pairs of two mirrored subtrees.
+
+**Variables:** `a`, `b` = mirrored node pair being compared
+**Pseudocode:**
+```
+if root null: return true
+return mirror(root.left, root.right)
+
+mirror(a, b):
+  if both null: return true
+  if exactly one null: return false
+  if a.val != b.val: return false
+  return mirror(a.left, b.right) and mirror(a.right, b.left)
+```
 
 ```java
 class Solution {
@@ -1531,6 +2153,22 @@ class Solution {
 
 **Description:** Return node values level by level, left to right.
 **Intuition:** BFS with a queue; drain one level's worth of nodes per outer iteration.
+
+**Variables:** `queue` = nodes pending by level · `size` = node count of current level · `level` = current level's values · `node` = dequeued node
+**Pseudocode:**
+```
+if root null: return []
+enqueue root
+while queue not empty:
+  size = queue size
+  level = []
+  repeat size times:
+    node = dequeue
+    add node.val to level
+    enqueue non-null children
+  add level to result
+return result
+```
 
 ```java
 class Solution {
@@ -1562,6 +2200,23 @@ class Solution {
 
 **Description:** Return node values level by level, alternating left-to-right and right-to-left.
 **Intuition:** standard BFS, but reverse the level list on alternate levels.
+
+**Variables:** `queue` = nodes pending by level · `leftToRight` = current level direction · `size` = current level node count · `level` = deque of current level values · `node` = dequeued node
+**Pseudocode:**
+```
+if root null: return []
+enqueue root; leftToRight = true
+while queue not empty:
+  size = queue size
+  level = empty deque
+  repeat size times:
+    node = dequeue
+    if leftToRight: add node.val at end else at front
+    enqueue non-null children
+  add level to result
+  flip leftToRight
+return result
+```
 
 ```java
 class Solution {
@@ -1597,6 +2252,22 @@ class Solution {
 **Description:** Reconstruct a binary tree from its preorder and inorder traversals.
 **Intuition:** the first preorder element is the root; its position in inorder splits left/right subtree sizes.
 
+**Variables:** `preIndex` = next preorder position · `inIndex` = value → inorder index map · `[lo, hi]` = inorder range of current subtree · `rootVal` = root value · `mid` = root's inorder index
+**Pseudocode:**
+```
+map each inorder value to its index
+return build(0, n-1)
+
+build(lo, hi):
+  if lo > hi: return null
+  rootVal = preorder[preIndex++]
+  root = node(rootVal)
+  mid = inIndex[rootVal]
+  root.left = build(lo, mid-1)
+  root.right = build(mid+1, hi)
+  return root
+```
+
 ```java
 class Solution {
     private int preIndex = 0;
@@ -1626,6 +2297,23 @@ class Solution {
 
 **Description:** Reconstruct a binary tree from its inorder and postorder traversals.
 **Intuition:** the last postorder element is the root; build right subtree before left since postorder is consumed back to front.
+
+**Variables:** `postIndex` = next postorder position (back to front) · `inIndex` = value → inorder index map · `[lo, hi]` = inorder range of current subtree · `rootVal` = root value · `mid` = root's inorder index
+**Pseudocode:**
+```
+postIndex = n-1
+map each inorder value to its index
+return build(0, n-1)
+
+build(lo, hi):
+  if lo > hi: return null
+  rootVal = postorder[postIndex--]
+  root = node(rootVal)
+  mid = inIndex[rootVal]
+  root.right = build(mid+1, hi)
+  root.left = build(lo, mid-1)
+  return root
+```
 
 ```java
 class Solution {
@@ -1657,6 +2345,23 @@ class Solution {
 
 **Description:** Return node values level by level, from bottom to top.
 **Intuition:** standard BFS, then reverse the list of levels.
+
+**Variables:** `queue` = nodes pending by level · `size` = current level node count · `level` = current level values · `node` = dequeued node
+**Pseudocode:**
+```
+if root null: return []
+enqueue root
+while queue not empty:
+  size = queue size
+  level = []
+  repeat size times:
+    node = dequeue
+    add node.val to level
+    enqueue non-null children
+  add level to result
+reverse result
+return result
+```
 
 ```java
 class Solution {
@@ -1690,6 +2395,20 @@ class Solution {
 **Description:** Convert a sorted array to a height-balanced BST.
 **Intuition:** pick the middle element as the root so left and right halves are balanced; recurse on each half.
 
+**Variables:** `[lo, hi]` = inclusive array range for subtree · `mid` = midpoint chosen as root
+**Pseudocode:**
+```
+return build(0, n-1)
+
+build(lo, hi):
+  if lo > hi: return null
+  mid = lo + (hi-lo)/2
+  root = node(nums[mid])
+  root.left = build(lo, mid-1)
+  root.right = build(mid+1, hi)
+  return root
+```
+
 ```java
 class Solution {
     public TreeNode sortedArrayToBST(int[] nums) {
@@ -1714,6 +2433,17 @@ class Solution {
 **Description:** Find the shortest path length from root to any leaf.
 **Intuition:** like max depth, but a node with one missing child must take the existing child's depth (a non-leaf cannot end a root-to-leaf path).
 
+**Variables:** `left` = min depth of left subtree · `right` = min depth of right subtree
+**Pseudocode:**
+```
+minDepth(root):
+  if root null: return 0
+  left = minDepth(root.left)
+  right = minDepth(root.right)
+  if one child missing: return max(left, right) + 1
+  return min(left, right) + 1
+```
+
 ```java
 class Solution {
     public int minDepth(TreeNode root) {
@@ -1736,6 +2466,18 @@ class Solution {
 **Description:** Flatten a binary tree into a right-pointer linked list following preorder, in place.
 **Intuition:** reverse-preorder traversal (right, left, node) lets you prepend each node to a running tail.
 
+**Variables:** `prev` = head of already-flattened suffix (built in reverse preorder) · `root` = current node
+**Pseudocode:**
+```
+flatten(root):
+  if root null: return
+  flatten(root.right)
+  flatten(root.left)
+  root.right = prev
+  root.left = null
+  prev = root
+```
+
 ```java
 class Solution {
     private TreeNode prev = null;
@@ -1757,6 +2499,20 @@ class Solution {
 
 **Description:** Connect each node's `next` pointer to its right neighbor in a perfect binary tree, using O(1) extra space.
 **Intuition:** use already-established `next` links of the current level to thread the next level.
+
+**Variables:** `leftmost` = leftmost node of current level · `head` = node walking across current level
+**Pseudocode:**
+```
+leftmost = root
+while leftmost and leftmost.left exist:
+  head = leftmost
+  while head not null:
+    head.left.next = head.right
+    if head.next exists: head.right.next = head.next.left
+    head = head.next
+  leftmost = leftmost.left
+return root
+```
 
 ```java
 class Solution {
@@ -1784,6 +2540,19 @@ class Solution {
 **Description:** Same as #116 but for an arbitrary binary tree.
 **Intuition:** walk each level via `next` links, building the next level's chain through a dummy head since children may be missing.
 
+**Variables:** `head` = leftmost node of current level · `dummy` = sentinel before next level's chain · `tail` = builder tail for next level · `cur` = node walking across current level
+**Pseudocode:**
+```
+head = root
+while head not null:
+  dummy = sentinel; tail = dummy
+  for cur = head across level via next:
+    if cur.left: tail.next = cur.left; advance tail
+    if cur.right: tail.next = cur.right; advance tail
+  head = dummy.next
+return root
+```
+
 ```java
 class Solution {
     public Node connect(Node root) {
@@ -1810,6 +2579,18 @@ class Solution {
 **Description:** Return the preorder traversal (root → left → right) of a binary tree.
 **Intuition:** visit node, recurse left, recurse right.
 
+**Variables:** `node` = current subtree root · `result` = preorder values
+**Pseudocode:**
+```
+dfs(root); return result
+
+dfs(node):
+  if node null: return
+  add node.val
+  dfs(node.left)
+  dfs(node.right)
+```
+
 ```java
 class Solution {
     public List<Integer> preorderTraversal(TreeNode root) {
@@ -1834,6 +2615,18 @@ class Solution {
 **Description:** Return the postorder traversal (left → right → root) of a binary tree.
 **Intuition:** recurse left, recurse right, visit node.
 
+**Variables:** `node` = current subtree root · `result` = postorder values
+**Pseudocode:**
+```
+dfs(root); return result
+
+dfs(node):
+  if node null: return
+  dfs(node.left)
+  dfs(node.right)
+  add node.val
+```
+
 ```java
 class Solution {
     public List<Integer> postorderTraversal(TreeNode root) {
@@ -1857,6 +2650,20 @@ class Solution {
 
 **Description:** Return the values visible from the right side, one per level.
 **Intuition:** BFS each level; the last node dequeued in a level is the rightmost visible one.
+
+**Variables:** `queue` = nodes pending by level · `size` = current level node count · `node` = dequeued node · `i` = index within level
+**Pseudocode:**
+```
+if root null: return []
+enqueue root
+while queue not empty:
+  size = queue size
+  for i = 0..size-1:
+    node = dequeue
+    if i == size-1: add node.val (rightmost)
+    enqueue non-null children
+return result
+```
 
 ```java
 class Solution {
@@ -1886,6 +2693,20 @@ class Solution {
 
 **Description:** Count nodes in a complete binary tree faster than O(n).
 **Intuition:** if leftmost and rightmost depths match, the subtree is perfect (2^h − 1 nodes); otherwise recurse on both children.
+
+**Variables:** `left` = leftmost path depth · `right` = rightmost path depth · `d` = depth counter in helpers
+**Pseudocode:**
+```
+countNodes(root):
+  if root null: return 0
+  left = leftDepth(root)
+  right = rightDepth(root)
+  if left == right: return 2^left - 1   // perfect subtree
+  return 1 + countNodes(root.left) + countNodes(root.right)
+
+leftDepth/rightDepth(node):
+  d = 0; walk down left/right counting nodes; return d
+```
 
 ```java
 class Solution {
@@ -1917,6 +2738,16 @@ class Solution {
 **Description:** Find the LCA of two nodes in a BST.
 **Intuition:** if both values are less than the node, go left; if both greater, go right; otherwise the node is the split point = LCA.
 
+**Variables:** `root` = current node walking down · `p`, `q` = target nodes
+**Pseudocode:**
+```
+while root not null:
+  if both p,q < root.val: root = root.left
+  else if both p,q > root.val: root = root.right
+  else: return root   // split point
+return null
+```
+
 ```java
 class Solution {
     public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
@@ -1938,6 +2769,17 @@ class Solution {
 **Description:** Find the LCA of two nodes in a general binary tree.
 **Intuition:** post-order: if p or q matches the node, return it; the node where both arms return non-null is the LCA.
 
+**Variables:** `root` = current node · `p`, `q` = target nodes · `left` = LCA result from left subtree · `right` = LCA result from right subtree
+**Pseudocode:**
+```
+lowestCommonAncestor(root, p, q):
+  if root null or root is p or q: return root
+  left = recurse on root.left
+  right = recurse on root.right
+  if left and right both non-null: return root
+  return whichever of left/right is non-null
+```
+
 ```java
 class Solution {
     public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
@@ -1957,6 +2799,21 @@ class Solution {
 
 **Description:** Compute all results obtainable by parenthesizing an expression differently.
 **Intuition:** at each operator, split into left and right subexpressions, recursively evaluate both, and combine every pair.
+
+**Variables:** `i` = scan index · `c` = current char · `left` = results of left subexpression · `right` = results of right subexpression · `a`, `b` = one operand pair
+**Pseudocode:**
+```
+diffWaysToCompute(expression):
+  for i over expression:
+    c = char at i
+    if c is operator:
+      left = diffWaysToCompute(expression[0, i))
+      right = diffWaysToCompute(expression[i+1, end])
+      for each a in left, each b in right:
+        apply c to a,b; add to result
+  if result empty: result = [parse expression as int]
+  return result
+```
 
 ```java
 class Solution {
@@ -1990,6 +2847,19 @@ class Solution {
 **Description:** Count subtrees in which all nodes share the same value.
 **Intuition:** post-order; a subtree is univalue if both children are univalue and their values match the node's value.
 
+**Variables:** `count` = running total of univalue subtrees · `left`/`right` = whether each child subtree is univalue
+**Pseudocode:**
+```
+isUnival(root); return count
+isUnival(node):
+  if node null: return true
+  left = isUnival(node.left); right = isUnival(node.right)
+  if either child not univalue: return false
+  if left child exists and differs in value: return false
+  if right child exists and differs in value: return false
+  count++; return true
+```
+
 ```java
 class Solution {
     private int count = 0;
@@ -2018,6 +2888,17 @@ class Solution {
 **Description:** Verify whether an array is a valid BST preorder traversal.
 **Intuition:** use a stack to simulate the path; popping when a value exceeds the top sets a lower bound. Any later value below that bound is invalid.
 
+**Variables:** `stack` = path of ancestors with no right child yet seen · `lowerBound` = min allowed value once we turn right
+**Pseudocode:**
+```
+lowerBound = -inf
+for each value in preorder:
+  if value < lowerBound: return false
+  while stack nonempty and top < value: lowerBound = pop()
+  push(value)
+return true
+```
+
 ```java
 class Solution {
     public boolean verifyPreorder(int[] preorder) {
@@ -2042,6 +2923,23 @@ class Solution {
 
 **Description:** Return all palindrome permutations of a string.
 **Intuition:** a palindrome needs at most one odd-count character; build half the palindrome by permuting half the characters, then mirror it.
+
+**Variables:** `count[c]` = frequency of char `c` · `mid` = single odd-count char (center) · `half` = chars for one half · `used[i]` = whether `half[i]` is placed · `builder` = current half being built
+**Pseudocode:**
+```
+count frequencies of all chars
+for each char i:
+  if odd count: if mid already set return [] else mid = char i
+  add count[i]/2 copies of char i to half
+backtrack(half, used, builder, mid)
+backtrack:
+  if builder full: result += builder + mid + reverse(builder); return
+  for each i in half:
+    if used or (duplicate of prev unused): skip
+    mark used, append half[i]
+    recurse
+    undo append, unmark
+```
 
 ```java
 class Solution {
@@ -2088,6 +2986,19 @@ class Solution {
 **Description:** Find the k values in a BST closest to a target.
 **Intuition:** inorder gives sorted values; keep a sliding window of size k, evicting the farther end while a closer candidate exists.
 
+**Variables:** `window` = deque of k closest values so far (sorted) · `target` = value to be close to · `k` = window size
+**Pseudocode:**
+```
+inorder(root); return window as list
+inorder(node):
+  if null: return
+  recurse left
+  if window smaller than k: add node.val at back
+  else if node.val closer than front element: remove front, add node.val at back
+  else: return   // farther from here on, stop early
+  recurse right
+```
+
 ```java
 class Solution {
     public List<Integer> closestKValues(TreeNode root, double target, int k) {
@@ -2118,6 +3029,22 @@ class Solution {
 
 **Description:** Insert +, -, * between digits of a string to reach a target value; return all expressions.
 **Intuition:** backtrack each operand prefix; track running value and the last multiplied term so * can fold correctly.
+
+**Variables:** `start` = index where current operand begins · `value` = running evaluated total · `prev` = last term (for * folding) · `cur` = current operand · `builder` = expression so far · `len` = builder length to truncate back to
+**Pseudocode:**
+```
+backtrack(start=0, value=0, prev=0)
+if start at end: if value == target record builder; return
+for i from start to end:
+  if operand has leading zero: break
+  cur = num[start..i]
+  if start == 0:
+    append cur; recurse(i+1, cur, cur); truncate
+  else:
+    append "+cur"; recurse(i+1, value+cur, cur); truncate
+    append "-cur"; recurse(i+1, value-cur, -cur); truncate
+    append "*cur"; recurse(i+1, value-prev+prev*cur, prev*cur); truncate
+```
 
 ```java
 class Solution {
@@ -2165,6 +3092,25 @@ class Solution {
 **Description:** Check if a string follows a pattern where each pattern char maps to a non-empty, non-overlapping substring.
 **Intuition:** backtrack assigning substrings to pattern characters, enforcing a bijection via two maps.
 
+**Variables:** `pi` = index in pattern · `si` = index in string `s` · `map` = pattern char to assigned substring · `used` = set of substrings already assigned · `candidate` = trial substring `s[si..i]`
+**Pseudocode:**
+```
+backtrack(pi=0, si=0)
+if both exhausted: return true
+if one exhausted: return false
+c = pattern[pi]
+if c already mapped:
+  if s does not start with mapped at si: return false
+  return recurse(pi+1, si + mapped length)
+for i from si to end:
+  candidate = s[si..i]
+  if candidate already used: skip
+  map c -> candidate, mark used
+  if recurse(pi+1, i+1): return true
+  unmap, unmark
+return false
+```
+
 ```java
 class Solution {
     public boolean wordPatternMatch(String pattern, String s) {
@@ -2201,6 +3147,17 @@ class Solution {
 **Description:** Given a string of '+' and '-', return all states after flipping one "++" to "--".
 **Intuition:** scan for each "++" occurrence and produce the flipped string.
 
+**Variables:** `arr` = mutable char array of state · `i` = position of candidate "++"
+**Pseudocode:**
+```
+for i in 0..len-2:
+  if arr[i]=='+' and arr[i+1]=='+':
+    flip both to '-'
+    record new string
+    restore both to '+'
+return result
+```
+
 ```java
 class Solution {
     public List<String> generatePossibleNextMoves(String currentState) {
@@ -2227,6 +3184,18 @@ class Solution {
 
 **Description:** Determine if the first player can guarantee a win in Flip Game.
 **Intuition:** the current player wins if any "++" flip leaves the opponent in a losing position; memoize states.
+
+**Variables:** `state` = current board string · `memo` = state to win/lose result · `next` = board after flipping a "++" at i
+**Pseudocode:**
+```
+canWin(state):
+  if state in memo: return memo
+  for i in 0..len-2:
+    if "++" at i:
+      next = flip both to "--"
+      if not canWin(next): memo[state]=true; return true
+  memo[state]=false; return false
+```
 
 ```java
 class Solution {
@@ -2257,6 +3226,24 @@ class Solution {
 
 **Description:** Serialize a binary tree to a string and deserialize it back.
 **Intuition:** preorder with explicit "#" null markers uniquely encodes structure; rebuild by consuming tokens in the same order.
+
+**Variables:** `builder` = output buffer · `queue` = tokens split by comma · `token` = current node value or "#" (null)
+**Pseudocode:**
+```
+serialize(node, builder):
+  if null: append "#,"; return
+  append val + ","
+  serialize left; serialize right
+deserialize(data):
+  queue = tokens of data
+  return build(queue)
+build(queue):
+  token = poll
+  if "#": return null
+  node = new node(token)
+  node.left = build; node.right = build
+  return node
+```
 
 ```java
 public class Codec {
@@ -2294,6 +3281,18 @@ public class Codec {
 **Description:** Find the longest consecutive increasing-by-1 path going from parent to child.
 **Intuition:** pass the current run length down; extend it when the child is exactly parent + 1, otherwise reset to 1.
 
+**Variables:** `max` = longest consecutive run found · `parent` = previous node on path · `length` = current consecutive run length
+**Pseudocode:**
+```
+dfs(root, null, 0); return max
+dfs(node, parent, length):
+  if null: return
+  if parent exists and node.val == parent.val+1: length++
+  else: length = 1
+  max = max(max, length)
+  dfs(left, node, length); dfs(right, node, length)
+```
+
 ```java
 class Solution {
     private int max = 0;
@@ -2319,6 +3318,22 @@ class Solution {
 
 **Description:** Remove the minimum number of parentheses to make a string valid; return all distinct results.
 **Intuition:** BFS by removal count; the first level whose strings include valid ones is the minimum-removal answer.
+
+**Variables:** `queue` = BFS frontier of candidate strings · `visited` = strings already enqueued · `found` = whether a valid string was found at current level · `cur` = current string · `balance` = paren balance in validity check
+**Pseudocode:**
+```
+enqueue s, mark visited
+while queue nonempty:
+  cur = poll
+  if valid: add to result, found = true
+  if found: skip expanding (only finish this level)
+  for each position i:
+    if char not a paren: skip
+    next = cur without char i
+    if newly visited: enqueue
+return result
+isValid: scan tracking balance, fail if it goes negative, require 0 at end
+```
 
 ```java
 class Solution {
@@ -2360,6 +3375,21 @@ class Solution {
 **Description:** Check if a string forms an additive sequence (each number is the sum of the two preceding).
 **Intuition:** backtrack the first two numbers; the rest of the string is forced, so just verify it matches the running sums.
 
+**Variables:** `i` = end of first number `[0, i)` · `j` = end of second number `[i, j)` · `first`/`second` = first two numbers · `sum` = first+second · `sumStr` = its string · `start` = index in num to match next
+**Pseudocode:**
+```
+for i from 1 to n/2 (no leading-zero first):
+  for j from i+1 while remaining long enough (no leading-zero second):
+    first = num[0..i), second = num[i..j)
+    if check(first, second, j): return true
+return false
+check(first, second, start):
+  if start at end: return true
+  sum = first+second; sumStr = its string
+  if num does not start with sumStr at start: return false
+  return check(second, sum, start + sumStr length)
+```
+
 ```java
 class Solution {
     public boolean isAdditiveNumber(String num) {
@@ -2392,6 +3422,21 @@ class Solution {
 
 **Description:** Return node values ordered by column, then by row.
 **Intuition:** BFS tracking each node's column; collect values per column, then read columns left to right.
+
+**Variables:** `columns` = column index to list of values · `queue`/`cols` = parallel BFS queues of nodes and their columns · `col` = current node's column · `min`/`max` = column range seen
+**Pseudocode:**
+```
+if root null: return []
+enqueue root with col 0
+while queue nonempty:
+  node = poll, col = poll
+  columns[col].add(node.val)
+  update min, max
+  if left: enqueue left with col-1
+  if right: enqueue right with col+1
+for col from min to max: result.add(columns[col])
+return result
+```
 
 ```java
 class Solution {
@@ -2427,6 +3472,18 @@ class Solution {
 **Description:** Return all abbreviations of a word (replace any non-adjacent groups of letters with their counts).
 **Intuition:** for each character, choose to either abbreviate it (extend a count) or keep it literally; backtrack.
 
+**Variables:** `start` = current char index · `count` = pending run of abbreviated chars · `builder` = abbreviation being built · `len` = builder length to restore to
+**Pseudocode:**
+```
+backtrack(start=0, count=0)
+if start at end:
+  if count>0 append count; record; restore; return
+backtrack(start+1, count+1)   // abbreviate this char
+save len; if count>0 append count; append word[start]
+backtrack(start+1, 0)         // keep this char
+restore len
+```
+
 ```java
 class Solution {
     public List<String> generateAbbreviations(String word) {
@@ -2460,6 +3517,18 @@ class Solution {
 **Description:** Sum each integer in a nested list weighted by its depth.
 **Intuition:** DFS carrying the current depth; integers add `value·depth`, lists recurse one level deeper.
 
+**Variables:** `depth` = current nesting depth (root = 1) · `sum` = accumulated weighted sum at this level
+**Pseudocode:**
+```
+return dfs(list, depth=1)
+dfs(list, depth):
+  sum = 0
+  for ni in list:
+    if integer: sum += value * depth
+    else: sum += dfs(ni.list, depth+1)
+  return sum
+```
+
 ```java
 class Solution {
     public int depthSum(List<NestedInteger> nestedList) {
@@ -2483,6 +3552,20 @@ class Solution {
 
 **Description:** Sum each integer weighted by its inverse depth (deepest integers have weight 1).
 **Intuition:** weight = (maxDepth − depth + 1). Accumulate sum of values at each level and a running unweighted total per BFS level so deeper values get counted more often.
+
+**Variables:** `unweighted` = running sum of all integers seen through current level · `total` = answer accumulator · `queue` = BFS frontier · `size` = nodes in current level
+**Pseudocode:**
+```
+queue = nestedList
+while queue nonempty:
+  size = queue size
+  for size items:
+    ni = poll
+    if integer: unweighted += value
+    else: enqueue its list
+  total += unweighted   // shallow values re-added each level
+return total
+```
 
 ```java
 class Solution {
@@ -2511,6 +3594,16 @@ class Solution {
 **Description:** Return integers 1..n in lexicographical order.
 **Intuition:** DFS a 10-ary prefix tree: start at each digit, append 0-9 as long as the number stays ≤ n.
 
+**Variables:** `cur` = current number / prefix being visited · `n` = upper bound
+**Pseudocode:**
+```
+for i in 1..9: dfs(i)
+dfs(cur):
+  if cur > n: return
+  record cur
+  for digit in 0..9: dfs(cur*10 + digit)
+```
+
 ```java
 class Solution {
     public List<Integer> lexicalOrder(int n) {
@@ -2534,6 +3627,16 @@ class Solution {
 **Description:** Sum the values of all left leaves in a binary tree.
 **Intuition:** pass down whether a node is a left child; add its value when it is both a left child and a leaf.
 
+**Variables:** `isLeft` = whether current node is its parent's left child
+**Pseudocode:**
+```
+return dfs(root, false)
+dfs(node, isLeft):
+  if null: return 0
+  if leaf: return isLeft ? node.val : 0
+  return dfs(left, true) + dfs(right, false)
+```
+
 ```java
 class Solution {
     public int sumOfLeftLeaves(TreeNode root) {
@@ -2556,6 +3659,22 @@ class Solution {
 
 **Description:** Convert a BST into a sorted circular doubly linked list in place.
 **Intuition:** inorder traversal yields sorted order; link each node to the previous one, then close the ring between head and tail.
+
+**Variables:** `first` = head of list (smallest) · `last` = last node linked so far
+**Pseudocode:**
+```
+if root null: return null
+inorder(root)
+link last.right -> first and first.left -> last   // close ring
+return first
+inorder(node):
+  if null: return
+  recurse left
+  if last exists: last.right=node, node.left=last
+  else: first = node
+  last = node
+  recurse right
+```
 
 ```java
 class Solution {
@@ -2585,6 +3704,20 @@ class Solution {
 
 **Description:** Return the level order traversal of an N-ary tree.
 **Intuition:** BFS, enqueuing all children of each node per level.
+
+**Variables:** `queue` = BFS frontier · `size` = nodes in current level · `level` = values collected for this level
+**Pseudocode:**
+```
+if root null: return []
+enqueue root
+while queue nonempty:
+  size = queue size; level = []
+  for size items:
+    node = poll; level.add(node.val)
+    enqueue all children
+  result.add(level)
+return result
+```
 
 ```java
 class Solution {
@@ -2616,6 +3749,21 @@ class Solution {
 **Description:** Count downward paths (any node to any descendant) summing to a target.
 **Intuition:** prefix-sum the running root-to-node sum; the number of paths ending here equals how many earlier prefixes equal `current − target`.
 
+**Variables:** `prefix` = map of root-to-node running sum to occurrence count · `current` = running sum down to this node · `count` = paths found in this subtree
+**Pseudocode:**
+```
+prefix[0] = 1
+return dfs(root, 0, target)
+dfs(node, current, target):
+  if null: return 0
+  current += node.val
+  count = prefix[current - target]   // paths ending here
+  prefix[current]++
+  count += dfs(left) + dfs(right)
+  prefix[current]--                  // backtrack
+  return count
+```
+
 ```java
 class Solution {
     public int pathSum(TreeNode root, int targetSum) {
@@ -2643,6 +3791,23 @@ class Solution {
 
 **Description:** Find the kth smallest integer in 1..n by lexicographical order.
 **Intuition:** count how many numbers share a prefix; skip whole subtrees of the 10-ary prefix tree when k exceeds their size, otherwise descend.
+
+**Variables:** `cur` = current prefix in 10-ary tree · `k` = remaining steps to target · `steps` = count of numbers under prefix range `[first, last)` ≤ n
+**Pseudocode:**
+```
+cur = 1; k--
+while k > 0:
+  steps = countSteps(cur, cur+1)
+  if steps <= k: move right sibling (cur++, k -= steps)
+  else: descend (cur *= 10, k--)
+return cur
+countSteps(first, last):
+  steps = 0
+  while first <= n:
+    steps += min(n+1, last) - first   // count this level
+    first *= 10; last *= 10
+  return steps
+```
 
 ```java
 class Solution {
@@ -2680,6 +3845,24 @@ class Solution {
 
 **Description:** Serialize and deserialize a BST compactly.
 **Intuition:** preorder alone reconstructs a BST using value bounds, so no null markers are needed.
+
+**Variables:** `builder` = preorder output · `tokens` = split values · `index` = next token to consume · `min`/`max` = allowed value bounds for current node
+**Pseudocode:**
+```
+serialize(node): if null return; append val+","; recurse left; recurse right
+deserialize(data):
+  if empty: return null
+  tokens = split; index = 0
+  return build(-inf, +inf)
+build(min, max):
+  if no tokens left: return null
+  val = tokens[index]
+  if val outside [min, max]: return null   // belongs elsewhere
+  index++
+  node = new node(val)
+  node.left = build(min, val); node.right = build(val, max)
+  return node
+```
 
 ```java
 public class Codec {
@@ -2723,6 +3906,21 @@ public class Codec {
 **Description:** Delete a key from a BST and return the new root.
 **Intuition:** find the node; if it has two children, replace its value with the inorder successor (smallest in right subtree) and delete that successor.
 
+**Variables:** `key` = value to delete · `successor` = smallest node in right subtree (inorder successor)
+**Pseudocode:**
+```
+if root null: return null
+if key < root.val: root.left = delete(root.left, key)
+else if key > root.val: root.right = delete(root.right, key)
+else:   // found node
+  if no left child: return right
+  if no right child: return left
+  successor = leftmost of right subtree
+  root.val = successor.val
+  root.right = delete(root.right, successor.val)
+return root
+```
+
 ```java
 class Solution {
     public TreeNode deleteNode(TreeNode root, int key) {
@@ -2751,6 +3949,23 @@ class Solution {
 
 **Description:** Determine if matchsticks can form a square (4 equal sides) using all sticks.
 **Intuition:** backtrack placing each stick into one of 4 side buckets; prune when total isn't divisible by 4 or a stick exceeds the side length.
+
+**Variables:** `total` = sum of sticks · `side` = target side length total/4 · `sides[i]` = current length of bucket i · `index` = stick being placed (descending)
+**Pseudocode:**
+```
+total = sum; if not divisible by 4: return false
+side = total/4; sort sticks
+return backtrack(last index, sides=[0,0,0,0], side)
+backtrack(index, sides, target):
+  if index < 0: return all four sides == target
+  for each bucket i in 0..3:
+    if adding stick exceeds target: skip
+    if bucket equals previous bucket (duplicate state): skip
+    add stick to bucket i
+    if backtrack(index-1): return true
+    remove stick
+  return false
+```
 
 ```java
 class Solution {
@@ -2785,6 +4000,24 @@ class Solution {
 
 **Description:** Find the minimum balls from hand to insert to clear the board (or -1).
 **Intuition:** DFS each board state, trying every hand ball at every insertion point, removing groups of 3+; memoize visited states.
+
+**Variables:** `board` = current board · `hand` = sorted remaining balls · `memo` = state to min-steps · `key` = board+"#"+hand · `best` = min balls needed · `next` = board after inserting · `remaining` = hand minus used ball
+**Pseudocode:**
+```
+sort hand; result = dfs(board, hand)
+return result == INF ? -1 : result
+dfs(board, hand):
+  if board empty: return 0
+  if hand empty: return INF
+  if key in memo: return it
+  for each distinct hand ball i:
+    for each insert position j in board:
+      next = board with ball inserted at j, then removeGroups
+      sub = dfs(next, hand without i)
+      if sub finite: best = min(best, sub+1)
+  memo[key] = best; return best
+removeGroups(s): repeatedly find run of >=3 equal chars, remove it, restart
+```
 
 ```java
 class Solution {
@@ -2836,6 +4069,21 @@ class Solution {
 **Description:** Clean an entire room with a robot that has only relative move/turn/clean APIs and no map.
 **Intuition:** DFS with backtracking using relative coordinates; clean, try all four directions, and reverse-move to return after each branch.
 
+**Variables:** `dr`/`dc` = direction deltas (up,right,down,left) · `r`/`c` = relative coords · `dir` = current facing · `visited` = cleaned cells · `nd`/`nr`/`nc` = next direction and cell
+**Pseudocode:**
+```
+backtrack(robot, 0, 0, 0, visited)
+backtrack(r, c, dir):
+  clean; mark (r,c) visited
+  for i in 0..3:
+    nd = (dir+i)%4; nr,nc = neighbor in dir nd
+    if (nr,nc) unvisited and robot.move() succeeds:
+      backtrack(nr, nc, nd)
+      goBack()   // return to (r,c) facing dir
+    turnRight
+goBack: turn around, move, turn around again
+```
+
 ```java
 class Solution {
     private static final int[] dr = {-1, 0, 1, 0};
@@ -2875,6 +4123,20 @@ class Solution {
 **Description:** Return all increasing subsequences of length ≥ 2 (input may have duplicates).
 **Intuition:** backtrack choosing elements ≥ the last picked; within one recursion level use a set to skip duplicate starts. Cannot sort (would destroy original order).
 
+**Variables:** `start` = index to pick from · `path` = current subsequence · `used` = values already chosen at this level (dedup)
+**Pseudocode:**
+```
+backtrack(start=0, path=[])
+if path size >= 2: record copy
+used = empty set
+for i from start to end:
+  if path nonempty and nums[i] < last picked: skip
+  if nums[i] already used this level: skip
+  mark used; path.add(nums[i])
+  backtrack(i+1, path)
+  path.remove last
+```
+
 ```java
 class Solution {
     public List<List<Integer>> findSubsequences(int[] nums) {
@@ -2904,6 +4166,20 @@ class Solution {
 
 **Description:** Find the mode(s) (most frequent values) in a BST that may have duplicates.
 **Intuition:** inorder gives sorted values, so equal values are adjacent; track current run count and update the mode list when counts tie or exceed the max.
+
+**Variables:** `prev` = previous inorder node · `count` = length of current equal-value run · `maxCount` = best run length · `modes` = values achieving maxCount
+**Pseudocode:**
+```
+inorder(root); copy modes to result array
+inorder(node):
+  if null: return
+  recurse left
+  if prev exists and same value: count++ else count = 1
+  if count > maxCount: maxCount=count, modes=[node.val]
+  else if count == maxCount: modes.add(node.val)
+  prev = node
+  recurse right
+```
 
 ```java
 class Solution {
@@ -2937,6 +4213,19 @@ class Solution {
 **Description:** Find the subtree sum(s) that occur most frequently.
 **Intuition:** post-order compute each subtree's sum, tally frequencies in a map, then collect the keys with the max frequency.
 
+**Variables:** `freq` = subtree sum to occurrence count · `maxFreq` = highest frequency · `sum` = current subtree sum · `f` = updated count for this sum
+**Pseudocode:**
+```
+dfs(root)
+collect all sums whose freq == maxFreq into result array
+dfs(node):
+  if null: return 0
+  sum = node.val + dfs(left) + dfs(right)
+  f = ++freq[sum]
+  maxFreq = max(maxFreq, f)
+  return sum
+```
+
 ```java
 class Solution {
     private Map<Integer, Integer> freq = new HashMap<>();
@@ -2969,6 +4258,18 @@ class Solution {
 **Description:** Find the inorder successor of a node given only a parent pointer (no root).
 **Intuition:** if a right subtree exists, the successor is its leftmost node; otherwise climb up until you come from a left child.
 
+**Variables:** `node` = given node, walked toward successor
+**Pseudocode:**
+```
+if node has right child:
+  node = node.right
+  while node.left exists: node = node.left
+  return node
+while node has parent and node is parent's right child:
+  node = node.parent
+return node.parent
+```
+
 ```java
 class Solution {
     public Node inorderSuccessor(Node node) {
@@ -2993,6 +4294,17 @@ class Solution {
 **Description:** Find the leftmost value in the last (deepest) row of a binary tree.
 **Intuition:** BFS scanning right-to-left so the final node dequeued is the bottom-left value.
 
+**Variables:** `queue` = BFS frontier · `node` = last node dequeued (becomes bottom-left)
+**Pseudocode:**
+```
+enqueue root
+while queue nonempty:
+  node = poll
+  if right child: enqueue right   // enqueue right before left
+  if left child: enqueue left
+return node.val   // last dequeued = deepest, leftmost
+```
+
 ```java
 class Solution {
     public int findBottomLeftValue(TreeNode root) {
@@ -3016,6 +4328,20 @@ class Solution {
 
 **Description:** Return the maximum value in each row of a binary tree.
 **Intuition:** BFS level by level, tracking the max per level.
+
+**Variables:** `queue` = BFS frontier · `size` = nodes in current level · `max` = max value in current level
+**Pseudocode:**
+```
+if root null: return []
+enqueue root
+while queue nonempty:
+  size = queue size; max = -inf
+  for size items:
+    node = poll; max = max(max, node.val)
+    enqueue left and right if present
+  result.add(max)
+return result
+```
 
 ```java
 class Solution {
@@ -3048,6 +4374,18 @@ class Solution {
 **Description:** Count permutations of 1..n where each number divides or is divisible by its position.
 **Intuition:** backtrack placing numbers position by position, only choosing a number when it satisfies the divisibility rule.
 
+**Variables:** `count` = valid arrangements found · `pos` = position being filled (1-based) · `used[i]` = whether number i is placed
+**Pseudocode:**
+```
+backtrack(n, pos=1, used)
+if pos > n: count++; return
+for i in 1..n:
+  if i unused and (i divisible by pos or pos divisible by i):
+    mark i used
+    backtrack(pos+1)
+    unmark i
+```
+
 ```java
 class Solution {
     private int count = 0;
@@ -3075,6 +4413,23 @@ class Solution {
 
 **Description:** Build a binary tree from a string like `4(2(3)(1))(6(5))`.
 **Intuition:** parse the leading number as the node, then the first parenthesized group as the left subtree and the second as the right subtree.
+
+**Variables:** `index` = current parse position · `start` = start of number token · `node` = node being built
+**Pseudocode:**
+```
+if s empty: return null
+return build(s)
+build(s):
+  start = index
+  if '-': advance
+  while digit: advance
+  node = new node(num[start..index])
+  if next char '(':
+    consume '('; node.left = build; consume ')'
+  if next char '(':
+    consume '('; node.right = build; consume ')'
+  return node
+```
 
 ```java
 class Solution {
@@ -3111,6 +4466,17 @@ class Solution {
 **Description:** Replace each node's value with the sum of all values greater than or equal to it.
 **Intuition:** reverse inorder (right → node → left) visits values in descending order; carry a running sum and add it into each node.
 
+**Variables:** `sum` = running total of all values visited so far (descending) · `root` = current node
+**Pseudocode:**
+```
+if root null: return null
+recurse right
+sum += root.val
+root.val = sum
+recurse left
+return root
+```
+
 ```java
 class Solution {
     private int sum = 0;
@@ -3132,6 +4498,35 @@ class Solution {
 
 **Description:** Return the boundary: root, left boundary top-down, leaves left-to-right, right boundary bottom-up, no duplicates.
 **Intuition:** collect three parts separately — left boundary (excluding leaves), all leaves, and right boundary reversed (excluding leaves).
+
+**Variables:** `result` = boundary values in order · `node` = current node · `temp` = right-boundary values collected top-down (later reversed)
+**Pseudocode:**
+```
+if root null: return result
+if root not leaf: add root.val
+addLeftBoundary(root.left)
+addLeaves(root)
+addRightBoundary(root.right)
+return result
+
+isLeaf: both children null
+
+addLeftBoundary(node):
+  while node != null:
+    if node not leaf: add node.val
+    node = left if exists else right
+
+addLeaves(node):
+  if null: return
+  if leaf: add node.val; return
+  recurse left, recurse right
+
+addRightBoundary(node):
+  while node != null:
+    if node not leaf: temp.add(node.val)
+    node = right if exists else left
+  reverse temp; add all to result
+```
 
 ```java
 class Solution {
@@ -3179,6 +4574,15 @@ class Solution {
 **Description:** Find the maximum depth of an N-ary tree.
 **Intuition:** depth is 1 plus the max depth among all children.
 
+**Variables:** `root` = current node · `max` = deepest child depth seen
+**Pseudocode:**
+```
+if root null: return 0
+max = 0
+for each child: max = max(max, maxDepth(child))
+return max + 1
+```
+
 ```java
 class Solution {
     public int maxDepth(Node root) {
@@ -3199,6 +4603,19 @@ class Solution {
 
 **Description:** Sum the tilt of every node, where tilt = |left subtree sum − right subtree sum|.
 **Intuition:** post-order return each subtree sum; accumulate the absolute difference into a global total.
+
+**Variables:** `total` = accumulated tilt across all nodes · `left`/`right` = subtree sums
+**Pseudocode:**
+```
+sum(root); return total
+
+sum(node):
+  if null: return 0
+  left = sum(node.left)
+  right = sum(node.right)
+  total += |left - right|
+  return left + right + node.val
+```
 
 ```java
 class Solution {
@@ -3225,6 +4642,21 @@ class Solution {
 **Description:** Check whether `subRoot` is a subtree of `root`.
 **Intuition:** at every node of `root`, test for structural equality with `subRoot`.
 
+**Variables:** `root` = current node of main tree · `subRoot` = pattern tree root · `a`/`b` = nodes compared for equality
+**Pseudocode:**
+```
+isSubtree(root, subRoot):
+  if root null: return false
+  if isSame(root, subRoot): return true
+  return isSubtree(left) or isSubtree(right)
+
+isSame(a, b):
+  if both null: return true
+  if one null: return false
+  if a.val != b.val: return false
+  return isSame(lefts) and isSame(rights)
+```
+
 ```java
 class Solution {
     public boolean isSubtree(TreeNode root, TreeNode subRoot) {
@@ -3249,6 +4681,17 @@ class Solution {
 **Description:** Return the preorder traversal of an N-ary tree.
 **Intuition:** visit the node, then recurse into each child in order.
 
+**Variables:** `result` = preorder values · `node` = current node
+**Pseudocode:**
+```
+dfs(root, result); return result
+
+dfs(node):
+  if null: return
+  add node.val
+  for each child: dfs(child)
+```
+
 ```java
 class Solution {
     public List<Integer> preorder(Node root) {
@@ -3272,6 +4715,17 @@ class Solution {
 **Description:** Return the postorder traversal of an N-ary tree.
 **Intuition:** recurse into all children first, then visit the node.
 
+**Variables:** `result` = postorder values · `node` = current node
+**Pseudocode:**
+```
+dfs(root, result); return result
+
+dfs(node):
+  if null: return
+  for each child: dfs(child)
+  add node.val
+```
+
 ```java
 class Solution {
     public List<Integer> postorder(Node root) {
@@ -3294,6 +4748,20 @@ class Solution {
 
 **Description:** Build a preorder string with parentheses, e.g. `1(2(4))(3)`.
 **Intuition:** append the value, then each non-null child wrapped in parentheses; keep empty `()` for a left child only when a right child exists.
+
+**Variables:** `builder` = output string buffer · `node` = current node
+**Pseudocode:**
+```
+dfs(root, builder); return builder
+
+dfs(node):
+  if null: return
+  append node.val
+  if leaf: return
+  append '('; dfs(left); append ')'
+  if right != null:
+    append '('; dfs(right); append ')'
+```
 
 ```java
 class Solution {
@@ -3326,6 +4794,17 @@ class Solution {
 **Description:** Merge two binary trees by summing overlapping node values.
 **Intuition:** if either node is null, return the other; otherwise sum values and recurse on both child pairs.
 
+**Variables:** `root1`/`root2` = current nodes of the two trees · `merged` = new combined node
+**Pseudocode:**
+```
+if root1 null: return root2
+if root2 null: return root1
+merged = node(root1.val + root2.val)
+merged.left = merge(root1.left, root2.left)
+merged.right = merge(root1.right, root2.right)
+return merged
+```
+
 ```java
 class Solution {
     public TreeNode mergeTrees(TreeNode root1, TreeNode root2) {
@@ -3346,6 +4825,19 @@ class Solution {
 
 **Description:** Return the average value of nodes on each level.
 **Intuition:** BFS each level, summing values and dividing by the level size.
+
+**Variables:** `queue` = BFS queue · `size` = nodes on current level · `sum` = level value sum · `result` = per-level averages
+**Pseudocode:**
+```
+offer root
+while queue not empty:
+  size = queue.size; sum = 0
+  repeat size times:
+    node = poll; sum += node.val
+    offer non-null children
+  result.add(sum / size)
+return result
+```
 
 ```java
 class Solution {
@@ -3377,6 +4869,19 @@ class Solution {
 **Description:** Return one root per group of structurally identical, duplicated subtrees.
 **Intuition:** serialize each subtree post-order into a canonical string; the second time a serialization appears, record its root.
 
+**Variables:** `seen` = serialization → occurrence count · `result` = one root per duplicate group · `key` = canonical serialization of subtree · `count` = occurrences of key
+**Pseudocode:**
+```
+serialize(root, seen, result); return result
+
+serialize(node):
+  if null: return "#"
+  key = node.val + "," + serialize(left) + "," + serialize(right)
+  count = seen.merge(key, +1)
+  if count == 2: result.add(node)
+  return key
+```
+
 ```java
 class Solution {
     public List<TreeNode> findDuplicateSubtrees(TreeNode root) {
@@ -3402,6 +4907,18 @@ class Solution {
 **Description:** Find whether two nodes in a BST sum to a target.
 **Intuition:** traverse, storing seen values in a set; for each node check if `target − val` was seen.
 
+**Variables:** `k` = target sum · `seen` = values visited so far · `node` = current node
+**Pseudocode:**
+```
+return dfs(root, k, empty set)
+
+dfs(node):
+  if null: return false
+  if seen contains k - node.val: return true
+  seen.add(node.val)
+  return dfs(left) or dfs(right)
+```
+
 ```java
 class Solution {
     public boolean findTarget(TreeNode root, int k) {
@@ -3423,6 +4940,21 @@ class Solution {
 
 **Description:** Build a tree where the root is the array max, left subtree from the left subarray, right subtree from the right subarray.
 **Intuition:** find the max in the range as root, recurse on the two halves.
+
+**Variables:** range `[lo, hi]` = subarray under construction · `maxIndex` = index of max in range · `root` = node for that max
+**Pseudocode:**
+```
+return build(nums, 0, n-1)
+
+build(lo, hi):
+  if lo > hi: return null
+  maxIndex = lo
+  for i in lo+1..hi: if nums[i] > nums[maxIndex]: maxIndex = i
+  root = node(nums[maxIndex])
+  root.left = build(lo, maxIndex-1)
+  root.right = build(maxIndex+1, hi)
+  return root
+```
 
 ```java
 class Solution {
@@ -3450,6 +4982,22 @@ class Solution {
 
 **Description:** Return the maximum width of any level, where width counts the gap between the leftmost and rightmost non-null nodes.
 **Intuition:** assign heap-style indices (left = 2i, right = 2i+1); per level the width is last index − first index + 1.
+
+**Variables:** `queue` = node BFS queue · `indices` = heap-style index per node (left=2i, right=2i+1) · `first`/`last` = leftmost/rightmost index this level · `max` = widest level
+**Pseudocode:**
+```
+if root null: return 0
+offer root with index 0
+while queue not empty:
+  size = queue.size
+  for i in 0..size-1:
+    node = poll; index = indices.poll
+    if i == 0: first = index
+    if i == size-1: last = index
+    offer left with 2*index, right with 2*index+1 (if non-null)
+  max = max(max, last - first + 1)
+return max
+```
 
 ```java
 class Solution {
@@ -3486,6 +5034,19 @@ class Solution {
 **Description:** In a tree where each node's value is the min of its children, find the second smallest value overall.
 **Intuition:** the root is the global minimum; DFS for the smallest value strictly greater than the root.
 
+**Variables:** `min` = root value (global minimum) · `second` = smallest value strictly greater than min · `left`/`right` = recursive results
+**Pseudocode:**
+```
+second = dfs(root, root.val)
+return second == MAX ? -1 : second
+
+dfs(node, min):
+  if null: return MAX
+  if node.val > min: return node.val
+  left = dfs(left, min); right = dfs(right, min)
+  return min(left, right)
+```
+
 ```java
 class Solution {
     public int findSecondMinimumValue(TreeNode root) {
@@ -3509,6 +5070,24 @@ class Solution {
 
 **Description:** Determine if four numbers can be combined with +, −, ×, ÷ to make 24.
 **Intuition:** backtrack: pick any two numbers, apply each operator, replace them with the result, and recurse until one number remains.
+
+**Variables:** `nums`/`list` = current numbers as doubles · `i`,`j` = indices of the two picked numbers · `next` = remaining numbers plus result · `value` = result of one operation
+**Pseudocode:**
+```
+convert cards to doubles; return backtrack(list)
+
+backtrack(nums):
+  if size == 1: return |nums[0] - 24| < eps
+  for i in nums, for j in nums, i != j:
+    next = all nums except i, j
+    for each value in compute(nums[i], nums[j]):
+      next.add(value)
+      if backtrack(next): return true
+      next.remove last
+  return false
+
+compute(a, b): {a+b, a-b, a*b, and a/b if b != 0}
+```
 
 ```java
 class Solution {
@@ -3551,6 +5130,25 @@ class Solution {
 **Description:** Determine if an array can be split into k subsets of equal sum.
 **Intuition:** target = total/k; backtrack filling one bucket at a time, sorting descending to fail fast, skipping when total isn't divisible.
 
+**Variables:** `total` = sum of nums · `target` = total/k bucket size · `used[i]` = number i already placed · `index` = current scan start · `current` = current bucket sum · `k` = buckets remaining
+**Pseudocode:**
+```
+total = sum; if total % k != 0: return false
+target = total/k; sort nums
+if largest > target: return false
+return backtrack(n-1, used, k, 0, target)
+
+backtrack(index, used, k, current, target):
+  if k == 0: return true
+  if current == target: return backtrack(n-1, used, k-1, 0, target)
+  for i from index down to 0:
+    if used[i] or current+nums[i] > target: continue
+    used[i] = true
+    if backtrack(i-1, used, k, current+nums[i], target): return true
+    used[i] = false
+  return false
+```
+
 ```java
 class Solution {
     public boolean canPartitionKSubsets(int[] nums, int k) {
@@ -3586,6 +5184,14 @@ class Solution {
 **Description:** Find the subtree rooted at the node with a given value in a BST.
 **Intuition:** binary-search the tree: go left if target is smaller, right if larger.
 
+**Variables:** `root` = current node · `val` = target value
+**Pseudocode:**
+```
+while root != null and root.val != val:
+  root = left if val < root.val else right
+return root
+```
+
 ```java
 class Solution {
     public TreeNode searchBST(TreeNode root, int val) {
@@ -3605,6 +5211,15 @@ class Solution {
 **Description:** Insert a value into a BST and return the root.
 **Intuition:** descend like a search until reaching a null child, then attach a new node there.
 
+**Variables:** `root` = current node · `val` = value to insert
+**Pseudocode:**
+```
+if root null: return new node(val)
+if val < root.val: root.left = insert(root.left, val)
+else: root.right = insert(root.right, val)
+return root
+```
+
 ```java
 class Solution {
     public TreeNode insertIntoBST(TreeNode root, int val) {
@@ -3623,6 +5238,23 @@ class Solution {
 
 **Description:** Find the value of the leaf nearest to the node with a given value.
 **Intuition:** convert the tree to an undirected graph, then BFS from the target node until the first leaf is reached.
+
+**Variables:** `graph` = node → neighbor list (undirected) · `start[0]` = node with value k · `queue`/`visited` = BFS state · `k` = target value
+**Pseudocode:**
+```
+buildGraph(root, null, graph, k, start)
+BFS from start[0]:
+  node = poll
+  if node is leaf: return node.val
+  for each neighbor: if newly visited, offer
+return -1
+
+buildGraph(node, parent):
+  if null: return
+  if node.val == k: start[0] = node
+  if parent != null: add edges node<->parent
+  recurse left (parent=node), recurse right (parent=node)
+```
 
 ```java
 class Solution {
@@ -3664,6 +5296,20 @@ class Solution {
 **Description:** Split a BST into two trees: one with values ≤ V and one with values > V.
 **Intuition:** recurse; at each node decide which result tree it belongs to based on V, then reattach the recursively-split child.
 
+**Variables:** `root` = current node · `target` = split value · returned pair `[≤target tree, >target tree]` · `left`/`right` = recursive split pairs
+**Pseudocode:**
+```
+if root null: return [null, null]
+if root.val <= target:
+  right = split(root.right, target)
+  root.right = right[0]
+  return [root, right[1]]
+else:
+  left = split(root.left, target)
+  root.left = left[1]
+  return [left[0], root]
+```
+
 ```java
 class Solution {
     public TreeNode[] splitBST(TreeNode root, int target) {
@@ -3688,6 +5334,20 @@ class Solution {
 
 **Description:** Return all strings formable by toggling the case of letters in a string.
 **Intuition:** backtrack character by character; digits have one choice, letters branch into lower and upper case.
+
+**Variables:** `arr` = mutable char array · `start` = index being decided · `result` = all permutations
+**Pseudocode:**
+```
+backtrack(chars, 0, result); return result
+
+backtrack(arr, start):
+  if start == length: add new String(arr); return
+  if arr[start] is letter:
+    set lowercase; backtrack(start+1)
+    set uppercase; backtrack(start+1)
+  else:
+    backtrack(start+1)
+```
 
 ```java
 class Solution {
@@ -3718,6 +5378,16 @@ class Solution {
 **Description:** Remove every subtree that contains no node with value 1.
 **Intuition:** post-order prune children first; drop a node if both children become null and its own value is 0.
 
+**Variables:** `root` = current node
+**Pseudocode:**
+```
+if root null: return null
+root.left = prune(root.left)
+root.right = prune(root.right)
+if both children null and root.val == 0: return null
+return root
+```
+
 ```java
 class Solution {
     public TreeNode pruneTree(TreeNode root) {
@@ -3739,6 +5409,25 @@ class Solution {
 
 **Description:** Split a digit string into a Fibonacci-like sequence (each term = sum of previous two), with terms fitting in a 32-bit int.
 **Intuition:** backtrack the first two numbers; the rest is forced. Prune leading zeros and overflow.
+
+**Variables:** `path` = sequence built so far · `start` = current split position · `i` = end index of current number · `value` = parsed number · `size` = path length
+**Pseudocode:**
+```
+backtrack(num, 0, result); return result
+
+backtrack(start, path):
+  if start == length: return path.size >= 3
+  for i from start to end:
+    if leading zero (num[start]=='0' and i>start): break
+    value = parse num[start..i]
+    if value > INT_MAX: break
+    if size >= 2 and value > path[-1]+path[-2]: break
+    if size < 2 or value == path[-1]+path[-2]:
+      path.add(value)
+      if backtrack(i+1, path): return true
+      path.remove last
+  return false
+```
 
 ```java
 class Solution {
@@ -3773,6 +5462,22 @@ class Solution {
 
 **Description:** Find all node values exactly distance k from a target node.
 **Intuition:** build parent links so the tree becomes an undirected graph, then BFS k levels from the target.
+
+**Variables:** `parent` = node → its parent · `queue`/`visited` = BFS state · `dist` = current distance from target · `k` = target distance
+**Pseudocode:**
+```
+buildParents(root, null, parent)
+offer target; visited.add(target); dist = 0
+while queue not empty:
+  if dist == k: break
+  for each node in current level:
+    for neighbor in {left, right, parent}:
+      if non-null and newly visited: offer
+  dist++
+collect remaining queue values into result; return result
+
+buildParents(node, par): record parent, recurse children
+```
 
 ```java
 class Solution {
@@ -3816,6 +5521,18 @@ class Solution {
 **Description:** Find the smallest subtree containing all of the tree's deepest leaves.
 **Intuition:** post-order return (depth, lca). If left and right depths tie, the current node is the LCA; otherwise carry up the deeper side.
 
+**Variables:** `Result.depth` = subtree height · `Result.node` = LCA of deepest nodes in subtree · `left`/`right` = child results
+**Pseudocode:**
+```
+return dfs(root).node
+
+dfs(node):
+  if null: return Result(0, null)
+  left = dfs(left); right = dfs(right)
+  if left.depth == right.depth: return Result(left.depth+1, node)
+  return deeper side's node with depth+1
+```
+
 ```java
 class Solution {
     public TreeNode subtreeWithAllDeepest(TreeNode root) {
@@ -3848,6 +5565,16 @@ class Solution {
 **Description:** Reconstruct a binary tree from preorder and postorder traversals (any valid tree).
 **Intuition:** preorder[start] is the root; preorder[start+1] is the left subtree root, whose position in postorder gives the left subtree size.
 
+**Variables:** `preIndex` = pointer into preorder · `postIndex` = pointer into postorder · `root` = node built from current preorder value
+**Pseudocode:**
+```
+root = node(preorder[preIndex++])
+if root.val != postorder[postIndex]: root.left = recurse
+if root.val != postorder[postIndex]: root.right = recurse
+postIndex++
+return root
+```
+
 ```java
 class Solution {
     private int preIndex = 0, postIndex = 0;
@@ -3872,6 +5599,21 @@ class Solution {
 
 **Description:** Rearrange a BST into a right-skewed tree following inorder order.
 **Intuition:** inorder traversal; relink each node as the right child of the previous, clearing left pointers.
+
+**Variables:** `current` = tail of the rebuilt right-skewed list · `dummy` = sentinel before first node · `node` = current node in inorder
+**Pseudocode:**
+```
+dummy = node(0); current = dummy
+inorder(root)
+return dummy.right
+
+inorder(node):
+  if null: return
+  inorder(left)
+  node.left = null
+  current.right = node; current = node
+  inorder(right)
+```
 
 ```java
 class Solution {
@@ -3900,6 +5642,23 @@ class Solution {
 
 **Description:** Design a structure that supports O(1) insertion into a complete binary tree.
 **Intuition:** keep a BFS queue of nodes that still have a free child slot; insert into the front node and enqueue the new node.
+
+**Variables:** `root` = tree root · `queue` = nodes with a free child slot (front = next insert point) · `bfs` = init traversal queue · `parent` = node receiving the new child
+**Pseudocode:**
+```
+constructor(root):
+  BFS all nodes; enqueue any node missing a child into queue
+
+insert(val):
+  node = new node(val)
+  parent = queue.peek
+  if parent.left == null: parent.left = node
+  else: parent.right = node; queue.poll
+  queue.offer(node)
+  return parent.val
+
+get_root: return root
+```
 
 ```java
 class CBTInserter {
@@ -3936,6 +5695,18 @@ class CBTInserter {
 **Description:** Construct an array of 1..n where no three indices i<j<k satisfy 2·a[j] = a[i] + a[k].
 **Intuition:** divide and conquer: a beautiful array of odds followed by evens stays beautiful, since odd + even is never twice an integer.
 
+**Variables:** `result` = current beautiful array · `next` = next-round array (odds-mapped then evens-mapped) · `x` = element being transformed · `arr` = final output
+**Pseudocode:**
+```
+result = [1]
+while result.size < n:
+  next = []
+  for x in result: if 2x-1 <= n: next.add(2x-1)   // odds
+  for x in result: if 2x <= n: next.add(2x)        // evens
+  result = next
+copy result into arr; return arr
+```
+
 ```java
 class Solution {
     public int[] beautifulArray(int n) {
@@ -3962,6 +5733,15 @@ class Solution {
 **Description:** Sum all node values within the inclusive range [low, high].
 **Intuition:** prune branches outside the range using BST ordering.
 
+**Variables:** `root` = current node · range `[low, high]` = inclusive bounds
+**Pseudocode:**
+```
+if root null: return 0
+if root.val < low: return rangeSum(right)
+if root.val > high: return rangeSum(left)
+return root.val + rangeSum(left) + rangeSum(right)
+```
+
 ```java
 class Solution {
     public int rangeSumBST(TreeNode root, int low, int high) {
@@ -3980,6 +5760,15 @@ class Solution {
 
 **Description:** Check if two trees are flip-equivalent (can be made identical by swapping some children).
 **Intuition:** match children either directly or swapped at each node.
+
+**Variables:** `root1`/`root2` = current nodes of the two trees
+**Pseudocode:**
+```
+if both null: return true
+if one null: return false
+if values differ: return false
+return (match children directly) or (match children swapped)
+```
 
 ```java
 class Solution {
@@ -4000,6 +5789,19 @@ class Solution {
 
 **Description:** Determine if a binary tree is complete.
 **Intuition:** BFS including null children; once a null is seen, no real node may follow.
+
+**Variables:** `queue` = BFS queue (includes nulls) · `seenNull` = a gap has appeared · `node` = current node
+**Pseudocode:**
+```
+offer root; seenNull = false
+while queue not empty:
+  node = poll
+  if node null: seenNull = true
+  else:
+    if seenNull: return false   // real node after a gap
+    offer left, offer right
+return true
+```
 
 ```java
 class Solution {
@@ -4029,6 +5831,22 @@ class Solution {
 
 **Description:** Group node values by column, then by row, then by value within the same position.
 **Intuition:** DFS recording (col, row, val); sort by column, then row, then value.
+
+**Variables:** `nodes` = list of {col, row, val} · `prevCol` = column of previous group · `result` = column-grouped values · dfs args `row`/`col`
+**Pseudocode:**
+```
+dfs(root, 0, 0, nodes)
+sort nodes by col, then row, then val
+for each node:
+  if first or col changed from prevCol: start new group; prevCol = col
+  add node.val to current group
+return result
+
+dfs(node, row, col):
+  if null: return
+  add {col, row, val}
+  dfs(left, row+1, col-1); dfs(right, row+1, col+1)
+```
 
 ```java
 class Solution {
@@ -4068,6 +5886,21 @@ class Solution {
 **Description:** Return the lexicographically smallest root-to-leaf string, where each node maps to a letter 'a'..'z' and the string is read leaf to root.
 **Intuition:** build the path down, reverse it at each leaf, and track the minimum.
 
+**Variables:** `smallest` = best leaf-to-root string so far · `builder` = root-to-node path of letters · `candidate` = reversed path at a leaf
+**Pseudocode:**
+```
+dfs(root, ""); return smallest
+
+dfs(node, builder):
+  if null: return
+  append letter ('a'+node.val)
+  if leaf:
+    candidate = reverse(builder); reverse back
+    if candidate < smallest: smallest = candidate
+  dfs(left); dfs(right)
+  delete last char
+```
+
 ```java
 class Solution {
     private String smallest = null;
@@ -4097,6 +5930,22 @@ class Solution {
 
 **Description:** Check if two values are cousins (same depth, different parents).
 **Intuition:** BFS recording each value's depth and parent; cousins share depth but differ in parent.
+
+**Variables:** `queue` = BFS queue · `foundX`/`foundY` = x/y seen this level · `x`,`y` = target values · `a`,`b` = a node's two children values
+**Pseudocode:**
+```
+offer root
+while queue not empty:
+  size = queue.size; foundX = foundY = false
+  for each node in level:
+    if node.val == x: foundX = true
+    if node.val == y: foundY = true
+    if both children exist and they are {x, y}: return false  // siblings
+    offer non-null children
+  if foundX and foundY: return true
+  if foundX or foundY: return false
+return false
+```
 
 ```java
 class Solution {
@@ -4133,6 +5982,15 @@ class Solution {
 **Description:** Insert a value into a maximum tree built by appending the value to the original array's end.
 **Intuition:** since the value was appended last, it lies on the rightmost spine; insert where it first exceeds the current node.
 
+**Variables:** `root` = current node on right spine · `val` = appended value · `node` = new node when val is largest
+**Pseudocode:**
+```
+if root null or val > root.val:
+  node = new node(val); node.left = root; return node
+root.right = insert(root.right, val)
+return root
+```
+
 ```java
 class Solution {
     public TreeNode insertIntoMaxTree(TreeNode root, int val) {
@@ -4154,6 +6012,19 @@ class Solution {
 
 **Description:** Build a BST from its preorder traversal.
 **Intuition:** the first value is the root; values less than it form the left subtree, the rest form the right. Use an upper bound to decide where to stop.
+
+**Variables:** `index` = pointer into preorder · `bound` = upper limit for current subtree · `root` = node built from current value
+**Pseudocode:**
+```
+return build(preorder, INT_MAX)
+
+build(bound):
+  if index == length or preorder[index] > bound: return null
+  root = node(preorder[index++])
+  root.left = build(root.val)
+  root.right = build(bound)
+  return root
+```
 
 ```java
 class Solution {
@@ -4178,6 +6049,18 @@ class Solution {
 
 **Description:** Find the maximum |a − d| over all ancestor a and descendant d pairs.
 **Intuition:** pass the min and max seen on the path down; at each node update the answer with the largest gap against those extremes.
+
+**Variables:** `max` = best |ancestor − descendant| found · `min`/`maxVal` = smallest/largest value on path down · `node` = current node
+**Pseudocode:**
+```
+dfs(root, root.val, root.val); return max
+
+dfs(node, min, maxVal):
+  if null: return
+  max = max(max, |node.val-min|, |node.val-maxVal|)
+  min = min(min, node.val); maxVal = max(maxVal, node.val)
+  dfs(left, min, maxVal); dfs(right, min, maxVal)
+```
 
 ```java
 class Solution {
@@ -4205,6 +6088,16 @@ class Solution {
 **Description:** Replace each node's value with the sum of all values greater than or equal to it.
 **Intuition:** reverse inorder (right → node → left) processes descending order; carry a running sum.
 
+**Variables:** `sum` = running total of values visited so far (descending) · `root` = current node
+**Pseudocode:**
+```
+if root null: return null
+recurse right
+sum += root.val; root.val = sum
+recurse left
+return root
+```
+
 ```java
 class Solution {
     private int sum = 0;
@@ -4226,6 +6119,25 @@ class Solution {
 
 **Description:** Expand a string with brace options like `{a,b}c{d,e}` into all sorted concatenations.
 **Intuition:** parse each position into a sorted list of choices, then backtrack the Cartesian product.
+
+**Variables:** `groups` = per-position sorted choice lists · `i` = scan index over s · `options` = choices at one position · `builder` = current concatenation · `result` = all expansions · `start` = group index in backtrack
+**Pseudocode:**
+```
+i = 0
+while i < length:
+  options = []
+  if s[i] == '{':
+    i++; while s[i] != '}': if s[i] != ',': options.add(s[i]); i++
+    i++  // skip '}'
+  else: options.add(s[i]); i++
+  sort options; groups.add(options)
+backtrack(groups, 0, builder, result); return as array
+
+backtrack(start, builder):
+  if start == groups.size: result.add(builder); return
+  for c in groups[start]:
+    append c; backtrack(start+1); delete last
+```
 
 ```java
 class Solution {
@@ -4271,6 +6183,18 @@ class Solution {
 **Description:** Return the root-to-node path of labels in a zigzag-labeled infinite binary tree.
 **Intuition:** the normal parent of label is label/2, but rows alternate direction, so mirror the parent within its row range.
 
+**Variables:** `level` = depth of label · `result` = root-to-label path · `levelMin`/`levelMax` = label range at current level · `label` = current node label
+**Pseudocode:**
+```
+level = floor(log2(label))
+while label >= 1:
+  prepend label to result
+  levelMax = 2^(level+1) - 1; levelMin = 2^level
+  label = (levelMin + levelMax - label) / 2   // mirror within row, then halve
+  level--
+return result
+```
+
 ```java
 class Solution {
     public List<Integer> pathInZigZagTree(int label) {
@@ -4296,6 +6220,22 @@ class Solution {
 
 **Description:** Delete the given values and return the roots of the resulting forest.
 **Intuition:** post-order; if a node is deleted, its surviving children become new roots. A node is a root if its parent was deleted (or it's the original root) and it itself survives.
+
+**Variables:** `toDelete` = values to remove · `result` = forest roots · `isRoot` = node is a potential root (parent deleted/original root) · `deleted` = current node is to be deleted
+**Pseudocode:**
+```
+build toDelete set
+if dfs(root, true, ...) != null: result.add(root)
+return result
+
+dfs(node, isRoot):
+  if null: return null
+  deleted = toDelete contains node.val
+  if isRoot and not deleted: result.add(node)
+  node.left = dfs(left, isRoot=deleted)
+  node.right = dfs(right, isRoot=deleted)
+  return deleted ? null : node
+```
 
 ```java
 class Solution {
@@ -4326,6 +6266,18 @@ Note: the helper handles adding roots; the public method's extra add is avoided 
 
 **Description:** Find the LCA of all the deepest leaves.
 **Intuition:** post-order return (depth, lca); when both arms reach equal depth, the node is the LCA, else carry up the deeper arm.
+
+**Variables:** `Result.depth` = subtree height · `Result.node` = LCA of deepest leaves in subtree · `left`/`right` = child results
+**Pseudocode:**
+```
+return dfs(root).node
+
+dfs(node):
+  if null: return Result(0, null)
+  left = dfs(left); right = dfs(right)
+  if left.depth == right.depth: return Result(left.depth+1, node)
+  return deeper side's node with depth+1
+```
 
 ```java
 class Solution {
@@ -4359,6 +6311,17 @@ class Solution {
 **Description:** Return the 1-indexed level with the largest sum of node values.
 **Intuition:** BFS level by level, tracking the level whose sum is maximum.
 
+**Variables:** `queue` = BFS queue · `level` = current level (1-indexed) · `bestLevel` = level with max sum · `maxSum` = best level sum · `sum` = current level sum
+**Pseudocode:**
+```
+offer root; level = 0; bestLevel = 1; maxSum = MIN
+while queue not empty:
+  level++; size = queue.size; sum = 0
+  for each node in level: sum += node.val; offer non-null children
+  if sum > maxSum: maxSum = sum; bestLevel = level
+return bestLevel
+```
+
 ```java
 class Solution {
     public int maxLevelSum(TreeNode root) {
@@ -4390,6 +6353,20 @@ class Solution {
 **Description:** Given two BSTs and a target, decide if a value from each sums to the target.
 **Intuition:** store all values of the first BST in a set, then traverse the second checking for the complement.
 
+**Variables:** `seen` = all values from tree 1 · `target` = required sum · `node` = current node
+**Pseudocode:**
+```
+collect(root1, seen)
+return search(root2, target, seen)
+
+collect(node): if null return; add val; recurse both children
+
+search(node):
+  if null: return false
+  if seen contains target - node.val: return true
+  return search(left) or search(right)
+```
+
 ```java
 class Solution {
     public boolean twoSumBSTs(TreeNode root1, TreeNode root2, int target) {
@@ -4418,6 +6395,19 @@ class Solution {
 
 **Description:** Return all elements from two BSTs in sorted order.
 **Intuition:** inorder each tree into a sorted list, then merge the two lists like merge sort.
+
+**Variables:** `a`/`b` = sorted inorder lists of the two trees · `i`,`j` = merge pointers into a,b · `result` = merged sorted output
+**Pseudocode:**
+```
+inorder(root1, a); inorder(root2, b)
+i = j = 0
+while i < a.size and j < b.size:
+  add smaller of a[i], b[j]; advance that pointer
+append remaining a, then remaining b
+return result
+
+inorder(node): left, add val, right
+```
 
 ```java
 class Solution {
@@ -4451,6 +6441,17 @@ class Solution {
 
 **Description:** Given child arrays, verify the nodes form exactly one valid binary tree.
 **Intuition:** exactly one node has no parent (the root); every other node has exactly one parent, there are no cycles, and all nodes are reachable from the root.
+
+**Variables:** `indegree[i]` = number of parents of node i · `root` = the unique node with indegree 0 · `queue`/`count` = BFS reachability count
+**Pseudocode:**
+```
+for each i: increment indegree of its children; if any exceeds 1: return false
+root = -1
+for each i with indegree 0: if root already set return false; root = i
+if root == -1: return false
+BFS from root counting reachable nodes
+return count == n
+```
 
 ```java
 class Solution {
@@ -4490,6 +6491,22 @@ class Solution {
 **Description:** Rebuild a BST so it becomes height-balanced.
 **Intuition:** inorder gives a sorted array; build a balanced BST by recursively choosing the middle element as root.
 
+**Variables:** `values` = sorted inorder values · range `[lo, hi]` = subarray for current subtree · `mid` = chosen root index · `root` = built node
+**Pseudocode:**
+```
+inorder(root, values)
+return build(values, 0, size-1)
+
+inorder(node): left, add val, right
+
+build(lo, hi):
+  if lo > hi: return null
+  mid = lo + (hi-lo)/2
+  root = node(values[mid])
+  root.left = build(lo, mid-1); root.right = build(mid+1, hi)
+  return root
+```
+
 ```java
 class Solution {
     public TreeNode balanceBST(TreeNode root) {
@@ -4522,6 +6539,21 @@ class Solution {
 **Description:** Find the diameter (longest path between any two nodes) of an N-ary tree.
 **Intuition:** like binary-tree diameter, but track the two deepest child heights to form the longest path through each node.
 
+**Variables:** `diameter` = longest path found · `max1`/`max2` = two largest child heights · `height` = a child's height
+**Pseudocode:**
+```
+dfs(root); return diameter
+
+dfs(node):
+  if null: return 0
+  max1 = max2 = 0
+  for each child:
+    height = dfs(child)
+    update max1, max2 with height (two largest)
+  diameter = max(diameter, max1 + max2)
+  return max1 + 1
+```
+
 ```java
 class Solution {
     private int diameter = 0;
@@ -4551,6 +6583,20 @@ class Solution {
 **Description:** Find the LCA of two nodes that may not both exist in the tree; return null if either is missing.
 **Intuition:** standard LCA but count how many of p, q were actually found, so a node returned without seeing both isn't accepted.
 
+**Variables:** `found` = count of p/q actually present · `lca` = candidate LCA from dfs · `left`/`right` = recursive results
+**Pseudocode:**
+```
+lca = dfs(root, p, q)
+return found == 2 ? lca : null
+
+dfs(node):
+  if null: return null
+  left = dfs(left); right = dfs(right)
+  if node == p or node == q: found++; return node
+  if left and right both non-null: return node
+  return left != null ? left : right
+```
+
 ```java
 class Solution {
     private int found = 0;
@@ -4579,6 +6625,16 @@ class Solution {
 
 **Description:** Find the LCA of two nodes given parent pointers, without root access.
 **Intuition:** like finding the intersection of two linked lists — walk both pointers up, switching to the other node when one reaches the top; they meet at the LCA.
+
+**Variables:** `a`/`b` = two pointers walking up from p and q, switching to the other's start at the top
+**Pseudocode:**
+```
+a = p; b = q
+while a != b:
+  a = (a == null) ? q : a.parent
+  b = (b == null) ? p : b.parent
+return a
+```
 
 ```java
 class Solution {
