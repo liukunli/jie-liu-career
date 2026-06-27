@@ -400,10 +400,10 @@ Binary search appears in two forms: searching an **array index**, or searching a
 
 | # | Name | Description | Intuition | Time | Space | Key Implementation |
 |---|---|---|---|---|---|---|
-| 704 | Binary Search | Given a sorted array and a target, return its index. Return -1 if not found. | The target is one specific value; halve a closed range until you sit on it (or the range empties). | O(log n) | O(1) | Standard |
+| 704 | Binary Search | Given a sorted array and a target, return its index. Return -1 if not found. | Both bounds converge to a single index `i`. With `lowerBound`, `i` is the first slot `>= target`, so check `nums[i]`. With `upperBound`, `i` is one past the last `<= target`, so check `nums[i-1]`. Same loop, mirror edge. | O(log n) | O(1) | Standard |
 | 34 | Find First and Last Position of Element in Sorted Array | Return `[first, last]` index of target. Return `{-1,-1}` if absent. | Find the boundary where "< target" flips to "≥ target" (first position), and the next boundary just past target. | O(log n) | O(1) | Standard |
 | 35 | Search Insert Position | Return the index where target is or would be inserted to keep the array sorted. | The insert position is the first index whose value is ≥ target — exactly `lowerBound`. | O(log n) | O(1) | Standard |
-| 33 | Search in Rotated Sorted Array | Array was sorted then rotated at an unknown pivot. Find target index, or -1. | Even rotated, one half is always sorted; check if target lies in that half and discard the other. | O(log n) | O(1) | Standard |
+| 33 | Search in Rotated Sorted Array | Array was sorted then rotated at an unknown pivot. Find target index, or -1. | First locate the rotation point with a boundary search, then the array splits into one sorted segment that must contain target — run a plain `lowerBound` there. | O(log n) | O(1) | Standard |
 | 162 | Find Peak Element | Return any index where `arr[k] > arr[k-1]` and `arr[k] > arr[k+1]`. Edges are -∞. | Always walk uphill — an upward slope guarantees a peak to the right, so the slope direction is the "condition". | O(log n) | O(1) | Standard |
 | 875 | Koko Eating Bananas | Minimum eating speed so Koko finishes all piles in h hours (one pile per hour, at most `speed` bananas eaten). | Feasibility is monotonic in speed (faster always works), so binary search the speed axis for the smallest that finishes in time. | O(n log(max(piles))) | O(1) | Standard |
 | 1011 | Capacity to Ship Packages Within D Days | Minimum ship capacity to deliver all packages (in order) within d days. | Bigger capacity is always feasible, so binary search capacity for the smallest that ships within the day budget. | O(n log(sum(weights))) | O(1) | Standard |
@@ -412,12 +412,12 @@ Binary search appears in two forms: searching an **array index**, or searching a
 | 1231 | Divide Chocolate ← MAXIMIZE (the one that differs) | Cut chocolate into k+1 pieces; keep the minimum-sweetness piece. Maximize that minimum. | A larger target-minimum yields fewer pieces, so the condition flips true→false; binary search for the largest minimum still giving ≥ k+1 pieces. | O(n log(sum(s))) | O(1) | Standard |
 | 4 | Median of Two Sorted Arrays | Find the median of two sorted arrays of sizes m and n in O(log(m+n)) time. | Pick a split of the smaller array; the rest of the split is forced. Shrink the partition until the left half's max ≤ the right half's min, then the median falls out of the boundary values. | O(log(min(m, n))) | O(1) | search smaller array |
 | 69 | Sqrt(x) | Compute the integer square root of a non-negative integer x without using sqrt(). | The condition `k*k <= x` holds true...true then flips false as k grows; find the largest k still true. Ceiling mid avoids the infinite loop at `i+1 == j`. | O(log x) | O(1) | Standard |
-| 74 | Search a 2D Matrix | Search for a target in an m×n matrix where each row is sorted and each row's first element > previous row's last. | The layout means the whole matrix reads as a single sorted sequence; map a flat index to `(row, col)` and run a standard closed binary search. | O(log(m*n)) | O(1) | flatten index to 2D |
+| 74 | Search a 2D Matrix | Search for a target in an m×n matrix where each row is sorted and each row's first element > previous row's last. | The layout means the whole matrix reads as a single sorted sequence; map a flat index to `(row, col)` and run a standard `[i, j)` lowerBound, then verify the landed value. | O(log(m*n)) | O(1) | flatten index to 2D |
 | 81 | Search in Rotated Sorted Array II | Search in a sorted, rotated array that may contain duplicates. | Duplicates can make both ends equal to the midpoint so neither half looks sorted; in that ambiguous case shrink both bounds by one and retry. | O(log n) average, O(n) worst | O(1) | ambiguous duplicates |
 | 153 | Find Minimum in Rotated Sorted Array | Find the minimum element in a sorted, rotated array with no duplicates. | The minimum is the single point where the order breaks; if `arr[k] > arr[j]` the break is to the right, otherwise the min is at k or left. | O(log n) | O(1) | compare to right end |
 | 240 | Search a 2D Matrix II | Search for a target in an m×n matrix where rows and columns are both sorted. | From the top-right, moving left strictly decreases and moving down strictly increases, so each comparison eliminates a full row or column. | O(m + n) | O(1) | start top-right corner |
 | 278 | First Bad Version | Find the first bad version using a provided isBadVersion(n) API. Minimize API calls. | Versions are good...good then bad...bad once corrupted; this is the classic first-true boundary search. | O(log n) | O(1) | Standard |
-| 374 | Guess Number Higher or Lower | Guess the number between 1 and n using a provided guess() API. Minimize calls. | `guess(k)` tells you which half holds the answer (`-1` lower, `1` higher); halve the closed range until it returns 0. | O(log n) | O(1) | Standard |
+| 374 | Guess Number Higher or Lower | Guess the number between 1 and n using a provided guess() API. Minimize calls. | `guess(k)` returns `-1` when the pick is lower than `k`, `1` when higher, `0` on a hit. So `guess(k) <= 0` is false…false TRUE…true as `k` grows, and the first true `k` is the answer. | O(log n) | O(1) | Standard |
 | 475 | Heaters | Given house and heater positions, find the minimum heater radius so every house is covered by some heater. | Each house needs the closest heater; the required radius is the largest of those closest distances. Find each house's nearest heater by binary search. | O((m + n) log m) | O(1) | also check left neighbor |
 | 540 | Single Element in a Sorted Array | Find the single non-duplicate element in a sorted array where all others appear twice. O(log n). | Before the unique element each pair starts at an even index; after it, the parity shifts. Force the midpoint even and check whether its partner matches to pick a half. | O(log n) | O(1) | force k even |
 | 658 | Find K Closest Elements | Find k integers in a sorted array closest to x, ordered by closeness then value. | The answer is a contiguous window of size k; search for its start by comparing the distances of the two window edges to x and sliding toward the closer side. | O(log(n - k) + k) | O(k) | search window start |
@@ -428,85 +428,59 @@ Binary search appears in two forms: searching an **array index**, or searching a
 | 1482 | Minimum Number of Days to Make m Bouquets | Find the minimum number of days to make m bouquets of k adjacent flowers. | Waiting more days only adds bloomed flowers, so feasibility is monotonic; binary search the day axis and greedily count adjacent runs of bloomed flowers. | O(n log(max(bloomDay))) | O(1) | impossible if not enough flowers |
 | 1539 | Kth Missing Positive Number | Find the kth missing positive integer. | At each index the number of missing positives so far is `arr[k] - (k+1)`; binary search the first index whose missing count is ≥ k, then offset. | O(log n) | O(1) | i missing-free slots + k |
 | 1818 | Minimum Absolute Sum Difference | Find the minimum absolute sum difference after one substitution. | Total cost is the sum of absolute differences; one swap can only help where the closest available nums1 value beats the current difference. Find that closest value by binary search and track the best gain. | O(n log n) | O(n) | also check left neighbor |
-| 1891 | Cutting Ribbons | Find the maximum ribbon length such that m ribbons of that length can be cut. | Longer pieces produce fewer ribbons, so the count flips true→false as length grows; find the largest length still giving enough ribbons. Ceiling mid avoids the infinite loop. | O(n log(max(ribbons))) | O(1) | closed [i, j], result tracked |
+| 1891 | Cutting Ribbons | Find the maximum ribbon length such that m ribbons of that length can be cut. | Longer pieces produce fewer ribbons, so feasibility flips true→false as length grows. Search the first INFEASIBLE length (`condition(k) = countRibbons(k) < k`, false…false TRUE…true) and step back one; that is the largest feasible length. If no length is feasible the loop lands on `lo`, giving `i - 1 = 0`. | O(n log(max(ribbons))) | O(1) | [1, max+1) over lengths |
 
 \* #162 uses `j = n-1` (not `n`) — loop reads `arr[k+1]`, out of bounds if `j = n`.
 
 ---
 
-### All Four Templates
+### The Only Template — `[i, j)`, find first `k` with `condition(k)`
+
+**There is one binary search.** Define a monotone `condition(k)` (`false…false TRUE…true`); the loop returns the **first `k` where `condition(k)` is true**. Then look at `i`: if `i == n` no index qualified, otherwise `i` is the boundary — check the value to decide.
 
 ```java
-// 1. CLOSED [i, j] — exact match, return on hit
-// MENTAL MODEL: target is a specific value sitting at some index; shrink a fully-closed range until you land on it.
-// WHEN: "find this exact value in a sorted array"
-int i = 0, j = n - 1;
-while (i <= j) {
+int i = 0, j = nums.length;       // [i, j)
+// find first k that meets condition(k)
+while (i < j) {
     int k = i + (j - i) / 2;
-    if (arr[k] == target) {
-        return k;
-    } else if (arr[k] < target) {
+    if (!condition(k)) {          // condition false → answer is strictly to the right
         i = k + 1;
-    } else {
-        j = k - 1;
-    }
-}
-return -1;
-
-// 2. HALF-OPEN [i, j) — boundary search, answer falls out of i
-// MENTAL MODEL: the predicate is false...false TRUE...true; find the FIRST position that satisfies the condition.
-// WHEN: "first/last position", "insert position", "first index where condition holds"
-int i = 0, j = n;            // j = n (or n-1 for #162)
-while (i < j) {
-    int k = i + (j - i) / 2;
-    if (arr[k] < target) {
-        i = k + 1;   // lowerBound: < 
-    } else {
-        j = k;        // upperBound: swap < for <=
-    }
-}
-return i;
-
-// 3. ANSWER SPACE MINIMIZE — smallest k where condition(k) is true
-// MENTAL MODEL: condition goes false→TRUE as k grows (bigger k = more feasible); find the smallest k that flips it true.
-// WHEN: "minimum X such that feasible(X)" — min speed, min capacity, smallest divisor
-int i = minPossible, j = maxPossible;
-while (i < j) {
-    int k = i + (j - i) / 2;          // floor mid
-    if (condition(k)) {
+    } else {                      // condition true  → k might be the answer
         j = k;
-    } else {
-        i = k + 1;
     }
 }
-return i;
-
-// 4. ANSWER SPACE MAXIMIZE — largest k where condition(k) is true
-// MENTAL MODEL: condition goes TRUE→false as k grows (bigger k = less feasible); find the largest k still true.
-// WHEN: "maximum X such that feasible(X)" — max min-piece, max guarantee
-int i = minPossible, j = maxPossible;
-while (i < j) {
-    int k = i + (j - i + 1) / 2;      // ceiling mid ← avoids infinite loop
-    if (condition(k)) {
-        i = k;
-    } else {
-        j = k - 1;
-    }
-}
-return i;
+// i in [0, nums.length]; if i == nums.length, no k met condition(k)
 ```
+
+**Pick `condition(k)`:**
+
+| Want | `condition(k)` | Answer after loop |
+|---|---|---|
+| `lowerBound` — first `>= target` | `nums[k] >= target` | `i` |
+| `upperBound` — first `> target` | `nums[k] > target` | `i` |
+| exact search (#704) | `nums[k] >= target` | `i < n && nums[i] == target ? i : -1` |
+| insert position (#35) | `nums[k] >= target` | `i` |
+| first / last occurrence (#34) | `>=` then `>` | `lowerBound`, `upperBound - 1` |
+| count of target | — | `upperBound - lowerBound` |
+| minimize feasible X | `feasible(k)` over value range | `i` |
+| maximize feasible X | `!feasible(k)` (first infeasible) | `i - 1` |
+
+**The rule:** the answer is always `i`. Guard `i == nums.length` (nothing met the condition) before reading `nums[i]`, then confirm the value.
 
 ---
 
 ### How to Choose
 
-| Signal | Template |
+| Signal | `condition(k)` |
 |---|---|
-| Sorted array, find exact value | Closed — return on `arr[k] == target` |
-| First/last position, insert position | Half-open lowerBound / upperBound |
-| Rotated array or slope search | Closed — pick sorted half each step |
-| "minimum X such that feasible(X)" | Answer space MINIMIZE — floor mid |
-| "maximum X such that feasible(X)" | Answer space MAXIMIZE — ceiling mid |
+| Sorted array, find exact value | `arr[k] >= target`, then check `arr[i] == target` |
+| Insert position / first occurrence | `arr[k] >= target` → return `i` (`= lowerBound`) |
+| Last occurrence / count | `arr[k] > target` (`= upperBound`); last = `upperBound - 1`, count = `upper - lower` |
+| Rotated / peak slope search | `condition(k)` compares `arr[k]` to a neighbor or endpoint |
+| "minimum X such that feasible(X)" | `condition(k) = feasible(k)` over value range → return `i` |
+| "maximum X such that feasible(X)" | `condition(k) = !feasible(k)` over `[lo, hi+1)` → return `i - 1` |
+
+**The one rule:** define `condition(k)` so it is monotone `false…false TRUE…true`, then the answer is the first `k` that flips it true (`j = k` on true, `i = k + 1` on false). For MAXIMIZE, make the condition "first infeasible" and subtract 1 — same loop, no ceiling mid.
 
 ---
 
@@ -514,10 +488,10 @@ return i;
 
 | # | Name | Description | Interval | On `arr[k]==target` | Shrink left | Shrink right | Return |
 |---|---|---|---|---|---|---|---|
-| 704 | Binary Search | Find index of target; -1 if absent | Closed | `return k` | `i = k+1` | `j = k-1` | `-1` |
+| 704 | Binary Search | Find index of target; -1 if absent | Half-open | — | `i = k+1` | `j = k` | `lower, then arr[i]==target ? i : -1` |
 | 34 | First & Last Position | First and last index of target | Half-open | — | `i = k+1` | `j = k` | `{lower, upper-1}` |
 | 35 | Search Insert Position | Index where target is or would be inserted | Half-open | — | `i = k+1` | `j = k` | `i` |
-| 33 | Search in Rotated Array | Find target after unknown-pivot rotation | Closed | `return k` | `i = k+1` | `j = k-1` | `-1` |
+| 33 | Search in Rotated Array | Find target after unknown-pivot rotation | Half-open | — | `i = k+1` | `j = k` | find pivot, then lowerBound; `nums[i]==target ? i : -1` |
 | 162 | Find Peak Element | Any local peak index | Half-open* | — | `i = k+1` | `j = k` | `i` |
 
 ---

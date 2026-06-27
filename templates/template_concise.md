@@ -251,79 +251,53 @@ Binary search appears in two forms: searching an **array index**, or searching a
 
 ---
 
-### All Four Templates
+### The Only Template — `[i, j)`, find first `k` with `condition(k)`
+
+**There is one binary search.** Define a monotone `condition(k)` (`false…false TRUE…true`); the loop returns the **first `k` where `condition(k)` is true**. Then look at `i`: if `i == n` no index qualified, otherwise `i` is the boundary — check the value to decide.
 
 ```java
-// 1. CLOSED [i, j] — exact match, return on hit
-// MENTAL MODEL: target is a specific value sitting at some index; shrink a fully-closed range until you land on it.
-// WHEN: "find this exact value in a sorted array"
-int i = 0, j = n - 1;
-while (i <= j) {
+int i = 0, j = nums.length;       // [i, j)
+// find first k that meets condition(k)
+while (i < j) {
     int k = i + (j - i) / 2;
-    if (arr[k] == target) {
-        return k;
-    } else if (arr[k] < target) {
+    if (!condition(k)) {          // condition false → answer is strictly to the right
         i = k + 1;
-    } else {
-        j = k - 1;
-    }
-}
-return -1;
-
-// 2. HALF-OPEN [i, j) — boundary search, answer falls out of i
-// MENTAL MODEL: the predicate is false...false TRUE...true; find the FIRST position that satisfies the condition.
-// WHEN: "first/last position", "insert position", "first index where condition holds"
-int i = 0, j = n;            // j = n (or n-1 for #162)
-while (i < j) {
-    int k = i + (j - i) / 2;
-    if (arr[k] < target) {
-        i = k + 1;   // lowerBound: < 
-    } else {
-        j = k;        // upperBound: swap < for <=
-    }
-}
-return i;
-
-// 3. ANSWER SPACE MINIMIZE — smallest k where condition(k) is true
-// MENTAL MODEL: condition goes false→TRUE as k grows (bigger k = more feasible); find the smallest k that flips it true.
-// WHEN: "minimum X such that feasible(X)" — min speed, min capacity, smallest divisor
-int i = minPossible, j = maxPossible;
-while (i < j) {
-    int k = i + (j - i) / 2;          // floor mid
-    if (condition(k)) {
+    } else {                      // condition true  → k might be the answer
         j = k;
-    } else {
-        i = k + 1;
     }
 }
-return i;
-
-// 4. ANSWER SPACE MAXIMIZE — largest k where condition(k) is true
-// MENTAL MODEL: condition goes TRUE→false as k grows (bigger k = less feasible); find the largest k still true.
-// WHEN: "maximum X such that feasible(X)" — max min-piece, max guarantee
-int i = minPossible, j = maxPossible;
-while (i < j) {
-    int k = i + (j - i + 1) / 2;      // ceiling mid ← avoids infinite loop
-    if (condition(k)) {
-        i = k;
-    } else {
-        j = k - 1;
-    }
-}
-return i;
+// i in [0, nums.length]; if i == nums.length, no k met condition(k)
 ```
+
+**Pick `condition(k)`:**
+
+| Want | `condition(k)` | Answer after loop |
+|---|---|---|
+| `lowerBound` — first `>= target` | `nums[k] >= target` | `i` |
+| `upperBound` — first `> target` | `nums[k] > target` | `i` |
+| exact search (#704) | `nums[k] >= target` | `i < n && nums[i] == target ? i : -1` |
+| insert position (#35) | `nums[k] >= target` | `i` |
+| first / last occurrence (#34) | `>=` then `>` | `lowerBound`, `upperBound - 1` |
+| count of target | — | `upperBound - lowerBound` |
+| minimize feasible X | `feasible(k)` over value range | `i` |
+| maximize feasible X | `!feasible(k)` (first infeasible) | `i - 1` |
+
+**The rule:** the answer is always `i`. Guard `i == nums.length` (nothing met the condition) before reading `nums[i]`, then confirm the value.
 
 ---
 
 ### How to Choose
 
-| Signal | Template |
+| Signal | `condition(k)` |
 |---|---|
-| Sorted array, find exact value | Closed — return on `arr[k] == target` |
-| First/last position, insert position | Half-open lowerBound / upperBound |
-| Rotated array or slope search | Closed — pick sorted half each step |
-| "minimum X such that feasible(X)" | Answer space MINIMIZE — floor mid |
-| "maximum X such that feasible(X)" | Answer space MAXIMIZE — ceiling mid |
+| Sorted array, find exact value | `arr[k] >= target`, then check `arr[i] == target` |
+| Insert position / first occurrence | `arr[k] >= target` → return `i` (`= lowerBound`) |
+| Last occurrence / count | `arr[k] > target` (`= upperBound`); last = `upperBound - 1`, count = `upper - lower` |
+| Rotated / peak slope search | `condition(k)` compares `arr[k]` to a neighbor or endpoint |
+| "minimum X such that feasible(X)" | `condition(k) = feasible(k)` over value range → return `i` |
+| "maximum X such that feasible(X)" | `condition(k) = !feasible(k)` over `[lo, hi+1)` → return `i - 1` |
+
+**The one rule:** define `condition(k)` so it is monotone `false…false TRUE…true`, then the answer is the first `k` that flips it true (`j = k` on true, `i = k + 1` on false). For MAXIMIZE, make the condition "first infeasible" and subtract 1 — same loop, no ceiling mid.
 
 ---
 
