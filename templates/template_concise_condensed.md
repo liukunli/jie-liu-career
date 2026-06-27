@@ -133,11 +133,10 @@ System.arraycopy(src, srcPos, dst, dstPos, len);     // ← fast block copy (mer
 Arrays.asList(1, 2, 3);                              // fixed-size List view
 int sum = Arrays.stream(arr).sum();
 int max = Arrays.stream(arr).max().getAsInt();
-// List<Integer> → int[]  (replaces the manual copy loop)
-int[] a = list.stream().mapToInt(Integer::intValue).toArray();
-//        list.stream()            → Stream<Integer>
-//        .mapToInt(Integer::intValue) → IntStream (unbox)   ← needed: Stream.toArray() gives Integer[]
-//        .toArray()               → int[]
+// List → array
+Object[]  arr = list.toArray();                  // → Object[]
+Integer[] box = list.toArray(new Integer[0]);    // → typed Integer[]
+int[] a = list.stream().mapToInt(Integer::intValue).toArray();  // → primitive int[]
 // int[] → List<Integer>
 List<Integer> l = Arrays.stream(a).boxed().collect(Collectors.toList());  // or .toList() (Java 16+)
 ```
