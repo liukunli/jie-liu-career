@@ -1597,17 +1597,6 @@ for (int i = n - 1; i >= 0; i--) {                   // right-to-left
 }
 ```
 
-**Alternative (length-based):** Equivalent, sometimes clearer for k-partition problems:
-
-```java
-for (int len = 2; len <= n; len++) {           // outer: length of interval
-    for (int i = 0; i + len - 1 < n; i++) {   // inner: left endpoint
-        int j = i + len - 1;
-        dp[i][j] = ...;
-    }
-}
-```
-
 **Alternative (forward `i`, inner `j` descending):** `i` is the right endpoint going left-to-right; `j` is the left endpoint sweeping back from `i-1`. Inner intervals (larger `j`, smaller `i`) are already filled.
 
 ```java
