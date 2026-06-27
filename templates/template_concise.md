@@ -32,8 +32,7 @@ Sort first. `i` and `j` converge inward. Used when the array is sorted and you c
 ### Pattern 2 — Same Direction (Write Pointer)
 
 ```java
-// MENTAL MODEL: a fast reader scans everything; a slow writer trails behind and only copies the keepers.
-// WHEN: filter/compact an array in place, no extra buffer
+// a fast reader scans everything; a slow writer trails behind and only copies the keepers.  — WHEN: filter/compact an array in place, no extra buffer
 int i = 0;                           // i = write position
 for (int j = 0; j < n; j++) {       // j = read position
     if (keepCondition(nums[j]))
@@ -91,8 +90,7 @@ Window = `[i, j]`, size = `j - i + 1`.
 
 ```java
 // FIXED window of size k — shrink exactly once when full
-// MENTAL MODEL: a constant-width window slides one step at a time; add the new cell, drop the old one.
-// WHEN: "subarray/substring of size k"
+// a constant-width window slides one step at a time; add the new cell, drop the old one.  — WHEN: "subarray/substring of size k"
 int i = 0;
 for (int j = 0; j < n; j++) {
     // 1. add nums[j] to state
@@ -104,8 +102,7 @@ for (int j = 0; j < n; j++) {
 }
 
 // MAX variable window — find LONGEST valid window
-// MENTAL MODEL: grow greedily; shrink only enough to restore validity, then the window is the best ending here.
-// WHEN: "longest" + "at most k ..."
+// grow greedily; shrink only enough to restore validity, then the window is the best ending here.  — WHEN: "longest" + "at most k ..."
 int i = 0, result = 0;
 for (int j = 0; j < n; j++) {
     // 1. add nums[j] to state
@@ -117,8 +114,7 @@ for (int j = 0; j < n; j++) {
 }
 
 // MIN variable window — find SHORTEST valid window
-// MENTAL MODEL: grow until valid, then shrink aggressively while still valid to find the tightest fit.
-// WHEN: "shortest/minimum" + "sum >= target" / "contains all of t"
+// grow until valid, then shrink aggressively while still valid to find the tightest fit.  — WHEN: "shortest/minimum" + "sum >= target" / "contains all of t"
 int i = 0, result = Integer.MAX_VALUE;
 for (int j = 0; j < n; j++) {
     // 1. add nums[j] to state
@@ -177,8 +173,7 @@ Store that X in a HashMap for O(1) lookup.
 ### Core Template
 
 ```java
-// MENTAL MODEL: a subarray is the difference of two prefixes; remember prefixes seen so far and look up the complement.
-// WHEN: "subarray sum equals/divisible by k", "longest subarray with sum X" — anything reducible to prefix[r]-prefix[l]
+// a subarray is the difference of two prefixes; remember prefixes seen so far and look up the complement.  — WHEN: "subarray sum equals/divisible by k", "longest subarray with sum X" — anything reducible to prefix[r]-prefix[l]
 Map<Long, Integer> map = new HashMap<>();
 map.put(0L, ???);    // seed: empty prefix (sum=0) seen before index 0
 long sum = 0;
@@ -293,8 +288,7 @@ Inside merge and partition: `i`, `j`, `k` as scan/write pointers (consistent wit
 ### Template 1 — Merge Sort
 
 ```java
-// MENTAL MODEL: split in half until trivially sorted, then merge two sorted halves into one.
-// WHEN: need stable sort, sort a linked list, or count cross-pairs (inversions) during the merge.
+// split in half until trivially sorted, then merge two sorted halves into one.  — WHEN: need stable sort, sort a linked list, or count cross-pairs (inversions) during the merge.
 // Entry point
 public void mergeSort(int[] nums) {
     mergeSort(nums, 0, nums.length, new int[nums.length]);
@@ -328,8 +322,7 @@ private void merge(int[] nums, int start, int mid, int end, int[] temp) {
 ### Template 2 — Quick Sort (3-way Dutch Flag Partition)
 
 ```java
-// MENTAL MODEL: pick a pivot, partition into <pivot | ==pivot | >pivot, recurse on the two ends only.
-// WHEN: in-place sort with O(log n) stack; the ==pivot middle is already in final position.
+// pick a pivot, partition into <pivot | ==pivot | >pivot, recurse on the two ends only.  — WHEN: in-place sort with O(log n) stack; the ==pivot middle is already in final position.
 // Entry point — no extra array needed (in-place)
 public void quickSort(int[] nums) {
     quickSort(nums, 0, nums.length);
@@ -367,8 +360,7 @@ private void swap(int[] nums, int i, int j) {
 Extends quick sort: after partition, only recurse into the side that contains `target` index.
 
 ```java
-// MENTAL MODEL: same partition as quick sort, but recurse into only the one side holding target → O(n) avg.
-// WHEN: "k-th largest/smallest", "k closest/most frequent" — you need a position, not a full sort.
+// same partition as quick sort, but recurse into only the one side holding target → O(n) avg.  — WHEN: "k-th largest/smallest", "k closest/most frequent" — you need a position, not a full sort.
 // Returns value at 0-indexed position target after sorting
 private int quickSelect(int[] nums, int start, int end, int target) {
     int pivot = nums[start + (end - start) / 2];
@@ -400,8 +392,7 @@ private int quickSelect(int[] nums, int start, int end, int target) {
 O(n + range). Use when values are bounded integers.
 
 ```java
-// MENTAL MODEL: tally how many times each value occurs, then emit values in order — no comparisons.
-// WHEN: integers in a small bounded range; beats O(n log n) when range = O(n).
+// tally how many times each value occurs, then emit values in order — no comparisons.  — WHEN: integers in a small bounded range; beats O(n log n) when range = O(n).
 public void countingSort(int[] arr) {
     if (arr.length == 0) return;
     int min = Arrays.stream(arr).min().getAsInt();
@@ -468,8 +459,7 @@ Consistent naming throughout: `sentinel`, `previous`, `current`, `next`, `slow`,
 
 ```java
 // 1. DELETE / FILTER  — sentinel guards head removal; previous tracks last kept node
-// MENTAL MODEL: previous always points at the last node you decided to keep, so re-wiring it skips anything unwanted.
-// WHEN: "remove / delete / skip nodes by value or duplicate"
+// previous always points at the last node you decided to keep, so re-wiring it skips anything unwanted.  — WHEN: "remove / delete / skip nodes by value or duplicate"
 ListNode sentinel = new ListNode(0);
 sentinel.next = head;
 ListNode previous = sentinel, current = head;
@@ -484,8 +474,7 @@ while (current != null) {
 return sentinel.next;
 
 // 2. REVERSAL — re-wire one node at a time
-// MENTAL MODEL: flip each arrow to point backward; previous is the growing reversed list trailing behind current.
-// WHEN: "reverse the list (whole, partial, or in k-groups)"
+// flip each arrow to point backward; previous is the growing reversed list trailing behind current.  — WHEN: "reverse the list (whole, partial, or in k-groups)"
 ListNode previous = null, current = head;
 while (current != null) {
     ListNode next = current.next;   // save before overwrite
@@ -496,8 +485,7 @@ while (current != null) {
 return previous;  // new head
 
 // 3. FAST / SLOW — two pointers at different speeds
-// MENTAL MODEL: fast covers twice the distance, so when it hits the end slow is exactly halfway; in a loop they must collide.
-// WHEN: "middle node", "detect/locate cycle", "nth from end"
+// fast covers twice the distance, so when it hits the end slow is exactly halfway; in a loop they must collide.  — WHEN: "middle node", "detect/locate cycle", "nth from end"
 ListNode slow = head, fast = head;
 while (fast != null && fast.next != null) {
     slow = slow.next;
@@ -506,8 +494,7 @@ while (fast != null && fast.next != null) {
 // slow is at middle  (or cycle detection: slow == fast → cycle found)
 
 // 4. MERGE — sentinel collects nodes from two lists in order
-// MENTAL MODEL: repeatedly splice the smaller head onto a growing result tail, like a zipper.
-// WHEN: "merge two (or k) sorted lists"
+// repeatedly splice the smaller head onto a growing result tail, like a zipper.  — WHEN: "merge two (or k) sorted lists"
 ListNode sentinel = new ListNode(0);
 ListNode current = sentinel;
 while (a != null && b != null) {
@@ -569,8 +556,7 @@ For sliding window string problems (#3, #76, #567, #424), see `sliding_window.md
 ### Core Idioms
 
 ```java
-// MENTAL MODEL: a lowercase string is a length-26 frequency vector; most string problems are vector ops on it.
-// WHEN: "anagram", "char count", "group by letters", "first unique", "sort by frequency".
+// a lowercase string is a length-26 frequency vector; most string problems are vector ops on it.  — WHEN: "anagram", "char count", "group by letters", "first unique", "sort by frequency".
 // 1. CHAR COUNT — lowercase letters
 int[] count = new int[26];
 // WHY ch - 'a': ASCII 'a'=97, so 'a'→0, 'b'→1, ..., 'z'→25 — a clean 0–25 bucket index into count[].
@@ -712,8 +698,7 @@ stack.pop();       // remove from top
 stack.peek();      // view top, no remove
 
 // 2A. MONOTONE DECREASING STACK — next GREATER element
-// MENTAL MODEL: keep only candidates still waiting for a bigger neighbor; current resolves them all.
-// WHEN: "next/previous greater element", "warmer/taller to the right"
+// keep only candidates still waiting for a bigger neighbor; current resolves them all.  — WHEN: "next/previous greater element", "warmer/taller to the right"
 // Invariant: stack values decrease from bottom to top
 // Pop when current is GREATER than top → top found its next greater
 Deque<Integer> stack = new ArrayDeque<>();  // stores indices
@@ -725,8 +710,7 @@ for (int i = 0; i < n; i++) {
 // Remaining in stack: no next greater element exists
 
 // 2B. MONOTONE INCREASING STACK — next SMALLER element / span width
-// MENTAL MODEL: each popped bar's reach extends until something shorter blocks it on both sides.
-// WHEN: "largest rectangle", "trapped water", "span/width bounded by smaller elements"
+// each popped bar's reach extends until something shorter blocks it on both sides.  — WHEN: "largest rectangle", "trapped water", "span/width bounded by smaller elements"
 // Invariant: stack values increase from bottom to top
 // Pop when current is SMALLER than top → use popped index to compute width/span
 Deque<Integer> stack = new ArrayDeque<>();  // stores indices
@@ -740,8 +724,7 @@ for (int i = 0; i < n; i++) {
 }
 
 // 3. MONOTONE DEQUE — sliding window max/min
-// MENTAL MODEL: the front is the current window's answer; anything a newer-and-bigger value beats is dead weight.
-// WHEN: "max/min of every window of size k"
+// the front is the current window's answer; anything a newer-and-bigger value beats is dead weight.  — WHEN: "max/min of every window of size k"
 // Deque stores INDICES; values at those indices are decreasing front-to-back (for max)
 Deque<Integer> queue = new ArrayDeque<>();
 for (int i = 0; i < n; i++) {
@@ -761,8 +744,7 @@ pq.poll();     // remove and return min/max
 pq.peek();     // view min/max without removing
 
 // 5. TWO HEAPS — maintain median in O(log n)
-// MENTAL MODEL: split the data at the median; the median is always sitting on the two heaps' tops.
-// WHEN: "running median", "median of a data stream"
+// split the data at the median; the median is always sitting on the two heaps' tops.  — WHEN: "running median", "median of a data stream"
 // maxHeap = lower half (smaller numbers), minHeap = upper half (larger numbers)
 // Invariant: maxHeap.size() == minHeap.size() or maxHeap.size() == minHeap.size() + 1
 PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder());
@@ -857,8 +839,7 @@ One template: snapshot the level size, then drain exactly that many nodes per le
 
 ```java
 // LEVEL-AWARE PROCESSING — snapshot size to make per-level decisions
-// MENTAL MODEL: the queue holds exactly one full level; freeze its size, then drain just that many.
-// WHEN: "level by level", "per row", "rightmost/leftmost in level", "min depth"
+// the queue holds exactly one full level; freeze its size, then drain just that many.  — WHEN: "level by level", "per row", "rightmost/leftmost in level", "min depth"
 Queue<TreeNode> queue = new ArrayDeque<>();
 queue.offer(root);
 int level = 0;
@@ -941,8 +922,7 @@ DFS appears in five forms. The pattern determines naming, return type, and where
 
 ```java
 // 1. PROCESS CHILDREN FIRST, COMBINE AT NODE (post-order)
-// MENTAL MODEL: each node trusts its children to return a finished answer, then merges them.
-// WHEN: "what is the height/sum/property OF the subtree rooted here"
+// each node trusts its children to return a finished answer, then merges them.  — WHEN: "what is the height/sum/property OF the subtree rooted here"
 private int dfs(TreeNode node) {
     if (node == null) return BASE;          // 0 for depth, true for balanced
     int left  = dfs(node.left);
@@ -952,8 +932,7 @@ private int dfs(TreeNode node) {
 }
 
 // 2. PROCESS NODE FIRST, PASS STATE DOWN (pre-order)
-// MENTAL MODEL: carry what you've seen so far down the path; the leaf has the full picture.
-// WHEN: "root-to-leaf path", "running sum/number built along the way"
+// carry what you've seen so far down the path; the leaf has the full picture.  — WHEN: "root-to-leaf path", "running sum/number built along the way"
 private void dfs(TreeNode node, int accumulated) {
     if (node == null) return;
     accumulated += node.val;                // update state on way down
@@ -964,8 +943,7 @@ private void dfs(TreeNode node, int accumulated) {
 }
 
 // 3. TREE — GLOBAL ANSWER (return up the best single arm; update global across both arms)
-// MENTAL MODEL: the answer may bend through a node using both arms, but only one arm can extend upward.
-// WHEN: use when the best path spans across a node, not just up one arm.
+// the answer may bend through a node using both arms, but only one arm can extend upward.  — WHEN: use when the best path spans across a node, not just up one arm.
 int answer = Integer.MIN_VALUE;
 private int dfs(TreeNode node) {
     if (node == null) return 0;
@@ -976,8 +954,7 @@ private int dfs(TreeNode node) {
 }
 
 // 4. GRID DFS — mark visited by mutating grid; 4-directional flood fill
-// MENTAL MODEL: stand on a cell, flood into all 4 neighbors, sinking each as you visit it.
-// WHEN: "connected region / island / flood fill" on a grid
+// stand on a cell, flood into all 4 neighbors, sinking each as you visit it.  — WHEN: "connected region / island / flood fill" on a grid
 private void dfs(int[][] grid, int r, int c) {
     if (r < 0 || r >= grid.length || c < 0 || c >= grid[0].length) return;
     if (grid[r][c] != TARGET) return;
@@ -987,8 +964,7 @@ private void dfs(int[][] grid, int r, int c) {
 }
 
 // 5. GRAPH DFS — 3-color visited: 0=unseen 1=in-stack 2=done
-// MENTAL MODEL: if you re-enter a node still on the current stack, you've looped back → cycle.
-// WHEN: "can finish all", "detect cycle", "valid ordering" on a directed graph
+// if you re-enter a node still on the current stack, you've looped back → cycle.  — WHEN: "can finish all", "detect cycle", "valid ordering" on a directed graph
 int[] state;
 private boolean dfs(int node) {
     if (state[node] == 1) return true;    // back edge → cycle
@@ -1001,8 +977,7 @@ private boolean dfs(int node) {
 }
 
 // 6. BACKTRACKING — choose / recurse / undo
-// MENTAL MODEL: build a candidate one element at a time; undo each choice to explore the next branch.
-// WHEN: "all subsets / permutations / combinations", "find all ways"
+// build a candidate one element at a time; undo each choice to explore the next branch.  — WHEN: "all subsets / permutations / combinations", "find all ways"
 private void backtrack(int start, List<Integer> current) {
     if (baseCase) { result.add(new ArrayList<>(current)); return; }
     for (int i = start; i < n; i++) {
@@ -1164,8 +1139,7 @@ int[] dc = {0,  0, 1, -1};
 
 ```java
 // 1. BFS — shortest path / level order (track distance by level-size snapshot)
-// MENTAL MODEL: explore in rings of equal distance; snapshot the level size so each ring = one step.
-// WHEN: "fewest steps", "shortest path", "level order" on an unweighted graph
+// explore in rings of equal distance; snapshot the level size so each ring = one step.  — WHEN: "fewest steps", "shortest path", "level order" on an unweighted graph
 Queue<Integer> queue = new ArrayDeque<>();
 boolean[] visited = new boolean[n];
 queue.offer(start);
@@ -1187,8 +1161,7 @@ while (!queue.isEmpty()) {
 }
 
 // 2. TOPOLOGICAL SORT — Kahn's BFS
-// MENTAL MODEL: peel off nodes with no remaining prerequisites; if any get stuck, a cycle exists.
-// WHEN: "valid order", "dependencies/prerequisites", "detect cycle" on a directed graph
+// peel off nodes with no remaining prerequisites; if any get stuck, a cycle exists.  — WHEN: "valid order", "dependencies/prerequisites", "detect cycle" on a directed graph
 int[] inDegree = new int[n];
 for (int[] edge : edges) inDegree[edge[1]]++;
 Queue<Integer> queue = new ArrayDeque<>();
@@ -1203,8 +1176,7 @@ while (!queue.isEmpty()) {
 // order.size() == n → no cycle
 
 // 3. UNION FIND
-// MENTAL MODEL: each set points to one representative; merge sets by linking roots, query by finding roots.
-// WHEN: "connected components", "is it already connected", "merge groups dynamically"
+// each set points to one representative; merge sets by linking roots, query by finding roots.  — WHEN: "connected components", "is it already connected", "merge groups dynamically"
 int[] parent, rank;
 void init(int n) {
     parent = new int[n]; rank = new int[n];
@@ -1224,8 +1196,7 @@ boolean union(int x, int y) {
 }
 
 // 4. DIJKSTRA — shortest path (non-negative weights)
-// MENTAL MODEL: greedily settle the closest unfinished node; non-negative weights guarantee it's final.
-// WHEN: "shortest/cheapest path" with non-negative weights
+// greedily settle the closest unfinished node; non-negative weights guarantee it's final.  — WHEN: "shortest/cheapest path" with non-negative weights
 int[] dist = new int[n];
 Arrays.fill(dist, Integer.MAX_VALUE);
 dist[src] = 0;
@@ -1245,8 +1216,7 @@ while (!pq.isEmpty()) {
 }
 
 // 5. BIPARTITE CHECK — BFS 2-coloring
-// MENTAL MODEL: paint neighbors the opposite color; a neighbor that's already your color means an odd cycle.
-// WHEN: "split into two groups", "2-colorable", "no edge within a group"
+// paint neighbors the opposite color; a neighbor that's already your color means an odd cycle.  — WHEN: "split into two groups", "2-colorable", "no edge within a group"
 int[] color = new int[n];
 Arrays.fill(color, -1);
 Queue<Integer> queue = new ArrayDeque<>();
@@ -1355,8 +1325,7 @@ TEMPLATE 2 — Sort by START time, sweep forward, merge when overlapping
 ```
 
 ```java
-// MENTAL MODEL: sort to expose a local greedy choice, then sweep once making the locally-best pick.
-// WHEN: intervals + "max non-overlapping / min arrows / merge / min rooms", or jump/partition sweeps.
+// sort to expose a local greedy choice, then sweep once making the locally-best pick.  — WHEN: intervals + "max non-overlapping / min arrows / merge / min rooms", or jump/partition sweeps.
 // TEMPLATE 1: Sort by end, compare start
 Arrays.sort(intervals, (a, b) -> a[1] - b[1]);      // sort by END time
 int lastEnd = Integer.MIN_VALUE;
@@ -1433,16 +1402,14 @@ Six template families. Every problem maps to one loop skeleton and one dp-state 
 
 ```java
 // 1. LINEAR 1D — each cell depends on a fixed number of previous cells
-// MENTAL MODEL: the answer at i is a fixed recipe over the last one or two answers.
-// WHEN: "ways/cost to reach step i", "can't pick adjacent"
+// the answer at i is a fixed recipe over the last one or two answers.  — WHEN: "ways/cost to reach step i", "can't pick adjacent"
 int[] dp = new int[n + 1];
 dp[0] = base;
 for (int i = 1; i <= n; i++)
     dp[i] = f(dp[i-1], dp[i-2], ...);
 
 // 2A. LOOK-BACK 1D — dp[i] depends on all j < i
-// MENTAL MODEL: to finish position i, scan every earlier position j and extend the best valid one.
-// WHEN: "longest increasing/chain ending here", "can the prefix be segmented"
+// to finish position i, scan every earlier position j and extend the best valid one.  — WHEN: "longest increasing/chain ending here", "can the prefix be segmented"
 int[] dp = new int[n];
 for (int i = 0; i < n; i++) {
     for (int j = 0; j < i; j++) {
@@ -1456,50 +1423,14 @@ for (int i = 0; i < n; i++) {
 //   Mnemonic: DESCENDING = Distinct, ASCENDING = Again. Full code + permutation
 //   variant + "why" in Part 2 — Knapsack DP.
 
-// 3. 2D SEQUENCE — two strings/arrays; i indexes one, j indexes the other
-// MENTAL MODEL: compare the last char of each prefix — match consumes both, mismatch drops one side.
-// WHEN: "compare two strings/arrays" (LCS, edit distance, subsequence count)
-int[][] dp = new int[m + 1][n + 1];
-for (int i = 1; i <= m; i++) {
-    for (int j = 1; j <= n; j++) {
-        if (match(i, j)) {
-            dp[i][j] = dp[i-1][j-1] + val;
-        } else {
-            dp[i][j] = combine(dp[i-1][j], dp[i][j-1]);
-        }
-    }
-}
-
-// 4. INTERVAL DP — i goes RIGHT to LEFT; j goes i+1 to end
-//    "shorter comes first": when computing dp[i][j], dp[i+1][*] is already done
-// MENTAL MODEL: build answers for short ranges first, then combine them into longer ranges.
-// WHEN: "palindrome substring/subseq", "merge/burst in a range", split-point problems
-int[][] dp = new int[n][n];
-for (int i = 0; i < n; i++) dp[i][i] = base;   // length-1 intervals
-for (int i = n - 1; i >= 0; i--) {              // ← right-to-left
-    for (int j = i + 1; j < n; j++) {
-        dp[i][j] = f(dp[i+1][j-1], dp[i+1][j], dp[i][j-1]);
-    }
-}
-
-// 5. GRID DP — 4-directional neighbors
-// MENTAL MODEL: each cell's answer accumulates from the cells you could have arrived from.
-// WHEN: "paths / min-cost in a grid moving right+down", "largest square"
-int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};   // DOWN UP RIGHT LEFT
-// Standard grid (dag, only right/down):
-int[][] dp = new int[rows][cols];
-for (int i = 0; i < rows; i++)
-    for (int j = 0; j < cols; j++)
-        dp[i][j] = grid[i][j] + combine(dp[i-1][j], dp[i][j-1]);
-
-// 6. STATE MACHINE — named states updated simultaneously each step
-// MENTAL MODEL: track the best value in each named situation; each day every state updates from yesterday's states.
-// WHEN: "buy/sell/hold", "limited transactions", "cooldown/fee"
-int cash = 0, hold = -prices[0];
-for (int i = 1; i < prices.length; i++) {
-    cash = Math.max(cash, hold + prices[i]);
-    hold = Math.max(hold, ??? - prices[i]);   // ??? depends on problem
-}
+// 3. 2D SEQUENCE — match consumes both, mismatch drops one side. WHEN: LCS / edit
+//    distance / subsequence count over two strings. Full code → Part 3.
+// 4. INTERVAL DP — short ranges first (i right-to-left, j from i+1; dp[i+1][*] ready).
+//    WHEN: palindrome / merge-burst / split-point in a range. Full code → Part 4.
+// 5. GRID DP — each cell accumulates from cells it could arrive from (up/left).
+//    WHEN: grid paths / min-cost / largest square. Full code → Part 5.
+// 6. STATE MACHINE — named states updated from yesterday's states each step.
+//    WHEN: buy/sell/hold, limited transactions, cooldown/fee. Full code → Part 6.
 ```
 
 #### Knapsack Decision Tree
@@ -1714,8 +1645,7 @@ Problem     hold update                   cash update                 Extra stat
 ### Canonical Template
 
 ```java
-// MENTAL MODEL: every node is a shared prefix; walking down spells a word, so common prefixes are stored once.
-// WHEN: "prefix / startsWith / autocomplete", "wildcard match", "prune a search by shared prefixes"
+// every node is a shared prefix; walking down spells a word, so common prefixes are stored once.  — WHEN: "prefix / startsWith / autocomplete", "wildcard match", "prune a search by shared prefixes"
 
 // ── TRIE NODE ──
 // Array vs Map TrieNode mental model:
@@ -1874,8 +1804,7 @@ The only decision point after traversal:
 ### Canonical Template
 
 ```java
-// MENTAL MODEL: bits are a set/counter — XOR cancels duplicates, AND/OR/shift edit individual bits.
-// WHEN: "appears once/odd among pairs", "count set bits", "no shared letters", "power of 2/4".
+// bits are a set/counter — XOR cancels duplicates, AND/OR/shift edit individual bits.  — WHEN: "appears once/odd among pairs", "count set bits", "no shared letters", "power of 2/4".
 // ── XOR CANCEL ── pairs cancel; lone element survives
 int result = 0;
 for (int num : nums) result ^= num;
@@ -2008,8 +1937,7 @@ i & 1              // last bit (0 = even, 1 = odd)
 ### Canonical Template — HashMap + Doubly Linked List (LRU)
 
 ```java
-// MENTAL MODEL: HashMap gives O(1) lookup; the doubly linked list orders by recency so the LRU is always one hop from tail.
-// WHEN: "O(1) get/put with eviction by recency or frequency"
+// HashMap gives O(1) lookup; the doubly linked list orders by recency so the LRU is always one hop from tail.  — WHEN: "O(1) get/put with eviction by recency or frequency"
 
 // CacheNode for doubly linked list (named CacheNode to distinguish from ListNode contexts)
 class CacheNode {

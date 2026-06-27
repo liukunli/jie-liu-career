@@ -9,8 +9,7 @@ One template: snapshot the level size, then drain exactly that many nodes per le
 
 ```java
 // LEVEL-AWARE PROCESSING — snapshot size to make per-level decisions
-// MENTAL MODEL: the queue holds exactly one full level; freeze its size, then drain just that many.
-// WHEN: "level by level", "per row", "rightmost/leftmost in level", "min depth"
+// the queue holds exactly one full level; freeze its size, then drain just that many.  — WHEN: "level by level", "per row", "rightmost/leftmost in level", "min depth"
 Queue<TreeNode> queue = new ArrayDeque<>();
 queue.offer(root);
 int level = 0;

@@ -102,8 +102,7 @@ For sliding window string problems (#3, #76, #567, #424), see `sliding_window.md
 ## Core Idioms
 
 ```java
-// MENTAL MODEL: a lowercase string is a length-26 frequency vector; most string problems are vector ops on it.
-// WHEN: "anagram", "char count", "group by letters", "first unique", "sort by frequency".
+// a lowercase string is a length-26 frequency vector; most string problems are vector ops on it.  — WHEN: "anagram", "char count", "group by letters", "first unique", "sort by frequency".
 // 1. CHAR COUNT — lowercase letters
 int[] count = new int[26];
 // WHY ch - 'a': ASCII 'a'=97, so 'a'→0, 'b'→1, ..., 'z'→25 — a clean 0–25 bucket index into count[].

@@ -99,16 +99,14 @@ Six template families. Every problem maps to one loop skeleton and one dp-state 
 
 ```java
 // 1. LINEAR 1D — each cell depends on a fixed number of previous cells
-// MENTAL MODEL: the answer at i is a fixed recipe over the last one or two answers.
-// WHEN: "ways/cost to reach step i", "can't pick adjacent"
+// the answer at i is a fixed recipe over the last one or two answers.  — WHEN: "ways/cost to reach step i", "can't pick adjacent"
 int[] dp = new int[n + 1];
 dp[0] = base;
 for (int i = 1; i <= n; i++)
     dp[i] = f(dp[i-1], dp[i-2], ...);
 
 // 2A. LOOK-BACK 1D — dp[i] depends on all j < i
-// MENTAL MODEL: to finish position i, scan every earlier position j and extend the best valid one.
-// WHEN: "longest increasing/chain ending here", "can the prefix be segmented"
+// to finish position i, scan every earlier position j and extend the best valid one.  — WHEN: "longest increasing/chain ending here", "can the prefix be segmented"
 int[] dp = new int[n];
 for (int i = 0; i < n; i++) {
     for (int j = 0; j < i; j++) {
@@ -122,50 +120,14 @@ for (int i = 0; i < n; i++) {
 //   Mnemonic: DESCENDING = Distinct, ASCENDING = Again. Full code + permutation
 //   variant + "why" in Part 2 — Knapsack DP.
 
-// 3. 2D SEQUENCE — two strings/arrays; i indexes one, j indexes the other
-// MENTAL MODEL: compare the last char of each prefix — match consumes both, mismatch drops one side.
-// WHEN: "compare two strings/arrays" (LCS, edit distance, subsequence count)
-int[][] dp = new int[m + 1][n + 1];
-for (int i = 1; i <= m; i++) {
-    for (int j = 1; j <= n; j++) {
-        if (match(i, j)) {
-            dp[i][j] = dp[i-1][j-1] + val;
-        } else {
-            dp[i][j] = combine(dp[i-1][j], dp[i][j-1]);
-        }
-    }
-}
-
-// 4. INTERVAL DP — i goes RIGHT to LEFT; j goes i+1 to end
-//    "shorter comes first": when computing dp[i][j], dp[i+1][*] is already done
-// MENTAL MODEL: build answers for short ranges first, then combine them into longer ranges.
-// WHEN: "palindrome substring/subseq", "merge/burst in a range", split-point problems
-int[][] dp = new int[n][n];
-for (int i = 0; i < n; i++) dp[i][i] = base;   // length-1 intervals
-for (int i = n - 1; i >= 0; i--) {              // ← right-to-left
-    for (int j = i + 1; j < n; j++) {
-        dp[i][j] = f(dp[i+1][j-1], dp[i+1][j], dp[i][j-1]);
-    }
-}
-
-// 5. GRID DP — 4-directional neighbors
-// MENTAL MODEL: each cell's answer accumulates from the cells you could have arrived from.
-// WHEN: "paths / min-cost in a grid moving right+down", "largest square"
-int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};   // DOWN UP RIGHT LEFT
-// Standard grid (dag, only right/down):
-int[][] dp = new int[rows][cols];
-for (int i = 0; i < rows; i++)
-    for (int j = 0; j < cols; j++)
-        dp[i][j] = grid[i][j] + combine(dp[i-1][j], dp[i][j-1]);
-
-// 6. STATE MACHINE — named states updated simultaneously each step
-// MENTAL MODEL: track the best value in each named situation; each day every state updates from yesterday's states.
-// WHEN: "buy/sell/hold", "limited transactions", "cooldown/fee"
-int cash = 0, hold = -prices[0];
-for (int i = 1; i < prices.length; i++) {
-    cash = Math.max(cash, hold + prices[i]);
-    hold = Math.max(hold, ??? - prices[i]);   // ??? depends on problem
-}
+// 3. 2D SEQUENCE — match consumes both, mismatch drops one side. WHEN: LCS / edit
+//    distance / subsequence count over two strings. Full code → Part 3.
+// 4. INTERVAL DP — short ranges first (i right-to-left, j from i+1; dp[i+1][*] ready).
+//    WHEN: palindrome / merge-burst / split-point in a range. Full code → Part 4.
+// 5. GRID DP — each cell accumulates from cells it could arrive from (up/left).
+//    WHEN: grid paths / min-cost / largest square. Full code → Part 5.
+// 6. STATE MACHINE — named states updated from yesterday's states each step.
+//    WHEN: buy/sell/hold, limited transactions, cooldown/fee. Full code → Part 6.
 ```
 
 ### Knapsack Decision Tree

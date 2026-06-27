@@ -60,8 +60,7 @@ Consistent naming throughout: `sentinel`, `previous`, `current`, `next`, `slow`,
 
 ```java
 // 1. DELETE / FILTER  — sentinel guards head removal; previous tracks last kept node
-// MENTAL MODEL: previous always points at the last node you decided to keep, so re-wiring it skips anything unwanted.
-// WHEN: "remove / delete / skip nodes by value or duplicate"
+// previous always points at the last node you decided to keep, so re-wiring it skips anything unwanted.  — WHEN: "remove / delete / skip nodes by value or duplicate"
 ListNode sentinel = new ListNode(0);
 sentinel.next = head;
 ListNode previous = sentinel, current = head;
@@ -76,8 +75,7 @@ while (current != null) {
 return sentinel.next;
 
 // 2. REVERSAL — re-wire one node at a time
-// MENTAL MODEL: flip each arrow to point backward; previous is the growing reversed list trailing behind current.
-// WHEN: "reverse the list (whole, partial, or in k-groups)"
+// flip each arrow to point backward; previous is the growing reversed list trailing behind current.  — WHEN: "reverse the list (whole, partial, or in k-groups)"
 ListNode previous = null, current = head;
 while (current != null) {
     ListNode next = current.next;   // save before overwrite
@@ -88,8 +86,7 @@ while (current != null) {
 return previous;  // new head
 
 // 3. FAST / SLOW — two pointers at different speeds
-// MENTAL MODEL: fast covers twice the distance, so when it hits the end slow is exactly halfway; in a loop they must collide.
-// WHEN: "middle node", "detect/locate cycle", "nth from end"
+// fast covers twice the distance, so when it hits the end slow is exactly halfway; in a loop they must collide.  — WHEN: "middle node", "detect/locate cycle", "nth from end"
 ListNode slow = head, fast = head;
 while (fast != null && fast.next != null) {
     slow = slow.next;
@@ -98,8 +95,7 @@ while (fast != null && fast.next != null) {
 // slow is at middle  (or cycle detection: slow == fast → cycle found)
 
 // 4. MERGE — sentinel collects nodes from two lists in order
-// MENTAL MODEL: repeatedly splice the smaller head onto a growing result tail, like a zipper.
-// WHEN: "merge two (or k) sorted lists"
+// repeatedly splice the smaller head onto a growing result tail, like a zipper.  — WHEN: "merge two (or k) sorted lists"
 ListNode sentinel = new ListNode(0);
 ListNode current = sentinel;
 while (a != null && b != null) {

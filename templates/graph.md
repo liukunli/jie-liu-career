@@ -106,8 +106,7 @@ int[] dc = {0,  0, 1, -1};
 
 ```java
 // 1. BFS — shortest path / level order (track distance by level-size snapshot)
-// MENTAL MODEL: explore in rings of equal distance; snapshot the level size so each ring = one step.
-// WHEN: "fewest steps", "shortest path", "level order" on an unweighted graph
+// explore in rings of equal distance; snapshot the level size so each ring = one step.  — WHEN: "fewest steps", "shortest path", "level order" on an unweighted graph
 Queue<Integer> queue = new ArrayDeque<>();
 boolean[] visited = new boolean[n];
 queue.offer(start);
@@ -129,8 +128,7 @@ while (!queue.isEmpty()) {
 }
 
 // 2. TOPOLOGICAL SORT — Kahn's BFS
-// MENTAL MODEL: peel off nodes with no remaining prerequisites; if any get stuck, a cycle exists.
-// WHEN: "valid order", "dependencies/prerequisites", "detect cycle" on a directed graph
+// peel off nodes with no remaining prerequisites; if any get stuck, a cycle exists.  — WHEN: "valid order", "dependencies/prerequisites", "detect cycle" on a directed graph
 int[] inDegree = new int[n];
 for (int[] edge : edges) inDegree[edge[1]]++;
 Queue<Integer> queue = new ArrayDeque<>();
@@ -145,8 +143,7 @@ while (!queue.isEmpty()) {
 // order.size() == n → no cycle
 
 // 3. UNION FIND
-// MENTAL MODEL: each set points to one representative; merge sets by linking roots, query by finding roots.
-// WHEN: "connected components", "is it already connected", "merge groups dynamically"
+// each set points to one representative; merge sets by linking roots, query by finding roots.  — WHEN: "connected components", "is it already connected", "merge groups dynamically"
 int[] parent, rank;
 void init(int n) {
     parent = new int[n]; rank = new int[n];
@@ -166,8 +163,7 @@ boolean union(int x, int y) {
 }
 
 // 4. DIJKSTRA — shortest path (non-negative weights)
-// MENTAL MODEL: greedily settle the closest unfinished node; non-negative weights guarantee it's final.
-// WHEN: "shortest/cheapest path" with non-negative weights
+// greedily settle the closest unfinished node; non-negative weights guarantee it's final.  — WHEN: "shortest/cheapest path" with non-negative weights
 int[] dist = new int[n];
 Arrays.fill(dist, Integer.MAX_VALUE);
 dist[src] = 0;
@@ -187,8 +183,7 @@ while (!pq.isEmpty()) {
 }
 
 // 5. BIPARTITE CHECK — BFS 2-coloring
-// MENTAL MODEL: paint neighbors the opposite color; a neighbor that's already your color means an odd cycle.
-// WHEN: "split into two groups", "2-colorable", "no edge within a group"
+// paint neighbors the opposite color; a neighbor that's already your color means an odd cycle.  — WHEN: "split into two groups", "2-colorable", "no edge within a group"
 int[] color = new int[n];
 Arrays.fill(color, -1);
 Queue<Integer> queue = new ArrayDeque<>();

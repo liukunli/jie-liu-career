@@ -115,8 +115,7 @@ public class Solution {
 ## Canonical Template — HashMap + Doubly Linked List (LRU)
 
 ```java
-// MENTAL MODEL: HashMap gives O(1) lookup; the doubly linked list orders by recency so the LRU is always one hop from tail.
-// WHEN: "O(1) get/put with eviction by recency or frequency"
+// HashMap gives O(1) lookup; the doubly linked list orders by recency so the LRU is always one hop from tail.  — WHEN: "O(1) get/put with eviction by recency or frequency"
 
 // CacheNode for doubly linked list (named CacheNode to distinguish from ListNode contexts)
 class CacheNode {

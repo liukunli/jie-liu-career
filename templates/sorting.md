@@ -25,8 +25,7 @@ Inside merge and partition: `i`, `j`, `k` as scan/write pointers (consistent wit
 ## Template 1 — Merge Sort
 
 ```java
-// MENTAL MODEL: split in half until trivially sorted, then merge two sorted halves into one.
-// WHEN: need stable sort, sort a linked list, or count cross-pairs (inversions) during the merge.
+// split in half until trivially sorted, then merge two sorted halves into one.  — WHEN: need stable sort, sort a linked list, or count cross-pairs (inversions) during the merge.
 // Entry point
 public void mergeSort(int[] nums) {
     mergeSort(nums, 0, nums.length, new int[nums.length]);
@@ -60,8 +59,7 @@ private void merge(int[] nums, int start, int mid, int end, int[] temp) {
 ## Template 2 — Quick Sort (3-way Dutch Flag Partition)
 
 ```java
-// MENTAL MODEL: pick a pivot, partition into <pivot | ==pivot | >pivot, recurse on the two ends only.
-// WHEN: in-place sort with O(log n) stack; the ==pivot middle is already in final position.
+// pick a pivot, partition into <pivot | ==pivot | >pivot, recurse on the two ends only.  — WHEN: in-place sort with O(log n) stack; the ==pivot middle is already in final position.
 // Entry point — no extra array needed (in-place)
 public void quickSort(int[] nums) {
     quickSort(nums, 0, nums.length);
@@ -99,8 +97,7 @@ private void swap(int[] nums, int i, int j) {
 Extends quick sort: after partition, only recurse into the side that contains `target` index.
 
 ```java
-// MENTAL MODEL: same partition as quick sort, but recurse into only the one side holding target → O(n) avg.
-// WHEN: "k-th largest/smallest", "k closest/most frequent" — you need a position, not a full sort.
+// same partition as quick sort, but recurse into only the one side holding target → O(n) avg.  — WHEN: "k-th largest/smallest", "k closest/most frequent" — you need a position, not a full sort.
 // Returns value at 0-indexed position target after sorting
 private int quickSelect(int[] nums, int start, int end, int target) {
     int pivot = nums[start + (end - start) / 2];
@@ -132,8 +129,7 @@ private int quickSelect(int[] nums, int start, int end, int target) {
 O(n + range). Use when values are bounded integers.
 
 ```java
-// MENTAL MODEL: tally how many times each value occurs, then emit values in order — no comparisons.
-// WHEN: integers in a small bounded range; beats O(n log n) when range = O(n).
+// tally how many times each value occurs, then emit values in order — no comparisons.  — WHEN: integers in a small bounded range; beats O(n log n) when range = O(n).
 public void countingSort(int[] arr) {
     if (arr.length == 0) return;
     int min = Arrays.stream(arr).min().getAsInt();

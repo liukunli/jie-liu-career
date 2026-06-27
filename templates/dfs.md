@@ -174,8 +174,7 @@ DFS appears in five forms. The pattern determines naming, return type, and where
 
 ```java
 // 1. PROCESS CHILDREN FIRST, COMBINE AT NODE (post-order)
-// MENTAL MODEL: each node trusts its children to return a finished answer, then merges them.
-// WHEN: "what is the height/sum/property OF the subtree rooted here"
+// each node trusts its children to return a finished answer, then merges them.  — WHEN: "what is the height/sum/property OF the subtree rooted here"
 private int dfs(TreeNode node) {
     if (node == null) return BASE;          // 0 for depth, true for balanced
     int left  = dfs(node.left);
@@ -185,8 +184,7 @@ private int dfs(TreeNode node) {
 }
 
 // 2. PROCESS NODE FIRST, PASS STATE DOWN (pre-order)
-// MENTAL MODEL: carry what you've seen so far down the path; the leaf has the full picture.
-// WHEN: "root-to-leaf path", "running sum/number built along the way"
+// carry what you've seen so far down the path; the leaf has the full picture.  — WHEN: "root-to-leaf path", "running sum/number built along the way"
 private void dfs(TreeNode node, int accumulated) {
     if (node == null) return;
     accumulated += node.val;                // update state on way down
@@ -197,8 +195,7 @@ private void dfs(TreeNode node, int accumulated) {
 }
 
 // 3. TREE — GLOBAL ANSWER (return up the best single arm; update global across both arms)
-// MENTAL MODEL: the answer may bend through a node using both arms, but only one arm can extend upward.
-// WHEN: use when the best path spans across a node, not just up one arm.
+// the answer may bend through a node using both arms, but only one arm can extend upward.  — WHEN: use when the best path spans across a node, not just up one arm.
 int answer = Integer.MIN_VALUE;
 private int dfs(TreeNode node) {
     if (node == null) return 0;
@@ -209,8 +206,7 @@ private int dfs(TreeNode node) {
 }
 
 // 4. GRID DFS — mark visited by mutating grid; 4-directional flood fill
-// MENTAL MODEL: stand on a cell, flood into all 4 neighbors, sinking each as you visit it.
-// WHEN: "connected region / island / flood fill" on a grid
+// stand on a cell, flood into all 4 neighbors, sinking each as you visit it.  — WHEN: "connected region / island / flood fill" on a grid
 private void dfs(int[][] grid, int r, int c) {
     if (r < 0 || r >= grid.length || c < 0 || c >= grid[0].length) return;
     if (grid[r][c] != TARGET) return;
@@ -220,8 +216,7 @@ private void dfs(int[][] grid, int r, int c) {
 }
 
 // 5. GRAPH DFS — 3-color visited: 0=unseen 1=in-stack 2=done
-// MENTAL MODEL: if you re-enter a node still on the current stack, you've looped back → cycle.
-// WHEN: "can finish all", "detect cycle", "valid ordering" on a directed graph
+// if you re-enter a node still on the current stack, you've looped back → cycle.  — WHEN: "can finish all", "detect cycle", "valid ordering" on a directed graph
 int[] state;
 private boolean dfs(int node) {
     if (state[node] == 1) return true;    // back edge → cycle
@@ -234,8 +229,7 @@ private boolean dfs(int node) {
 }
 
 // 6. BACKTRACKING — choose / recurse / undo
-// MENTAL MODEL: build a candidate one element at a time; undo each choice to explore the next branch.
-// WHEN: "all subsets / permutations / combinations", "find all ways"
+// build a candidate one element at a time; undo each choice to explore the next branch.  — WHEN: "all subsets / permutations / combinations", "find all ways"
 private void backtrack(int start, List<Integer> current) {
     if (baseCase) { result.add(new ArrayList<>(current)); return; }
     for (int i = start; i < n; i++) {

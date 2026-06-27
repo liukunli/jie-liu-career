@@ -289,8 +289,7 @@ class Solution {
 ## Pattern 2 — Same Direction (Write Pointer)
 
 ```java
-// MENTAL MODEL: a fast reader scans everything; a slow writer trails behind and only copies the keepers.
-// WHEN: filter/compact an array in place, no extra buffer
+// a fast reader scans everything; a slow writer trails behind and only copies the keepers.  — WHEN: filter/compact an array in place, no extra buffer
 int i = 0;                           // i = write position
 for (int j = 0; j < n; j++) {       // j = read position
     if (keepCondition(nums[j]))

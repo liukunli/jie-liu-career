@@ -29,8 +29,7 @@
 ## Canonical Template
 
 ```java
-// MENTAL MODEL: bits are a set/counter — XOR cancels duplicates, AND/OR/shift edit individual bits.
-// WHEN: "appears once/odd among pairs", "count set bits", "no shared letters", "power of 2/4".
+// bits are a set/counter — XOR cancels duplicates, AND/OR/shift edit individual bits.  — WHEN: "appears once/odd among pairs", "count set bits", "no shared letters", "power of 2/4".
 // ── XOR CANCEL ── pairs cancel; lone element survives
 int result = 0;
 for (int num : nums) result ^= num;

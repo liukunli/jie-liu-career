@@ -9,8 +9,7 @@ Store that X in a HashMap for O(1) lookup.
 ## Core Template
 
 ```java
-// MENTAL MODEL: a subarray is the difference of two prefixes; remember prefixes seen so far and look up the complement.
-// WHEN: "subarray sum equals/divisible by k", "longest subarray with sum X" — anything reducible to prefix[r]-prefix[l]
+// a subarray is the difference of two prefixes; remember prefixes seen so far and look up the complement.  — WHEN: "subarray sum equals/divisible by k", "longest subarray with sum X" — anything reducible to prefix[r]-prefix[l]
 Map<Long, Integer> map = new HashMap<>();
 map.put(0L, ???);    // seed: empty prefix (sum=0) seen before index 0
 long sum = 0;

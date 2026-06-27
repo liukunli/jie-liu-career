@@ -10,8 +10,7 @@ Window = `[i, j]`, size = `j - i + 1`.
 
 ```java
 // FIXED window of size k — shrink exactly once when full
-// MENTAL MODEL: a constant-width window slides one step at a time; add the new cell, drop the old one.
-// WHEN: "subarray/substring of size k"
+// a constant-width window slides one step at a time; add the new cell, drop the old one.  — WHEN: "subarray/substring of size k"
 int i = 0;
 for (int j = 0; j < n; j++) {
     // 1. add nums[j] to state
@@ -23,8 +22,7 @@ for (int j = 0; j < n; j++) {
 }
 
 // MAX variable window — find LONGEST valid window
-// MENTAL MODEL: grow greedily; shrink only enough to restore validity, then the window is the best ending here.
-// WHEN: "longest" + "at most k ..."
+// grow greedily; shrink only enough to restore validity, then the window is the best ending here.  — WHEN: "longest" + "at most k ..."
 int i = 0, result = 0;
 for (int j = 0; j < n; j++) {
     // 1. add nums[j] to state
@@ -36,8 +34,7 @@ for (int j = 0; j < n; j++) {
 }
 
 // MIN variable window — find SHORTEST valid window
-// MENTAL MODEL: grow until valid, then shrink aggressively while still valid to find the tightest fit.
-// WHEN: "shortest/minimum" + "sum >= target" / "contains all of t"
+// grow until valid, then shrink aggressively while still valid to find the tightest fit.  — WHEN: "shortest/minimum" + "sum >= target" / "contains all of t"
 int i = 0, result = Integer.MAX_VALUE;
 for (int j = 0; j < n; j++) {
     // 1. add nums[j] to state

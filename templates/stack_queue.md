@@ -79,8 +79,7 @@ stack.pop();       // remove from top
 stack.peek();      // view top, no remove
 
 // 2A. MONOTONE DECREASING STACK — next GREATER element
-// MENTAL MODEL: keep only candidates still waiting for a bigger neighbor; current resolves them all.
-// WHEN: "next/previous greater element", "warmer/taller to the right"
+// keep only candidates still waiting for a bigger neighbor; current resolves them all.  — WHEN: "next/previous greater element", "warmer/taller to the right"
 // Invariant: stack values decrease from bottom to top
 // Pop when current is GREATER than top → top found its next greater
 Deque<Integer> stack = new ArrayDeque<>();  // stores indices
@@ -92,8 +91,7 @@ for (int i = 0; i < n; i++) {
 // Remaining in stack: no next greater element exists
 
 // 2B. MONOTONE INCREASING STACK — next SMALLER element / span width
-// MENTAL MODEL: each popped bar's reach extends until something shorter blocks it on both sides.
-// WHEN: "largest rectangle", "trapped water", "span/width bounded by smaller elements"
+// each popped bar's reach extends until something shorter blocks it on both sides.  — WHEN: "largest rectangle", "trapped water", "span/width bounded by smaller elements"
 // Invariant: stack values increase from bottom to top
 // Pop when current is SMALLER than top → use popped index to compute width/span
 Deque<Integer> stack = new ArrayDeque<>();  // stores indices
@@ -107,8 +105,7 @@ for (int i = 0; i < n; i++) {
 }
 
 // 3. MONOTONE DEQUE — sliding window max/min
-// MENTAL MODEL: the front is the current window's answer; anything a newer-and-bigger value beats is dead weight.
-// WHEN: "max/min of every window of size k"
+// the front is the current window's answer; anything a newer-and-bigger value beats is dead weight.  — WHEN: "max/min of every window of size k"
 // Deque stores INDICES; values at those indices are decreasing front-to-back (for max)
 Deque<Integer> queue = new ArrayDeque<>();
 for (int i = 0; i < n; i++) {
@@ -128,8 +125,7 @@ pq.poll();     // remove and return min/max
 pq.peek();     // view min/max without removing
 
 // 5. TWO HEAPS — maintain median in O(log n)
-// MENTAL MODEL: split the data at the median; the median is always sitting on the two heaps' tops.
-// WHEN: "running median", "median of a data stream"
+// split the data at the median; the median is always sitting on the two heaps' tops.  — WHEN: "running median", "median of a data stream"
 // maxHeap = lower half (smaller numbers), minHeap = upper half (larger numbers)
 // Invariant: maxHeap.size() == minHeap.size() or maxHeap.size() == minHeap.size() + 1
 PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder());

@@ -58,8 +58,7 @@ TEMPLATE 2 — Sort by START time, sweep forward, merge when overlapping
 ```
 
 ```java
-// MENTAL MODEL: sort to expose a local greedy choice, then sweep once making the locally-best pick.
-// WHEN: intervals + "max non-overlapping / min arrows / merge / min rooms", or jump/partition sweeps.
+// sort to expose a local greedy choice, then sweep once making the locally-best pick.  — WHEN: intervals + "max non-overlapping / min arrows / merge / min rooms", or jump/partition sweeps.
 // TEMPLATE 1: Sort by end, compare start
 Arrays.sort(intervals, (a, b) -> a[1] - b[1]);      // sort by END time
 int lastEnd = Integer.MIN_VALUE;

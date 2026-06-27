@@ -33,8 +33,7 @@
 ## Canonical Template
 
 ```java
-// MENTAL MODEL: every node is a shared prefix; walking down spells a word, so common prefixes are stored once.
-// WHEN: "prefix / startsWith / autocomplete", "wildcard match", "prune a search by shared prefixes"
+// every node is a shared prefix; walking down spells a word, so common prefixes are stored once.  — WHEN: "prefix / startsWith / autocomplete", "wildcard match", "prune a search by shared prefixes"
 
 // ── TRIE NODE ──
 // Array vs Map TrieNode mental model:
