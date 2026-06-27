@@ -2409,193 +2409,6 @@ Problem     hold update                   cash update                 Extra stat
 | Buy/sell/hold decision changes day to day | State Machine — named states |
 
 ---
-## Trie  &nbsp;`trie.md`
-
----
-
-### Quick Reference Table
-
-| # | Name | Description | Intuition | Time | Space | Key Implementation |
-|---|---|---|---|---|---|---|
-| 208 | Implement Trie | Implement `insert(word)`, `search(word)`, and `startsWith(prefix)`. | each word is a path of letters down the tree; shared prefixes share the same path, so searching is just walking that path. | O(k) per operation, k = word length | O(n·k) total | Standard |
-| 211 | Design Add and Search Words Data Structure | Same as Trie but `search` supports `.` which matches any single letter. |  | O(k) insert, O(26^k) search worst case (all `.`) | O(n·k) | when character is `.`, recursively try every non-null child. |
-| 212 | Word Search II | Given a board and a list of words, find all words that exist in the board (connected adjacent cells, no reuse). |  | O(M·N·4·3^(L-1)) where L = max word length | O(total chars in words) | build a Trie from the word list; during grid DFS, follow the Trie path to prune branches that can't form any word. This avoids re-scanning the grid for each word independently. |
-| 648 | Replace Words | Replace every word in a sentence with its shortest root from a dictionary. If multiple roots are prefixes, use the shortest. |  | O(n·k) build + O(sentence) search | O(dict·k) | insert dictionary into Trie. For each word in sentence, traverse the Trie and return immediately when `isEnd` is hit — that's the shortest matching root. |
-| 1268 | Search Suggestions System | For each prefix of `searchWord` (length 1, 2, ..., n), return up to 3 products from `products` that share that prefix, in lexicographic order. |  | O(n·k·log n) build + O(k) search | O(n·k) | sort products first, then insert into Trie. At each node on the insertion path, cache the word (up to 3) — since products are sorted, the first 3 cached are always lexicographically smallest. Lookup is then O(1) per prefix. |
-| 745 | Prefix and Suffix Search | Design a class `WordFilter` with `f(pref, suff)` that returns the index of the word with the given prefix and suffix. If multiple words match, return the largest index. |  | O(W·L²) build, O(p+s) query | O(W·L²) where W=words.length, L=max word length | precompute all prefix-suffix pairs |
-| 336 | Palindrome Pairs | Given a list of unique words, find all pairs of distinct indices `(i, j)` such that `words[i] + words[j]` is a palindrome. | insert every word **reversed** into a Trie, tagging each end node with its index. For a query word, walk the Trie char by char; whenever the remainder of the word is itself a palindrome and we sit on a complete reversed word, those two concatenate into a palindrome. | O(n·k²) where n = words count, k = max word length | O(n·k) | words whose remaining suffix is a palindrome |
-| 676 | Implement Magic Dictionary | Build a dictionary from a list of words. Implement `search(word)` that returns true if you can change **exactly one** character of `word` to make it match a dictionary word. | standard Trie insert; on search, DFS the Trie tracking how many characters have been changed so far. Allow exactly one mismatch. | O(k) insert, O(26^k) search worst case | O(n·k) | exactly one change required |
-| 720 | Longest Word in Dictionary | Given a list of words, return the longest word that can be built one character at a time by other words in the list. If multiple, return the lexicographically smallest. | a word is buildable only if **every** prefix of it is also a complete word in the list. Insert all words, then DFS the Trie only through `isEnd` nodes — any reachable end node represents a fully buildable word. | O(n·k) build + O(n·k) DFS | O(n·k) | longest, ties broken lexicographically |
-| 1233 | Remove Sub-Folders from the Filesystem | Given a list of folder paths, remove all sub-folders so only top-level folders remain. `"/a/b"` is a sub-folder of `"/a"`. | split each path into its `/`-separated components and build a Trie keyed by component (map-based, since components are arbitrary strings). Mark the node ending a folder. A folder is a sub-folder iff some ancestor node on its path is already an `isEnd` folder. | O(n·k) where n = folders, k = avg components | O(n·k) | map keyed by path component |
-
----
-
-### When to Use Trie (vs HashMap/Array)
-
-| Signal | Use |
-|---|---|
-| Prefix queries / `startsWith` / autocomplete | **Trie** — shares prefixes, prefix lookup is O(k) |
-| Wildcard match (`.` matches any char) | **Trie** — DFS branches over children |
-| Prune a search space by shared prefixes (e.g. Word Search II) | **Trie** — dead branches cut early |
-| Exact-key lookup only (no prefix logic) | **HashMap** — O(k) hash is simpler and faster, no node overhead |
-
----
-
-### Canonical Template
-
-```java
-// every node is a shared prefix; walking down spells a word, so common prefixes are stored once.  — WHEN: "prefix / startsWith / autocomplete", "wildcard match", "prune a search by shared prefixes"
-
-// ── TRIE NODE ──
-// Array vs Map TrieNode mental model:
-//   array  = O(1) per char, fixed 26 letters, wastes space when sparse
-//   HashMap = variable alphabet, smaller for sparse, hashing overhead
-class TrieNode {
-    TrieNode[] children = new TrieNode[26];   // array-based: O(1) access, O(26) per node
-    boolean isEnd = false;
-}
-// Alternative: Map-based (for non-lowercase or variable alphabets)
-class TrieNode {
-    Map<Character, TrieNode> children = new HashMap<>();
-    boolean isEnd = false;
-}
-
-// ── INSERT ──
-void insert(TrieNode root, String word) {
-    TrieNode node = root;
-    for (char c : word.toCharArray()) {
-        int idx = c - 'a';
-        if (node.children[idx] == null) node.children[idx] = new TrieNode();
-        node = node.children[idx];
-    }
-    node.isEnd = true;
-}
-
-// ── SEARCH (exact match) ──
-boolean search(TrieNode root, String word) {
-    TrieNode node = root;
-    for (char c : word.toCharArray()) {
-        int idx = c - 'a';
-        if (node.children[idx] == null) return false;
-        node = node.children[idx];
-    }
-    return node.isEnd;    // must end at a marked word boundary
-}
-
-// ── STARTS WITH (prefix match) ──
-boolean startsWith(TrieNode root, String prefix) {
-    TrieNode node = root;
-    for (char c : prefix.toCharArray()) {
-        int idx = c - 'a';
-        if (node.children[idx] == null) return false;
-        node = node.children[idx];
-    }
-    return true;          // ← difference from search: don't check node.isEnd
-}
-```
-
----
-
-### Variations
-
-```java
-// VARIATION 1: DFS for wildcard '.' (Add and Search Words)
-// When char is '.', try all 26 children recursively instead of following one path.
-boolean dfs(TrieNode node, String word, int i) {
-    if (i == word.length()) return node.isEnd;
-    char c = word.charAt(i);
-    if (c == '.') {
-        for (TrieNode child : node.children)            // ← VARIATION: try all children
-            if (child != null && dfs(child, word, i+1)) return true;
-        return false;
-    }
-    int idx = c - 'a';
-    if (node.children[idx] == null) return false;
-    return dfs(node.children[idx], word, i + 1);
-}
-
-// VARIATION 2: early-exit on isEnd (Replace Words — find shortest root)
-String findRoot(TrieNode root, String word) {
-    TrieNode node = root;
-    for (int i = 0; i < word.length(); i++) {
-        int idx = word.charAt(i) - 'a';
-        if (node.children[idx] == null) return word;    // no root found → return original
-        node = node.children[idx];
-        if (node.isEnd) return word.substring(0, i+1);  // ← VARIATION: return at first root hit
-    }
-    return word;
-}
-
-// VARIATION 3: store words at each node (Search Suggestions — top-3 per prefix)
-// During insert, each node on the path caches the word (up to 3).
-// Products must be inserted in sorted order → first 3 are lexicographically smallest.
-void insert(TrieNode root, String word) {
-    TrieNode node = root;
-    for (char c : word.toCharArray()) {
-        int idx = c - 'a';
-        if (node.children[idx] == null) node.children[idx] = new TrieNode();
-        node = node.children[idx];
-        if (node.words.size() < 3) node.words.add(word);  // ← VARIATION: cache at every node
-    }
-    node.isEnd = true;
-}
-
-// VARIATION 4: Trie + grid DFS pruning (Word Search II)
-// Build Trie from word list. DFS the grid; at each cell, check if current path
-// follows a Trie path. Prune entire branch if no Trie node exists.
-void dfs(char[][] board, int i, int j, TrieNode node, StringBuilder path, Set<String> result) {
-    if (i < 0 || i >= board.length || j < 0 || j >= board[0].length) return;
-    char c = board[i][j];
-    if (c == '#' || node.children[c - 'a'] == null) return;  // ← VARIATION: Trie prune
-    node = node.children[c - 'a'];
-    path.append(c);
-    if (node.isEnd) result.add(path.toString());
-    board[i][j] = '#';
-    dfs(board, i+1, j, node, path, result);
-    dfs(board, i-1, j, node, path, result);
-    dfs(board, i, j+1, node, path, result);
-    dfs(board, i, j-1, node, path, result);
-    board[i][j] = c;
-    path.deleteCharAt(path.length() - 1);
-}
-```
-
----
-
-### search vs startsWith — One Line Difference
-
-```
-search:      return node.isEnd;   // must land on a word boundary
-startsWith:  return true;         // any node reached = valid prefix
-```
-
----
-
-### Trie vs HashMap vs Sorting — When to Use Trie
-
-| Operation | HashMap | Sorting | Trie |
-|---|---|---|---|
-| Exact key lookup | O(k) ✓ | O(log n · k) | O(k) |
-| Prefix check | O(k) per key | O(log n) | O(k) ✓ |
-| All words with prefix | O(n · k) | O(log n + result) | O(k + result) ✓ |
-| Wildcard match | Not supported | Not supported | O(26^k) with DFS ✓ |
-| Space | O(n · k) | O(n · k) | O(n · k) alphabet-dependent |
-
-**Use Trie when:** prefix queries, wildcard search, or pruning a search space by shared prefixes (Word Search II).
-
-### Insert → Search — Structural Parallel
-
-```
-Both traverse the same path. Insert creates nodes; search reads them.
-The only decision point after traversal:
-
-  search:      return node.isEnd         ← complete word?
-  startsWith:  return true               ← any prefix is fine
-  findRoot:    return early if isEnd     ← want the shallowest word boundary
-  cache words: node.words.add(word)      ← accumulate at every node during insert
-```
-
----
 ## Bit Manipulation  &nbsp;`bit_manipulation.md`
 
 ---
@@ -3706,19 +3519,6 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 1696 | ★ | Jump Game VI |  | Find the maximum score reaching the last index, jumping 1 to k steps. |
 | 1884 | ★ | Egg Drop With 2 Eggs and N Floors |  | Find minimum moves to determine a critical floor using 2 eggs and n floors. |
 
-## Trie  (8 problems, 8 templated)
-
-| # | ★ | Name | Complexity | Description |
-|---|---|---|---|---|
-| 208 | ★ | Implement Trie (Prefix Tree) | O(L) / O(n) | Implement a Trie with insert, search, and startsWith operations. |
-| 211 | ★ | Design Add and Search Words Data Structure | O(L) / O(n) | Design a data structure supporting addWord and search (with '.' wildcard) for words. |
-| 212 | ★ | Word Search II | O(mn4\^L) / O(L) | Find all words from a dictionary that exist in an m×n character board (adjacent cells, no reuse). |
-| 336 | ★ | Palindrome Pairs |  | Find all palindrome pairs among a list of unique words. |
-| 648 | ★ | Replace Words |  | Given a sentence and a list of roots, replace each word with its root if one exists. |
-| 676 | ★ | Implement Magic Dictionary |  | Design a data structure with addWord and search supporting '.' wildcard. |
-| 720 | ★ | Longest Word in Dictionary |  | Find the longest word in a dictionary that can be built one character at a time. |
-| 1233 | ★ | Remove Sub-Folders from the Filesystem |  | Given a list of folder paths, remove all sub-folders so only top-level folders remain. `"/a/b"` is a sub-folder of `"/a"`. |
-
 ## Bit Manipulation  (16 problems, 16 templated)
 
 | # | ★ | Name | Complexity | Description |
@@ -3740,7 +3540,7 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 476 | ★ | Number Complement |  | Find the complement of an integer (flip all bits up to the most significant bit). |
 | 957 | ★ | Prison Cells After N Days |  | Find the prison cell configuration after n days of simultaneous updates. |
 
-## Design  (25 problems, 25 templated)
+## Design  (25 problems, 24 templated)
 
 | # | ★ | Name | Complexity | Description |
 |---|---|---|---|---|
@@ -3766,7 +3566,7 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 729 | ★ | 我的日程安排表 I |  | Book time intervals on a calendar; return false if overlap exists. |
 | 731 | ★ | 我的日程安排表 II |  | Book events; return number of existing bookings overlapping the new booking. |
 | 732 | ★ | My Calendar III |  | Book events; return the maximum k-booking (k events overlap at same time). |
-| 745 | ★ | #745 | O(L) / O(n) | Prefix and suffix search --- find word with given prefix and suffix. |
+| 745 |  | #745 | O(L) / O(n) | Prefix and suffix search --- find word with given prefix and suffix. |
 | 933 | ★ | Number of Recent Calls |  | Find the number of requests made in the last 3000 milliseconds. |
 | 1570 | ★ | Dot Product of Two Sparse Vectors |  | Compute the dot product of two sparse vectors efficiently. |
 
@@ -3841,4 +3641,4 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 
 ---
 
-*Total: 737 problems indexed across 15 categories.*
+*Total: 729 problems indexed across 14 categories.*

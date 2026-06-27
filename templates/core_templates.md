@@ -251,7 +251,7 @@ Deque<Integer> stack = new ArrayDeque<>();   // never use java.util.Stack
 StringBuilder builder = new StringBuilder();      // append, then builder.toString() once
 
 // ── EARLY EXIT / PRUNING ── return the moment the answer is decided
-if (found) return result;             // e.g. Trie shortest-root, backtracking bounds
+if (found) return result;             // e.g. backtracking bounds
 ```
 
 ---
@@ -274,7 +274,6 @@ if (found) return result;             // e.g. Trie shortest-root, backtracking b
 | `greedy.md` | Greedy | Sort-by-end, sort-by-start, sort + heap, non-interval |
 | `string.md` | String | Frequency counting, hashing, bucket sort, expand-from-center |
 | `bit_manipulation.md` | Bit Manipulation | XOR cancel, mod-k state machine, bitmask as set, power checks |
-| `trie.md` | Trie | Insert/search/startsWith, wildcard DFS, grid pruning |
 | `design.md` | Design | HashMap + linked list (LRU), frequency maps (LFU), array + map |
 | `math.md` | Math | Fast power, base conversion, sieve, digit manipulation |
 
@@ -1384,151 +1383,6 @@ cooldown  = max profit right after selling (can't buy today)
 #123 (2 tx):        chain: buy2 uses sell1 cash             4 states chained
 #309 (cooldown):    hold = max(hold, cooldown - price)      must wait 1 day
 #714 (fee):         hold = max(hold, cash - price)          pay fee on sell
-```
-
-
----
-## Trie  &nbsp;`trie.md`
-
----
-
-### When to Use Trie (vs HashMap/Array)
-
-| Signal | Use |
-|---|---|
-| Prefix queries / `startsWith` / autocomplete | **Trie** — shares prefixes, prefix lookup is O(k) |
-| Wildcard match (`.` matches any char) | **Trie** — DFS branches over children |
-| Prune a search space by shared prefixes (e.g. Word Search II) | **Trie** — dead branches cut early |
-| Exact-key lookup only (no prefix logic) | **HashMap** — O(k) hash is simpler and faster, no node overhead |
-
----
-
-### Canonical Template
-
-```java
-// every node is a shared prefix; walking down spells a word, so common prefixes are stored once.  — WHEN: "prefix / startsWith / autocomplete", "wildcard match", "prune a search by shared prefixes"
-
-// ── TRIE NODE ──
-// Array vs Map TrieNode mental model:
-//   array  = O(1) per char, fixed 26 letters, wastes space when sparse
-//   HashMap = variable alphabet, smaller for sparse, hashing overhead
-class TrieNode {
-    TrieNode[] children = new TrieNode[26];   // array-based: O(1) access, O(26) per node
-    boolean isEnd = false;
-}
-// Alternative: Map-based (for non-lowercase or variable alphabets)
-class TrieNode {
-    Map<Character, TrieNode> children = new HashMap<>();
-    boolean isEnd = false;
-}
-
-// ── INSERT ──
-void insert(TrieNode root, String word) {
-    TrieNode node = root;
-    for (char c : word.toCharArray()) {
-        int idx = c - 'a';
-        if (node.children[idx] == null) node.children[idx] = new TrieNode();
-        node = node.children[idx];
-    }
-    node.isEnd = true;
-}
-
-// ── SEARCH (exact match) ──
-boolean search(TrieNode root, String word) {
-    TrieNode node = root;
-    for (char c : word.toCharArray()) {
-        int idx = c - 'a';
-        if (node.children[idx] == null) return false;
-        node = node.children[idx];
-    }
-    return node.isEnd;    // must end at a marked word boundary
-}
-
-// ── STARTS WITH (prefix match) ──
-boolean startsWith(TrieNode root, String prefix) {
-    TrieNode node = root;
-    for (char c : prefix.toCharArray()) {
-        int idx = c - 'a';
-        if (node.children[idx] == null) return false;
-        node = node.children[idx];
-    }
-    return true;          // ← difference from search: don't check node.isEnd
-}
-```
-
----
-
-### Variations
-
-```java
-// VARIATION 1: DFS for wildcard '.' (Add and Search Words)
-// When char is '.', try all 26 children recursively instead of following one path.
-boolean dfs(TrieNode node, String word, int i) {
-    if (i == word.length()) return node.isEnd;
-    char c = word.charAt(i);
-    if (c == '.') {
-        for (TrieNode child : node.children)            // ← VARIATION: try all children
-            if (child != null && dfs(child, word, i+1)) return true;
-        return false;
-    }
-    int idx = c - 'a';
-    if (node.children[idx] == null) return false;
-    return dfs(node.children[idx], word, i + 1);
-}
-
-// VARIATION 2: early-exit on isEnd (Replace Words — find shortest root)
-String findRoot(TrieNode root, String word) {
-    TrieNode node = root;
-    for (int i = 0; i < word.length(); i++) {
-        int idx = word.charAt(i) - 'a';
-        if (node.children[idx] == null) return word;    // no root found → return original
-        node = node.children[idx];
-        if (node.isEnd) return word.substring(0, i+1);  // ← VARIATION: return at first root hit
-    }
-    return word;
-}
-
-// VARIATION 3: store words at each node (Search Suggestions — top-3 per prefix)
-// During insert, each node on the path caches the word (up to 3).
-// Products must be inserted in sorted order → first 3 are lexicographically smallest.
-void insert(TrieNode root, String word) {
-    TrieNode node = root;
-    for (char c : word.toCharArray()) {
-        int idx = c - 'a';
-        if (node.children[idx] == null) node.children[idx] = new TrieNode();
-        node = node.children[idx];
-        if (node.words.size() < 3) node.words.add(word);  // ← VARIATION: cache at every node
-    }
-    node.isEnd = true;
-}
-
-// VARIATION 4: Trie + grid DFS pruning (Word Search II)
-// Build Trie from word list. DFS the grid; at each cell, check if current path
-// follows a Trie path. Prune entire branch if no Trie node exists.
-void dfs(char[][] board, int i, int j, TrieNode node, StringBuilder path, Set<String> result) {
-    if (i < 0 || i >= board.length || j < 0 || j >= board[0].length) return;
-    char c = board[i][j];
-    if (c == '#' || node.children[c - 'a'] == null) return;  // ← VARIATION: Trie prune
-    node = node.children[c - 'a'];
-    path.append(c);
-    if (node.isEnd) result.add(path.toString());
-    board[i][j] = '#';
-    dfs(board, i+1, j, node, path, result);
-    dfs(board, i-1, j, node, path, result);
-    dfs(board, i, j+1, node, path, result);
-    dfs(board, i, j-1, node, path, result);
-    board[i][j] = c;
-    path.deleteCharAt(path.length() - 1);
-}
-```
-
----
-
-### search vs startsWith — One Line Difference
-
-```
-search:      return node.isEnd;   // must land on a word boundary
-startsWith:  return true;         // any node reached = valid prefix
 ```
 
 

@@ -161,7 +161,7 @@ Deque<Integer> stack = new ArrayDeque<>();   // never use java.util.Stack
 // ── StringBuilder over String += in a loop ── O(n) vs O(n²)
 StringBuilder builder = new StringBuilder();      // append, then builder.toString() once
 // ── EARLY EXIT / PRUNING ── return the moment the answer is decided
-if (found) return result;             // e.g. Trie shortest-root, backtracking bounds
+if (found) return result;             // e.g. backtracking bounds
 ```
 **Template Index**
 ### Two Pointers
@@ -831,105 +831,6 @@ cooldown  = max profit right after selling (can't buy today)
 #123 (2 tx):        chain: buy2 uses sell1 cash             4 states chained
 #309 (cooldown):    hold = max(hold, cooldown - price)      must wait 1 day
 #714 (fee):         hold = max(hold, cash - price)          pay fee on sell
-```
-### Trie
-**When to Use Trie (vs HashMap/Array)**
-**Canonical Template**
-```java
-// ── TRIE NODE ──
-class TrieNode {
-    TrieNode[] children = new TrieNode[26];
-    boolean isEnd = false;
-}
-class TrieNode {
-    Map<Character, TrieNode> children = new HashMap<>();
-    boolean isEnd = false;
-}
-// ── INSERT ──
-void insert(TrieNode root, String word) {
-    TrieNode node = root;
-    for (char c : word.toCharArray()) {
-        int idx = c - 'a';
-        if (node.children[idx] == null) node.children[idx] = new TrieNode();
-        node = node.children[idx];
-    }
-    node.isEnd = true;
-}
-// ── SEARCH (exact match) ──
-boolean search(TrieNode root, String word) {
-    TrieNode node = root;
-    for (char c : word.toCharArray()) {
-        int idx = c - 'a';
-        if (node.children[idx] == null) return false;
-        node = node.children[idx];
-    }
-    return node.isEnd;
-}
-// ── STARTS WITH (prefix match) ──
-boolean startsWith(TrieNode root, String prefix) {
-    TrieNode node = root;
-    for (char c : prefix.toCharArray()) {
-        int idx = c - 'a';
-        if (node.children[idx] == null) return false;
-        node = node.children[idx];
-    }
-    return true;
-}
-```
-**Variations**
-```java
-boolean dfs(TrieNode node, String word, int i) {
-    if (i == word.length()) return node.isEnd;
-    char c = word.charAt(i);
-    if (c == '.') {
-        for (TrieNode child : node.children)
-            if (child != null && dfs(child, word, i+1)) return true;
-        return false;
-    }
-    int idx = c - 'a';
-    if (node.children[idx] == null) return false;
-    return dfs(node.children[idx], word, i + 1);
-}
-String findRoot(TrieNode root, String word) {
-    TrieNode node = root;
-    for (int i = 0; i < word.length(); i++) {
-        int idx = word.charAt(i) - 'a';
-        if (node.children[idx] == null) return word;
-        node = node.children[idx];
-        if (node.isEnd) return word.substring(0, i+1);
-    }
-    return word;
-}
-void insert(TrieNode root, String word) {
-    TrieNode node = root;
-    for (char c : word.toCharArray()) {
-        int idx = c - 'a';
-        if (node.children[idx] == null) node.children[idx] = new TrieNode();
-        node = node.children[idx];
-        if (node.words.size() < 3) node.words.add(word);
-    }
-    node.isEnd = true;
-}
-void dfs(char[][] board, int i, int j, TrieNode node, StringBuilder path, Set<String> result) {
-    if (i < 0 || i >= board.length || j < 0 || j >= board[0].length) return;
-    char c = board[i][j];
-    if (c == '#' || node.children[c - 'a'] == null) return;
-    node = node.children[c - 'a'];
-    path.append(c);
-    if (node.isEnd) result.add(path.toString());
-    board[i][j] = '#';
-    dfs(board, i+1, j, node, path, result);
-    dfs(board, i-1, j, node, path, result);
-    dfs(board, i, j+1, node, path, result);
-    dfs(board, i, j-1, node, path, result);
-    board[i][j] = c;
-    path.deleteCharAt(path.length() - 1);
-}
-```
-**search vs startsWith — One Line Difference**
-```java
-search:      return node.isEnd;
-startsWith:  return true;
 ```
 ### Bit Manipulation
 **Canonical Template**

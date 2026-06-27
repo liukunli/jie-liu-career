@@ -681,19 +681,6 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 1696 | ★ | Jump Game VI |  | Find the maximum score reaching the last index, jumping 1 to k steps. |
 | 1884 | ★ | Egg Drop With 2 Eggs and N Floors |  | Find minimum moves to determine a critical floor using 2 eggs and n floors. |
 
-## Trie  (8 problems, 8 templated)
-
-| # | ★ | Name | Complexity | Description |
-|---|---|---|---|---|
-| 208 | ★ | Implement Trie (Prefix Tree) | O(L) / O(n) | Implement a Trie with insert, search, and startsWith operations. |
-| 211 | ★ | Design Add and Search Words Data Structure | O(L) / O(n) | Design a data structure supporting addWord and search (with '.' wildcard) for words. |
-| 212 | ★ | Word Search II | O(mn4\^L) / O(L) | Find all words from a dictionary that exist in an m×n character board (adjacent cells, no reuse). |
-| 336 | ★ | Palindrome Pairs |  | Find all palindrome pairs among a list of unique words. |
-| 648 | ★ | Replace Words |  | Given a sentence and a list of roots, replace each word with its root if one exists. |
-| 676 | ★ | Implement Magic Dictionary |  | Design a data structure with addWord and search supporting '.' wildcard. |
-| 720 | ★ | Longest Word in Dictionary |  | Find the longest word in a dictionary that can be built one character at a time. |
-| 1233 | ★ | Remove Sub-Folders from the Filesystem |  | Given a list of folder paths, remove all sub-folders so only top-level folders remain. `"/a/b"` is a sub-folder of `"/a"`. |
-
 ## Bit Manipulation  (16 problems, 16 templated)
 
 | # | ★ | Name | Complexity | Description |
@@ -715,7 +702,7 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 476 | ★ | Number Complement |  | Find the complement of an integer (flip all bits up to the most significant bit). |
 | 957 | ★ | Prison Cells After N Days |  | Find the prison cell configuration after n days of simultaneous updates. |
 
-## Design  (25 problems, 25 templated)
+## Design  (25 problems, 24 templated)
 
 | # | ★ | Name | Complexity | Description |
 |---|---|---|---|---|
@@ -741,7 +728,7 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 | 729 | ★ | 我的日程安排表 I |  | Book time intervals on a calendar; return false if overlap exists. |
 | 731 | ★ | 我的日程安排表 II |  | Book events; return number of existing bookings overlapping the new booking. |
 | 732 | ★ | My Calendar III |  | Book events; return the maximum k-booking (k events overlap at same time). |
-| 745 | ★ | #745 | O(L) / O(n) | Prefix and suffix search --- find word with given prefix and suffix. |
+| 745 |  | #745 | O(L) / O(n) | Prefix and suffix search --- find word with given prefix and suffix. |
 | 933 | ★ | Number of Recent Calls |  | Find the number of requests made in the last 3000 milliseconds. |
 | 1570 | ★ | Dot Product of Two Sparse Vectors |  | Compute the dot product of two sparse vectors efficiently. |
 
@@ -816,4 +803,4 @@ All **737 problems** from `LeetCode_Complete_Reference.tex`, assigned to their t
 
 ---
 
-*Total: 737 problems indexed across 15 categories.*
+*Total: 729 problems indexed across 14 categories.*

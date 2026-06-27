@@ -245,7 +245,7 @@ Deque<Integer> stack = new ArrayDeque<>();   // never use java.util.Stack
 StringBuilder builder = new StringBuilder();      // append, then builder.toString() once
 
 // ── EARLY EXIT / PRUNING ── return the moment the answer is decided
-if (found) return result;             // e.g. Trie shortest-root, backtracking bounds
+if (found) return result;             // e.g. backtracking bounds
 ```
 
 ---
@@ -268,6 +268,5 @@ if (found) return result;             // e.g. Trie shortest-root, backtracking b
 | `greedy.md` | Greedy | Sort-by-end, sort-by-start, sort + heap, non-interval |
 | `string.md` | String | Frequency counting, hashing, bucket sort, expand-from-center |
 | `bit_manipulation.md` | Bit Manipulation | XOR cancel, mod-k state machine, bitmask as set, power checks |
-| `trie.md` | Trie | Insert/search/startsWith, wildcard DFS, grid pruning |
 | `design.md` | Design | HashMap + linked list (LRU), frequency maps (LFU), array + map |
 | `math.md` | Math | Fast power, base conversion, sieve, digit manipulation |
