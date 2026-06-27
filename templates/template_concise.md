@@ -59,28 +59,6 @@ return i;
 
 ---
 
-### Pattern 3 — Dutch Flag (3 Pointers)
-
-```java
-// MENTAL MODEL: one scan partitions into three buckets (low / mid / high) using two boundary pointers.
-// WHEN: 3-way partition — sort 0/1/2, segregate by a pivot category
-int i = 0, k = 0, j = n - 1;
-while (k <= j) {
-    if (nums[k] == LO) {
-        swap(nums, i++, k++);  // confirmed small
-    } else if (nums[k] == MID) {
-        k++;                   // confirmed mid, skip
-    } else {
-        swap(nums, k, j--);    // large — don't advance k
-    }
-}
-```
-
-Three regions: `[0, i)` = confirmed small, `[i, k)` = confirmed mid, `(j, n)` = confirmed large. `k` is the frontier.  
-Do **not** increment `k` after swapping with `j` — the swapped element is unknown.
-
----
-
 ### Pattern Comparison
 
 | Pattern | Pointers move | Sort needed | Use when |
@@ -1168,8 +1146,6 @@ BFS / DFS         O(V + E)            visit each vertex and edge once
 Topo sort (Kahn)  O(V + E)            each node enqueued once, each edge relaxed once
 Union-Find        ~O(n·α(n)) ≈ O(n)   α = inverse Ackermann, effectively constant
 Dijkstra          O((V + E) log V)    non-negative weights ONLY
-Bellman-Ford      O(V · E)            allows negative weights; run k+1 rounds for a k-hop limit
-Prim's MST        O(E log V)          PQ of candidate edges
 ```
 
 ### Graph Representation
@@ -1519,36 +1495,11 @@ for (int i = 0; i < n; i++) {
     }
 }
 
-// ──────────────────────────────────────────────────────────────
-// MENTAL MODEL: both are the same 2D recurrence collapsed to 1D.
-//   dp[i][j] = ways to make sum j using the first i items.
-//   After dropping the i dimension, dp[j-nums[i]] is read from:
-//     • the PREVIOUS row (item i not yet used)  → 0/1, no reuse
-//     • the CURRENT  row (item i already used)   → unbounded, reuse
-//   Loop direction decides which one you read.
-// Mnemonic: DESCENDING = Distinct (each once), ASCENDING = Again (reusable).
-// Seed/operator picks the flavor:
-//   count       → dp[0]=1, dp[j] += dp[j-w]
-//   max-value   → dp[0]=0, dp[j] = Math.max(dp[j], dp[j-w] + v)
-// ──────────────────────────────────────────────────────────────
-
-// 2B. KNAPSACK 0/1 — each item at most once
-int[] dp = new int[target + 1];
-dp[0] = 1;                                       // 1 way to make 0: take nothing
-for (int i = 0; i < nums.length; i++)
-    for (int j = target; j >= nums[i]; j--)      // ↓ DESCENDING
-        dp[j] += dp[j - nums[i]];
-        //         ^^^^^^^^^^^^^ j-nums[i] < j, not yet touched THIS pass
-        //                       → still "previous row" → item i unused → no reuse
-
-// 2C. KNAPSACK UNBOUNDED — each item reusable
-int[] dp = new int[target + 1];
-dp[0] = 1;
-for (int i = 0; i < nums.length; i++)
-    for (int j = nums[i]; j <= target; j++)      // ↑ ASCENDING
-        dp[j] += dp[j - nums[i]];
-        //         ^^^^^^^^^^^^^ j-nums[i] < j, ALREADY updated THIS pass
-        //                       → "current row" → item i can reappear → reuse
+// 2B/2C. KNAPSACK — collapse the item dimension to 1D; loop direction picks reuse.
+//   0/1 (each item once): j DESCENDING  → reads previous row.
+//   unbounded (reusable): j ASCENDING   → reads current row.
+//   Mnemonic: DESCENDING = Distinct, ASCENDING = Again. Full code + permutation
+//   variant + "why" in Part 2 — Knapsack DP.
 
 // 3. 2D SEQUENCE — two strings/arrays; i indexes one, j indexes the other
 // MENTAL MODEL: compare the last char of each prefix — match consumes both, mismatch drops one side.

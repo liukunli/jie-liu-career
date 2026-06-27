@@ -402,28 +402,6 @@ class Solution {
 
 ---
 
-## Pattern 3 — Dutch Flag (3 Pointers)
-
-```java
-// MENTAL MODEL: one scan partitions into three buckets (low / mid / high) using two boundary pointers.
-// WHEN: 3-way partition — sort 0/1/2, segregate by a pivot category
-int i = 0, k = 0, j = n - 1;
-while (k <= j) {
-    if (nums[k] == LO) {
-        swap(nums, i++, k++);  // confirmed small
-    } else if (nums[k] == MID) {
-        k++;                   // confirmed mid, skip
-    } else {
-        swap(nums, k, j--);    // large — don't advance k
-    }
-}
-```
-
-Three regions: `[0, i)` = confirmed small, `[i, k)` = confirmed mid, `(j, n)` = confirmed large. `k` is the frontier.  
-Do **not** increment `k` after swapping with `j` — the swapped element is unknown.
-
----
-
 ## #75 Sort Colors
 
 **Description:** Sort array of 0s, 1s, 2s in-place without library sort.  

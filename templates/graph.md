@@ -12,8 +12,6 @@ BFS / DFS         O(V + E)            visit each vertex and edge once
 Topo sort (Kahn)  O(V + E)            each node enqueued once, each edge relaxed once
 Union-Find        ~O(n·α(n)) ≈ O(n)   α = inverse Ackermann, effectively constant
 Dijkstra          O((V + E) log V)    non-negative weights ONLY
-Bellman-Ford      O(V · E)            allows negative weights; run k+1 rounds for a k-hop limit
-Prim's MST        O(E log V)          PQ of candidate edges
 ```
 
 ## Quick Reference Table
