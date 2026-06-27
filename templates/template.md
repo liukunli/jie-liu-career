@@ -1830,24 +1830,30 @@ int[] dc = {0,  0, 1, -1};
 
 ---
 
-### All Six Templates
+### Core Templates
 
 ```java
-// 1. BFS — shortest path / level order
-// MENTAL MODEL: explore in rings of equal distance, so the first time you reach a node is the shortest.
-// WHEN: "fewest steps", "shortest path" on an unweighted graph
+// 1. BFS — shortest path / level order (track distance by level-size snapshot)
+// MENTAL MODEL: explore in rings of equal distance; snapshot the level size so each ring = one step.
+// WHEN: "fewest steps", "shortest path", "level order" on an unweighted graph
 Queue<Integer> queue = new ArrayDeque<>();
 boolean[] visited = new boolean[n];
 queue.offer(start);
 visited[start] = true;
+int level = 0;
 while (!queue.isEmpty()) {
-    int node = queue.poll();
-    for (int neighbor : graph.get(node)) {
-        if (!visited[neighbor]) {
-            visited[neighbor] = true;
-            queue.offer(neighbor);
+    int size = queue.size();              // ← snapshot: all nodes at this distance
+    for (int i = 0; i < size; i++) {
+        int node = queue.poll();
+        // process node (distance == level)
+        for (int neighbor : graph.get(node)) {
+            if (!visited[neighbor]) {
+                visited[neighbor] = true;
+                queue.offer(neighbor);
+            }
         }
     }
+    level++;
 }
 
 // 2. TOPOLOGICAL SORT — Kahn's BFS
@@ -1927,29 +1933,6 @@ for (int start = 0; start < n; start++) {
     }
 }
 return true;
-
-// 6. PRIM'S MST — greedy, always add cheapest edge to growing tree
-// MENTAL MODEL: grow one tree outward, each step absorbing the cheapest edge that reaches a new node.
-// WHEN: "connect all nodes at minimum total cost"
-boolean[] inMST = new boolean[n];
-int[] minEdge = new int[n];
-Arrays.fill(minEdge, Integer.MAX_VALUE);
-minEdge[0] = 0;
-PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[1] - b[1]);
-pq.offer(new int[]{0, 0});
-int total = 0;
-while (!pq.isEmpty()) {
-    int[] current = pq.poll();
-    int node = current[0], cost = current[1];
-    if (inMST[node]) continue;
-    inMST[node] = true;
-    total += cost;
-    for (int[] nb : graph.get(node))
-        if (!inMST[nb[0]] && nb[1] < minEdge[nb[0]]) {
-            minEdge[nb[0]] = nb[1];
-            pq.offer(new int[]{nb[0], nb[1]});
-        }
-}
 ```
 
 ---
@@ -1992,31 +1975,15 @@ boolean union(int x, int y) {               // returns false if already connecte
 
 ---
 
-### Dijkstra vs Bellman-Ford
-
-```
-                    Dijkstra                    Bellman-Ford
-Weights:            Non-negative only           Any (handles negative)
-Constraint:         —                           k-hop limit (run k+1 rounds)
-Time:               O((V+E) log V)              O(k·E)
-When to use:        Standard shortest path      k-stop limit or negative weights
-Key trick:          stale check: d > dist[node] copy array each round (temp[])
-```
-
----
-
 ### Algorithm Chooser
 
 | Signal in problem | Algorithm |
 |---|---|
 | Shortest path, unweighted / unit weight | BFS |
 | Shortest path, non-negative weights | Dijkstra |
-| Shortest path, k-hop limit | Bellman-Ford (k+1 rounds) |
-| Shortest path, negative weights | Bellman-Ford (n-1 rounds) |
 | Connected components, cycle detection | Union Find |
 | Directed cycle / valid ordering | Topological Sort (Kahn's) |
 | 2-colorable graph | Bipartite BFS coloring |
-| Connect all nodes minimum cost | Prim's / Kruskal's MST |
 | "nearest X for all cells" | Multi-source BFS |
 
 ### Stale Entry Pattern (Dijkstra)
