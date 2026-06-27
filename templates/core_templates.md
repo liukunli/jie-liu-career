@@ -205,9 +205,13 @@ Arrays.asList(1, 2, 3);                              // fixed-size List view
 int sum = Arrays.stream(arr).sum();
 int max = Arrays.stream(arr).max().getAsInt();
 
-// List<Integer> ↔ int[]
+// List<Integer> → int[]  (replaces the manual copy loop)
 int[] a = list.stream().mapToInt(Integer::intValue).toArray();
-List<Integer> l = Arrays.stream(a).boxed().collect(Collectors.toList());
+//        list.stream()            → Stream<Integer>
+//        .mapToInt(Integer::intValue) → IntStream (unbox)   ← needed: Stream.toArray() gives Integer[]
+//        .toArray()               → int[]
+// int[] → List<Integer>
+List<Integer> l = Arrays.stream(a).boxed().collect(Collectors.toList());  // or .toList() (Java 16+)
 ```
 
 #### Math & bit operations
