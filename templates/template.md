@@ -2189,6 +2189,10 @@ int[] dp = new int[n + 1];
 dp[0] = base;
 for (int i = 1; i <= n; i++)
     dp[i] = f(dp[i-1], dp[i-2], ...);
+// KADANE (max subarray, #53) = Linear-1D where dp[i] = best sum ENDING at i:
+//   dp[i] = max(nums[i], dp[i-1] + nums[i])   // start fresh vs extend (drop a negative prefix)
+//   answer = max over all dp[i]; collapse dp[] to one rolling int → O(1) space.
+//   variants: #152 product (track max AND min, a negative swaps them); #918 circular.
 
 // 2A. LOOK-BACK 1D — dp[i] depends on all j < i
 // to finish position i, scan every earlier position j and extend the best valid one.  — WHEN: "longest increasing/chain ending here", "can the prefix be segmented"

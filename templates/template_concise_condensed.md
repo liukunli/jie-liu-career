@@ -731,6 +731,7 @@ int[] dp = new int[n + 1];
 dp[0] = base;
 for (int i = 1; i <= n; i++)
     dp[i] = f(dp[i-1], dp[i-2], ...);
+// KADANE (max subarray, #53) = Linear-1D where dp[i] = best sum ENDING at i:
 // 2A. LOOK-BACK 1D — dp[i] depends on all j < i
 int[] dp = new int[n];
 for (int i = 0; i < n; i++) {
