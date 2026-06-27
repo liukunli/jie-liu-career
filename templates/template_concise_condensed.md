@@ -19,16 +19,6 @@ public class Solution {
     }
 }
 ```
-**Formatting Rules**
-```java
-if (condition) {
-    doThis();
-} else if (other) {
-    doThat();
-} else {
-    fallback();
-}
-```
 **Naming Conventions (enforced across all template files)**
 **Common Java API Cheat-Sheet**
 ```java
@@ -193,12 +183,16 @@ while (i < j) {
 ```java
 int i = 0;
 for (int j = 0; j < n; j++) {
+    // 1. add nums[j] to state
     if (j - i + 1 == k) {
+        // 2. record (window is exactly size k)
+        // 3. remove nums[i] from state
         i++;
     }
 }
 int i = 0, result = 0;
 for (int j = 0; j < n; j++) {
+    // 1. add nums[j] to state
     while (/* window exceeds constraint */) {
         i++;
     }
@@ -206,6 +200,7 @@ for (int j = 0; j < n; j++) {
 }
 int i = 0, result = Integer.MAX_VALUE;
 for (int j = 0; j < n; j++) {
+    // 1. add nums[j] to state
     while (/* window VALID */) {
         result = Math.min(result, j - i + 1);
         i++;
@@ -334,6 +329,7 @@ public void countingSort(int[] arr) {
 **When to Use — Signal → Pattern**
 **All Four Templates**
 ```java
+// 1. DELETE / FILTER  — sentinel guards head removal; previous tracks last kept node
 ListNode sentinel = new ListNode(0);
 sentinel.next = head;
 ListNode previous = sentinel, current = head;
@@ -346,6 +342,7 @@ while (current != null) {
     current = current.next;
 }
 return sentinel.next;
+// 2. REVERSAL — re-wire one node at a time
 ListNode previous = null, current = head;
 while (current != null) {
     ListNode next = current.next;
@@ -354,11 +351,13 @@ while (current != null) {
     current = next;
 }
 return previous;
+// 3. FAST / SLOW — two pointers at different speeds
 ListNode slow = head, fast = head;
 while (fast != null && fast.next != null) {
     slow = slow.next;
     fast = fast.next.next;
 }
+// 4. MERGE — sentinel collects nodes from two lists in order
 ListNode sentinel = new ListNode(0);
 ListNode current = sentinel;
 while (a != null && b != null) {
@@ -377,13 +376,17 @@ return sentinel.next;
 ### String
 **Core Idioms**
 ```java
+// 1. CHAR COUNT — lowercase letters
 int[] count = new int[26];
 for (char ch : s.toCharArray()) count[ch - 'a']++;
+// 2. CHAR COUNT — digits 0–9
 int[] count = new int[10];
 for (char ch : s.toCharArray()) count[ch - '0']++;
+// 3. CHAR TO INTEGER — build number digit by digit
 int num = 0;
 for (int i = 0; i < s.length(); i++)
     num = num * 10 + (s.charAt(i) - '0');
+// 4. ANAGRAM HASH KEY — frequency-based (bucket sort style) O(k) vs sort O(k log k)
 String hashKey(String s) {
     int[] count = new int[26];
     for (char ch : s.toCharArray()) count[ch - 'a']++;
@@ -397,6 +400,7 @@ String hashKey(String s) {
 char[] chars = s.toCharArray();
 Arrays.sort(chars);
 String key = new String(chars);
+// 5. BUCKET SORT — sort by frequency without comparison sort
 int[] count = new int[128];
 for (char ch : s.toCharArray()) count[ch]++;
 List<Character>[] buckets = new List[s.length() + 1]; // index = frequency
@@ -413,6 +417,7 @@ for (int freq = buckets.length - 1; freq > 0; freq--) {
     for (char ch : buckets[freq])
         for (int i = 0; i < freq; i++) builder.append(ch);
 }
+// 6. EXPAND FROM CENTER — palindrome check in O(1) space
 int expand(String s, int i, int j) {
     while (i >= 0 && j < s.length() && s.charAt(i) == s.charAt(j)) { i--; j++; }
     return j - i - 1;
@@ -421,16 +426,19 @@ int expand(String s, int i, int j) {
 ### Stack / Queue / Heap
 **All Templates**
 ```java
+// 1. STACK (LIFO) — use ArrayDeque, not Stack class
 Deque<Integer> stack = new ArrayDeque<>();
 stack.push(x);
 stack.pop();
 stack.peek();
+// 2A. MONOTONE DECREASING STACK — next GREATER element
 Deque<Integer> stack = new ArrayDeque<>();
 for (int i = 0; i < n; i++) {
     while (!stack.isEmpty() && nums[stack.peek()] < nums[i])
         result[stack.pop()] = nums[i];
     stack.push(i);
 }
+// 2B. MONOTONE INCREASING STACK — next SMALLER element / span width
 Deque<Integer> stack = new ArrayDeque<>();
 for (int i = 0; i < n; i++) {
     while (!stack.isEmpty() && nums[stack.peek()] > nums[i]) {
@@ -439,6 +447,7 @@ for (int i = 0; i < n; i++) {
     }
     stack.push(i);
 }
+// 3. MONOTONE DEQUE — sliding window max/min
 Deque<Integer> queue = new ArrayDeque<>();
 for (int i = 0; i < n; i++) {
     while (!queue.isEmpty() && nums[queue.peekLast()] <= nums[i])
@@ -447,12 +456,14 @@ for (int i = 0; i < n; i++) {
     if (queue.peekFirst() < i - k + 1) queue.pollFirst();
     if (i >= k - 1) result[i - k + 1] = nums[queue.peekFirst()];
 }
+// 4. PRIORITY QUEUE
 PriorityQueue<Integer> minPQ = new PriorityQueue<>();
 PriorityQueue<Integer> maxPQ = new PriorityQueue<>(Collections.reverseOrder()); // max-heap
 PriorityQueue<int[]>    pq   = new PriorityQueue<>((a, b) -> a[1] - b[1]); // custom: sort by index 1
 pq.offer(x);
 pq.poll();
 pq.peek();
+// 5. TWO HEAPS — maintain median in O(log n)
 PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder());
 PriorityQueue<Integer> minHeap = new PriorityQueue<>();
 void addNum(int num) {
@@ -496,12 +507,14 @@ and i == size-1 / i == 0 checks become meaningless.
 **When to Use — Signal → Pattern**
 **All Templates**
 ```java
+// 1. PROCESS CHILDREN FIRST, COMBINE AT NODE (post-order)
 private int dfs(TreeNode node) {
     if (node == null) return BASE;
     int left  = dfs(node.left);
     int right = dfs(node.right);
     return ...;
 }
+// 2. PROCESS NODE FIRST, PASS STATE DOWN (pre-order)
 private void dfs(TreeNode node, int accumulated) {
     if (node == null) return;
     accumulated += node.val;
@@ -509,6 +522,7 @@ private void dfs(TreeNode node, int accumulated) {
     dfs(node.left,  accumulated);
     dfs(node.right, accumulated);
 }
+// 3. TREE — GLOBAL ANSWER (return up the best single arm; update global across both arms)
 int answer = Integer.MIN_VALUE;
 private int dfs(TreeNode node) {
     if (node == null) return 0;
@@ -517,6 +531,7 @@ private int dfs(TreeNode node) {
     answer = Math.max(answer, left + right + node.val);
     return Math.max(left, right) + node.val;
 }
+// 4. GRID DFS — mark visited by mutating grid; 4-directional flood fill
 private void dfs(int[][] grid, int r, int c) {
     if (r < 0 || r >= grid.length || c < 0 || c >= grid[0].length) return;
     if (grid[r][c] != TARGET) return;
@@ -524,6 +539,7 @@ private void dfs(int[][] grid, int r, int c) {
     dfs(grid, r+1, c); dfs(grid, r-1, c);
     dfs(grid, r, c+1); dfs(grid, r, c-1);
 }
+// 5. GRAPH DFS — 3-color visited: 0=unseen 1=in-stack 2=done
 int[] state;
 private boolean dfs(int node) {
     if (state[node] == 1) return true;
@@ -534,6 +550,7 @@ private boolean dfs(int node) {
     state[node] = 2;
     return false;
 }
+// 6. BACKTRACKING — choose / recurse / undo
 private void backtrack(int start, List<Integer> current) {
     if (baseCase) { result.add(new ArrayList<>(current)); return; }
     for (int i = start; i < n; i++) {
@@ -569,6 +586,7 @@ int[] dc = {0,  0, 1, -1};
 ```
 **Core Templates**
 ```java
+// 1. BFS — shortest path / level order (track distance by level-size snapshot)
 Queue<Integer> queue = new ArrayDeque<>();
 boolean[] visited = new boolean[n];
 queue.offer(start);
@@ -587,6 +605,7 @@ while (!queue.isEmpty()) {
     }
     level++;
 }
+// 2. TOPOLOGICAL SORT — Kahn's BFS
 int[] inDegree = new int[n];
 for (int[] edge : edges) inDegree[edge[1]]++;
 Queue<Integer> queue = new ArrayDeque<>();
@@ -598,6 +617,7 @@ while (!queue.isEmpty()) {
     for (int neighbor : graph.get(node))
         if (--inDegree[neighbor] == 0) queue.offer(neighbor);
 }
+// 3. UNION FIND
 int[] parent, rank;
 void init(int n) {
     parent = new int[n]; rank = new int[n];
@@ -615,6 +635,7 @@ boolean union(int x, int y) {
     if (rank[px] == rank[py]) rank[px]++;
     return true;
 }
+// 4. DIJKSTRA — shortest path (non-negative weights)
 int[] dist = new int[n];
 Arrays.fill(dist, Integer.MAX_VALUE);
 dist[src] = 0;
@@ -632,6 +653,7 @@ while (!pq.isEmpty()) {
         }
     }
 }
+// 5. BIPARTITE CHECK — BFS 2-coloring
 int[] color = new int[n];
 Arrays.fill(color, -1);
 Queue<Integer> queue = new ArrayDeque<>();
@@ -696,16 +718,22 @@ for (int[] interval : intervals) {
 ### Dynamic Programming
 **All Six Templates**
 ```java
+// 1. LINEAR 1D — each cell depends on a fixed number of previous cells
 int[] dp = new int[n + 1];
 dp[0] = base;
 for (int i = 1; i <= n; i++)
     dp[i] = f(dp[i-1], dp[i-2], ...);
+// 2A. LOOK-BACK 1D — dp[i] depends on all j < i
 int[] dp = new int[n];
 for (int i = 0; i < n; i++) {
     for (int j = 0; j < i; j++) {
         dp[i] = f(dp[i], dp[j]);
     }
 }
+// 3. 2D SEQUENCE — match consumes both, mismatch drops one side. WHEN: LCS / edit
+// 4. INTERVAL DP — short ranges first (i right-to-left, j from i+1; dp[i+1][*] ready).
+// 5. GRID DP — each cell accumulates from cells it could arrive from (up/left).
+// 6. STATE MACHINE — named states updated from yesterday's states each step.
 ```
 ```java
 Want count or min/max?
@@ -718,18 +746,21 @@ Want count or min/max?
     └── Unbounded minimize:      j ascending  → #322
 ```
 ```java
+// ── 0/1 KNAPSACK ── each item at most once
 int[] dp = new int[target + 1];
 dp[0] = 1;
 for (int i = 0; i < nums.length; i++) {
     for (int j = target; j >= nums[i]; j--)
         dp[j] += dp[j - nums[i]];
 }
+// ── UNBOUNDED KNAPSACK ── each item reusable
 int[] dp = new int[target + 1];
 dp[0] = 1;
 for (int i = 0; i < nums.length; i++) {
     for (int j = nums[i]; j <= target; j++)
         dp[j] += dp[j - nums[i]];
 }
+// ── PERMUTATION COUNT ── order matters (Combination Sum IV)
 int[] dp = new int[target + 1];
 dp[0] = 1;
 for (int j = 1; j <= target; j++) {
@@ -805,6 +836,7 @@ cooldown  = max profit right after selling (can't buy today)
 **When to Use Trie (vs HashMap/Array)**
 **Canonical Template**
 ```java
+// ── TRIE NODE ──
 class TrieNode {
     TrieNode[] children = new TrieNode[26];
     boolean isEnd = false;
@@ -813,6 +845,7 @@ class TrieNode {
     Map<Character, TrieNode> children = new HashMap<>();
     boolean isEnd = false;
 }
+// ── INSERT ──
 void insert(TrieNode root, String word) {
     TrieNode node = root;
     for (char c : word.toCharArray()) {
@@ -822,6 +855,7 @@ void insert(TrieNode root, String word) {
     }
     node.isEnd = true;
 }
+// ── SEARCH (exact match) ──
 boolean search(TrieNode root, String word) {
     TrieNode node = root;
     for (char c : word.toCharArray()) {
@@ -831,6 +865,7 @@ boolean search(TrieNode root, String word) {
     }
     return node.isEnd;
 }
+// ── STARTS WITH (prefix match) ──
 boolean startsWith(TrieNode root, String prefix) {
     TrieNode node = root;
     for (char c : prefix.toCharArray()) {
@@ -899,16 +934,20 @@ startsWith:  return true;
 ### Bit Manipulation
 **Canonical Template**
 ```java
+// ── XOR CANCEL ── pairs cancel; lone element survives
 int result = 0;
 for (int num : nums) result ^= num;
+// ── BIT OPERATIONS ──
 boolean isSet  = ((n >> i) & 1) == 1;
 int set        = n | (1 << i);
 int clear      = n & ~(1 << i);
 int toggle     = n ^ (1 << i);
 int lowest     = n & (-n);
 boolean isPow2 = n > 0 && (n & (n-1)) == 0;
+// ── COUNT SET BITS ── Brian Kernighan: each iteration removes one set bit
 int count = 0;
 while (n != 0) { count++; n &= (n - 1); }
+// ── BITMASK AS SET ── 26-bit integer represents presence of 26 letters
 int mask = 0;
 for (char c : word.toCharArray()) mask |= (1 << (c - 'a'));
 if ((mask[i] & mask[j]) == 0) { /* no shared letter */ }
@@ -950,18 +989,22 @@ class CacheNode {
     CacheNode previous, next;
     CacheNode(int key, int value) { this.key = key; this.value = value; }
 }
+// ── SENTINEL NODES ── head (MRU side) ↔ ... ↔ tail (LRU side)
 CacheNode head = new CacheNode(0, 0), tail = new CacheNode(0, 0);
 head.next = tail; tail.previous = head;
+// ── REMOVE NODE ──
 void remove(CacheNode node) {
     node.previous.next = node.next;
     node.next.previous = node.previous;
 }
+// ── INSERT AFTER HEAD (= mark as MRU) ──
 void insertAfterHead(CacheNode node) {
     node.next = head.next;
     node.previous = head;
     head.next.previous = node;
     head.next = node;
 }
+// ── LRU EVICTION ── tail.previous is LRU
 CacheNode lru = tail.previous;
 remove(lru);
 map.remove(lru.key);
@@ -970,10 +1013,12 @@ map.remove(lru.key);
 ### Math
 **Canonical Templates**
 ```java
+// ── DIGIT EXTRACTION LOOP ── peel digits right-to-left
 while (n != 0) {
     int digit = n % 10;
     n /= 10;
 }
+// ── FAST POWER (exponentiation by squaring) ──
 double fastPow(double x, long n) {
     double result = 1;
     while (n > 0) {
@@ -983,6 +1028,7 @@ double fastPow(double x, long n) {
     }
     return result;
 }
+// ── BASE CONVERSION ── generic base b, 0-indexed
 StringBuilder builder = new StringBuilder();
 while (num > 0) {
     builder.append(num % b);
@@ -991,6 +1037,7 @@ while (num > 0) {
 builder.reverse();
 int value = 0;
 for (int digit : digits) value = value * b + digit;
+// ── SIEVE OF ERATOSTHENES ── mark composites up to n
 boolean[] composite = new boolean[n];
 for (int i = 2; i * i < n; i++) {
     if (composite[i]) continue;

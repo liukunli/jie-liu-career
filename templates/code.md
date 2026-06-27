@@ -36,22 +36,6 @@ public class Solution {
 
 ---
 
-## Formatting Rules
-
-- **Always brace `if`/`else`** — no inline single-statement bodies, no column-aligned `else`. Every branch uses `{ }` on its own lines:
-
-```java
-if (condition) {
-    doThis();
-} else if (other) {
-    doThat();
-} else {
-    fallback();
-}
-```
-
----
-
 ## Naming Conventions (enforced across all template files)
 
 | Context | Convention |
