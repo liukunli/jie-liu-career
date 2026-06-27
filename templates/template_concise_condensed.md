@@ -133,12 +133,14 @@ System.arraycopy(src, srcPos, dst, dstPos, len);     // ← fast block copy (mer
 Arrays.asList(1, 2, 3);                              // fixed-size List view
 int sum = Arrays.stream(arr).sum();
 int max = Arrays.stream(arr).max().getAsInt();
-// List → array
-Object[]  arr = list.toArray();                  // → Object[]
-Integer[] box = list.toArray(new Integer[0]);    // → typed Integer[]
-int[] a = list.stream().mapToInt(Integer::intValue).toArray();  // → primitive int[]
-// int[] → List<Integer>
-List<Integer> l = Arrays.stream(a).boxed().collect(Collectors.toList());  // or .toList() (Java 16+)
+// List → array  (toArray makes REFERENCE arrays only; primitives need a stream)
+String[]  s   = strList.toArray(new String[0]);   // List<T> → T[]   (typed, preferred)
+Object[]  obj = list.toArray();                    // List<T> → Object[]
+int[]  a = list.stream().mapToInt(Integer::intValue).toArray();   // List<Integer> → int[]
+long[] b = list.stream().mapToLong(Long::longValue).toArray();    // List<Long>    → long[]
+// array → List
+List<Integer> l = Arrays.stream(a).boxed().collect(Collectors.toList());  // int[] → List<Integer> (or .toList() J16+)
+List<String>  t = Arrays.asList(strArr);                                   // T[]   → fixed-size List<T>
 ```
 ```java
 Math.max(a, b);  Math.min(a, b);  Math.abs(x);
