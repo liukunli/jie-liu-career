@@ -4,6 +4,14 @@
 **Generic Test Harness**
 ```java
 class Question {
+    // ── PROBLEM-SOLVING PROCESS ──────────────────────────────────────
+    // 1. INPUT / OUTPUT  : types, sizes, ranges; what to return; examples.
+    // 2. HIGH-LEVEL ALGO : pick the pattern (two-ptr / BFS / DP / ...); state the idea in 1 line.
+    // 3. IMPLEMENTATION  : data structures, loop/recursion, invariants.
+    // 4. EDGE CASES      : empty, size 0/1, duplicates, negatives, overflow, all-same, not-found.
+    // 5. COMPLEXITY      : time & space; is it within limits?
+    // 6. OPTIMIZATION    : reduce time/space (hashing, two-pointer, rolling array, pruning, early exit).
+    // ─────────────────────────────────────────────────────────────────
     private int data;
     public Question(int data) {
         this.data = data;
