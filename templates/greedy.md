@@ -269,12 +269,12 @@ class Solution {
     public int[][] insert(int[][] intervals, int[] newInterval) {
         List<int[]> result = new ArrayList<>();
         for (int[] interval : intervals) {
-            if (interval[1] < newInterval[0]) {
+            if (interval[1] < newInterval[0]) {                  // ends before new → keep as is
                 result.add(interval);
-            } else if (interval[0] > newInterval[1]) {
+            } else if (interval[0] > newInterval[1]) {           // starts after new → flush new, move on
                 result.add(newInterval);
                 newInterval = interval;
-            } else {
+            } else {                                             // overlap → absorb into new
                 newInterval[0] = Math.min(newInterval[0], interval[0]);
                 newInterval[1] = Math.max(newInterval[1], interval[1]);
             }

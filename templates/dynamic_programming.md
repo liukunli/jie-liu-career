@@ -162,7 +162,8 @@ class Solution {
         if (n <= 2) return n;
         int[] dp = new int[n + 1];
         dp[1] = 1; dp[2] = 2;
-        for (int i = 3; i <= n; i++) dp[i] = dp[i-1] + dp[i-2];
+        for (int i = 3; i <= n; i++)
+            dp[i] = dp[i-1] + dp[i-2];   // arrive via a 1-step or a 2-step
         return dp[n];
     }
 }
@@ -184,7 +185,7 @@ class Solution {
         int[] dp = new int[n];
         dp[0] = nums[0]; dp[1] = Math.max(nums[0], nums[1]);
         for (int i = 2; i < n; i++)
-            dp[i] = Math.max(dp[i-1], dp[i-2] + nums[i]);
+            dp[i] = Math.max(dp[i-1], dp[i-2] + nums[i]);   // skip i, or rob i + best up to i-2
         return dp[n-1];
     }
 }
@@ -236,7 +237,7 @@ class Solution {
         int max = 1;
         for (int i = 1; i < n; i++) {
             for (int j = 0; j < i; j++) {
-                if (nums[j] < nums[i]) dp[i] = Math.max(dp[i], dp[j] + 1);
+                if (nums[j] < nums[i]) dp[i] = Math.max(dp[i], dp[j] + 1);  // extend a smaller-ending LIS
             }
             max = Math.max(max, dp[i]);
         }
@@ -263,7 +264,7 @@ class Solution {
         dp[0] = true;
         for (int i = 1; i <= n; i++) {
             for (int j = 0; j < i; j++) {
-                if (dp[j] && words.contains(s.substring(j, i))) {
+                if (dp[j] && words.contains(s.substring(j, i))) {  // breakable cut + word tail
                     dp[i] = true;
                     break;
                 }

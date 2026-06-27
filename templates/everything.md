@@ -858,14 +858,13 @@ class Solution {
     public int firstMissingPositive(int[] nums) {
         int n = nums.length;
         for (int i = 0; i < n; i++) {
+            // place each value v in [1,n] at its home slot v-1 (cyclic swaps until it stays)
             while (nums[i] > 0 && nums[i] <= n && nums[nums[i] - 1] != nums[i]) {
                 swap(nums, i, nums[i] - 1);
             }
         }
         for (int i = 0; i < n; i++) {
-            if (nums[i] != i + 1) {
-                return i + 1;
-            }
+            if (nums[i] != i + 1) return i + 1;   // first slot holding the wrong value
         }
         return n + 1;
     }
@@ -889,14 +888,14 @@ class Solution {
 class Solution {
     public void rotate(int[][] matrix) {
         int n = matrix.length;
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++) {            // transpose: mirror across the main diagonal
             for (int j = i + 1; j < n; j++) {
                 int t = matrix[i][j];
                 matrix[i][j] = matrix[j][i];
                 matrix[j][i] = t;
             }
         }
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++) {            // reverse each row → 90° clockwise
             int lo = 0, hi = n - 1;
             while (lo < hi) {
                 int t = matrix[i][lo];
@@ -1133,7 +1132,7 @@ class Solution {
     public void rotate(int[] nums, int k) {
         int n = nums.length;
         k %= n;
-        reverse(nums, 0, n - 1);
+        reverse(nums, 0, n - 1);   // reverse all, then un-reverse each block into place
         reverse(nums, 0, k - 1);
         reverse(nums, k, n - 1);
     }
@@ -1281,11 +1280,11 @@ class Solution {
         int[] result = new int[n];
         result[0] = 1;
         for (int i = 1; i < n; i++) {
-            result[i] = result[i - 1] * nums[i - 1];
+            result[i] = result[i - 1] * nums[i - 1];   // result[i] = product of everything to the left
         }
         int suffix = 1;
         for (int i = n - 1; i >= 0; i--) {
-            result[i] *= suffix;
+            result[i] *= suffix;                       // then fold in the running product to the right
             suffix *= nums[i];
         }
         return result;
@@ -1839,21 +1838,16 @@ class Solution {
         Long first = null, second = null, third = null;
         for (int x : nums) {
             Long v = (long) x;
-            if (v.equals(first) || v.equals(second) || v.equals(third)) {
-                continue;
-            }
-            if (first == null || v > first) {
-                third = second;
-                second = first;
-                first = v;
+            if (v.equals(first) || v.equals(second) || v.equals(third)) continue;  // skip duplicates
+            if (first == null || v > first) {       // new max → cascade the old top-three down
+                third = second; second = first; first = v;
             } else if (second == null || v > second) {
-                third = second;
-                second = v;
+                third = second; second = v;
             } else if (third == null || v > third) {
                 third = v;
             }
         }
-        return (int) (long) (third == null ? first : third);
+        return (int) (long) (third == null ? first : third);   // no 3rd distinct → return the max
     }
 }
 ```
@@ -1989,37 +1983,23 @@ class Solution {
     public boolean circularArrayLoop(int[] nums) {
         n = nums.length;
         for (int i = 0; i < n; i++) {
-            int slow = i, fast = i;
             boolean forward = nums[i] > 0;
-            do {
+            int slow = i, fast = i;
+            // advance hare twice and tortoise once; next() returns -1 on a direction flip or self-loop
+            while (true) {
                 slow = next(nums, slow, forward);
-                if (slow == -1) {
-                    break;
-                }
                 fast = next(nums, fast, forward);
-                if (fast == -1) {
-                    break;
-                }
-                fast = next(nums, fast, forward);
-                if (fast == -1) {
-                    break;
-                }
-            } while (slow != fast);
-            if (slow != -1 && slow == fast) {
-                return true;
+                if (fast != -1) fast = next(nums, fast, forward);
+                if (slow == -1 || fast == -1) break;
+                if (slow == fast) return true;   // pointers meet → valid cycle of length > 1
             }
         }
         return false;
     }
     private int next(int[] nums, int i, boolean forward) {
-        if ((nums[i] > 0) != forward) {
-            return -1;
-        }
+        if ((nums[i] > 0) != forward) return -1;          // direction flipped → not this cycle
         int j = ((i + nums[i]) % n + n) % n;
-        if (j == i) {
-            return -1;
-        }
-        return j;
+        return j == i ? -1 : j;                            // single-element self-loop is invalid
     }
 }
 ```
@@ -2340,19 +2320,15 @@ class Solution {
 class Solution {
     public int findUnsortedSubarray(int[] nums) {
         int n = nums.length;
-        int left = -1, right = -2;
+        int left = -1, right = -2;   // default span length 0 when already sorted
         int max = nums[0], min = nums[n - 1];
-        for (int i = 1; i < n; i++) {
+        for (int i = 1; i < n; i++) {       // right bound = last element smaller than some earlier max
             max = Math.max(max, nums[i]);
-            if (nums[i] < max) {
-                right = i;
-            }
+            if (nums[i] < max) right = i;
         }
-        for (int i = n - 2; i >= 0; i--) {
+        for (int i = n - 2; i >= 0; i--) {  // left bound = first element larger than some later min
             min = Math.min(min, nums[i]);
-            if (nums[i] > min) {
-                left = i;
-            }
+            if (nums[i] > min) left = i;
         }
         return right - left + 1;
     }
@@ -2783,20 +2759,13 @@ class Solution {
         int n = arr.length, best = 0, i = 0;
         while (i < n) {
             int start = i;
-            if (i + 1 < n && arr[i] < arr[i + 1]) {
-                while (i + 1 < n && arr[i] < arr[i + 1]) {
-                    i++;
-                }
-                if (i + 1 < n && arr[i] > arr[i + 1]) {
-                    while (i + 1 < n && arr[i] > arr[i + 1]) {
-                        i++;
-                    }
-                    best = Math.max(best, i - start + 1);
-                }
+            while (i + 1 < n && arr[i] < arr[i + 1]) i++;   // climb up
+            if (i > start) {                                // had an up-slope: try the down-slope
+                int peak = i;
+                while (i + 1 < n && arr[i] > arr[i + 1]) i++;
+                if (i > peak) best = Math.max(best, i - start + 1);   // both slopes present → mountain
             }
-            if (i == start) {
-                i++;
-            }
+            if (i == start) i++;   // flat or descent from start: nothing consumed, force progress
         }
         return best;
     }
@@ -10771,15 +10740,10 @@ class Solution {
     public boolean isValid(String s) {
         Deque<Character> stack = new ArrayDeque<>();
         for (char c : s.toCharArray()) {
-            if (c == '(' || c == '[' || c == '{') {
-                stack.push(c);
-            } else {
-                if (stack.isEmpty()) return false;
-                char top = stack.pop();
-                if (c == ')' && top != '(') return false;
-                if (c == ']' && top != '[') return false;
-                if (c == '}' && top != '{') return false;
-            }
+            if (c == '(') stack.push(')');           // ← push the expected closer
+            else if (c == '[') stack.push(']');
+            else if (c == '{') stack.push('}');
+            else if (stack.isEmpty() || stack.pop() != c) return false;  // ← closer must match top
         }
         return stack.isEmpty();
     }
@@ -19141,17 +19105,12 @@ class Solution {
         int rows = grid.length, cols = grid[0].length;
         List<Integer> rowList = new ArrayList<>();
         List<Integer> colList = new ArrayList<>();
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                if (grid[i][j] == 1) {
-                    rowList.add(i);
-                    colList.add(j);
-                }
-            }
-        }
-        Collections.sort(colList);
+        for (int i = 0; i < rows; i++)             // outer loop on i → rowList already sorted
+            for (int j = 0; j < cols; j++)
+                if (grid[i][j] == 1) { rowList.add(i); colList.add(j); }
+        Collections.sort(colList);                 // colList built per-row, so sort it
         int total = 0;
-        int medianRow = rowList.get(rowList.size() / 2);
+        int medianRow = rowList.get(rowList.size() / 2);   // median minimizes sum of |x - p|
         int medianCol = colList.get(colList.size() / 2);
         for (int r : rowList) {
             total += Math.abs(r - medianRow);
@@ -20598,12 +20557,12 @@ class Solution {
     public int[][] insert(int[][] intervals, int[] newInterval) {
         List<int[]> result = new ArrayList<>();
         for (int[] interval : intervals) {
-            if (interval[1] < newInterval[0]) {
+            if (interval[1] < newInterval[0]) {                  // ends before new → keep as is
                 result.add(interval);
-            } else if (interval[0] > newInterval[1]) {
+            } else if (interval[0] > newInterval[1]) {           // starts after new → flush new, move on
                 result.add(newInterval);
                 newInterval = interval;
-            } else {
+            } else {                                             // overlap → absorb into new
                 newInterval[0] = Math.min(newInterval[0], interval[0]);
                 newInterval[1] = Math.max(newInterval[1], interval[1]);
             }
@@ -21434,7 +21393,8 @@ class Solution {
         if (n <= 2) return n;
         int[] dp = new int[n + 1];
         dp[1] = 1; dp[2] = 2;
-        for (int i = 3; i <= n; i++) dp[i] = dp[i-1] + dp[i-2];
+        for (int i = 3; i <= n; i++)
+            dp[i] = dp[i-1] + dp[i-2];   // arrive via a 1-step or a 2-step
         return dp[n];
     }
 }
@@ -21456,7 +21416,7 @@ class Solution {
         int[] dp = new int[n];
         dp[0] = nums[0]; dp[1] = Math.max(nums[0], nums[1]);
         for (int i = 2; i < n; i++)
-            dp[i] = Math.max(dp[i-1], dp[i-2] + nums[i]);
+            dp[i] = Math.max(dp[i-1], dp[i-2] + nums[i]);   // skip i, or rob i + best up to i-2
         return dp[n-1];
     }
 }
@@ -21508,7 +21468,7 @@ class Solution {
         int max = 1;
         for (int i = 1; i < n; i++) {
             for (int j = 0; j < i; j++) {
-                if (nums[j] < nums[i]) dp[i] = Math.max(dp[i], dp[j] + 1);
+                if (nums[j] < nums[i]) dp[i] = Math.max(dp[i], dp[j] + 1);  // extend a smaller-ending LIS
             }
             max = Math.max(max, dp[i]);
         }
@@ -21535,7 +21495,7 @@ class Solution {
         dp[0] = true;
         for (int i = 1; i <= n; i++) {
             for (int j = 0; j < i; j++) {
-                if (dp[j] && words.contains(s.substring(j, i))) {
+                if (dp[j] && words.contains(s.substring(j, i))) {  // breakable cut + word tail
                     dp[i] = true;
                     break;
                 }
@@ -25065,11 +25025,8 @@ class TwoSum {
     public boolean find(int value) {
         for (int key : map.keySet()) {
             int complement = value - key;
-            if (complement == key) {
-                if (map.get(key) >= 2) {
-                    return true;
-                }
-            } else if (map.containsKey(complement)) {
+            // pair needs two copies when key is its own complement
+            if (complement == key ? map.get(key) >= 2 : map.containsKey(complement)) {
                 return true;
             }
         }

@@ -1381,17 +1381,12 @@ class Solution {
         int rows = grid.length, cols = grid[0].length;
         List<Integer> rowList = new ArrayList<>();
         List<Integer> colList = new ArrayList<>();
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                if (grid[i][j] == 1) {
-                    rowList.add(i);
-                    colList.add(j);
-                }
-            }
-        }
-        Collections.sort(colList);
+        for (int i = 0; i < rows; i++)             // outer loop on i → rowList already sorted
+            for (int j = 0; j < cols; j++)
+                if (grid[i][j] == 1) { rowList.add(i); colList.add(j); }
+        Collections.sort(colList);                 // colList built per-row, so sort it
         int total = 0;
-        int medianRow = rowList.get(rowList.size() / 2);
+        int medianRow = rowList.get(rowList.size() / 2);   // median minimizes sum of |x - p|
         int medianCol = colList.get(colList.size() / 2);
         for (int r : rowList) {
             total += Math.abs(r - medianRow);

@@ -390,11 +390,8 @@ class TwoSum {
     public boolean find(int value) {
         for (int key : map.keySet()) {
             int complement = value - key;
-            if (complement == key) {
-                if (map.get(key) >= 2) {
-                    return true;
-                }
-            } else if (map.containsKey(complement)) {
+            // pair needs two copies when key is its own complement
+            if (complement == key ? map.get(key) >= 2 : map.containsKey(complement)) {
                 return true;
             }
         }
