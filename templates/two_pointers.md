@@ -2173,45 +2173,21 @@ class Solution {
 
 **Intuition:** Set membership turns intersection into linear lookups.
 
-**Variables:** `set` = values of nums1 · `common` = intersection set · `result` = output array · `i` = fill index
+**Variables:** `set1` = distinct values of nums1
 **Pseudocode:**
 ```
-put all of nums1 into a set
-  
-  
-collect shared values without repeats
-  
-    
-      
-    
-  
-copy the set into an array
-  
-  
-    
-  
-return it
+set1 = distinct values of nums1
+return distinct values of nums2 that are in set1, as int[]
 ```
 
 ```java
 class Solution {
     public int[] intersection(int[] nums1, int[] nums2) {
-        Set<Integer> set = new HashSet<>();
-        for (int x : nums1) {
-            set.add(x);
-        }
-        Set<Integer> common = new HashSet<>();
-        for (int x : nums2) {
-            if (set.contains(x)) {
-                common.add(x);
-            }
-        }
-        int[] result = new int[common.size()];
-        int i = 0;
-        for (int x : common) {
-            result[i++] = x;
-        }
-        return result;
+        Set<Integer> set1 = Arrays.stream(nums1).boxed().collect(Collectors.toSet());
+        return Arrays.stream(nums2)
+                     .distinct()                 // each shared value once
+                     .filter(set1::contains)     // keep only those in nums1
+                     .toArray();
     }
 }
 ```
