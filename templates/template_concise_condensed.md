@@ -543,6 +543,90 @@ Want count or min/max?
     ├── 0/1 minimize:            j descending → #474 (maximize)
     └── Unbounded minimize:      j ascending  → #322
 ```
+```java
+int[] dp = new int[target + 1];
+dp[0] = 1;
+for (int i = 0; i < nums.length; i++) {
+    for (int j = target; j >= nums[i]; j--)
+        dp[j] += dp[j - nums[i]];
+}
+int[] dp = new int[target + 1];
+dp[0] = 1;
+for (int i = 0; i < nums.length; i++) {
+    for (int j = nums[i]; j <= target; j++)
+        dp[j] += dp[j - nums[i]];
+}
+int[] dp = new int[target + 1];
+dp[0] = 1;
+for (int j = 1; j <= target; j++) {
+    for (int num : nums) {
+        if (j >= num) dp[j] += dp[j - num];
+    }
+}
+```
+```java
+int[][] dp = new int[m + 1][n + 1];
+for (int i = 1; i <= m; i++) {
+    for (int j = 1; j <= n; j++) {
+        if (s1.charAt(i-1) == s2.charAt(j-1)) {
+            dp[i][j] = dp[i-1][j-1] + 1;
+        } else {
+            dp[i][j] = combine(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+        }
+    }
+}
+```
+```java
+int[][] dp = new int[n][n];
+for (int i = 0; i < n; i++) dp[i][i] = base_case;
+for (int i = n - 1; i >= 0; i--) {
+    for (int j = i + 1; j < n; j++) {
+        dp[i][j] = ...;
+    }
+}
+```
+```java
+int[][] dp = new int[n][n];
+for (int i = 0; i < n; i++) dp[i][i] = base_case;
+for (int i = 0; i < n; i++) {
+    for (int j = i - 1; j >= 0; j--) {
+        dp[i][j] = ...;
+    }
+}
+```
+```java
+int[][] dp = new int[n][n];
+for (int i = 0; i < n; i++) dp[i][0] = 1;
+for (int i = 1; i < n; i++) {
+    for (int j = 1; j <= i; j++) {
+        dp[i][j] = ...;
+    }
+}
+```
+```java
+int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};
+int[][] dp = new int[rows][cols];
+for (int i = 0; i < rows; i++)
+    for (int j = 0; j < cols; j++)
+        dp[i][j] = grid[i][j] + f(dp[i-1][j], dp[i][j-1]);
+int[][] memo = new int[rows][cols];
+for (int i = 0; i < rows; i++)
+    for (int j = 0; j < cols; j++)
+        dfs(grid, i, j, memo, dr, dc);
+```
+```java
+cash      = max profit when NOT holding (free to buy or idle)
+hold      = max profit when HOLDING stock (bought it at some cost)
+cooldown  = max profit right after selling (can't buy today)
+```
+```java
+                    buy                 sell                re-buy condition
+#121 (1 tx):        hold = max(hold, -price)                no re-buy (ignore cash)
+#122 (unlimited):   hold = max(hold, cash - price)          re-buy with full cash
+#123 (2 tx):        chain: buy2 uses sell1 cash             4 states chained
+#309 (cooldown):    hold = max(hold, cooldown - price)      must wait 1 day
+#714 (fee):         hold = max(hold, cash - price)          pay fee on sell
+```
 ### Trie
 **When to Use Trie (vs HashMap/Array)**
 **Canonical Template**

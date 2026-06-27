@@ -964,6 +964,156 @@ Want count or min/max?
     └── Unbounded minimize:      j ascending  → #322
 ```
 
+---
+
+**Part 2 — Knapsack DP**
+
+```java
+// ── 0/1 KNAPSACK ── each item at most once
+int[] dp = new int[target + 1];
+dp[0] = 1;
+for (int i = 0; i < nums.length; i++) {
+    for (int j = target; j >= nums[i]; j--)   // DESCENDING: sees OLD dp (before item i)
+        dp[j] += dp[j - nums[i]];
+}
+
+// ── UNBOUNDED KNAPSACK ── each item reusable
+int[] dp = new int[target + 1];
+dp[0] = 1;
+for (int i = 0; i < nums.length; i++) {
+    for (int j = nums[i]; j <= target; j++)    // ASCENDING: sees NEW dp (after item i already used)
+        dp[j] += dp[j - nums[i]];
+}
+
+// ── PERMUTATION COUNT ── order matters (Combination Sum IV)
+int[] dp = new int[target + 1];
+dp[0] = 1;
+for (int j = 1; j <= target; j++) {           // OUTER: target
+    for (int num : nums) {                     // INNER: try all nums (not fixing order)
+        if (j >= num) dp[j] += dp[j - num];
+    }
+}
+```
+
+**Why descending for 0/1:**  
+`dp[j - nums[i]]` is read **before** `dp[j]` is updated (j > j-nums[i]). So it always sees the dp state from before item `i` was considered — no item is used twice.
+
+**Why ascending for unbounded:**  
+`dp[j - nums[i]]` was already updated in this same pass (j - nums[i] < j, processed earlier). This allows item `i` to be picked multiple times.
+
+**2D anchor:** both loops are `dp[i][j] = dp[i-1][j] + dp[i-?][j-w]` collapsed to 1D — descending keeps `dp[j-w]` on the *previous* row (item i unused), ascending pulls it from the *current* row (item i reused).
+
+**Mnemonic:** DESCENDING = **D**istinct (each item once), ASCENDING = **A**gain (reusable).
+
+**Flavor = seed + operator (same skeleton):**
+- count → `dp[0]=1`, `dp[j] += dp[j-w]`
+- feasibility → `dp[0]=true`, `dp[j] = dp[j] || dp[j-w]`
+- max-value → `dp[0]=0`, `dp[j] = Math.max(dp[j], dp[j-w] + v)`
+
+---
+
+**Part 3 — 2D Sequence DP**
+
+```java
+// i indexes string/array 1 (1-indexed), j indexes string/array 2
+int[][] dp = new int[m + 1][n + 1];
+// Init dp[0][*] and dp[*][0] based on problem
+for (int i = 1; i <= m; i++) {
+    for (int j = 1; j <= n; j++) {
+        if (s1.charAt(i-1) == s2.charAt(j-1)) {
+            dp[i][j] = dp[i-1][j-1] + 1;          // characters match
+        } else {
+            dp[i][j] = combine(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+        }
+    }
+}
+```
+
+---
+
+**Part 4 — Interval DP**
+
+**Rule:** `i` goes right-to-left (ensures shorter/inner intervals are computed first). `j` goes left-to-right from `i+1`. When computing `dp[i][j]`, all `dp[i'][j']` with `i' > i` or `j' < j` are already done.
+
+```java
+int[][] dp = new int[n][n];
+for (int i = 0; i < n; i++) dp[i][i] = base_case;   // single elements
+for (int i = n - 1; i >= 0; i--) {                   // right-to-left
+    for (int j = i + 1; j < n; j++) {                // left-to-right from i+1
+        // dp[i][j] can safely use dp[i+1][j], dp[i][j-1], dp[i+1][j-1]
+        dp[i][j] = ...;
+    }
+}
+```
+
+**Alternative (forward `i`, inner `j` descending):** `i` is the right endpoint going left-to-right; `j` is the left endpoint sweeping back from `i-1`. Inner intervals (larger `j`, smaller `i`) are already filled.
+
+```java
+int[][] dp = new int[n][n];
+for (int i = 0; i < n; i++) dp[i][i] = base_case;   // single elements
+for (int i = 0; i < n; i++) {                        // i = right endpoint, left-to-right
+    for (int j = i - 1; j >= 0; j--) {               // j = left endpoint, from i-1 down to 0
+        // dp[i][j] can safely use dp[i-1][j], dp[i][j+1], dp[i-1][j+1]
+        dp[i][j] = ...;
+    }
+}
+```
+
+**Alternative (triangular fill, column base case):** used when `dp[i][j]` depends only on the previous row/column (e.g. counting problems). Fill row by row with `j` from `0` to `i`.
+
+```java
+int[][] dp = new int[n][n];
+for (int i = 0; i < n; i++) dp[i][0] = 1;   // base: dp[i][0] = 1; dp[0][j] = 0 for j > 0
+for (int i = 1; i < n; i++) {
+    for (int j = 1; j <= i; j++) {           // j from 1 to i
+        // dp[i][j] can safely use dp[i-1][j], dp[i][j-1], dp[i-1][j-1]
+        dp[i][j] = ...;
+    }
+}
+```
+
+---
+
+**Part 5 — Grid DP**
+
+```java
+int[] dr = {1,-1,0,0}, dc = {0,0,1,-1};   // DOWN UP RIGHT LEFT
+
+// Standard grid (only move right/down — DAG, no cycle):
+int[][] dp = new int[rows][cols];
+// initialize first row and first column
+for (int i = 0; i < rows; i++)
+    for (int j = 0; j < cols; j++)
+        dp[i][j] = grid[i][j] + f(dp[i-1][j], dp[i][j-1]);
+
+// All-direction grid (memoized DFS for increasing/decreasing paths):
+int[][] memo = new int[rows][cols];
+for (int i = 0; i < rows; i++)
+    for (int j = 0; j < cols; j++)
+        dfs(grid, i, j, memo, dr, dc);
+```
+
+---
+
+**Part 6 — State Machine DP (Stock Problems)**
+
+```
+cash      = max profit when NOT holding (free to buy or idle)
+hold      = max profit when HOLDING stock (bought it at some cost)
+cooldown  = max profit right after selling (can't buy today)
+```
+
+**Part 6 — State Machine DP (Stock Problems)**
+
+```
+                    buy                 sell                re-buy condition
+#121 (1 tx):        hold = max(hold, -price)                no re-buy (ignore cash)
+#122 (unlimited):   hold = max(hold, cash - price)          re-buy with full cash
+#123 (2 tx):        chain: buy2 uses sell1 cash             4 states chained
+#309 (cooldown):    hold = max(hold, cooldown - price)      must wait 1 day
+#714 (fee):         hold = max(hold, cash - price)          pay fee on sell
+```
+
 
 ---
 ## Trie  &nbsp;`trie.md`
